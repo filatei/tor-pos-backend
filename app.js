@@ -60,8 +60,8 @@ app.use("/api/products", productsRoutes);
 app.use("/api/customers", customersRoutes);
 app.use("/api/orders", ordersRoutes);
 app.use("/api/users", userRoutes);
-app.use((req, res, next) => {
-    res.sendFile(path.join(__dirname, 'www', 'index.html'));
-})
+// app.use((req, res, next) => {
+//     res.sendFile(path.join(__dirname, 'www', 'index.html'));
+// })
 
 module.exports = app;

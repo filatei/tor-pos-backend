@@ -14,17 +14,17 @@ router.post('/signup', (req, res, next) => {
         })
         user.save()
         .then((result) => {
-            console.log(result)
-            return res.status(201).json({
-                message: 'user saved'
-            })
+           // console.log(result)
+           res.status(201).json({
+            message: "User created!",
+            result: result
+          });
         })
-        .catch( err => {
-            console.log(err)
-            return res.status(500).json({
-                error: err
-            })
-        })
+        .catch(err => {
+            res.status(500).json({
+              message: "Invalid authentication credentials!"
+            });
+        });
 
     })
     
@@ -33,38 +33,39 @@ router.post('/signup', (req, res, next) => {
 
 
 router.post('/login', (req, res, next) => {
-    let fuser;
+    let fetchedUser;
     User.findOne({email: req.body.email})
     .then ((user) => {
         if (!user) {
-           return  res.status(401).json({ message: 'auth failed'});
-        }
-        fuser = user;
-        return bcrypt.compare(req.body.password, user.password)
-        .then( result => {
-            if(!result) {
-                return  res.status(401).json({ 
-                    message: 'bad auth'
-                });
-            } 
-            // manage token
-            const token = jwt.sign({email:fuser.email, userId: fuser._id},
-                process.env.ACCESS_TOKEN_SECRET,
-                {expiresIn:'10h'});
-                console.log(token)
-                res.status(200).json({
-                    token: token,
-                    expiresIn: 36000
-                })
-        })
-        .catch(err => {
-            console.log(err)
-            return  res.status(401).json({ 
-                message: 'bad passwd',
-                error: err
+            return res.status(401).json({
+              message: "Auth failed"
             });
-        })    
+          }
+          fetchedUser = user;
+      return bcrypt.compare(req.body.password, user.password);
     })
+    .then(result => {
+        if (!result) {
+          return res.status(401).json({
+            message: "Auth failed"
+          });
+        }
+        const token = jwt.sign(
+            { email: fetchedUser.email, userId: fetchedUser._id },
+            process.env.ACCESS_TOKEN_SECRET,
+            {expiresIn:'10h'}
+        );
+        res.status(200).json({
+            token: token,
+            expiresIn: 36000,
+            userId: fetchedUser._id
+        });
+    })
+    .catch(err => {
+        return res.status(401).json({
+          message: "Invalid authentication credentials!"
+        });
+    });
 })
 
 // router.get('', authenticateToken, (req, res) => {

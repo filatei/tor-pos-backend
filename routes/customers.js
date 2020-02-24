@@ -1,78 +1,110 @@
 const express = require("express");
 const Customer = require("../models/customer");
 const router = express.Router();
+const checkAuth = require('../middleware/check-auth');
 
 router.get('',(req, res, next) => {
-    Customer.find()
-    .then(docs => {
-       // console.log('cusotmers', docs)
-        res.status(200).json(
-         {
-            customers: docs
-         });
+  const pageSize = +req.query.pagesize;
+  const currentPage = +req.query.page;
+  const custQuery = Customer.find();
+  let fetchedCustomers;
+  if (pageSize && currentPage) {
+    custQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
+  }
+  custQuery
+    .then(documents => {
+      fetchedCustomers = documents;
+      return Customer.countDocuments();
     })
-    .catch(err => {
-        console.log (err)
+    .then(count => {
+      res.status(200).json({
+        message: "Customers fetched successfully!",
+        customers: fetchedCustomers,
+        maxCustomers: count
+      });
     })
+    .catch(error => {
+      res.status(500).json({
+        message: "Fetching customers failed!"
+      });
+    });
 });
 
-router.post("", (req, res, next) => {
+router.post("", checkAuth, (req, res, next) => {
   let cust = req.body;
+  cust.creator = req.userData.userId; 
+
   const customer = new Customer(cust);
-    // const customer = new Customer({
-    //     name: req.body.name,
-    //     email: req.body.email,
-    //     phone: req.body.phone,
-    //     icon: req.body.icon,
-    //     createdAt: req.body.createdAt,
-    //     updatedAt: req.body.updatedAt
-    // });
-    // console.log('customer ', customer);
   customer.save().then ((result)=> {
-      console.log('saved customer', result)
+    res.status(201).json({
+      message: "Customer added successfully",
+      customer: {
+        ...result,
+        id: result._id
+      }
+    });
   })
-  res.status(201).json({
-      message: 'customer added successfully'
+  .catch(error => {
+    res.status(500).json({
+      message: "creating customers failed!"
+    });
   });
 });
 
 router.get("/:id", (req, res, next) => {
-    Customer.findById(req.params.id).then(customer => {
+    Customer.findById(req.params.id)
+    .then(customer => {
       if (customer) {
         res.status(200).json(customer);
       } else {
         res.status(404).json({ message: "customer not found!" });
       }
+    })
+    .catch(error => {
+      res.status(500).json({
+        message: "Fetching customer failed!"
+      });
     });
   });
   
-router.put("/:id", (req, res, next) => {
+router.put("/:id", checkAuth, (req, res, next) => {
   console.log('params ', req.params)
   let cust = req.body;
   cust._id = req.params.id;
+  cust.updater = req.userData.userId; 
   const customer = new Customer(cust);
 
-  // const customer = new Customer({
-  //     _id: req.params.id,
-  //     name: req.body.name,
-  //     email: req.body.email,
-  //     phone: req.body.phone,
-  //     barcode: req.body.barcode,
-  //     address: req.body.address,
-  //     phones: req.body.phones,
-  //     updatedAt: req.body.updatedAt
-  // });
-  Customer.updateOne({ _id: req.params.id }, customer).then(result => {
-    res.status(200).json({ message: "Update successful!" });
+  Customer.updateOne({ _id: req.params.id }, customer)
+  .then(result => {
+    if (result.nModified > 0) {
+      res.status(200).json({ message: "Update successful!" });
+    } else {
+      res.status(401).json({ message: "Not authorized!" });
+    }
+  })
+  .catch(error => {
+    res.status(500).json({
+      message: "Couldn't udpate customer!"
+    });
   });
 });
 
 router.delete("/:id", (req, res, next) => {
     console.log('params ', req.params)
-   Customer.deleteOne({ _id: req.params.id }).then(result => {
-   //  console.log(result);
-     res.status(200).json({ message: "customer deleted!" });
-   });
- });
+   Customer.deleteOne({ _id: req.params.id })
+   .then(result => {
+    console.log(result);
+    if (result.n > 0) {
+      res.status(200).json({ message: "Deletion successful!" });
+    } else {
+      res.status(401).json({ message: "Not authorized!" });
+    }
+   })
+   .catch(error => {
+    res.status(500).json({
+      message: "Deleting customer failed!"
+    });
+  });
+});
 
 module.exports = router;

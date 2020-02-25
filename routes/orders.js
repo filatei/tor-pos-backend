@@ -2,7 +2,17 @@ const express = require("express");
 const Order = require("../models/order");
 const router = express.Router();
 const checkAuth = require("../middleware/check-auth");
+const { Parser } = require('json2csv');
+var fs = require('fs');
 
+function json2csv(fetchedOrders) {
+  let fields = ['orderRef', 'status','payMethod', 'customer','createdAt','amount','amountPaid','site','cartItems'];
+      const json2csvParser = new Parser({ fields, eol: "\n",
+          unwindPath: 'cartItems',});
+      const csvOrders = json2csvParser.parse(fetchedOrders);
+      // console.log(csvOrders)
+      return csvOrders;
+}
 
 router.get('',(req, res, next) => {
   const pageSize = +req.query.pagesize;
@@ -18,9 +28,26 @@ router.get('',(req, res, next) => {
       return Order.countDocuments();
     })
     .then(count => {
+      // fetchedOrders.map(order => {
+      //   order.cartItems.forEach (item => {
+      //      User.findById(item.customer).then ((cust) => {
+      //       if (cust) {
+      //         item.customer = cust.name
+      //       }
+      //      })
+      //   })
+      // })
+      let csv = json2csv(fetchedOrders)
+      const filename = 'data/file-' + (new Date().toLocaleDateString()).replace(/\//g,'-') + '.csv';
+      fs.writeFile(filename, csv, function(err) {
+        if (err) throw err;
+        console.log('file saved');
+      });
       res.status(200).json({
         message: "orders fetched successfully!",
         orders: fetchedOrders,
+        csv: csv,
+        filename: filename,
         maxOrders: count
       });
     })
@@ -98,7 +125,7 @@ router.put("/:id", checkAuth, (req, res, next) => {
   
     Order.updateOne({ _id: req.params.id, creator: req.userData.userId }, order)
     .then(result => {
-      if (result.nModified > 0) {
+      if (result.n > 0) {
         res.status(200).json({ message: "Update successful!" });
       } else {
         res.status(401).json({ message: "Not authorized!" });

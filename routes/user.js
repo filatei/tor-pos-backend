@@ -4,6 +4,8 @@ const bcrypt = require('bcrypt');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 
+const checkAuth = require('../middleware/check-auth');
+
 router.post('/signup', (req, res, next) => {
     
     bcrypt.hash(req.body.password,10).then( hash => {
@@ -67,6 +69,29 @@ router.post('/login', (req, res, next) => {
         });
     });
 })
+
+router.put("/:id", checkAuth, (req, res, next) => {
+  let userObj = req.body;
+  userObj._id = req.params.id;
+  // userData  was added to checkAuth middleware and passed along
+  userObj.updater = req.userData.userId; 
+
+  const user = new User(userObj);
+  
+    User.updateOne({ _id: req.params.id }, user)
+    .then(result => {
+      if (result.n > 0) {
+        res.status(200).json({ message: "Update successful!" });
+      } else {
+        res.status(401).json({ message: "Not authorized!" });
+      }
+    })
+    .catch(error => {
+      res.status(500).json({
+        message: "Couldn't udpate user!"
+      });
+    });
+});
 
 // router.get('', authenticateToken, (req, res) => {
 //     console.log(req.user)

@@ -33,7 +33,7 @@ router.put("/:id", checkAuth, (req, res, next) => {
     
     Product.updateOne({ _id: req.params.id }, product)
     .then(result => {
-      if (result.nModified > 0) {
+      if (result.n > 0) {
         res.status(200).json({ message: "Update successful!" });
       } else {
         res.status(401).json({ message: "Not authorized!" });

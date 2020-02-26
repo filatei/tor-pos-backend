@@ -30,20 +30,11 @@ router.get('',(req, res, next) => {
       return Order.countDocuments();
     })
     .then(count => {
-      // fetchedOrders.map(order => {
-      //   order.cartItems.forEach (item => {
-      //      User.findById(item.customer).then ((cust) => {
-      //       if (cust) {
-      //         item.customer = cust.name
-      //       }
-      //      })
-      //   })
-      // })
+      
       let csv = json2csv(fetchedOrders)
       const filename = 'data/file-' + (new Date().toLocaleDateString()).replace(/\//g,'-') + '.csv';
       const filename2 = 'data/filejson-' + (new Date().toLocaleDateString()).replace(/\//g,'-') + '.txt';
-       // save json file
-      // setTimeOut(() => {
+       
       const makeRecursiveFileAsync = async (path, data) => {
         try{
           await fs.writeFile(path,data,(err)=> {
@@ -56,19 +47,7 @@ router.get('',(req, res, next) => {
       }
       makeRecursiveFileAsync(filename, csv);
       makeRecursiveFileAsync(filename2, fetchedOrders);
-        // fs.writeFile(filename, fetchedOrders, function(err) {
-        //   if (err) throw err;
-        //   console.log('json file saved');
-        // });
-      // },3000)
-      // setTimeout(() => {
-        // fs.writeFile(filename, csv, function(err) {
-        //   if (err) throw err;
-        //   console.log('csv file saved');
-        // });
-      // },3000)
-      
-     
+        
       res.status(200).json({
         message: "orders fetched successfully!",
         orders: fetchedOrders,
@@ -146,7 +125,6 @@ router.put("/:id", checkAuth, (req, res, next) => {
   orderObj._id = req.params.id;
   // userData  was added to checkAuth middleware and passed along
   orderObj.updater = req.userData.userId; 
-
   const order = new Order(orderObj);
   
     Order.updateOne({ _id: req.params.id, creator: req.userData.userId }, order)

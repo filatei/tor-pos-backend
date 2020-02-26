@@ -16,6 +16,8 @@ function json2csv(fetchedOrders) {
 
 router.get('',(req, res, next) => {
   const pageSize = +req.query.pagesize;
+  const dateBegin = req.query.datebegin;
+  const dateEnd = req.query.dateend;
   const currentPage = +req.query.page;
   const orderQuery = Order.find();
   let fetchedOrders;
@@ -39,10 +41,34 @@ router.get('',(req, res, next) => {
       // })
       let csv = json2csv(fetchedOrders)
       const filename = 'data/file-' + (new Date().toLocaleDateString()).replace(/\//g,'-') + '.csv';
-      fs.writeFile(filename, csv, function(err) {
-        if (err) throw err;
-        console.log('file saved');
-      });
+      const filename2 = 'data/filejson-' + (new Date().toLocaleDateString()).replace(/\//g,'-') + '.txt';
+       // save json file
+      // setTimeOut(() => {
+      const makeRecursiveFileAsync = async (path, data) => {
+        try{
+          await fs.writeFile(path,data,(err)=> {
+            if (err) throw err;
+          })
+        }
+        catch(err){
+          if (err) throw err;
+        }
+      }
+      makeRecursiveFileAsync(filename, csv);
+      makeRecursiveFileAsync(filename2, fetchedOrders);
+        // fs.writeFile(filename, fetchedOrders, function(err) {
+        //   if (err) throw err;
+        //   console.log('json file saved');
+        // });
+      // },3000)
+      // setTimeout(() => {
+        // fs.writeFile(filename, csv, function(err) {
+        //   if (err) throw err;
+        //   console.log('csv file saved');
+        // });
+      // },3000)
+      
+     
       res.status(200).json({
         message: "orders fetched successfully!",
         orders: fetchedOrders,

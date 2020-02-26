@@ -21,7 +21,7 @@ const DB = 'torposedb';
 // if prod use this
 // connectStr ='mongodb+srv://user1:RwyT4Eyw799tQUKF@cluster0-j4gfg.gcp.mongodb.net/torposedb?retryWrites=true&w=majority'
 // app.use('/', express.static(path.join(__dirname, 'www')));
-app.use('/', express.static(path.join(__dirname, 'data')));
+app.use('/data', express.static(path.join(__dirname, 'data')));
 
 // app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: true, parameterLimit: 50000 }))

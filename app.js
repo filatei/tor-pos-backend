@@ -13,6 +13,8 @@ const customersRoutes = require("./routes/customers");
 const ordersRoutes = require("./routes/orders");
 
 const userRoutes = require("./routes/user");
+const fileRoutes = require("./routes/file");
+const printRoutes = require("./routes/print");
 
 //let connectStr =  'mongodb://localhost:27017/torposdb';
 let connectStr = process.env.CONNECT_STR
@@ -49,6 +51,8 @@ app.use((req,res,next) => {
         'Access-Control-Allow-Methods',
         'GET, POST, PATCH, DELETE, POST, PUT, OPTIONS'
     );
+
+   //  res.setHeader({'Feature-Policy': layout-animations 'none'; unoptimized-images 'none'; oversized-images 'none'; sync-script 'none'; sync-xhr 'none'; unsized-media 'none';
     next();
 })
 
@@ -61,6 +65,8 @@ app.use("/api/products", productsRoutes);
 app.use("/api/customers", customersRoutes);
 app.use("/api/orders", ordersRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/files", fileRoutes);
+app.use("/api/prints", printRoutes);
 // app.use((req, res, next) => {
 //     res.sendFile(path.join(__dirname, 'www', 'index.html'));
 // })

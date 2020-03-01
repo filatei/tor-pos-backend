@@ -7,7 +7,6 @@ const orderSchema = mongoose.Schema({
     userId: String,
     creator: {type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true},
     updater: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
-
     tellerId: String,
     payMethod: {type: mongoose.Schema.Types.ObjectId, ref: 'Paymethod', required: true},
     site: String,

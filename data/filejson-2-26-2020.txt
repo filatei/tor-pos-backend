@@ -1,33 +1,6 @@
 {
   cartItems: [
     {
-      prodId: '5e42aaf71e2807574d4bf2c5',
-      name: '50cl Crate',
-      price: 556,
-      qty: 55,
-      amount: 30580
-    }
-  ],
-  _id: 5e539c94da65b47bb629628f,
-  payMethod: 5e418d921c2bfe2f15f86a5f,
-  customer: 5e41ca171c2bfe2f15f86a70,
-  tellerId: 'u67543',
-  createdAt: 1582537876545,
-  updatedAt: 1582537876545,
-  site: 'Okutukutu',
-  amount: 30580,
-  amountPaid: 30580,
-  taxAmount: 0,
-  amountAfterTax: 30580,
-  status: 'Paid',
-  orderRef: 'Order - 1582537876545',
-  taxRate: 0,
-  creator: 5e539b14593ec97ab6f605cc,
-  updateLog: [],
-  __v: 0
-},{
-  cartItems: [
-    {
       prodId: '5e42ab2f1e2807574d4bf2c6',
       name: '19L Dispenser Refill',
       price: 400,
@@ -50,81 +23,6 @@
   orderRef: 'Order - 1582538211269',
   taxRate: 0,
   creator: 5e539b14593ec97ab6f605cc,
-  updateLog: [],
-  __v: 0
-},{
-  cartItems: [
-    {
-      prodId: '5e42aaf71e2807574d4bf2c5',
-      name: '50cl Crate',
-      price: 556,
-      qty: 50,
-      amount: 27800
-    }
-  ],
-  _id: 5e54f29628791106d08916ef,
-  payMethod: 5e418d921c2bfe2f15f86a5f,
-  customer: 5e41cb681c2bfe2f15f86a71,
-  tellerId: 'u123',
-  createdAt: 1582625430123,
-  updatedAt: 1582625430123,
-  site: 'Okutukutu',
-  amount: 27800,
-  amountPaid: 27800,
-  taxAmount: 0,
-  amountAfterTax: 27800,
-  status: 'Paid',
-  orderRef: 'Order - 1582625430123',
-  taxRate: 0,
-  creator: 5e4f06c6738bb80f15ef6171,
-  updateLog: [],
-  __v: 0
-},{
-  cartItems: [
-    {
-      prodId: '5e42aaf71e2807574d4bf2c5',
-      name: '50cl Crate',
-      price: 556,
-      qty: 500,
-      amount: 278000
-    },
-    {
-      prodId: '5e4b95b3186081cb5aa9e839',
-      name: '50cl Pure Water',
-      price: 61,
-      qty: 500,
-      amount: 30500
-    },
-    {
-      prodId: '5e528ebb3d439101bbd67048',
-      name: '19L Fido Dispenser Replace2',
-      price: 1950,
-      qty: 400,
-      amount: 780000
-    },
-    {
-      prodId: '5e524af189eaa63531aeb3c6',
-      name: 'FIdo Recycles',
-      price: 500,
-      qty: 20,
-      amount: 10000
-    }
-  ],
-  _id: 5e55046df0f18508fe69e866,
-  payMethod: 5e418d9c1c2bfe2f15f86a60,
-  customer: 5e411647865c751fd4307d49,
-  tellerId: 'fcmb2341',
-  createdAt: 1582629997071,
-  updatedAt: 1582629997071,
-  site: 'Okutukutu',
-  amount: 1098500,
-  amountPaid: 1098500,
-  taxAmount: 0,
-  amountAfterTax: 1098500,
-  status: 'Paid',
-  orderRef: 'Order - 1582629997071',
-  taxRate: 0,
-  creator: 5e4f06c6738bb80f15ef6171,
   updateLog: [],
   __v: 0
 }

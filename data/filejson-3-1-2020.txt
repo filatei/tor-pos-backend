@@ -1,0 +1,64 @@
+{
+  cartItems: [
+    {
+      prodId: '5e42ab2f1e2807574d4bf2c6',
+      name: '19L Dispenser Refill',
+      price: 400,
+      qty: 500,
+      amount: 200000
+    },
+    {
+      prodId: '5e4b95b3186081cb5aa9e839',
+      name: '50cl Pure Water',
+      price: 70,
+      qty: 1000,
+      amount: 70000
+    }
+  ],
+  _id: 5e5b7b4c527b78f8cadaf880,
+  payMethod: 5e418d921c2bfe2f15f86a5f,
+  customer: 5e4116ea865c751fd4307d4a,
+  tellerId: 'u12345',
+  createdAt: 1583053644712,
+  updatedAt: 1583053644712,
+  site: 'Okutukutu',
+  amount: 270000,
+  amountPaid: 270000,
+  taxAmount: 0,
+  amountAfterTax: 270000,
+  status: 'Paid',
+  orderRef: 'Order - 1583053644712',
+  taxRate: 0,
+  creator: 5e4f06c6738bb80f15ef6171,
+  updateLog: [],
+  __v: 0
+},{
+  cartItems: [
+    {
+      prodId: '5e42ab2f1e2807574d4bf2c6',
+      name: '19L Dispenser Refill',
+      price: 400,
+      qty: 600,
+      amount: 240000
+    }
+  ],
+  _id: 5e5b904a5d1fb7fd945bf196,
+  payMethod: 5e418d9c1c2bfe2f15f86a60,
+  bankName: 'POS-FCMB',
+  customer: 5e41cb681c2bfe2f15f86a71,
+  customerName: 'Sarah Tiewei',
+  tellerId: 'f565',
+  createdAt: 1583059017961,
+  updatedAt: 1583059017961,
+  site: 'Okutukutu',
+  amount: 240000,
+  amountPaid: 240000,
+  taxAmount: 0,
+  amountAfterTax: 240000,
+  status: 'Paid',
+  orderRef: 'Order - 1583059017961',
+  taxRate: 0,
+  creator: 5e4f06c6738bb80f15ef6171,
+  updateLog: [],
+  __v: 0
+}

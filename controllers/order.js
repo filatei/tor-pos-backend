@@ -14,6 +14,7 @@ function json2csv(fetchedOrders) {
 
 exports.createOrder =  (req, res, next) => {
     let orderObj = req.body;
+    console.log('orderObj ',req)
     // userData was added to checkAuth middleware and passed along
     orderObj.creator = req.userData.userId; 
     const order = new Order(orderObj);

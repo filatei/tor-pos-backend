@@ -1,0 +1,4 @@
+"orderRef","status","payMethod","customer","createdAt","amount","amountPaid","site","cartItems"
+"Order - 1583059017961","Paid","5e418d9c1c2bfe2f15f86a60","5e41cb681c2bfe2f15f86a71",1583059017961,240000,240000,"Okutukutu","[{""prodId"":""5e42ab2f1e2807574d4bf2c6"",""name"":""19L Dispenser Refill"",""price"":400,""qty"":600,""amount"":240000}]"
+"Order - 1583165706942","Paid","5e418d921c2bfe2f15f86a5f","5e41cb681c2bfe2f15f86a71",1583165706942,20000,20000,"Okutukutu","[{""prodId"":""5e42ab2f1e2807574d4bf2c6"",""name"":""19L Dispenser Refill"",""price"":400,""qty"":50,""amount"":20000}]"
+"Order - 1583168141270","Paid","5e418d921c2bfe2f15f86a5f","5e41cb681c2bfe2f15f86a71",1583168141270,20000,20000,"Okutukutu","[{""prodId"":""5e42ab2f1e2807574d4bf2c6"",""name"":""19L Dispenser Refill"",""price"":400,""qty"":50,""amount"":20000}]"

@@ -83,3 +83,16 @@ exports.updateUser = (req, res, next) => {
         });
       });
   }
+
+  exports.getUser = (req, res, next) => {
+     
+        //verify the JWT token generated for the user
+        console.log(req.userData)
+
+        res.json({
+            email: req.userData.email,
+            userid: req.userData.userId
+        });
+        
+   
+  }

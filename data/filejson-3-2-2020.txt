@@ -1,0 +1,88 @@
+{
+  cartItems: [
+    {
+      prodId: '5e42ab2f1e2807574d4bf2c6',
+      name: '19L Dispenser Refill',
+      price: 400,
+      qty: 600,
+      amount: 240000
+    }
+  ],
+  _id: 5e5b904a5d1fb7fd945bf196,
+  payMethod: 5e418d9c1c2bfe2f15f86a60,
+  bankName: 'POS-FCMB',
+  customer: 5e41cb681c2bfe2f15f86a71,
+  customerName: 'Sarah Tiewei',
+  tellerId: 'f565',
+  createdAt: 1583059017961,
+  updatedAt: 1583059017961,
+  site: 'Okutukutu',
+  amount: 240000,
+  amountPaid: 240000,
+  taxAmount: 0,
+  amountAfterTax: 240000,
+  status: 'Paid',
+  orderRef: 'Order - 1583059017961',
+  taxRate: 0,
+  creator: 5e4f06c6738bb80f15ef6171,
+  updateLog: [],
+  __v: 0
+},{
+  cartItems: [
+    {
+      prodId: '5e42ab2f1e2807574d4bf2c6',
+      name: '19L Dispenser Refill',
+      price: 400,
+      qty: 50,
+      amount: 20000
+    }
+  ],
+  _id: 5e5d310bd03c556021e5a477,
+  payMethod: 5e418d921c2bfe2f15f86a5f,
+  bankName: 'POS-UBA',
+  customer: 5e41cb681c2bfe2f15f86a71,
+  customerName: 'Sarah Tiewei',
+  tellerId: 'u233',
+  createdAt: 1583165706942,
+  updatedAt: 1583165706942,
+  site: 'Okutukutu',
+  amount: 20000,
+  amountPaid: 20000,
+  taxAmount: 0,
+  amountAfterTax: 20000,
+  status: 'Paid',
+  orderRef: 'Order - 1583165706942',
+  taxRate: 0,
+  creator: 5e4f06c6738bb80f15ef6171,
+  updateLog: [],
+  __v: 0
+},{
+  cartItems: [
+    {
+      prodId: '5e42ab2f1e2807574d4bf2c6',
+      name: '19L Dispenser Refill',
+      price: 400,
+      qty: 50,
+      amount: 20000
+    }
+  ],
+  _id: 5e5d3a8d15a3bc6da89ac80a,
+  payMethod: 5e418d921c2bfe2f15f86a5f,
+  bankName: 'POS-UBA',
+  customer: 5e41cb681c2bfe2f15f86a71,
+  customerName: 'Sarah Tiewei',
+  tellerId: 'u2233',
+  createdAt: 1583168141270,
+  updatedAt: 1583168141270,
+  site: 'Okutukutu',
+  amount: 20000,
+  amountPaid: 20000,
+  taxAmount: 0,
+  amountAfterTax: 20000,
+  status: 'Paid',
+  orderRef: 'Order - 1583168141270',
+  taxRate: 0,
+  creator: 5e4f06c6738bb80f15ef6171,
+  updateLog: [],
+  __v: 0
+}

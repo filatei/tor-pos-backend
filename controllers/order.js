@@ -14,11 +14,11 @@ function json2csv(fetchedOrders) {
 
 exports.createOrder =  (req, res, next) => {
     let orderObj = req.body;
-    console.log('orderObj ',req)
+   // zawsw console.log('orderObj ',req)
     // userData was added to checkAuth middleware and passed along
     orderObj.creator = req.userData.userId; 
     const order = new Order(orderObj);
-      console.log('order ', order);
+     //  console.log('order ', order);
       order.save()
       .then(result => {
         res.status(201).json({

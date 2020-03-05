@@ -1,0 +1,31 @@
+{
+  cartItems: [
+    {
+      prodId: '5e42ab2f1e2807574d4bf2c6',
+      name: '19L Dispenser Refill',
+      price: 400,
+      qty: 50,
+      amount: 20000
+    }
+  ],
+  _id: 5e600215f1868381ef86318a,
+  userId: '5e4f06c6738bb80f15ef6171',
+  payMethod: 5e418d921c2bfe2f15f86a5f,
+  bankName: 'POS-UBA',
+  customer: 5e41cb681c2bfe2f15f86a71,
+  customerName: 'Sarah Tiewei',
+  tellerId: 'u2334',
+  createdAt: 1583350293231,
+  updatedAt: 1583350293231,
+  site: 'Okutukutu',
+  amount: 20000,
+  amountPaid: 20000,
+  taxAmount: 0,
+  amountAfterTax: 20000,
+  status: 'Paid',
+  orderRef: 'Order - 1583350293231',
+  taxRate: 0,
+  creator: 5e4f06c6738bb80f15ef6171,
+  updateLog: [],
+  __v: 0
+}

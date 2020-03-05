@@ -15,6 +15,7 @@ const ordersRoutes = require("./routes/orders");
 const userRoutes = require("./routes/user");
 const fileRoutes = require("./routes/file");
 const printRoutes = require("./routes/print");
+const receiptRoutes = require("./routes/receipts");
 
 //let connectStr =  'mongodb://localhost:27017/torposdb';
 let connectStr = process.env.CONNECT_STR
@@ -56,8 +57,6 @@ app.use((req,res,next) => {
     next();
 })
 
-
-
 //user1 - RwyT4Eyw799tQUKF  admin1  - LvJMVIuk3ShxJyt4
 
 app.use("/api/paymethods", paymethodsRoutes);
@@ -67,6 +66,7 @@ app.use("/api/orders", ordersRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/files", fileRoutes);
 app.use("/api/prints", printRoutes);
+app.use("/api/receipts", receiptRoutes);
 // app.use((req, res, next) => {
 //     res.sendFile(path.join(__dirname, 'www', 'index.html'));
 // })

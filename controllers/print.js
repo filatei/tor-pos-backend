@@ -16,8 +16,8 @@ exports.print = (req, res) => {
    // file = path.join(__dirname, '..', 'data', file);
    // const orderId = req.query.orderid;
     try {
-       const device  = new escpos.USB()
-       console.log(device.findPrinter())
+       device  = new escpos.USB()
+       //console.log(device.findPrinter())
         // device  = new escpos.Network('192.168.1.4', 631);
     } catch {
         console.error('cant initialise device')
@@ -28,6 +28,8 @@ exports.print = (req, res) => {
    const customerName = receipt.header.customerName;
    const myDate = receipt.header.createDate;
    let cartItems = receipt.mid.cartItems;
+   const orderRef = receipt.header.orderRef.split(' - ')[1]
+   console.log('userid: ' + receipt.header.userId);
    let userName
    User.findById(receipt.header.userId).then( (user) => {
        console.log(receipt.header.userId)
@@ -80,8 +82,6 @@ exports.print = (req, res) => {
         .drawLine()
         .align('lt')
         .text('Customer: ' + customerName) // receipt.customer-name
-        const orderRef = receipt.header.orderRef.split(' - ')[1]
-        printer
         .text('Order Reference#: ' + orderRef)
         .text('Pay Method: ' + receipt.header.bankName)
         .text('Teller Id: ' + receipt.header.tellerId)
@@ -119,13 +119,14 @@ exports.print = (req, res) => {
         .text('Served By: ' + userName)
         
         .align('lt')
-        // .qrimage('https://fidowater.ng', function(err){
-        //   this.cut();
-        //   this.close();
-        // })
-        .newLine()
-        .cut()
-        .close()
+        .qrimage('https://fidowater.ng', function(err){
+            this.newLine()
+            this.cut();
+            this.close();
+        })
+        // .newLine()
+        // .cut()
+        // .close()
       });
       res.json({'message': 'Receipt Printed'})  
    }

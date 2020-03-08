@@ -4,7 +4,7 @@ const printController = require('../controllers/print');
 
 const checkAuth = require('../middleware/check-auth');
 
-router.post('', printController.print)
+router.post('', checkAuth, printController.print)
 
 module.exports = router;
 

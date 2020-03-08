@@ -29,20 +29,21 @@ exports.print = (req, res) => {
    const myDate = receipt.header.createDate;
    let cartItems = receipt.mid.cartItems;
    const orderRef = receipt.header.orderRef.split(' - ')[1]
-   console.log('userid: ' + receipt.header.userId);
-   let userName
-   User.findById(receipt.header.userId).then( (user) => {
-       console.log(receipt.header.userId)
-       console.log(user)
+    // console.log('userid: ' + receipt.header.userId);
+    let userName = req.userData.name;
+    printReceipt(receipt);
+//    User.findById(receipt.header.userId).then( (user) => {
+//        console.log(receipt.header.userId)
+//        console.log(user)
 
-        if (user) {
-            userName = user.name;
-            printReceipt(receipt);
-        } else {
-            console.log('print: not valid user')
-            return;
-        }
-   })
+//         if (user) {
+//             userName = user.name;
+//             printReceipt(receipt);
+//         } else {
+//             console.log('print: not valid user')
+//             return;
+//         }
+//    })
   // console.log('receipt ', receipt);
     
    function printReceipt(data) {

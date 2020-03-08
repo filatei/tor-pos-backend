@@ -12,6 +12,7 @@ exports.userLogin = (req, res, next) => {
             });
           }
           fetchedUser = user;
+          console.log('fetcheduser ', fetchedUser)
       return bcrypt.compare(req.body.password, user.password);
     })
     .then(result => {
@@ -21,7 +22,7 @@ exports.userLogin = (req, res, next) => {
           });
         }
         const token = jwt.sign(
-            { email: fetchedUser.email, userId: fetchedUser._id },
+            { email: fetchedUser.email, userId: fetchedUser._id, name: fetchedUser.name },
             process.env.ACCESS_TOKEN_SECRET,
             {expiresIn:'10h'}
         );
@@ -32,9 +33,10 @@ exports.userLogin = (req, res, next) => {
         });
     })
     .catch(err => {
-        return res.status(401).json({
-          message: "Invalid authentication credentials!"
-        });
+      throw err
+        // return res.status(401).json({
+        //   message: "Invalid authentication credentials!"
+        // });
     });
 }
 

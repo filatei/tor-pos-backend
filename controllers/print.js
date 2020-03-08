@@ -31,6 +31,7 @@ exports.print = (req, res) => {
    const orderRef = receipt.header.orderRef.split(' - ')[1]
     // console.log('userid: ' + receipt.header.userId);
     let userName = req.userData.name;
+    console.log('username in print ', userName)
     printReceipt(receipt);
 //    User.findById(receipt.header.userId).then( (user) => {
 //        console.log(receipt.header.userId)

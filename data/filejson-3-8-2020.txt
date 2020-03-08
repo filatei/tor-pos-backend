@@ -928,4 +928,244 @@
   creator: 5e4f06c6738bb80f15ef6171,
   updateLog: [],
   __v: 0
+},{
+  cartItems: [
+    {
+      prodId: '5e42abd31e2807574d4bf2c7',
+      name: '19L Fido Dispenser Replace',
+      price: 1951,
+      qty: 560,
+      amount: 1092560
+    }
+  ],
+  _id: 5e64c59a8ea670036f13ba22,
+  userId: '5e4f06c6738bb80f15ef6171',
+  payMethod: 5e418d921c2bfe2f15f86a5f,
+  bankName: 'POS-UBA',
+  customer: 5e41cca13949b0367a05de10,
+  customerName: 'Solomon Ebiowei',
+  tellerId: 'u677',
+  createdAt: 1583662490353,
+  updatedAt: 1583662490353,
+  site: 'Okutukutu',
+  amount: 1092560,
+  amountPaid: 1092560,
+  taxAmount: 0,
+  amountAfterTax: 1092560,
+  status: 'Paid',
+  orderRef: 'Order - 1583662490353',
+  taxRate: 0,
+  creator: 5e4f06c6738bb80f15ef6171,
+  updateLog: [],
+  __v: 0
+},{
+  cartItems: [
+    {
+      prodId: '5e42abd31e2807574d4bf2c7',
+      name: '19L Fido Dispenser Replace',
+      price: 1951,
+      qty: 50,
+      amount: 97550
+    }
+  ],
+  _id: 5e64c5fa8ea670036f13ba23,
+  userId: '5e4f06c6738bb80f15ef6171',
+  payMethod: 5e418d921c2bfe2f15f86a5f,
+  bankName: 'POS-UBA',
+  customer: 5e41cca13949b0367a05de10,
+  customerName: 'Solomon Ebiowei',
+  tellerId: 'u443',
+  createdAt: 1583662586250,
+  updatedAt: 1583662586250,
+  site: 'Okutukutu',
+  amount: 97550,
+  amountPaid: 97550,
+  taxAmount: 0,
+  amountAfterTax: 97550,
+  status: 'Paid',
+  orderRef: 'Order - 1583662586250',
+  taxRate: 0,
+  creator: 5e4f06c6738bb80f15ef6171,
+  updateLog: [],
+  __v: 0
+},{
+  cartItems: [
+    {
+      prodId: '5e42abd31e2807574d4bf2c7',
+      name: '19L Fido Dispenser Replace',
+      price: 1951,
+      qty: 55,
+      amount: 107305
+    }
+  ],
+  _id: 5e64c6a7818fd2418953d001,
+  userId: '5e4f06c6738bb80f15ef6171',
+  payMethod: 5e418d921c2bfe2f15f86a5f,
+  bankName: 'POS-UBA',
+  customer: 5e41cca13949b0367a05de10,
+  customerName: 'Solomon Ebiowei',
+  tellerId: 'y43545',
+  createdAt: 1583662759513,
+  updatedAt: 1583662759513,
+  site: 'Okutukutu',
+  amount: 107305,
+  amountPaid: 107305,
+  taxAmount: 0,
+  amountAfterTax: 107305,
+  status: 'Paid',
+  orderRef: 'Order - 1583662759513',
+  taxRate: 0,
+  creator: 5e4f06c6738bb80f15ef6171,
+  updateLog: [],
+  __v: 0
+},{
+  cartItems: [
+    {
+      prodId: '5e42abd31e2807574d4bf2c7',
+      name: '19L Fido Dispenser Replace',
+      price: 1951,
+      qty: 500,
+      amount: 975500
+    }
+  ],
+  _id: 5e64c862171c4341b108ff25,
+  userId: '5e4f06c6738bb80f15ef6171',
+  payMethod: 5e418d9c1c2bfe2f15f86a60,
+  bankName: 'POS-FCMB',
+  customer: 5e41cca13949b0367a05de10,
+  customerName: 'Solomon Ebiowei',
+  tellerId: 'f333',
+  createdAt: 1583663202015,
+  updatedAt: 1583663202015,
+  site: 'Okutukutu',
+  amount: 975500,
+  amountPaid: 975500,
+  taxAmount: 0,
+  amountAfterTax: 975500,
+  status: 'Paid',
+  orderRef: 'Order - 1583663202015',
+  taxRate: 0,
+  creator: 5e4f06c6738bb80f15ef6171,
+  updateLog: [],
+  __v: 0
+},{
+  cartItems: [
+    {
+      prodId: '5e42abd31e2807574d4bf2c7',
+      name: '19L Fido Dispenser Replace',
+      price: 1951,
+      qty: 5,
+      amount: 9755
+    }
+  ],
+  _id: 5e64c948171c4341b108ff26,
+  userId: '5e4f06c6738bb80f15ef6171',
+  payMethod: 5e418d9c1c2bfe2f15f86a60,
+  bankName: 'POS-FCMB',
+  customer: 5e41cca13949b0367a05de10,
+  customerName: 'Solomon Ebiowei',
+  tellerId: 'ff',
+  createdAt: 1583663432718,
+  updatedAt: 1583663432718,
+  site: 'Okutukutu',
+  amount: 9755,
+  amountPaid: 9755,
+  taxAmount: 0,
+  amountAfterTax: 9755,
+  status: 'Paid',
+  orderRef: 'Order - 1583663432718',
+  taxRate: 0,
+  creator: 5e4f06c6738bb80f15ef6171,
+  updateLog: [],
+  __v: 0
+},{
+  cartItems: [
+    {
+      prodId: '5e42abd31e2807574d4bf2c7',
+      name: '19L Fido Dispenser Replace',
+      price: 1951,
+      qty: 554,
+      amount: 1080854
+    }
+  ],
+  _id: 5e64c99d171c4341b108ff27,
+  userId: '5e4f06c6738bb80f15ef6171',
+  payMethod: 5e418d9c1c2bfe2f15f86a60,
+  bankName: 'POS-FCMB',
+  customer: 5e41cca13949b0367a05de10,
+  customerName: 'Solomon Ebiowei',
+  tellerId: 'f444',
+  createdAt: 1583663517270,
+  updatedAt: 1583663517270,
+  site: 'Okutukutu',
+  amount: 1080854,
+  amountPaid: 1080854,
+  taxAmount: 0,
+  amountAfterTax: 1080854,
+  status: 'Paid',
+  orderRef: 'Order - 1583663517270',
+  taxRate: 0,
+  creator: 5e4f06c6738bb80f15ef6171,
+  updateLog: [],
+  __v: 0
+},{
+  cartItems: [
+    {
+      prodId: '5e42abd31e2807574d4bf2c7',
+      name: '19L Fido Dispenser Replace',
+      price: 1951,
+      qty: 78,
+      amount: 152178
+    }
+  ],
+  _id: 5e64ce96171c4341b108ff28,
+  userId: '5e4f06c6738bb80f15ef6171',
+  payMethod: 5e418d921c2bfe2f15f86a5f,
+  bankName: 'POS-UBA',
+  customer: 5e4116ea865c751fd4307d4a,
+  customerName: 'Stanley Emina',
+  tellerId: 'u67676',
+  createdAt: 1583664790240,
+  updatedAt: 1583664790240,
+  site: 'Okutukutu',
+  amount: 152178,
+  amountPaid: 152178,
+  taxAmount: 0,
+  amountAfterTax: 152178,
+  status: 'Paid',
+  orderRef: 'Order - 1583664790240',
+  taxRate: 0,
+  creator: 5e4f06c6738bb80f15ef6171,
+  updateLog: [],
+  __v: 0
+},{
+  cartItems: [
+    {
+      prodId: '5e42abd31e2807574d4bf2c7',
+      name: '19L Fido Dispenser Replace',
+      price: 1951,
+      qty: 50,
+      amount: 97550
+    }
+  ],
+  _id: 5e652e2b171c4341b108ff29,
+  userId: '5e4f06c6738bb80f15ef6171',
+  payMethod: 5e418d9c1c2bfe2f15f86a60,
+  bankName: 'POS-FCMB',
+  customer: 5e41cca13949b0367a05de10,
+  customerName: 'Solomon Ebiowei',
+  tellerId: 'f345',
+  createdAt: 1583689259317,
+  updatedAt: 1583689259317,
+  site: 'Okutukutu',
+  amount: 97550,
+  amountPaid: 97550,
+  taxAmount: 0,
+  amountAfterTax: 97550,
+  status: 'Paid',
+  orderRef: 'Order - 1583689259317',
+  taxRate: 0,
+  creator: 5e4f06c6738bb80f15ef6171,
+  updateLog: [],
+  __v: 0
 }

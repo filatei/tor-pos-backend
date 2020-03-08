@@ -1,5 +1,5 @@
 const User = require("../models/user");
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 exports.userLogin = (req, res, next) => {
@@ -89,7 +89,7 @@ exports.updateUser = (req, res, next) => {
   exports.getUser = (req, res, next) => {
      
         //verify the JWT token generated for the user
-        console.log(req.userData)
+       // console.log(req.userData)
 
         res.json({
             email: req.userData.email,

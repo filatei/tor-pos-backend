@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 uniqueValidator = require('mongoose-unique-validator');
 
 const receiptSchema = mongoose.Schema({
+    orderId: {type: mongoose.Schema.Types.ObjectId, ref: 'Order', required: true},
     header: {
         company: String,
         address: {

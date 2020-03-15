@@ -109,16 +109,18 @@ exports.createOrder =  (req, res, next) => {
   exports.deleteOrder = (req, res, next) => {
    // console.log('params ', req.params)
     Order.deleteOne({ _id: req.params.id }).then(result => {
-        if (result.n > 0){
-        res.status(200).json({ message: "Order deleted!" });
-        }
-        else {
-        res.status(401).json({ message: "Not Authorised!" });
-        }
+      console.error('order delete ', result)
+      if (result.n == 1 && result.deletedCount == 1){
+        console.log(' order deleted :', result.deletedCount)
+       return res.status(200).json({ message: "Order deleted!" });
+      }
+      else {
+       return res.status(401).json({ message: "Not Authorised!" });
+      }
     })
     .catch(error => {
-        res.status(500).json({
-        message: "Deleting order failed!"
+        return res.status(500).json({
+        message: "Deleting order failed! - " + error
         });
     });
 }

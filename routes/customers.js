@@ -32,6 +32,8 @@ router.get('',(req, res, next) => {
 
 router.post("", checkAuth, (req, res, next) => {
   let cust = req.body;
+  cust.barcode = req.body.name;
+  
   cust.creator = req.userData.userId; 
 
   const customer = new Customer(cust);

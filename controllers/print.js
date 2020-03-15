@@ -5,7 +5,6 @@ var fs = require('fs');
 // const Order = require('../models/order');
 // const Customer = require('../models/customer');
 const User = require('../models/user')
-
 const escpos = require('escpos');
 escpos.USB = require('escpos-usb');
 
@@ -21,8 +20,8 @@ exports.print = (req, res) => {
         // device  = new escpos.Network('192.168.1.4', 631);
     } catch {
         console.error('cant initialise device')
-        res.status(500).json({message: 'cant find printer'});
-        return;
+        return res.status(500).json({message: 'cant find printer'});
+        
     }
    const receipt = req.body
    const customerName = receipt.header.customerName;
@@ -31,7 +30,7 @@ exports.print = (req, res) => {
    const orderRef = receipt.header.orderRef.split(' - ')[1]
     // console.log('userid: ' + receipt.header.userId);
     let userName = req.userData.name;
-    console.log('username in print ', userName)
+    // console.log('username in print ', userName)
     printReceipt(receipt);
 //    User.findById(receipt.header.userId).then( (user) => {
 //        console.log(receipt.header.userId)
@@ -67,7 +66,6 @@ exports.print = (req, res) => {
         if (error) {
             throw error
         }
-       
         printer
         .font('a')
         .align('ct')
@@ -98,7 +96,6 @@ exports.print = (req, res) => {
         { text:'Price', align:"RIGHT", width:0.15},
         { text:'Amount', align:"RIGHT", width:0.15 } 
         ])
-
         cartItems.forEach( item => {
             printer.tableCustom([ //receipt.cart-items
                 { text:item.name, align:"LEFT", width:0.55 },
@@ -119,7 +116,6 @@ exports.print = (req, res) => {
         .align('ct')
         .text(receipt.footer) // thank you message
         .text('Served By: ' + userName)
-        
         .align('lt')
         .qrimage('https://fidowater.ng', function(err){
             this.newLine()
@@ -132,5 +128,4 @@ exports.print = (req, res) => {
       });
       res.json({'message': 'Receipt Printed'})  
    }
- 
 }

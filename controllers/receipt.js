@@ -1,16 +1,32 @@
 const Receipt = require("../models/receipt");
+const Order = require("../models/order");
+const mongoose = require('mongoose')
+
 const path = require('path')
 // const { Parser } = require('json2csv');
 var fs = require('fs');
 
-
 exports.createReceipt =  (req, res, next) => {
     let receiptObj = req.body;
-   // zawsw console.log('orderObj ',req)
-    // userData was added to checkAuth middleware and passed along
-    receiptObj.creator = req.userData.userId; 
-    const receipt = new Receipt(receiptObj);
-      console.log('receipt ', receipt);
+    receiptObj.creator = req.userData.userId; // userData was added to checkAuth middleware and passed along
+    let receipt = new Receipt(receiptObj);
+
+    // we query Order because we want to save the order._id in Receipt
+    Order.findOne({orderRef: receiptObj.header.orderRef})
+    .then ( (result) => {
+      receipt.orderId = result._id;
+      saveReceipt()
+    })
+    .catch(err => {
+      return res.status(500).json({
+        message: "getting order from eceipt failed! - " + err
+      });
+    })
+
+    // function save the receipt
+    // 'function saveReceipt() {' old method of declaring function
+
+    saveReceipt = () => {
       receipt.save()
       .then(result => {
         res.status(201).json({
@@ -22,64 +38,72 @@ exports.createReceipt =  (req, res, next) => {
         });
       })
       .catch(error => {
+        console.log(error)
         res.status(500).json({
-          message: "Creating a receipt failed!"
+          message: "saving a receipt failed! " + error
         });
       });
+    }
   }
 
   exports.getReceipts = (req, res, next) => {
-    const pageSize = +req.query.pagesize;
-    const dateBegin = req.query.datebegin;
-    const dateEnd = req.query.dateend;
-    const currentPage = +req.query.page;
-    const receiptQuery = Receipt.find();
-    let fetchedReceipts;
-    if (pageSize && currentPage) {
-      receiptQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
-    }
-    receiptQuery
-      .then(documents => {
-        fetchedReceipts = documents;
-        return Receipt.countDocuments();
-      })
-      .then(count => {
-        
-       
-        const filename2 = 'data/filejson-' + (new Date().toLocaleDateString()).replace(/\//g,'-') + '.txt';
-         
-        const makeRecursiveFileAsync = async (path, data) => {
-          try{
-            await fs.writeFile(path,data,(err)=> {
-              if (err) {  
-                throw err 
-              }
-            })
-          }
-          catch(err){
-            if (err){
-              throw err
-            } 
-          }
-        }
-        // makeRecursiveFileAsync(filename, csv);
-        makeRecursiveFileAsync(filename2, fetchedReceipts);
-          
-        res.status(200).json({
-          message: "receipts fetched successfully!",
-          receipts: fetchedReceipts,
-          filename: filename2,
-          maxReceipts: count
-        });
-      })
-      .catch(error => {
-        res.status(500).json({
-          message: "Fetching receipts failed!"
-        });
-      });
-   }
 
-   exports.getReceipt = (req, res, next) => {
+    // get receipt if orderid query parameter provided 
+    // eg http://localhost:3000/api/receipts?orderid=jhdfjf is defined
+    
+  //   if ( req.query  && req.query.orderid ) {  // check for a valid objectid
+  //     // check if req.query.orderid is a valid ObjectId
+  //     orderid = req.query.orderid;
+  //     console.log('order id', orderid)
+  //   //   Receipt.findOne({orderId: orderid})
+  //   //   .then (receipt => {
+  //   //     if (receipt) {
+  //   //       return res.status(200).json(receipt);
+  //   //     } else {
+  //   //       return res.status(404).json({ message: "receipt not found!" });
+  //   //     }
+  //   //   })
+  //   //   .catch(err => {
+  //   //     console.log(err);
+  //   //     return res.status(404).json({ message: "Probable non-existent orderid! - " + err });
+  //   //   } )
+  //   //   return 1;
+  //  }
+    // send all receipts if no req.query
+    
+      const pageSize = +req.query.pagesize;
+      const dateBegin = req.query.datebegin;
+      const dateEnd = req.query.dateend;
+      const currentPage = +req.query.page;
+      const receiptQuery = Receipt.find({orderId: req.query.orderid});
+      let fetchedReceipts;
+      if (pageSize && currentPage) {
+        receiptQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
+      }
+      receiptQuery
+        .then(documents => {
+          fetchedReceipts = documents;
+          return Receipt.countDocuments();
+        })
+        .then(count => {  
+          return res.status(200).json({
+            message: "receipts fetched successfully!",
+            receipts: fetchedReceipts,
+            maxReceipts: count
+          });
+        })
+        .catch(error => {
+          return res.status(500).json({
+            message: "Fetching receipts failed! - " + error
+          });
+        });
+    }
+    
+   
+
+  exports.getReceipt = (req, res, next) => {
+    
+    // use this if no req.query but req.params defined
     Receipt.findById(req.params.id).then(receipt => {
       if (receipt) {
         res.status(200).json(receipt);
@@ -97,6 +121,7 @@ exports.createReceipt =  (req, res, next) => {
   exports.deleteReceipt = (req, res, next) => {
    // console.log('params ', req.params)
     Receipt.deleteOne({ _id: req.params.id }).then(result => {
+      console.log('deletereceipt ', result)
         if (result.n > 0){
         res.status(200).json({ message: "Receipt deleted!" });
         }

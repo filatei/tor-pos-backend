@@ -33,11 +33,12 @@ router.get('',(req, res, next) => {
 router.post("", checkAuth, (req, res, next) => {
   let cust = req.body;
   cust.barcode = req.body.name;
-  
-  cust.creator = req.userData.userId; 
 
+  cust.creator = req.userData.userId; 
   const customer = new Customer(cust);
+  console.log(customer);
   customer.save().then ((result)=> {
+    console.log(result)
     res.status(201).json({
       message: "Customer added successfully",
       customer: {
@@ -48,26 +49,26 @@ router.post("", checkAuth, (req, res, next) => {
   })
   .catch(error => {
     res.status(500).json({
-      message: "creating customers failed!"
+      message: "creating customers failed! " + error
     });
   });
 });
 
 router.get("/:id", (req, res, next) => {
-    Customer.findById(req.params.id)
-    .then(customer => {
-      if (customer) {
-        res.status(200).json(customer);
-      } else {
-        res.status(404).json({ message: "customer not found!" });
-      }
-    })
-    .catch(error => {
-      res.status(500).json({
-        message: "Fetching customer failed!"
-      });
+  Customer.findById(req.params.id)
+  .then(customer => {
+    if (customer) {
+      res.status(200).json(customer);
+    } else {
+      res.status(404).json({ message: "customer not found!" });
+    }
+  })
+  .catch(error => {
+    res.status(500).json({
+      message: "Fetching customer failed!"
     });
   });
+});
   
 router.put("/:id", checkAuth, (req, res, next) => {
   console.log('params ', req.params)

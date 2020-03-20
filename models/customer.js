@@ -4,7 +4,7 @@ uniqueValidator = require('mongoose-unique-validator');
 const customerSchema = mongoose.Schema({
     name: {type: String, required: true},
     creator: {type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true},
-    phone: {type: String, unique: true},
+    phone: {type: String},
     email: {type: String},
     icon: {type: String},
     barcode: {type: String},
@@ -21,6 +21,6 @@ const customerSchema = mongoose.Schema({
 
 });
 
-customerSchema.plugin( uniqueValidator );
+// customerSchema.plugin( uniqueValidator );
 
 module.exports = mongoose.model('Customer', customerSchema)

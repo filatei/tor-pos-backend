@@ -43,6 +43,7 @@ router.post('', checkAuth, upload.single('icon'), function (req, res, next) {
     url = req.protocol + '://' + req.get('host')
     console.log(url)
     path = url + '/uploads/productimages/' + req.file.filename; 
+    // path = 'https://api.torama.ng' + '/uploads/productimages/' + req.file.filename;
   }
   
   console.log('path: ', path)
@@ -88,6 +89,7 @@ router.put("/:id", checkAuth, upload.single('icon'), (req, res, next) => {
     if (req.file && req.file.filename && req.file.filename.length > 0) {
       url = req.protocol + '://' + req.get('host')
       path = url + '/uploads/productimages/' + req.file.filename; 
+      // path = 'https://api.torama.ng' + '/uploads/productimages/' + req.file.filename;
       product.icon = path;
       Product.updateOne({ _id: req.params.id }, product)
       .then(result => {

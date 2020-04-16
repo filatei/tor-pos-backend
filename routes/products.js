@@ -3,7 +3,7 @@ const Product = require("../models/product");
 const router = express.Router();
 const path = require('path')
 const fs = require('fs')
-
+const os = require('os')
 var multer  = require('multer')
 const DIR = './uploads/productimages/';
 const storage = multer.diskStorage({
@@ -25,16 +25,15 @@ var upload = multer({
     fileSize: 1024 * 1024 * 5
   },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg") {
+    if (file.mimetype == "image/gif" || file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg") {
       cb(null, true);
     } else {
       cb(null, false);
-      return cb(new Error('Only .png, .jpg and .jpeg format allowed!'));
+      return cb(new Error('Only .gif, .png, .jpg and .jpeg format allowed!'));
     }
   }
 });
 
- 
 const checkAuth = require('../middleware/check-auth');
 
 router.post('', checkAuth, upload.single('icon'), function (req, res, next) {
@@ -42,6 +41,7 @@ router.post('', checkAuth, upload.single('icon'), function (req, res, next) {
   let url= ""
   if (req.file) { 
     url = req.protocol + '://' + req.get('host')
+    console.log(url)
     path = url + '/uploads/productimages/' + req.file.filename; 
   }
   
@@ -63,79 +63,64 @@ router.post('', checkAuth, upload.single('icon'), function (req, res, next) {
   })
   .catch(error => {
     res.status(500).json({
-      message: "Creating a product failed!"
+      message: "Creating a product failed! " + error
     });
   });
   
 })
 
-// router.post("", checkAuth,(req, res, next) => {
-//   // res.status(200).json({
-//   //   msg: 'file good',
-//   //   file: `uploads/${req.file.filename}`
-//   // })
-//   upload(req, res, (err) => {
-//     if(err) {
-//       return res.status(501).send({error: err})
-//     }
-//     if(req.file == undefined) {
-//       return res.status(501).json({msg: 'Error : no file'});
-//     } 
-//     console.log('req.file: ', req.file); 
-//     let prodObj = req.body;
-//     prodObj.creator = req.userData.userId;
-//     const product = new Product(prodObj);
-//     product.icon = `uploads/${req.file.filename}`;
 
-//     product.save()
-//     .then ((result)=> {
-//       res.status(201).json({
-//         message: 'Product added successfully',
-//         product: {...result,
-//           id: result._id
-//         }
-//     });
-//     })
-//     .catch(error => {
-//       res.status(500).json({
-//         message: "Creating a product failed!"
-//       });
-//     });
-//     // res.status(200).json({
-//     //   msg: 'file good',
-//     //   file: `uploads/${req.file.filename}`
-//     // })
-//   })
-
-  
-// });
 
 router.put("/:id", checkAuth, upload.single('icon'), (req, res, next) => {
     let path = ""
     let url= ""
-    if (req.file) { 
+    let prodObj = req.body;
+    const price = req.body.price;
+    const taxRate = req.body.taxRate;
+    const description = req.body.description;
+    const name = req.body.name;
+    const updatedAt = req.body.updatedAt;
+    const updater = req.userData.userId;
+    const id = req.params.id;
+    prodObj._id = id
+    prodObj.updater = updater
+    const product = new Product(prodObj);
+    if (req.file && req.file.filename && req.file.filename.length > 0) {
       url = req.protocol + '://' + req.get('host')
       path = url + '/uploads/productimages/' + req.file.filename; 
-    }
-    let prodObj = req.body;
-    prodObj._id = req.params.id;
-    prodObj.updater = req.userData.userId;
-    const product = new Product(prodObj);
-    product.icon = path;
-    
-    Product.updateOne({ _id: req.params.id }, product)
-    .then(result => {
-      if (result.n > 0) {
-        res.status(200).json({ message: "Update successful!" });
-      } else {
-        res.status(401).json({ message: "Not authorized!" });
-      }
-    })
-    .catch(error => {
-      res.status(500).json({
-        message: "Couldn't udpate product!"
+      product.icon = path;
+      Product.updateOne({ _id: req.params.id }, product)
+      .then(result => {
+        if (result.n > 0) {
+          res.status(200).json({ message: "Update successful!" });
+        } else {
+          res.status(401).json({ message: "Not authorized!" });
+        }
+      })
+      .catch(error => {
+        res.status(500).json({
+          message: "Couldn't udpate product! " + error
+        });
       });
-    });
+    } else {
+      Product.updateOne({ _id: req.params.id }, 
+        {name: name, price: price, description: description, taxRate: taxRate, updatedAt: updatedAt})
+      .then(result => {
+        if (result.n > 0) {
+          res.status(200).json({ message: "Update successful!" });
+        } else {
+          res.status(401).json({ message: "Not authorized!" });
+        }
+      })
+      .catch(error => {
+        res.status(500).json({
+          message: "Couldn't udpate product! " + error
+        });
+      });
+    }
+    
+    
+    
 });
 
 router.delete("/:id", checkAuth, (req, res, next) => {
@@ -145,7 +130,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
     filePath = 'uploads/' + product.icon.split('uploads')[1];
   })
   .catch(err => {
-    return res.status(401).json({ message: "product not found in db!" });
+    return res.status(401).json({ message: "product not found in db!" + err });
   })
   // console.log('params ', req.params)
   Product.deleteOne({ _id: req.params.id })
@@ -166,7 +151,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   .catch(error => {
     console.error(error)
     res.status(500).json({
-      message: "Deleting product failed!"
+      message: "Deleting product failed! " + error
     });
   });
 
@@ -194,7 +179,7 @@ router.get('',(req, res, next) => {
     })
    .catch(error => {
     res.status(500).json({
-      message: "Fetching products failed!"
+      message: "Fetching products failed! " + error
     });
   });
 });
@@ -209,7 +194,7 @@ router.get("/:id", (req, res, next) => {
       }
     }).catch(error => {
       res.status(500).json({
-        message: "Fetching product failed!"
+        message: "Fetching product failed! " + error
       });
     });
   });

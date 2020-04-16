@@ -33,10 +33,12 @@ exports.userLogin = (req, res, next) => {
         });
     })
     .catch(err => {
-      throw err
-        // return res.status(401).json({
-        //   message: "Invalid authentication credentials!"
-        // });
+      return res.status(500).json({
+        message: "invalid auth credentials! " + err
+      });
+      // return res.status(401).json({
+      //   message: "Invalid authentication credentials!"
+      // });
     });
 }
 
@@ -57,7 +59,7 @@ exports.createUser = (req, res, next) => {
         })
         .catch(err => {
             res.status(500).json({
-              message: "Invalid authentication credentials!"
+              message: "Invalid authentication credentials! " + err
             });
         });
     })
@@ -81,20 +83,18 @@ exports.updateUser = (req, res, next) => {
       })
       .catch(error => {
         res.status(500).json({
-          message: "Couldn't udpate user!"
+          message: "Couldn't udpate user! " + error
         });
       });
   }
 
   exports.getUser = (req, res, next) => {
-     
-        //verify the JWT token generated for the user
-       // console.log(req.userData)
-
-        res.json({
-            email: req.userData.email,
-            userid: req.userData.userId
-        });
+    //verify the JWT token generated for the user
+    // console.log(req.userData)
+    res.json({
+        email: req.userData.email,
+        userid: req.userData.userId
+    });
         
    
   }

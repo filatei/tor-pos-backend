@@ -16,11 +16,12 @@ exports.print = (req, res) => {
    // const orderId = req.query.orderid;
     try {
        device  = new escpos.USB()
+       console.log(device)
        //console.log(device.findPrinter())
         // device  = new escpos.Network('192.168.1.4', 631);
-    } catch {
-        console.error('cant initialise device')
-        return res.status(500).json({message: 'cant find printer'});
+    } catch(err) {
+        console.error(err.message)
+        return res.status(500).json({message: err.message});
         
     }
    const receipt = req.body
@@ -32,19 +33,6 @@ exports.print = (req, res) => {
     let userName = req.userData.name;
     // console.log('username in print ', userName)
     printReceipt(receipt);
-//    User.findById(receipt.header.userId).then( (user) => {
-//        console.log(receipt.header.userId)
-//        console.log(user)
-
-//         if (user) {
-//             userName = user.name;
-//             printReceipt(receipt);
-//         } else {
-//             console.log('print: not valid user')
-//             return;
-//         }
-//    })
-  // console.log('receipt ', receipt);
     
    function printReceipt(data) {
     // install escpos-usb adapter module manually
@@ -61,10 +49,12 @@ exports.print = (req, res) => {
 
     // const printer = new escpos.Printer(device, options);
     const printer = new escpos.Printer(device, options);
-    
+    console.log ('got here')
     device.open(function(error){
         if (error) {
-            throw error
+            return res.status(500).json({
+                message: "error opening print device! " + error
+              });
         }
         printer
         .font('a')

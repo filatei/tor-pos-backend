@@ -113,7 +113,7 @@ exports.createReceipt =  (req, res, next) => {
     })
     .catch(error => {
       res.status(500).json({
-        message: "Fetching receipt failed!"
+        message: "Fetching receipt failed!" + error
       });
     });
   }
@@ -131,7 +131,7 @@ exports.createReceipt =  (req, res, next) => {
     })
     .catch(error => {
         res.status(500).json({
-        message: "Deleting receipt failed!"
+        message: "Deleting receipt failed!" + error
         });
     });
 }
@@ -153,7 +153,7 @@ exports.updateReceipt =  (req, res, next) => {
       })
       .catch(error => {
         res.status(500).json({
-          message: "Couldn't udpate receipt!"
+          message: "Couldn't udpate receipt!" + error
         });
       });
   }

@@ -119,10 +119,7 @@ router.put("/:id", checkAuth, upload.single('icon'), (req, res, next) => {
           message: "Couldn't udpate product! " + error
         });
       });
-    }
-    
-    
-    
+    }   
 });
 
 router.delete("/:id", checkAuth, (req, res, next) => {
@@ -201,7 +198,4 @@ router.get("/:id", (req, res, next) => {
     });
   });
   
-
-
-
 module.exports = router;

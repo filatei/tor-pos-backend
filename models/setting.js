@@ -2,10 +2,14 @@ const mongoose = require('mongoose');
 const uniqueValidator = require('mongoose-unique-validator');
 
 const settingSchema = mongoose.Schema({
-    version: {type: String, required: true, unique: true, collation:{ locale: "en", strength: 3 }},
+    version: {type: String},
     buildDate: {type: Number},
+    printip: {type: String},
+    creator: {type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true},
+    updater: {type: mongoose.Schema.Types.ObjectId, ref: 'User'}
+
 });
 
-settingSchema.plugin( uniqueValidator );
+// settingSchema.plugin( uniqueValidator );
 
 module.exports = mongoose.model('Setting', settingSchema)

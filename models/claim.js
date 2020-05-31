@@ -19,7 +19,7 @@ const claimSchema = mongoose.Schema({
     trans_date_time: {type:  Date},
     reply_mail: {type:  Date},
     received_from_bank: {type:  Date},
-    avater: {type:  String},
+    avatar: {type:  String},
     expiry_date: {type:  Date},
     company: {type:  String},
     remarks: {type:  String},

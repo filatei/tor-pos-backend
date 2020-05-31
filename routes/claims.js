@@ -11,8 +11,11 @@ router.post("/import",  claimController.importClaim);
 router.get('', claimController.getClaims);
 router.get("/:id", claimController.getClaim);
   
-router.delete("/:id", checkAuth, claimController.deleteClaim);
+router.delete("/:id", claimController.deleteClaim);
+// router.delete("/:id", checkAuth, claimController.deleteClaim);
   
-router.put("/:id", checkAuth, claimController.updateClaim);
+router.put("/:id", claimController.updateClaim);
+
+// router.put("/:id", checkAuth, claimController.updateClaim);
 
 module.exports = router;

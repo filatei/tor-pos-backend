@@ -3,8 +3,6 @@ const path = require('path')
 const fs = require('fs');
 const readXlsxFile = require('read-excel-file/node');
  
-
-
 exports.importClaim =  (req, res, next) => {
   // console.log(req)
   let claimObj = req.body;
@@ -13,40 +11,39 @@ exports.importClaim =  (req, res, next) => {
     // console.log('userdata in claim ', req.userData)
    // claimObj.creator = req.userData.userId;
 
-    for (k=0; k< claimObj.length; k++) {
-      //  console.log(k)
+  for (k=0; k< claimObj.length; k++) {
+    //  console.log(k)
+    
+    el = claimObj[k];
+
+    try {
+      el.trans_date_time =  new Date((el.trans_date_time - (25567 + 2))*86400*1000); 
+      el.reply_mail =  new Date((el.reply_mail - (25567 + 2 ))*86400*1000); 
+      el.received_from_bank =  new Date((el.received_from_bank - (25567 + 2))*86400*1000); 
+    } catch (err) {
+      continue
+    }
+
+    let claim = new Claim(el);
+    // console.log(i, el)
+    claim.save()
+    .then(result => {
+    
       
-      el = claimObj[k];
-  
-      try {
-        el.trans_date_time =  new Date((el.trans_date_time - (25567 + 2))*86400*1000); 
-        el.reply_mail =  new Date((el.reply_mail - (25567 + 2 ))*86400*1000); 
-        el.received_from_bank =  new Date((el.received_from_bank - (25567 + 2))*86400*1000); 
-      } catch (err) {
-      // console.log (err + i)
-        continue
-      }
-  
-      let claim = new Claim(el);
-      // console.log(i, el)
-      claim.save()
-      .then(result => {
-      // console.log(i, result)
-        
-      })
-      .catch(error => {
-        console.error(error )
-        res.status(500).json({
-          message: "Creating an claim failed!" + error 
-        });
+    })
+    .catch(error => {
+      console.error(error )
+      res.status(500).json({
+        message: "Creating an claim failed!" + error 
       });
-      
-    };
-     
-    res.status(201).json({
-      message: " All Claim Imported successfully: " 
     });
- }
+    
+  };
+    
+  res.status(201).json({
+    message: " All Claim Imported successfully: " 
+  });
+}
 
 exports.createClaim =  (req, res, next) => {
 // console.log(req)
@@ -63,7 +60,7 @@ let claimObj = req.body;
   .then(result => {
     console.log(result)
     return res.status(201).json({
-      message: "  Claim Imported successfully: " 
+      message: "  Claim Imported successfully: " + result 
     });
     
   })
@@ -122,10 +119,10 @@ let claimObj = req.body;
   exports.deleteClaim = (req, res, next) => {
    // console.log('params ', req.params)
     Claim.deleteOne({ _id: req.params.id }).then(result => {
-      console.error('claim delete ', result)
+      console.error('claim deleted ', result)
       if (result.n == 1 && result.deletedCount == 1){
         console.log(' claim deleted :', result.deletedCount)
-       return res.status(200).json({ message: "Claim deleted!" });
+       return res.status(200).json({ message: "Claim deleted! " + result });
       }
       else {
        return res.status(401).json({ message: "Not Authorised!" });
@@ -142,10 +139,14 @@ exports.updateClaim =  (req, res, next) => {
   let claimObj = req.body;
   claimObj._id = req.params.id;
   // userData  was added to checkAuth middleware and passed along
-  claimObj.updater = req.userData.userId; 
+ // claimObj.updater = req.userData.userId; 
+  console.log(claimObj, 'for update')
+  // delete claimObj._id;
   const claim = new Claim(claimObj);
+  console.log(claim, 'for update')
   
-  Claim.updateOne({ _id: req.params.id, creator: req.userData.userId }, claim)
+  // Claim.updateOne({ _id: req.params.id, creator: req.userData.userId }, claim)
+  Claim.updateOne({ _id: req.params.id }, claim)
   .then(result => {
     if (result.n > 0) {
       res.status(200).json({ message: "Update successful!" });
@@ -154,37 +155,9 @@ exports.updateClaim =  (req, res, next) => {
     }
   })
   .catch(error => {
+    console.log(error)
     res.status(500).json({
-      message: "Couldn't udpate claim!"
+      message: "Couldn't udpate claim! " + error
     });
   });
 }
-
-  // exports.uploadClaim =  (req, res, next) => {
-  //   let claimObj = req.body;
-  //   const file = req.file
-  //   // File path.
-  //   readXlsxFile(file).then((rows) => {
-  //     // `rows` is an array of rows
-  //     // each row being an array of cells.
-  //   })
-  //   claimObj.creator = req.userData.userId; 
-  //   const claim = new Claim(claimObj);
-  //   // console.log('claim ', claim);
-  //     claim.save()
-  //     .then(result => {
-  //       res.status(201).json({
-  //         message: "Claim added successfully",
-  //         claim: {
-  //           ...result,
-  //           id: result._id
-  //         }
-  //       });
-  //     })
-  //     .catch(error => {
-  //       res.status(500).json({
-  //         message: "Creating an claim failed!"
-  //       });
-  //     });
-  // }
-

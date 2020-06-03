@@ -110,4 +110,43 @@ router.delete("/:id", (req, res, next) => {
   });
 });
 
+router.post("/import", (req, res, next) => {
+// exports.importClaim =  (req, res, next) => {
+  // console.log(req)
+  let customerObj = req.body;
+   // zawsw console.log('claimObj ',req)
+    // userData was added to checkAuth middleware and passed along
+    // console.log('userdata in claim ', req.userData)
+   // claimObj.creator = req.userData.userId;
+
+  for (k=0; k< customerObj.length; k++) {
+    //  console.log(k)
+    
+    el = customerObj[k];
+
+    
+
+    let customer = new Customer(el);
+    customer.barcode = customer._id + customer.name;
+    console.log(customer);
+
+    customer.save()
+    .then(result => {
+    
+      
+    })
+    .catch(error => {
+      console.error(error )
+      res.status(500).json({
+        message: "Creating an customer failed!" + error 
+      });
+    });
+    
+  };
+    
+  res.status(201).json({
+    message: " All customer Imported successfully: " 
+  });
+})
+
 module.exports = router;

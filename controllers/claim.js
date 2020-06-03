@@ -1,20 +1,19 @@
 const Claim = require("../models/claim");
+const Customer = require("../models/customer");
 const path = require('path')
 const fs = require('fs');
 const readXlsxFile = require('read-excel-file/node');
  
 exports.importClaim =  (req, res, next) => {
-  // console.log(req)
   let claimObj = req.body;
-   // zawsw console.log('claimObj ',req)
     // userData was added to checkAuth middleware and passed along
-    // console.log('userdata in claim ', req.userData)
-   // claimObj.creator = req.userData.userId;
+    // claimObj.creator = req.userData.userId;
 
   for (k=0; k< claimObj.length; k++) {
     //  console.log(k)
     
-    el = claimObj[k];
+    let el = claimObj[k];
+    let claim;
 
     try {
       el.trans_date_time =  new Date((el.trans_date_time - (25567 + 2))*86400*1000); 
@@ -24,22 +23,63 @@ exports.importClaim =  (req, res, next) => {
       continue
     }
 
-    let claim = new Claim(el);
-    // console.log(i, el)
-    claim.save()
-    .then(result => {
-    
-      
-    })
-    .catch(error => {
-      console.error(error )
-      res.status(500).json({
-        message: "Creating an claim failed!" + error 
-      });
-    });
+    let customerName = el.customer.trim()
+    Customer.findOne({name: new RegExp('^'+customerName+'$', "i")}, function(err, doc) {
+      if (err) {
+        console.err(err, 'err in customer find')
+        
+      } 
+      if (doc) {
+        console.log('customer exists - ' + doc);
+        el.customer = doc
+        claim = new Claim(el);
+        claim.save()
+        .then(result => {
+          res.status(201).json({
+            message: "Creating  claim succeeded!" + result
+          });
+        })
+        .catch(error => {
+          console.error(error )
+          res.status(500).json({
+            message: "Creating a claim failed!" + error 
+          });
+        });  
+       
+      } else {
+        // create customer
+        
+        let custObj = new Customer({name: el.customer})
+        el.customer = custObj; // we need to embed customer obj in claims doc
+        console.log(el, 'new custobj el')
+        custObj.save()
+        .then(res => {
+          console.log ('customer created ', res)
+          console.log(el, 'new custobj el 2')
+          claim = new Claim(el);
+          claim.save()
+          .then(result => {
+            res.status(201).json({
+              message: "Creating  claim succeeded!" + result
+            });
+          })
+          .catch(error => {
+            console.error(error )
+            res.status(500).json({
+              message: "Creating a claim failed!" + error 
+            });
+          });  
+        })
+        .catch(err => {
+          console.error ('error creating customer', err)
+          throw err
+        }) 
+      }
+
+    }); 
     
   };
-    
+        
   res.status(201).json({
     message: " All Claim Imported successfully: " 
   });
@@ -53,6 +93,7 @@ let claimObj = req.body;
   // claimObj.creator = req.userData.userId;
 
   console.log(claimObj)
+  claimObj.avatar = claimObj.stan + '.jpg';
   
   let claim = new Claim(claimObj);
   
@@ -60,7 +101,7 @@ let claimObj = req.body;
   .then(result => {
     console.log(result)
     return res.status(201).json({
-      message: "  Claim Imported successfully: " + result 
+      message: "  Claim added successfully: " + result 
     });
     
   })
@@ -86,11 +127,27 @@ let claimObj = req.body;
     }
     claimQuery
       .then(documents => {
+        // find one iphone adventures - iphone adventures??
+        // documents.map (doc => {
+        //   Customer.findOne({ _id: doc.customer }, function (err, cust) {
+        //     if (err) {}
+  
+        //     if (cust) {
+              
+        //       doc.customer = cust.name
+        //       console.log(doc)
+              
+        //     }  else {
+             
+        //     }
+        //   });
+        // })
+        // console.log (documents, 'documents')
+
         res.status(200).json({
           message: "claims fetched successfully!",
           claims: documents,
           total_count: documents.length
-          
         });
       })
       .catch(error => {
@@ -101,9 +158,10 @@ let claimObj = req.body;
    }
 
    exports.getClaim = (req, res, next) => {
-     console.log(req.params.id)
+    // console.log(req.params.id)
     Claim.findById(req.params.id).then(claim => {
       if (claim) {
+        console.log(claim)
         res.status(200).json(claim);
       } else {
         res.status(404).json({ message: "claim not found!" });

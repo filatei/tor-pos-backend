@@ -2,9 +2,21 @@ const mongoose = require('mongoose');
 const uniqueValidator = require('mongoose-unique-validator');
 
 const claimSchema = mongoose.Schema({
-    customer: {type: String,required: true },
-   //  creator: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
-   //  updater: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
+    customer: 
+    { 
+        name: {type:  String },
+        phone: {type:  String },
+        email: {type:  String },
+        icon:  {type:  String },
+        barcode: {type:  String },
+        biometric: {type:  String },
+        address: {
+            street: {type:  String },
+            city: {type:  String },
+            state: {type:  String },
+            zipcode: {type:  String }
+        }
+    },
 
     txn_amount: {type:  Number, required: true},
     trans_id: {type:  String },
@@ -12,6 +24,7 @@ const claimSchema = mongoose.Schema({
     acquirer: {type:  String, required: true},
     
     stan: {type:  String},
+    status: {type:  String},
     bank: {type:  String},
     card_number: {type:  String},
     action_taken: {type:  String},
@@ -27,7 +40,9 @@ const claimSchema = mongoose.Schema({
     card_bank: {type:  String},
     terminal_id: {type:  String},
     createdAt: {type: Date, Default: Date.now}
-    // createdAt: {type: Number},
+    //  creator: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
+    //  updater: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
+   
 },
 {
     timestamps: true

@@ -7,12 +7,12 @@ const readXlsxFile = require('read-excel-file/node');
 exports.importClaim =  (req, res, next) => {
   let claimObj = req.body;
     // userData was added to checkAuth middleware and passed along
-    // claimObj.creator = req.userData.userId;
+  let userid = req.userData.userId;
 
   for (k=0; k< claimObj.length; k++) {
     //  console.log(k)
-    
     let el = claimObj[k];
+    el.creator = userid;
     let claim;
 
     try {
@@ -86,11 +86,11 @@ exports.importClaim =  (req, res, next) => {
 }
 
 exports.createClaim =  (req, res, next) => {
-// console.log(req)
-let claimObj = req.body;
+  let claimObj = req.body;
   // userData was added to checkAuth middleware and passed along
-  // console.log('userdata in claim ', req.userData)
-  // claimObj.creator = req.userData.userId;
+   console.log('userdata in claim ', req.userData.userId)
+
+  claimObj.creator = req.userData.userId;
 
   console.log(claimObj)
   claimObj.avatar = claimObj.stan + '.jpg';
@@ -114,82 +114,64 @@ let claimObj = req.body;
 
 }
  
-  exports.getClaims = (req, res, next) => {
-    const pageSize = +req.query.pagesize;
-    // console.log(pageSize, 'pageSize')
-    const dateBegin = req.query.datebegin;
-    const dateEnd = req.query.dateend;
-    const currentPage = +req.query.page;
-    const claimQuery = Claim.find();
-    let fetchedClaims;
-    if (pageSize && currentPage) {
-      claimQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
-    }
-    claimQuery
-      .then(documents => {
-        // find one iphone adventures - iphone adventures??
-        // documents.map (doc => {
-        //   Customer.findOne({ _id: doc.customer }, function (err, cust) {
-        //     if (err) {}
-  
-        //     if (cust) {
-              
-        //       doc.customer = cust.name
-        //       console.log(doc)
-              
-        //     }  else {
-             
-        //     }
-        //   });
-        // })
-        // console.log (documents, 'documents')
-
-        res.status(200).json({
-          message: "claims fetched successfully!",
-          claims: documents,
-          total_count: documents.length
-        });
-      })
-      .catch(error => {
-        res.status(500).json({
-          message: "Fetching claims failed!"
-        });
+exports.getClaims = (req, res, next) => {
+  const pageSize = +req.query.pagesize;
+  const dateBegin = req.query.datebegin;
+  const dateEnd = req.query.dateend;
+  const currentPage = +req.query.page;
+  const claimQuery = Claim.find();
+  let fetchedClaims;
+  if (pageSize && currentPage) {
+    claimQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
+  }
+  claimQuery
+    .then(documents => {
+      res.status(200).json({
+        message: "claims fetched successfully!",
+        claims: documents,
+        total_count: documents.length
       });
-   }
-
-   exports.getClaim = (req, res, next) => {
-    // console.log(req.params.id)
-    Claim.findById(req.params.id).then(claim => {
-      if (claim) {
-        console.log(claim)
-        res.status(200).json(claim);
-      } else {
-        res.status(404).json({ message: "claim not found!" });
-      }
     })
+    .catch(error => {
+      res.status(500).json({
+        message: "Fetching claims failed!"
+      });
+    });
+}
+
+exports.getClaim = (req, res, next) => {
+  // console.log(req.params.id)
+  Claim.findById(req.params.id).then(claim => {
+    if (claim) {
+      console.log(claim)
+      res.status(200).json(claim);
+    } else {
+      res.status(404).json({ message: "claim not found!" });
+    }
+  })
     .catch(error => {
       res.status(500).json({
         message: "Fetching claim failed!"
       });
     });
-  }
+}
 
-  exports.deleteClaim = (req, res, next) => {
-   // console.log('params ', req.params)
-    Claim.deleteOne({ _id: req.params.id }).then(result => {
-      console.error('claim deleted ', result)
-      if (result.n == 1 && result.deletedCount == 1){
-        console.log(' claim deleted :', result.deletedCount)
-       return res.status(200).json({ message: "Claim deleted! " + result });
-      }
-      else {
-       return res.status(401).json({ message: "Not Authorised!" });
-      }
-    })
+exports.deleteClaim = (req, res, next) => {
+  // console.log('params ', req.params)
+  Claim.deleteOne({ _id: req.params.id }).then(result => {
+    console.error('claim deleted ', result)
+    if (result.n == 1 && result.deletedCount == 1) {
+      console.log(' claim deleted :', result.deletedCount)
+      return res.status(200).json({ message: "Claim deleted! " + result });
+    }
+    else {
+      return res.status(401).json({ message: "Not Authorised!" });
+    }
+  })
     .catch(error => {
-        return res.status(500).json({
+      return res.status(500).json({
         message: "Deleting claim failed! - " + error
-        });
+      });
     });
 }
 
@@ -197,7 +179,7 @@ exports.updateClaim =  (req, res, next) => {
   let claimObj = req.body;
   claimObj._id = req.params.id;
   // userData  was added to checkAuth middleware and passed along
- // claimObj.updater = req.userData.userId; 
+  // claimObj.updater = req.userData.userId; 
   console.log(claimObj, 'for update')
   // delete claimObj._id;
   const claim = new Claim(claimObj);

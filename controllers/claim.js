@@ -2,6 +2,8 @@ const Claim = require("../models/claim");
 const Customer = require("../models/customer");
 const path = require('path')
 const fs = require('fs');
+var moment = require('moment');
+
 const readXlsxFile = require('read-excel-file/node');
  
 exports.importClaim =  (req, res, next) => {
@@ -87,14 +89,15 @@ exports.importClaim =  (req, res, next) => {
 
 exports.createClaim =  (req, res, next) => {
   let claimObj = req.body;
+  console.log(claimObj)
   // userData was added to checkAuth middleware and passed along
-   console.log('userdata in claim ', req.userData.userId)
+  // console.log('userdata in claim ', req.userData.userId)
 
   claimObj.creator = req.userData.userId;
-
+ 
+ 
   console.log(claimObj)
-  claimObj.avatar = claimObj.stan + '.jpg';
-  
+
   let claim = new Claim(claimObj);
   
   claim.save()

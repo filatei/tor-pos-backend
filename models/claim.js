@@ -22,27 +22,34 @@ const claimSchema = mongoose.Schema({
     trans_id: {type:  String },
     log_code: {type:  String},
     acquirer: {type:  String, required: true},
-    
     stan: {type:  String},
     status: {type:  String},
     bank: {type:  String},
     card_number: {type:  String},
     action_taken: {type:  String},
     terminal_location: {type:  String},
-    trans_date_time: {type:  Date},
-    reply_mail: {type:  Date},
-    received_from_bank: {type:  Date},
+    
+    trans_date: {type:  Date},
+    trans_time: {type:  String},
+
+    reply_date: {type:  Date},
+    reply_time: {type:  String},
+
+    received_date: {type:  Date},
+    received_time: {type:  String},
+  
     avatar: {type:  String},
+    
     expiry_date: {type:  Date},
+    expiry_time: {type:  String},
+  
     company: {type:  String},
     remarks: {type:  String},
-    reply_date: {type:  Number},
     card_bank: {type:  String},
     terminal_id: {type:  String},
-    createdAt: {type: Date, Default: Date.now},
+    // createdAt: {type: Date, Default: Date.now},
     creator: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
     //  updater: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
-   
 },
 {
     timestamps: true

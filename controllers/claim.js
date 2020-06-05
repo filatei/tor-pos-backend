@@ -15,12 +15,19 @@ exports.importClaim =  (req, res, next) => {
     //  console.log(k)
     let el = claimObj[k];
     el.creator = userid;
+    el.avatar = el.stan + '.jpg'
     let claim;
 
     try {
-      el.trans_date_time =  new Date((el.trans_date_time - (25567 + 2))*86400*1000); 
-      el.reply_mail =  new Date((el.reply_mail - (25567 + 2 ))*86400*1000); 
-      el.received_from_bank =  new Date((el.received_from_bank - (25567 + 2))*86400*1000); 
+      if (el.trans_date)
+        el.trans_date =  new Date((el.trans_date - (25567 + 2))*86400*1000); 
+      if (el.reply_date)
+        el.reply_date =  new Date((el.reply_date - (25567 + 2 ))*86400*1000); 
+      if (el.received_date)
+        el.received_date =  new Date((el.received_date - (25567 + 2))*86400*1000);
+      if (el.expiry_date)
+        el.expiry_date =  new Date((el.expiry_date - (25567 + 2))*86400*1000);
+
     } catch (err) {
       continue
     }
@@ -28,8 +35,7 @@ exports.importClaim =  (req, res, next) => {
     let customerName = el.customer.trim()
     Customer.findOne({name: new RegExp('^'+customerName+'$', "i")}, function(err, doc) {
       if (err) {
-        console.err(err, 'err in customer find')
-        
+        console.err(err, 'err in customer find') 
       } 
       if (doc) {
         console.log('customer exists - ' + doc);
@@ -94,8 +100,6 @@ exports.createClaim =  (req, res, next) => {
   // console.log('userdata in claim ', req.userData.userId)
 
   claimObj.creator = req.userData.userId;
- 
- 
   console.log(claimObj)
 
   let claim = new Claim(claimObj);

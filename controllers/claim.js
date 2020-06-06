@@ -4,7 +4,7 @@ const path = require('path')
 const fs = require('fs');
 var moment = require('moment');
 
-const readXlsxFile = require('read-excel-file/node');
+// const readXlsxFile = require('read-excel-file/node');
  
 exports.importClaim =  (req, res, next) => {
   let claimObj = req.body;
@@ -27,15 +27,21 @@ exports.importClaim =  (req, res, next) => {
         el.received_date =  new Date((el.received_date - (25567 + 2))*86400*1000);
       if (el.expiry_date)
         el.expiry_date =  new Date((el.expiry_date - (25567 + 2))*86400*1000);
+      next()
 
     } catch (err) {
-      continue
+      res.status(500).json({
+        message: "Creating a claim failed!" + err
+      });
     }
 
     let customerName = el.customer.trim()
     Customer.findOne({name: new RegExp('^'+customerName+'$', "i")}, function(err, doc) {
       if (err) {
         console.err(err, 'err in customer find') 
+        return res.status(500).json({
+          message: "Creating a claim failed!" + err 
+        });
       } 
       if (doc) {
         console.log('customer exists - ' + doc);
@@ -61,9 +67,7 @@ exports.importClaim =  (req, res, next) => {
         el.customer = custObj; // we need to embed customer obj in claims doc
         console.log(el, 'new custobj el')
         custObj.save()
-        .then(res => {
-          console.log ('customer created ', res)
-          console.log(el, 'new custobj el 2')
+        .then(ress => {
           claim = new Claim(el);
           claim.save()
           .then(result => {
@@ -100,25 +104,84 @@ exports.createClaim =  (req, res, next) => {
   // console.log('userdata in claim ', req.userData.userId)
 
   claimObj.creator = req.userData.userId;
+  claimObj.avatar = claimObj.stan + '.jpg'
   console.log(claimObj)
+  let customerName = claimObj.customer;
+  if ( typeof customerName == 'object' ) {
+    // customer likely in customers db
+    // save claim
+    claim = new Claim(claimObj);
+    console.log('creating claim 0')
+    claim.save()
+      .then(result => {
+        res.status(201).json({
+          message: "Creating  claim succeeded!" + result
+        });
+      })
+      .catch(error => {
+        console.error(error)
+        res.status(500).json({
+          message: "Creating a claim failed!" + error
+        });
+      });  
 
-  let claim = new Claim(claimObj);
-  
-  claim.save()
-  .then(result => {
-    console.log(result)
-    return res.status(201).json({
-      message: "  Claim added successfully: " + result 
-    });
-    
-  })
-  .catch(error => {
-    console.error(error )
-    return res.status(500).json({
-      message: "Creating a claim failed! " + error 
-    });
-  });
-
+  } else {
+     // is customer in db? If not create in customers db them create claim
+    Customer.findOne({name: new RegExp('^'+customerName+'$', "i")}, function(err, doc) {
+      if (err) {
+        console.err(err, 'err in customer find') 
+        return res.status(500).json({
+          message: "error in customer find" + err 
+        });
+      } 
+      if (doc) {
+        // console.log('customer exists - ' + doc);
+        claimObj.customer = doc
+        claim = new Claim(claimObj);
+        console.log('creating claim 1')
+        claim.save()
+        .then(result => {
+          res.status(201).json({
+            message: "Creating  claim succeeded!" + result
+          });
+        })
+        .catch(error => {
+          console.error(error )
+          res.status(500).json({
+            message: "Creating a claim failed!" + error 
+          });
+        });  
+       
+      } else {
+        // create customer
+        
+        let custObj = new Customer({name: claimObj.customer})
+        claimObj.customer = custObj; // we need to embed customer obj in claims doc
+        
+        custObj.save()
+        .then(ress => {
+          claim = new Claim(claimObj);
+          console.log('creating claim 2')
+          claim.save()
+          .then(result => {
+            res.status(201).json({
+              message: "Creating  claim succeeded!" + result
+            });
+          })
+          .catch(error => {
+            console.error(error )
+            res.status(500).json({
+              message: "Creating a claim failed!" + error 
+            });
+          });  
+        })
+        .catch(err => {
+          console.error ('error creating customer', err)
+          throw err
+        }) 
+      }
+    })
+  }
 }
  
 exports.getClaims = (req, res, next) => {

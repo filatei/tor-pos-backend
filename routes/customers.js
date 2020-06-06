@@ -128,10 +128,10 @@ router.post("/import", (req, res, next) => {
 
     let customer = new Customer(el);
     customer.barcode = customer._id + customer.name.trim();
-    console.log(customer);
-
+   
     customer.save()
     .then(result => {
+      console.log(result, ' added');
     
       
     })

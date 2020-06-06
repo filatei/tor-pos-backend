@@ -118,13 +118,13 @@ router.post("/import", (req, res, next) => {
     // userData was added to checkAuth middleware and passed along
     // console.log('userdata in claim ', req.userData)
    // claimObj.creator = req.userData.userId;
-
+    let el;
   for (k=0; k< customerObj.length; k++) {
     //  console.log(k)
     
     el = customerObj[k];
 
-    
+    console.log(el, ' processing ', k);
 
     let customer = new Customer(el);
     customer.barcode = customer._id + customer.name.trim();

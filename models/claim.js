@@ -2,27 +2,13 @@ const mongoose = require('mongoose');
 const uniqueValidator = require('mongoose-unique-validator');
 
 const claimSchema = mongoose.Schema({
-    customer: 
-    { 
-        name: {type:  String },
-        phone: {type:  String },
-        email: {type:  String },
-        icon:  {type:  String },
-        barcode: {type:  String },
-        biometric: {type:  String },
-        address: {
-            street: {type:  String },
-            city: {type:  String },
-            state: {type:  String },
-            zipcode: {type:  String }
-        }
-    },
-
+  
+    customer: {type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true},
     txn_amount: {type:  Number, required: true},
     trans_id: {type:  String },
     log_code: {type:  String},
     acquirer: {type:  String, required: true},
-    stan: {type:  String},
+    stan: {type:  String, unique: true, required: true},
     status: {type:  String},
     bank: {type:  String},
     card_number: {type:  String},
@@ -56,5 +42,6 @@ const claimSchema = mongoose.Schema({
 });
 
 claimSchema.plugin( uniqueValidator );
+claimSchema.plugin(require('mongoose-beautiful-unique-validation'));
 
 module.exports = mongoose.model('Claim', claimSchema)

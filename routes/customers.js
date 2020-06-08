@@ -3,6 +3,8 @@ const Customer = require("../models/customer");
 const router = express.Router();
 const checkAuth = require('../middleware/check-auth');
 
+
+
 router.get('',(req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
@@ -13,6 +15,7 @@ router.get('',(req, res, next) => {
   }
   custQuery
     .then(documents => {
+     //  console.log(documents)
       fetchedCustomers = documents;
       return Customer.countDocuments();
     })
@@ -30,11 +33,31 @@ router.get('',(req, res, next) => {
     });
 });
 
+router.get("/:id",  (req, res, next) => {
+  // console.log('id ', req.params.id)
+  // console.log(req.userData.userId)
+  Customer.findById(req.params.id)
+  .then(customer => {
+    if (customer) {
+      // console.log(customer)
+      res.status(200).json({customer: customer});
+    } else {
+      res.status(404).json({ message: "customer not found!" });
+    }
+  })
+  .catch(error => {
+    res.status(500).json({
+      message: "Fetching customer failed!"
+    });
+  });
+});
+
 router.post("", checkAuth, (req, res, next) => {
   let cust = req.body;
   cust.barcode = req.body.name;
 
   cust.creator = req.userData.userId; 
+  cust.name = cust.name.toUpperCase();
   const customer = new Customer(cust);
   console.log(customer);
   customer.save().then ((result)=> {
@@ -54,21 +77,7 @@ router.post("", checkAuth, (req, res, next) => {
   });
 });
 
-router.get("/:id", (req, res, next) => {
-  Customer.findById(req.params.id)
-  .then(customer => {
-    if (customer) {
-      res.status(200).json(customer);
-    } else {
-      res.status(404).json({ message: "customer not found!" });
-    }
-  })
-  .catch(error => {
-    res.status(500).json({
-      message: "Fetching customer failed!"
-    });
-  });
-});
+
   
 router.put("/:id", checkAuth, (req, res, next) => {
   console.log('params ', req.params)
@@ -110,43 +119,41 @@ router.delete("/:id", (req, res, next) => {
   });
 });
 
-router.post("/import", (req, res, next) => {
+router.post("/import", checkAuth, (req, res, next) => {
 // exports.importClaim =  (req, res, next) => {
   // console.log(req)
-  let customerObj = req.body;
+  let customerArr = req.body;  // array of customer objs
    // zawsw console.log('claimObj ',req)
     // userData was added to checkAuth middleware and passed along
     // console.log('userdata in claim ', req.userData)
-   // claimObj.creator = req.userData.userId;
-    let el;
-  for (k=0; k< customerObj.length; k++) {
-    //  console.log(k)
-    
-    el = customerObj[k];
-
-    console.log(el, ' processing ', k);
-
-    let customer = new Customer(el);
-    customer.barcode = customer._id + customer.name.trim();
    
-    customer.save()
-    .then(result => {
-      console.log(result, ' added');
-    
-      
-    })
-    .catch(error => {
-      console.error(error )
-      res.status(500).json({
-        message: "Creating an customer failed!" + error 
-      });
+  // unique customer names
+  function uniqcust(array) {
+    const key = 'name';
+    const arrayUniqueByKey = [...new Map(array.map(item =>
+      [item[key], item])).values()];
+
+    return arrayUniqueByKey;
+  }
+
+  let uniqcusts = uniqcust(customerArr)
+  Customer.collection.insertMany(uniqcusts, {ordered: true})
+  .then(result => {
+    console.log('insertcount', result.insertedCount)
+    res.status(200).json({message: 'customers insertered ' +result.insertedCount })
+  })
+  .catch(err => {
+    // console.error(err)
+    res.status(500).json({
+      message: "Creating  customers failed!" + error 
     });
     
-  };
-    
-  res.status(201).json({
-    message: " All customer Imported successfully: " 
-  });
+    throw err
+  })
+
+
 })
+
+
 
 module.exports = router;

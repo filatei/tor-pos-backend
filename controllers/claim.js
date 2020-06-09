@@ -117,12 +117,13 @@ exports.createClaim =  (req, res, next) => {
   claimObj.avatar = claimObj.stan + '.jpg'
   // console.log(claimObj)
   let customerName = claimObj.customer;
+  // console.log(customerName);
   if ( typeof customerName == 'object' ) {
     // customer likely in customers db
     // save claim
     claimObj.customer = customerName._id
     claim = new Claim(claimObj);
-   // console.log('creating claim 0')
+    console.log('creating claim 0')
     claim.save()
       .then(result => {
         res.status(201).json({
@@ -171,11 +172,14 @@ exports.createClaim =  (req, res, next) => {
         
         custObj.save()
         .then(ress => {
+          
           claimObj.customer = ress._id;
           claim = new Claim(claimObj);
-          console.log('creating claim 2')
+           console.log(ress, ' ress', claimObj)
+           console.log('creating claim 2')
           claim.save()
           .then(result => {
+             console.log (' claim 2 success', result)
             res.status(201).json({
               message: "Creating  claim succeeded!" + result
             });
@@ -201,13 +205,15 @@ exports.getClaims = (req, res, next) => {
   const dateBegin = req.query.datebegin;
   const dateEnd = req.query.dateend;
   const currentPage = +req.query.page;
-  const claimQuery = Claim.find();
+  const claimQuery = Claim.find().populate('customer');
   let fetchedClaims;
   if (pageSize && currentPage) {
     claimQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
   }
   claimQuery
+
     .then(documents => {
+      console.log(documents[0])
       res.status(200).json({
         message: "claims fetched successfully!",
         claims: documents,
@@ -224,19 +230,26 @@ exports.getClaims = (req, res, next) => {
 exports.getClaim = (req, res, next) => {
   // console.log(req.params.id)
   if (!req.params.id || req.params.id == undefined) return;
-  Claim.findById(req.params.id).then(claim => {
-    if (claim) {
-      console.log(claim)
-      res.status(200).json(claim);
-    } else {
-      res.status(404).json({ message: "claim not found!" });
-    }
-  })
-    .catch(error => {
-      res.status(500).json({
-        message: "Fetching claim failed!"
-      });
+  Claim.
+    findById(req.params.id).
+    populate('customer').
+    exec(function (err, claim) {
+      // if (err) return handleError(err);
+      if (err)  throw err;
+      
+      if (claim) {
+        // let nc = JSON.parse(JSON.stringify(claim))
+        // nc.customer = claim.customer.name;
+        // console.log(nc)
+        // console.log('The customer is now %s', nc.customer);
+        res.status(200).json(claim);
+      } else {
+        res.status(404).json({ message: "claim not found!" });
+      }
+      
     });
+
+   
 }
 
 exports.deleteClaim = (req, res, next) => {
@@ -263,24 +276,56 @@ exports.updateClaim =  (req, res, next) => {
   claimObj._id = req.params.id;
   // userData  was added to checkAuth middleware and passed along
   // claimObj.updater = req.userData.userId; 
-  console.log(claimObj, 'for update')
-  // delete claimObj._id;
-  const claim = new Claim(claimObj);
-  console.log(claim, 'for update')
-  
-  // Claim.updateOne({ _id: req.params.id, creator: req.userData.userId }, claim)
-  Claim.updateOne({ _id: req.params.id }, claim)
-  .then(result => {
-    if (result.n > 0) {
-      res.status(200).json({ message: "Update successful!" });
-    } else {
-      res.status(401).json({ message: "Not authorized!" });
+
+  if (typeof claimObj.customer != 'object') {
+    let customer = new Customer({name: claimObj.customer})
+    customer.save()
+        .then(ress => {
+          
+          claimObj.customer = ress._id;
+          claim = new Claim(claimObj);
+
+           console.log(ress, ' ress', claimObj)
+           console.log('updating claim 1')
+          Claim.updateOne({ _id: req.params.id }, claim)
+          .then(result => {
+            if (result.n > 0) {
+              res.status(200).json({ message: "Update successful!" });
+            } else {
+              res.status(401).json({ message: "Not authorized!" });
+            }
+          })
+          .catch(error => {
+            console.log(error)
+            res.status(500).json({
+              message: "Couldn't udpate claim! " + error
+            });
+          });
+        })
+        .catch(err => {
+          console.error ('error creating customer', err)
+          throw err
+        }) 
+    } else { // customer is object and so from db
+      console.log(claimObj, 'for update 2')
+      // delete claimObj._id;
+      const claim = new Claim(claimObj);
+      console.log(claim, 'for update 2')
+      
+      // Claim.updateOne({ _id: req.params.id, creator: req.userData.userId }, claim)
+      Claim.updateOne({ _id: req.params.id }, claim)
+      .then(result => {
+        if (result.n > 0) {
+          res.status(200).json({ message: "Update successful!" });
+        } else {
+          res.status(401).json({ message: "Not authorized!" });
+        }
+      })
+      .catch(error => {
+        console.log(error)
+        res.status(500).json({
+          message: "Couldn't udpate claim! " + error
+        });
+      });
     }
-  })
-  .catch(error => {
-    console.log(error)
-    res.status(500).json({
-      message: "Couldn't udpate claim! " + error
-    });
-  });
 }

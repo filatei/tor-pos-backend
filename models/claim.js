@@ -33,6 +33,8 @@ const claimSchema = mongoose.Schema({
     remarks: {type:  String},
     card_bank: {type:  String},
     terminal_id: {type:  String},
+    comments: {type:  String},
+
     // createdAt: {type: Date, Default: Date.now},
     creator: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
     //  updater: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},

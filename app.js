@@ -18,6 +18,7 @@ const printRoutes = require("./routes/print");
 const receiptRoutes = require("./routes/receipts");
 const settingRoutes = require("./routes/settings");
 const claimRoutes = require("./routes/claims");
+const recUploadRoutes = require("./routes/recuploads");
 
 //let connectStr =  'mongodb://localhost:27017/torposdb';
 let connectStr = process.env.CONNECT_STR
@@ -73,6 +74,7 @@ app.use("/api/prints", printRoutes);
 app.use("/api/receipts", receiptRoutes);
 app.use("/api/settings", settingRoutes);
 app.use("/api/claims", claimRoutes);
+app.use("/api/recuploads", recUploadRoutes);
 
 // app.use((req, res, next) => {
 //     res.sendFile(path.join(__dirname, 'www', 'index.html'));

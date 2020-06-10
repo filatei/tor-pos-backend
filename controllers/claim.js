@@ -141,7 +141,7 @@ exports.createClaim =  (req, res, next) => {
      // is customer in db? If not create in customers db them create claim
     Customer.findOne({name: new RegExp('^'+customerName+'$', "i")}, function(err, doc) {
       if (err) {
-        console.err(err, 'err in customer find') 
+        console.error(err, 'err in customer find') 
         return res.status(500).json({
           message: "error in customer find" + err 
         });
@@ -280,32 +280,32 @@ exports.updateClaim =  (req, res, next) => {
   if (typeof claimObj.customer != 'object') {
     let customer = new Customer({name: claimObj.customer})
     customer.save()
-        .then(ress => {
-          
-          claimObj.customer = ress._id;
-          claim = new Claim(claimObj);
+    .then(ress => {
+      
+      claimObj.customer = ress._id;
+      claim = new Claim(claimObj);
 
-           console.log(ress, ' ress', claimObj)
-           console.log('updating claim 1')
-          Claim.updateOne({ _id: req.params.id }, claim)
-          .then(result => {
-            if (result.n > 0) {
-              res.status(200).json({ message: "Update successful!" });
-            } else {
-              res.status(401).json({ message: "Not authorized!" });
-            }
-          })
-          .catch(error => {
-            console.log(error)
-            res.status(500).json({
-              message: "Couldn't udpate claim! " + error
-            });
-          });
-        })
-        .catch(err => {
-          console.error ('error creating customer', err)
-          throw err
-        }) 
+        console.log(ress, ' ress', claimObj)
+        console.log('updating claim 1')
+      Claim.updateOne({ _id: req.params.id }, claim)
+      .then(result => {
+        if (result.n > 0) {
+          res.status(200).json({ message: "Update successful!" });
+        } else {
+          res.status(401).json({ message: "Not authorized!" });
+        }
+      })
+      .catch(error => {
+        console.log(error)
+        res.status(500).json({
+          message: "Couldn't udpate claim! " + error
+        });
+      });
+    })
+    .catch(err => {
+      console.error ('error creating customer', err)
+      throw err
+    }) 
     } else { // customer is object and so from db
       console.log(claimObj, 'for update 2')
       // delete claimObj._id;

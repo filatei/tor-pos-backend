@@ -5,6 +5,9 @@ const recuploadSchema = mongoose.Schema({
     customer: {type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true},
     driver: {type: String},
     pay_type: {type: String},
+    transfer_from_bank: {type: String},
+    transfer_from_account: {type: String},
+
     name_teller: {type: String},
     txn_amount: {type:  Number, required: true},
     amt_teller: {type:  Number},

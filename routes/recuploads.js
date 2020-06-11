@@ -6,6 +6,8 @@ const path = require('path')
 const fs = require('fs');
 const mime = require('mime');
 
+const env = process.env.NODE_ENV || 'development';
+
 var multer  = require('multer')
 const DIR = './uploads/recuploads/';
 const storage = multer.diskStorage({
@@ -25,7 +27,7 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const fileName = req.userData.userId + '-' + file.originalname.toLowerCase().split(' ').join('-');
-    console.log('file name',fileName)
+   
     cb(null, fileName)
   }
 });
@@ -37,7 +39,7 @@ var upload = multer({
     fileSize: 1024 * 1024 * 2
   },
   fileFilter: (req, file, cb) => {
-    console.log(file.mimetype)
+    // console.log(file.mimetype)
     if (file.mimetype == "image/png" || file.mimetype == "image/jpeg" || file.mimetype == "image/jpg") {
       cb(null, true);
     } else {
@@ -82,8 +84,16 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
     let type = decodedImg.type;
     let extension = mime.extension(type);
     let fileName = "image." + extension;
-    url = req.protocol + '://' + req.get('host')
-    fileName = 'uploads/recuploads/'  + recObj.stan + '-' + fileName
+    console.log(env, ' env')
+    if (env != 'development') {
+        url = 'https://api.torama.ng'
+    } else {
+        url = req.protocol + '://' + req.get('host')
+    }
+    
+    
+    console.log(url)
+    fileName = 'uploads/recuploads/'  + new Date().getTime() + '-' + fileName
     path = url + '/' + fileName;
     console.log('path: ', path)
 

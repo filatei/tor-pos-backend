@@ -175,8 +175,8 @@ exports.createClaim =  (req, res, next) => {
           
           claimObj.customer = ress._id;
           claim = new Claim(claimObj);
-           console.log(ress, ' ress', claimObj)
-           console.log('creating claim 2')
+           //console.log(ress, ' ress', claimObj)
+           // console.log('creating claim 2')
           claim.save()
           .then(result => {
              console.log (' claim 2 success', result)

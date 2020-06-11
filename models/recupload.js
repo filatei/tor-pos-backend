@@ -3,12 +3,17 @@ const uniqueValidator = require('mongoose-unique-validator');
 
 const recuploadSchema = mongoose.Schema({
     customer: {type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true},
+    driver: {type: String},
+    pay_type: {type: String},
+    name_teller: {type: String},
     txn_amount: {type:  Number, required: true},
+    amt_teller: {type:  Number},
+    date_teller: {type:  Date},
     trans_id: {type:  String },
     log_code: {type:  String},
     acquirer: {type:  String, required: true},
-    stan: {type:  String, unique: true, required: true},
-    rrn: {type:  String, unique: true, required: true},
+    stan: {type:  String},
+    rrn: {type:  String},
     status: {type:  String},
     bank: {type:  String},
     card_number: {type:  String},
@@ -26,6 +31,7 @@ const recuploadSchema = mongoose.Schema({
     terminal_location: {type:  String},
     comments: {type:  String},
     image: {type:  String},
+    products: [],
 
     creator: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
    

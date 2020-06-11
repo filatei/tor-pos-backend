@@ -3,7 +3,8 @@ const Recupload = require("../models/recupload");
 const Customer = require("../models/customer");
 const router = express.Router();
 const path = require('path')
-const fs = require('fs')
+const fs = require('fs');
+const mime = require('mime');
 
 var multer  = require('multer')
 const DIR = './uploads/recuploads/';
@@ -55,35 +56,44 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
 
     recObj.userid = req.userData.userId;
     let customerName = recObj.customer;
-
+    console.log(recObj.products, ' before')
+    recObj.products = JSON.parse(recObj.products)
+    console.log(recObj.products, ' after')
     const recupload = new Recupload(recObj);
 
-    //   company.createdAt = new Date().getTime();
-    //   company.ncontracts = parseInt(req.body.ncontracts);
-    console.log(req.file)
-    console.log(req.files)
-    if (req.files) {
-        console.log('files', req.files)
-        url = req.protocol + '://' + req.get('host')
-        // url = req.protocol + '://' + 'api.torama.ng:4000' //for prod
+    // company.createdAt = new Date().getTime();
+    // company.ncontracts = parseInt(req.body.ncontracts);
+    // console.log(req.file)
+    // console.log(req.files)
 
-        req.files.forEach(file => {
-            path = url + '/uploads/recuploads/'  + recObj.userid + '/' + file.filename;
-            console.log('path: ', path)
-
-            if (file.fieldname === 'image') {
-                recupload.image = path;
-            }
-        })
+    //base64
+    // console.log(recObj.image.substring(0, 50))
+    var matches = req.body.image.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/),
+    response = {};
+ 
+    if (matches.length !== 3) {
+        return new Error('Invalid input string');
     }
-    console.log(recObj, 'recobj')
-    
 
-  // if customer is object, it exists in our db
-  // get object_id of customer
-  console.log( typeof recObj.customer, 'typeof custobj', recObj.customer)
-    // if (typeof recObj.customer === 'object') {
-        // recupload.customer = recupload.customer._id;
+    response.type = matches[1];
+    response.data = new Buffer(matches[2], 'base64');
+    let decodedImg = response;
+    let imageBuffer = decodedImg.data;
+    let type = decodedImg.type;
+    let extension = mime.extension(type);
+    let fileName = "image." + extension;
+    url = req.protocol + '://' + req.get('host')
+    fileName = 'uploads/recuploads/'  + recObj.stan + '-' + fileName
+    path = url + '/' + fileName;
+    console.log('path: ', path)
+
+   
+    recupload.image = path;
+   
+
+    try 
+    {
+        fs.writeFileSync(fileName, imageBuffer, 'utf8');
         recupload.save()
             .then((result) => {
                 res.status(201).json({
@@ -99,7 +109,38 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
                     message: "Creating a Recupload failed! " + error
                 });
             });
-    // } 
+    
+       // return res.send({"status":"success"});
+     } catch (e) 
+     {
+            throw e
+     }
+        
+    
+
+    // if (req.files) {
+    //     console.log('files', req.files)
+    //     url = req.protocol + '://' + req.get('host')
+    //     // url = req.protocol + '://' + 'api.torama.ng:4000' //for prod
+
+    //     req.files.forEach(file => {
+    //         path = url + '/uploads/recuploads/'  + recObj.userid + '/' + file.filename;
+    //         console.log('path: ', path)
+
+    //         if (file.fieldname === 'image') {
+    //            // recupload.image = path;
+    //         }
+    //     })
+    // }
+    // console.log(recObj, 'recobj')
+    
+
+  // if customer is object, it exists in our db
+  // get object_id of customer
+  console.log( typeof recObj.customer, 'typeof custobj', recObj.customer)
+    // if (typeof recObj.customer === 'object') {
+        // recupload.customer = recupload.customer._id;
+        
     // else {
     //     // is customer in db? If not create in customers db them create rec
     //    Customer.findOne({name: new RegExp('^'+customerName+'$', "i")}, function(err, doc) {
@@ -227,7 +268,8 @@ router.get('',(req, res, next) => {
 });
 
 router.get("/:id", (req, res, next) => {
-    Recupload.findById(req.params.id)
+    Recupload.findById(req.params.id).
+    populate('customer')
     .then(record => {
       if (record) {
         res.status(200).json(record);

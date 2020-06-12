@@ -6,7 +6,7 @@ const recuploadSchema = mongoose.Schema({
     driver: {type: String},
     pay_type: {type: String},
     transfer_from_bank: {type: String},
-    transfer_from_account: {type: String},
+    transfer_from_account_name: {type: String},
 
     name_teller: {type: String},
     txn_amount: {type:  Number, required: true},
@@ -16,6 +16,7 @@ const recuploadSchema = mongoose.Schema({
     log_code: {type:  String},
     acquirer: {type:  String, required: true},
     stan: {type:  String},
+    trans_id: {type:  String},
     rrn: {type:  String},
     status: {type:  String},
     bank: {type:  String},

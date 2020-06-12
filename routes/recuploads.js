@@ -72,59 +72,36 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
     // console.log(recObj.image.substring(0, 50))
     console.log(req.body.image, 'image')
     let fileName;
-    if (req.body.image) {
-        // image from camera
-        var matches = req.body.image.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/),
-        response = {};
-    
-        if (matches.length !== 3) {
-            return new Error('Invalid input string');
-        }
-
-        response.type = matches[1];
-        response.data = new Buffer(matches[2], 'base64');
-        let decodedImg = response;
-        let imageBuffer = decodedImg.data;
-        let type = decodedImg.type;
-        let extension = mime.extension(type);
-        let fileName = "image." + extension;
+   
+    console.log(req.file, 'file')
+    console.log(req.files, 'files')
+    if (req.files) {
+        // console.log('files', req.files)
         if (env != 'development') {
             url = 'https://api.torama.ng'
         } else {
             url = req.protocol + '://' + req.get('host')
         }
-       
-        fileName = 'uploads/recuploads/'  + new Date().getTime() + '-' + fileName
-        path = url + '/' + fileName;
-        recupload.image = path;
-        try {
-            fs.writeFileSync(fileName, imageBuffer, 'utf8');
-        }
-        catch(e) {
-            throw e
-        }
-    } else {
-        // file upload from frontend, not camera
-        console.log(req.file)
-        if (req.files) {
-            // console.log('files', req.files)
-            if (env != 'development') {
-                url = 'https://api.torama.ng'
-            } else {
-                url = req.protocol + '://' + req.get('host')
+        // url = req.protocol + '://' + 'api.torama.ng:4000' //for prod
+
+        req.files.forEach(file => {
+            console.log(file, ' file in array')
+            if (file.originalname == 'blob') {
+                fileName = 'uploads/recuploads/'  + req.userData.userId + '/' + file.filename 
             }
-            // url = req.protocol + '://' + 'api.torama.ng:4000' //for prod
+                
+            else {
+                fileName = 'uploads/recuploads/'  + req.userData.userId + '/' + file.filename
+            }
+                
+            path = url + '/' + fileName;
     
-            req.files.forEach(file => {
-                fileName = 'uploads/recuploads/'  + req.userData.userId + '/' + file.filename;
-                path = url + '/' + fileName;
-        
-                if (file.fieldname === 'image') {
-                    recupload.image = path;
-                }
-            })
-        }
+            if (file.fieldname === 'image') {
+                recupload.image = path;
+            }
+        })
     }
+    // }
     console.log('path: ', path)
 
     recupload.save()
@@ -143,23 +120,6 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
         });
     });
     
-    // if (req.files) {
-    //     console.log('files', req.files)
-    //     url = req.protocol + '://' + req.get('host')
-    //     // url = req.protocol + '://' + 'api.torama.ng:4000' //for prod
-
-    //     req.files.forEach(file => {
-    //         path = url + '/uploads/recuploads/'  + recObj.userid + '/' + file.filename;
-    //         console.log('path: ', path)
-
-    //         if (file.fieldname === 'image') {
-    //            // recupload.image = path;
-    //         }
-    //     })
-    // }
-    // console.log(recObj, 'recobj')
-    
-
   // if customer is object, it exists in our db
   // get object_id of customer
   console.log( typeof recObj.customer, 'typeof custobj', recObj.customer)

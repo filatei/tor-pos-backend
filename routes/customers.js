@@ -8,14 +8,15 @@ const checkAuth = require('../middleware/check-auth');
 router.get('',(req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
-  const custQuery = Customer.find();
+  const custQuery = Customer.find().sort({updatedAt: -1});
   let fetchedCustomers;
   if (pageSize && currentPage) {
     custQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
   }
   custQuery
     .then(documents => {
-     //  console.log(documents)
+      
+       console.log(documents.length)
       fetchedCustomers = documents;
       return Customer.countDocuments();
     })

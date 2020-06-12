@@ -227,7 +227,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
 router.get('',(req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
-  const coyQuery = Recupload.find().
+  const coyQuery = Recupload.find().sort({updatedAt:-1}).
   populate('customer')
   let fetchedRecords;
   if (pageSize && currentPage) {
@@ -235,6 +235,7 @@ router.get('',(req, res, next) => {
   }
   coyQuery
     .then(documents => {
+        console.log(documents.count)
         fetchedRecords = documents;
       return Recupload.countDocuments();
     })

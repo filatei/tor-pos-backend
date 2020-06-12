@@ -205,7 +205,7 @@ exports.getClaims = (req, res, next) => {
   const dateBegin = req.query.datebegin;
   const dateEnd = req.query.dateend;
   const currentPage = +req.query.page;
-  const claimQuery = Claim.find().populate('customer');
+  const claimQuery = Claim.find().sort({ updatedAt:-1 }).populate('customer');
   let fetchedClaims;
   if (pageSize && currentPage) {
     claimQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
@@ -213,7 +213,7 @@ exports.getClaims = (req, res, next) => {
   claimQuery
 
     .then(documents => {
-      console.log(documents[0])
+      // console.log(documents[0])
       res.status(200).json({
         message: "claims fetched successfully!",
         claims: documents,

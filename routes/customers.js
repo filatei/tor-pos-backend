@@ -6,13 +6,44 @@ const checkAuth = require('../middleware/check-auth');
 
 
 router.get('',(req, res, next) => {
-  const pageSize = +req.query.pagesize;
-  const currentPage = +req.query.page;
-  const custQuery = Customer.find().sort({updatedAt: -1});
-  let fetchedCustomers;
+  const pageSize = +req.query.pagesize ;
+  const currentPage = +req.query.currentpage;
+  const sort = req.query.sort;
+
+  let custQuery = Customer.find();
   if (pageSize && currentPage) {
     custQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
   }
+
+  // console.log(sort, 'sort')
+  const byname = req.query.byname;
+  
+  // if (byname) {
+  //   custQuery = Customer.find({name: new RegExp(byname, "i")})
+  //  // console.log(custQuery)
+  // } else {
+  //   custQuery = Customer.find().sort(sort).limit(pageSize);
+  // }
+  
+  let fetchedCustomers;
+  
+
+  // Customer.findOne({name: new RegExp('^'+byname+'$', "i")}, function(err, doc) {
+  //   console.log(doc)
+  //   if (err) {
+  //     return res.status(500).json({
+  //       message: "Fetching customers failed! " + err
+  //     });
+  //   }
+  //   if (doc) {
+  //     console.log(doc)
+  //     return res.status(200).json({
+  //       message: "Customers fetched successfully!",
+  //       customers: doc,
+  //       maxCustomers: doc.length
+  //     });
+  //   }
+  // })
   custQuery
     .then(documents => {
       
@@ -29,7 +60,7 @@ router.get('',(req, res, next) => {
     })
     .catch(error => {
       res.status(500).json({
-        message: "Fetching customers failed!"
+        message: "Fetching customers failed! " + error
       });
     });
 });
@@ -59,6 +90,7 @@ router.post("", checkAuth, (req, res, next) => {
 
   cust.creator = req.userData.userId; 
   cust.name = cust.name.toUpperCase();
+
   const customer = new Customer(cust);
   console.log(customer);
   customer.save().then ((result)=> {
@@ -77,8 +109,6 @@ router.post("", checkAuth, (req, res, next) => {
     });
   });
 });
-
-
   
 router.put("/:id", checkAuth, (req, res, next) => {
   console.log('params ', req.params)
@@ -141,12 +171,12 @@ router.post("/import", checkAuth, (req, res, next) => {
   Customer.collection.insertMany(uniqcusts, {ordered: true})
   .then(result => {
     console.log('insertcount', result.insertedCount)
-    res.status(200).json({message: 'customers insertered ' +result.insertedCount })
+    res.status(200).json({message: 'customers insertered ' + result.insertedCount })
   })
   .catch(err => {
     // console.error(err)
     res.status(500).json({
-      message: "Creating  customers failed!" + error 
+      message: "Creating  customers failed!" + err
     });
     
     throw err

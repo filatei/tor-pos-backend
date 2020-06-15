@@ -130,7 +130,6 @@ exports.createClaim =  (req, res, next) => {
     console.log( 'customer may not  be in db')
     // store customer name and return _id,  before save claim
     saveCustomer(claimObj.customer);
-    
   }
 
   /**
@@ -258,57 +257,68 @@ exports.updateClaim =  (req, res, next) => {
   claimObj._id = sanitize(req.params.id);
 
   // userData  was added to checkAuth middleware and passed along
-  // claimObj.updater = req.userData.userId; 
+  claimObj.updater = req.userData.userId; 
 
-  if (typeof claimObj.customer != 'object') {
-    let customer = new Customer({name: claimObj.customer})
-    customer.save()
-    .then(ress => {
-      
-      claimObj.customer = ress._id;
-      claim = new Claim(claimObj);
+  if (claimObj.customer._id){
+    console.log( 'customer  already be in db')
+    // store customer id and save claim
+    claimObj.customer = claimObj.customer._id;
+    saveClaim(claimObj);
+  } else {
+    console.log( 'customer may not  be in db')
+    // store customer name and return _id,  before save claim
+    saveCustomer(claimObj.customer);
+  }
 
-       // console.log(ress, ' ress', claimObj)
-        console.log('updating claim 1')
-      Claim.updateOne({ _id: req.params.id }, claim)
-      .then(result => {
-        if (result.n > 0) {
-          res.status(200).json({ message: "Update successful!" });
-        } else {
-          res.status(401).json({ message: "Not authorized!" });
-        }
-      })
-      .catch(error => {
-        console.log(error)
-        res.status(500).json({
-          message: "Couldn't udpate claim! " + error
-        });
-      });
+   /**
+   * saves customer cust to customer collection if not exist already
+   * and sets claimObj.customer to savedcustomer._id
+   * @param {*} cust 
+   */
+  function saveCustomer( cust ) {
+    Customer.findOne({name: new RegExp('^'+cust.name+'$', "i")})
+    .then( (result) => {
+      if (result) {
+        console.log(result, ' cust find result')
+        claimObj.customer = result._id
+        saveClaim(claimObj)
+      } else {
+        let custObj = new Customer(cust);
+        console.log(custObj, ' new customer obj')
+        custObj.save()
+        .then((sres) => {
+          claimObj.customer = sres._id;
+          console.log(claimObj, ' claimobj in customerloop')
+          saveClaim(claimObj)
+        })
+        .catch(err => {
+          console.log(err, ' customer save err')
+          throw err
+        })
+      }
     })
-    .catch(err => {
-      console.error ('error creating customer', err)
+    .catch( (err) => {
+      console.log (err, 'customer find  find err')
       throw err
-    }) 
-    } else { // customer is object and so from db
-      console.log(claimObj, 'for update 2')
-      // delete claimObj._id;
-      const claim = new Claim(claimObj);
-      console.log(claim, 'for update 2')
-      
-      // Claim.updateOne({ _id: req.params.id, creator: req.userData.userId }, claim)
-      Claim.updateOne({ _id: req.params.id }, claim)
-      .then(result => {
-        if (result.n > 0) {
-          res.status(200).json({ message: "Update successful!" });
-        } else {
-          res.status(401).json({ message: "Not authorized!" });
-        }
-      })
-      .catch(error => {
-        console.log(error)
-        res.status(500).json({
-          message: "Couldn't udpate claim! " + error
-        });
+    })
+  }
+
+  function saveClaim(claimobj) {
+    claim = new Claim(claimobj);
+    Claim.updateOne({ _id: req.params.id }, claim)
+    .then(result => {
+      if (result.n > 0) {
+        res.status(200).json({ message: "Update successful!" });
+      } else {
+        res.status(401).json({ message: "Not authorized!" });
+      }
+    })
+    .catch(error => {
+      console.log(error)
+      res.status(500).json({
+        message: "Couldn't udpate claim! " + error
       });
-    }
+    });
+  }
+
 }

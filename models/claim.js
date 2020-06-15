@@ -38,7 +38,7 @@ const claimSchema = mongoose.Schema({
 
     // createdAt: {type: Date, Default: Date.now},
     creator: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
-    //  updater: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
+    updater: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
 },
 {
     timestamps: true

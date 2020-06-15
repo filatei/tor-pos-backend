@@ -3,12 +3,15 @@ const Customer = require("../models/customer");
 const path = require('path')
 const fs = require('fs');
 var moment = require('moment');
+var sanitize = require('mongo-sanitize');
+
 
 // const readXlsxFile = require('read-excel-file/node');
  
 exports.importClaim =  (req, res, next) => {
   let claimsArr = req.body;
   let userid = req.userData.userId;
+  
   
   // unique customer names  .. not used
   function uniqcust(array) {
@@ -89,12 +92,14 @@ exports.importClaim =  (req, res, next) => {
         company: claim.company,
         terminal_location: claim.terminal_location,
         terminal_id: claim.terminal_id,
+        card_number: claim.card_number,
+        card_bank: claim.card_bank,
         avatar: (claim.stan.indexOf('.jpg') > -1)? claim.stan: claim.stan.concat('.jpg'),
       }
       let newClaimObj = new Claim(nc);
       newClaimObj.save()
       .then( result => {
-        console.log('claim saved', result.stan)
+        console.log('claim saved', result.card_number)
         // res.status(201).jsom({message: 'claim saved'})
       })
       .catch(err => {
@@ -115,89 +120,69 @@ exports.createClaim =  (req, res, next) => {
 
   claimObj.creator = req.userData.userId;
   claimObj.avatar = claimObj.stan + '.jpg'
-  // console.log(claimObj)
-  let customerName = claimObj.customer;
-  // console.log(customerName);
-  if ( typeof customerName == 'object' ) {
-    // customer likely in customers db
-    // save claim
-    claimObj.customer = customerName._id
-    claim = new Claim(claimObj);
-    console.log('creating claim 0')
-    claim.save()
-      .then(result => {
-        res.status(201).json({
-          message: "Creating  claim succeeded!" + result
-        });
-      })
-      .catch(error => {
-        console.error(error)
-        res.status(500).json({
-          message: "Creating a claim failed!" + error
-        });
-      });  
 
+  if (claimObj.customer._id){
+    console.log( 'customer may already be in db')
+    // store customer id and save claim
+    claimObj.customer = claimObj.customer._id;
+    saveClaim(claimObj);
   } else {
-     // is customer in db? If not create in customers db them create claim
-    Customer.findOne({name: new RegExp('^'+customerName+'$', "i")}, function(err, doc) {
-      if (err) {
-        console.error(err, 'err in customer find') 
-        return res.status(500).json({
-          message: "error in customer find" + err 
-        });
-      } 
-      if (doc) {
-        // console.log('customer exists - ' + doc);
-        claimObj.customer = doc._id
-        claim = new Claim(claimObj);
-        // console.log('creating claim 1')
-        claim.save()
-        .then(result => {
-          res.status(201).json({
-            message: "Creating  claim succeeded!" + result
-          });
-        })
-        .catch(error => {
-          console.error(error )
-          res.status(500).json({
-            message: "Creating a claim failed!" + error 
-          });
-        });  
-       
+    console.log( 'customer may not  be in db')
+    // store customer name and return _id,  before save claim
+    saveCustomer(claimObj.customer);
+    
+  }
+
+  /**
+   * saves customer cust to customer collection if not exist already
+   * and sets claimObj.customer to savedcustomer._id
+   * @param {*} cust 
+   */
+  function saveCustomer( cust ) {
+    Customer.findOne({name: new RegExp('^'+cust.name+'$', "i")})
+    .then( (result) => {
+      if (result) {
+        console.log(result, ' cust find result')
+        claimObj.customer = result._id
+        saveClaim(claimObj)
       } else {
-        // create customer
-        
-        let custObj = new Customer({name: claimObj.customer})
-         // we need to embed customer obj in claims doc
-        
+        let custObj = new Customer(cust);
+        console.log(custObj, ' new customer obj')
         custObj.save()
-        .then(ress => {
-          
-          claimObj.customer = ress._id;
-          claim = new Claim(claimObj);
-           //console.log(ress, ' ress', claimObj)
-           // console.log('creating claim 2')
-          claim.save()
-          .then(result => {
-             console.log (' claim 2 success', result)
-            res.status(201).json({
-              message: "Creating  claim succeeded!" + result
-            });
-          })
-          .catch(error => {
-            console.error(error )
-            res.status(500).json({
-              message: "Creating a claim failed!" + error 
-            });
-          });  
+        .then((sres) => {
+          claimObj.customer = sres._id;
+          console.log(claimObj, ' claimobj in customerloop')
+          saveClaim(claimObj)
         })
         .catch(err => {
-          console.error ('error creating customer', err)
+          console.log(err, ' customer save err')
           throw err
-        }) 
+        })
       }
     })
+    .catch( (err) => {
+      console.log (err, 'customer find  find err')
+      throw err
+    })
   }
+
+  function saveClaim(claimobj) {
+    claim = new Claim(claimobj);
+    console.log('claim new ', claim)
+    claim.save()
+    .then(result => {
+      res.status(201).json({
+        message: "Creating  claim succeeded!" + result
+      });
+    })
+    .catch(error => {
+      console.error(error )
+      res.status(500).json({
+        message: "Creating a claim failed! " + error 
+      });
+    }); 
+  }
+
 }
  
 exports.getClaims = (req, res, next) => {
@@ -246,10 +231,7 @@ exports.getClaim = (req, res, next) => {
       } else {
         res.status(404).json({ message: "claim not found!" });
       }
-      
     });
-
-   
 }
 
 exports.deleteClaim = (req, res, next) => {
@@ -273,7 +255,8 @@ exports.deleteClaim = (req, res, next) => {
 
 exports.updateClaim =  (req, res, next) => {
   let claimObj = req.body;
-  claimObj._id = req.params.id;
+  claimObj._id = sanitize(req.params.id);
+
   // userData  was added to checkAuth middleware and passed along
   // claimObj.updater = req.userData.userId; 
 
@@ -285,7 +268,7 @@ exports.updateClaim =  (req, res, next) => {
       claimObj.customer = ress._id;
       claim = new Claim(claimObj);
 
-        console.log(ress, ' ress', claimObj)
+       // console.log(ress, ' ress', claimObj)
         console.log('updating claim 1')
       Claim.updateOne({ _id: req.params.id }, claim)
       .then(result => {

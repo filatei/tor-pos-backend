@@ -64,6 +64,8 @@ app.use((req,res,next) => {
     next();
 })
 
+
+
 //user1 - RwyT4Eyw799tQUKF  admin1  - LvJMVIuk3ShxJyt4
 
 app.use("/api/paymethods", paymethodsRoutes);
@@ -77,6 +79,12 @@ app.use("/api/receipts", receiptRoutes);
 app.use("/api/settings", settingRoutes);
 app.use("/api/claims", claimRoutes);
 app.use("/api/recuploads", recUploadRoutes);
+
+// function redirectRouterUnmatched(req,res) {
+//     res.sendFile("index.html", { root: './index.html' });
+// }
+
+// app.use(redirectRouterUnmatched);
 
 // app.use((req, res, next) => {
 //     res.sendFile(path.join(__dirname, 'www', 'index.html'));

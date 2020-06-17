@@ -49,7 +49,7 @@ exports.importClaim =  (req, res, next) => {
 
       if (err) {
         console.log (err)
-        throw err
+        // throw err
       }
       if (!cust) {
         // create customer and
@@ -155,13 +155,13 @@ exports.createClaim =  (req, res, next) => {
         })
         .catch(err => {
           console.log(err, ' customer save err')
-          throw err
+          // throw err
         })
       }
     })
     .catch( (err) => {
       console.log (err, 'customer find  find err')
-      throw err
+      // throw err
     })
   }
 
@@ -219,8 +219,12 @@ exports.getClaim = (req, res, next) => {
     populate('customer').
     exec(function (err, claim) {
       // if (err) return handleError(err);
-      if (err)  throw err;
-      
+      if (err)  {
+        return res.status(500).json({
+          message: "Error finding claim " + err
+        });
+      }
+    
       if (claim) {
         // let nc = JSON.parse(JSON.stringify(claim))
         // nc.customer = claim.customer.name;
@@ -293,13 +297,13 @@ exports.updateClaim =  (req, res, next) => {
         })
         .catch(err => {
           console.log(err, ' customer save err')
-          throw err
+          // throw err
         })
       }
     })
     .catch( (err) => {
       console.log (err, 'customer find  find err')
-      throw err
+      // throw err
     })
   }
 

@@ -24,11 +24,11 @@ exports.userLogin = (req, res, next) => {
         const token = jwt.sign(
             { email: fetchedUser.email, userId: fetchedUser._id, name: fetchedUser.name },
             process.env.ACCESS_TOKEN_SECRET,
-            {expiresIn:'10h'}
+            {expiresIn:'100h'}
         );
         res.status(200).json({
             token: token,
-            expiresIn: 36000,
+            expiresIn: 360000,
             userId: fetchedUser._id
         });
     })
@@ -36,9 +36,7 @@ exports.userLogin = (req, res, next) => {
       return res.status(500).json({
         message: "invalid auth credentials! " + err
       });
-      // return res.status(401).json({
-      //   message: "Invalid authentication credentials!"
-      // });
+      
     });
 }
 
@@ -93,7 +91,8 @@ exports.updateUser = (req, res, next) => {
     // console.log(req.userData)
     res.json({
         email: req.userData.email,
-        userid: req.userData.userId
+        userid: req.userData.userId,
+        name: req.userData.name
     });
         
    

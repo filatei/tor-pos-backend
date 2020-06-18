@@ -9,6 +9,14 @@ var sanitize = require('mongo-sanitize');
 // const readXlsxFile = require('read-excel-file/node');
  
 exports.importClaim =  (req, res, next) => {
+
+  const alloweds = ['filatei@torama.ng'];
+
+  claimObj.creator = req.userData.userId;
+
+  if ( !alloweds.includes(req.userData.email)) {
+     return res.status(500).json({message: 'Not allowed'});
+  }
   let claimsArr = req.body;
   let userid = req.userData.userId;
   
@@ -117,8 +125,14 @@ exports.createClaim =  (req, res, next) => {
   // console.log('reqbody', claimObj)
   // userData was added to checkAuth middleware and passed along
   // console.log('userdata in claim ', req.userData.userId)
+  const alloweds = ['filatei@torama.ng', 'jduke@gtsng.com', 'olawefaodumu@gmail.com', 'princess.filatei@gtsng.com'];
 
   claimObj.creator = req.userData.userId;
+
+  if ( !alloweds.includes(req.userData.email)) {
+     return res.status(500).json({message: 'Not allowed'});
+  }
+
   claimObj.avatar = claimObj.stan + '.jpg'
 
   if (claimObj.customer._id){
@@ -239,6 +253,11 @@ exports.getClaim = (req, res, next) => {
 
 exports.deleteClaim = (req, res, next) => {
   // console.log('params ', req.params)
+  const alloweds = ['filatei@torama.ng', 'princess.filatei@gtsng.com'];
+
+  if ( !alloweds.includes(req.userData.email)) {
+    return res.status(500).json({message: 'Not allowed'});
+  }
   Claim.deleteOne({ _id: req.params.id }).then(result => {
     console.error('claim deleted ', result)
     if (result.n == 1 && result.deletedCount == 1) {
@@ -257,6 +276,12 @@ exports.deleteClaim = (req, res, next) => {
 }
 
 exports.updateClaim =  (req, res, next) => {
+  const alloweds = ['filatei@torama.ng', 'jduke@gtsng.com', 'olawefaodumu@gmail.com', 'princess.filatei@gtsng.com'];
+
+  if ( !alloweds.includes(req.userData.email)) {
+    return res.status(500).json({message: 'Not allowed'});
+  }
+
   let claimObj = req.body;
   claimObj._id = sanitize(req.params.id);
 

@@ -250,6 +250,9 @@ router.post('/import', checkAuth,  function (req, res, next) {
         // customerID = Customer.findOneAndUpdate({name: claim.customer})
         claim.stan = claim.stan + ''
         let customerID;
+        // console.log(claim.customer, 'customer')
+        if (!claim.customer)
+            return res.status(500).json ({error: ' Blank Customer' })
 
         let customerName = claim.customer.trim()
         Customer.findOne({name: new RegExp('^'+customerName+'$', "i")}, function(err, cust) {
@@ -283,24 +286,27 @@ router.post('/import', checkAuth,  function (req, res, next) {
         // save claim
         let nc = {
             creator: userid,
-            customer: customerID,
-            acquirer: claim.acquirer,
+            customer: customerID? customerID:"",
+            acquirer: claim.acquirer? claim.acquirer:"",
             stan: (claim.stan != null && claim.stan.indexOf('.jpg') > -1)? claim.stan.replace('.jpg',""):claim.stan,
-            txn_amount: claim.txn_amount,
-            status: claim.status,
+            txn_amount: claim.txn_amount? claim.txn_amount:0,
+            status: claim.status?  claim.status:"",
             remarks: claim.remarks,
-            action_taken: claim.action_taken,
-            trans_id: claim.trans_id,
+            action_taken: claim.action_taken? claim.action_taken:"",
+            trans_id: claim.trans_id?claim.trans_id:"",
             log_code: claim.log_code,
             trans_date:  claim.trans_date? new Date((claim.trans_date - (25567 + 2)) * 86400 * 1000): null,
             expiry_date: claim.expiry_date?  new Date((claim.expiry_date - (25567 + 2)) * 86400 * 1000): null,
             received_date: claim.received_date?  new Date((claim.received_date - (25567 + 2)) * 86400 * 1000):null,
             reply_date: claim.reply_date?  new Date((claim.reply_date - (25567 + 2)) * 86400 * 1000):null,
-            company: claim.company,
-            terminal_location: claim.terminal_location,
-            terminal_id: claim.terminal_id,
-            card_number: claim.card_number,
-            card_bank: claim.card_bank,
+            company: claim.company? claim.company:"",
+            terminal_location: claim.terminal_location?laim.terminal_location:"",
+            terminal_id: claim.terminal_id?claim.terminal_id: "",
+            card_number: claim.card_number? claim.card_number: "",
+            card_bank: claim.card_bank? claim.card_bank: "",
+            bank_action: claim.bank_action? claim.bank_action: null,
+            bank_debit_date: claim.bank_debit_date? new Date((claim.bank_debit_date - (25567 + 2)) * 86400 * 1000):null,
+
             avatar: (claim.stan.indexOf('.jpg') > -1)? claim.stan: claim.stan.concat('.jpg'),
         }
         let newClaimObj = new Claim(nc);

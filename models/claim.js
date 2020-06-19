@@ -36,6 +36,7 @@ const claimSchema = mongoose.Schema({
     terminal_id: {type:  String},
     comments: {type:  String},
     bank_action: {type:  String}, // CORRECT DEBIT or WRONG DEBIT
+    bank_debit_date: {type:  Date},
     image: {type:  String}, 
 
     // createdAt: {type: Date, Default: Date.now},

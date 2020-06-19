@@ -7,6 +7,7 @@ const router = express.Router();
 const fs = require('fs');
 const mime = require('mime');
 const checkAuth = require('../middleware/check-auth');
+var sanitize = require('mongo-sanitize');
 
 // multer
 var multer  = require('multer')
@@ -203,16 +204,19 @@ router.get('',(req, res, next) => {
 });
   
 router.get("/:id", (req, res, next) => {
-    if (!req.params.id || req.params.id == undefined) return;
+    console.log(req.params.id )
+    if (!req.params.id || req.params.id == undefined) return res.status(500).json({
+        message: "claim id blank " 
+    });
     Claim.
     findById(req.params.id).
     populate('customer').
     exec(function (err, claim) {
         // if (err) return handleError(err);
         if (err)  {
-        return res.status(500).json({
-            message: "Error finding claim " + err
-        });
+            return res.status(500).json({
+                message: "Error finding claim " + err
+            });
         }
 
         if (claim) {
@@ -304,7 +308,7 @@ router.post('/import', checkAuth,  function (req, res, next) {
             terminal_id: claim.terminal_id?claim.terminal_id: "",
             card_number: claim.card_number? claim.card_number: "",
             card_bank: claim.card_bank? claim.card_bank: "",
-            bank_action: claim.bank_action? claim.bank_action: null,
+            bank_action: claim.bank_action? claim.bank_action: "",
             bank_debit_date: claim.bank_debit_date? new Date((claim.bank_debit_date - (25567 + 2)) * 86400 * 1000):null,
 
             avatar: (claim.stan.indexOf('.jpg') > -1)? claim.stan: claim.stan.concat('.jpg'),
@@ -323,5 +327,115 @@ router.post('/import', checkAuth,  function (req, res, next) {
     })
     res.status(201).json({message: "Claims Imported"})
 })
+
+router.put("/:id", checkAuth, upload.any(), (req, res, next) => {
+    const alloweds = ['filatei@torama.ng', 'jduke@gtsng.com', 'olawefaodumu@gmail.com', 'princess.filatei@gtsng.com'];
+
+  if ( !alloweds.includes(req.userData.email)) {
+    return res.status(500).json({message: 'Not allowed'});
+  }
+
+  // update bank debit status
+  
+  if (!req.body.customer) return res.status(500).json({message: 'Every Claim must have a customber '});
+
+  let claimObj = req.body;
+  claimObj._id = sanitize(req.params.id);
+
+  // userData  was added to checkAuth middleware and passed along
+  claimObj.updater = req.userData.userId; 
+    // console.log(claimObj.customer, typeof claimObj.customer)
+    if (typeof claimObj.customer != 'object')
+        claimObj.customer = JSON.parse(claimObj.customer)
+
+  if (req.files) {
+    console.log('files', req.files)
+
+    req.files.forEach(file => {
+        console.log(file, ' file in array')
+        if (file.originalname == 'blob') {
+            fileName = 'uploads/claims/'  + req.userData.userId + '/' + file.filename 
+        }
+            
+        else {
+            fileName = 'uploads/claims/'  + req.userData.userId + '/' + file.filename
+        }
+        // url = 'https://api.torama.ng'
+        url = req.protocol + '://' + req.get('host')
+
+        path = url + '/' + fileName;
+
+        if (file.fieldname === 'image') {
+            claimObj.image = path;
+        }
+    })
+  }
+
+  if (claimObj.customer._id){
+    console.log( 'customer  already be in db')
+    // store customer id and save claim
+    claimObj.customer = claimObj.customer._id;
+    saveClaim(claimObj);
+  } else {
+    console.log( 'customer may not  be in db')
+    // store customer name and return _id,  before save claim
+    saveCustomer(claimObj.customer);
+  }
+
+   /**
+   * saves customer cust to customer collection if not exist already
+   * and sets claimObj.customer to savedcustomer._id
+   * @param {*} cust 
+   */
+  function saveCustomer( cust ) {
+    Customer.findOne({name: new RegExp('^'+cust.name+'$', "i")})
+    .then( (result) => {
+      if (result) {
+        console.log(result, ' cust find result')
+        claimObj.customer = result._id
+        saveClaim(claimObj)
+      } else {
+        let custObj = new Customer(cust);
+        console.log(custObj, ' new customer obj')
+        custObj.save()
+        .then((sres) => {
+          claimObj.customer = sres._id;
+          console.log(claimObj, ' claimobj in customerloop')
+          saveClaim(claimObj)
+        })
+        .catch(err => {
+          console.log(err, ' customer save err')
+          // throw err
+        })
+      }
+    })
+    .catch( (err) => {
+      console.log (err, 'customer find  find err')
+      // throw err
+    })
+  }
+
+  function saveClaim(claimobj) {
+      // handle image upload
+
+    claim = new Claim(claimobj);
+    Claim.updateOne({ _id: req.params.id }, claim)
+    .then(result => {
+        console.log(result)
+      if (result.n > 0) {
+        res.status(200).json({ message: "Update successful!" });
+      } else {
+        res.status(401).json({ message: "Not authorized!" });
+      }
+    })
+    .catch(error => {
+      console.log(error)
+      res.status(500).json({
+        message: "Couldn't udpate claim! " + error
+      });
+    });
+  }
+
+});
 
 module.exports = router;

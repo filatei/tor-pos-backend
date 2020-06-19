@@ -17,7 +17,7 @@ const fileRoutes = require("./routes/file");
 const printRoutes = require("./routes/print");
 const receiptRoutes = require("./routes/receipts");
 const settingRoutes = require("./routes/settings");
-const claimRoutes = require("./routes/claims");
+const claimRoutes = require("./routes/claims.route");
 const recUploadRoutes = require("./routes/recuploads");
 
 //let connectStr =  'mongodb://localhost:27017/torposdb';

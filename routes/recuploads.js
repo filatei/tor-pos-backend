@@ -63,13 +63,6 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
     console.log(recObj.products, ' after')
     const recupload = new Recupload(recObj);
 
-    // company.createdAt = new Date().getTime();
-    // company.ncontracts = parseInt(req.body.ncontracts);
-    // console.log(req.file)
-    // console.log(req.files)
-
-    //base64
-    // console.log(recObj.image.substring(0, 50))
     console.log(req.body.image, 'image')
     let fileName;
    

@@ -5,7 +5,6 @@ const fs = require('fs');
 var moment = require('moment');
 var sanitize = require('mongo-sanitize');
 
-
 // const readXlsxFile = require('read-excel-file/node');
  
 exports.importClaim =  (req, res, next) => {
@@ -28,24 +27,6 @@ exports.importClaim =  (req, res, next) => {
       [item[key], item])).values()];
     return arrayUniqueByKey;
   }
-
-  // newClaimsArr =  claimsArr.map(fixClaim)
-  // let custArr = claimsArr.map(cl => {
-  //                 return {name: cl.customer}
-  //               })
-  // let  uniquecustarr = uniqcust(custArr)
-  // insert into customer collection
-  // Customer.collection.insertMany(uniquecustarr, {ordered: true})
-  // .then(result => {
-  //   console.log('insertcount', result.insertedCount)
-  //   res.status(200).json({message: 'customers insertered ' +result.insertedCount })
-  // })
-  // .catch(err => {
-  //   // console.error(err)
-
-  //   throw err
-  // })
-  // create claims with unique stan
 
   claimsArr.forEach(claim => {
     // customerID = Customer.findOneAndUpdate({name: claim.customer})
@@ -119,7 +100,8 @@ exports.importClaim =  (req, res, next) => {
   res.status(201).json({message: "Claims Imported"})
   
 }
- 
+
+
 exports.createClaim =  (req, res, next) => {
   let claimObj = req.body;
   // console.log('reqbody', claimObj)
@@ -134,6 +116,33 @@ exports.createClaim =  (req, res, next) => {
   }
 
   claimObj.avatar = claimObj.stan + '.jpg'
+  // file upload handing
+  if (req.files) {
+    console.log('files', req.files)
+    if (env != 'development') {
+        url = 'https://api.torama.ng'
+    } else {
+        url = req.protocol + '://' + req.get('host')
+    }
+    // url = req.protocol + '://' + 'api.torama.ng:4000' //for prod
+
+    req.files.forEach(file => {
+        console.log(file, ' file in array')
+        if (file.originalname == 'blob') {
+            fileName = 'uploads/claims/'  + req.userData.userId + '/' + file.filename 
+        }
+            
+        else {
+            fileName = 'uploads/claims/'  + req.userData.userId + '/' + file.filename
+        }
+            
+        path = url + '/' + fileName;
+
+        if (file.fieldname === 'image') {
+            claimObj.image = path;
+        }
+    })
+  }
 
   if (claimObj.customer._id){
     console.log( 'customer may already be in db')
@@ -281,6 +290,9 @@ exports.updateClaim =  (req, res, next) => {
   if ( !alloweds.includes(req.userData.email)) {
     return res.status(500).json({message: 'Not allowed'});
   }
+
+  // update bank debit status
+  
 
   let claimObj = req.body;
   claimObj._id = sanitize(req.params.id);

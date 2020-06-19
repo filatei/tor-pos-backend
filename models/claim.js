@@ -35,6 +35,8 @@ const claimSchema = mongoose.Schema({
     card_bank: {type:  String},
     terminal_id: {type:  String},
     comments: {type:  String},
+    bank_action: {type:  String}, // CORRECT DEBIT or WRONG DEBIT
+    image: {type:  String}, 
 
     // createdAt: {type: Date, Default: Date.now},
     creator: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},

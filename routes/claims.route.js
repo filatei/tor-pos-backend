@@ -63,6 +63,8 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
   if ( !alloweds.includes(req.userData.email)) {
      return res.status(500).json({message: 'Not allowed'});
   }
+  if ( !claimObj.customer || claimObj.customer === undefined )
+    return res.status(500).json({message: 'check your data. empty customer?'});
 
   claimObj.avatar = claimObj.stan + '.jpg'
   // file upload handing
@@ -88,7 +90,10 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
         }
     })
   }
-  claimObj.customer = JSON.parse(claimObj.customer);
+  console.log(typeof claimObj.customer, claimObj.customer)
+  if ( typeof claimObj.customer != 'object')
+    claimObj.customer = JSON.parse(claimObj.customer);
+
   if (claimObj.customer._id){
     console.log( 'customer may already be in db')
     // store customer id and save claim
@@ -239,6 +244,7 @@ router.post('/import', checkAuth,  function (req, res, next) {
         return res.status(500).json({message: 'Not allowed'});
     }
     let claimsArr = req.body;
+    console.log(claimsArr, claimsArr, req.body)
     let userid = req.userData.userId;
     
     
@@ -304,7 +310,7 @@ router.post('/import', checkAuth,  function (req, res, next) {
             received_date: claim.received_date?  new Date((claim.received_date - (25567 + 2)) * 86400 * 1000):null,
             reply_date: claim.reply_date?  new Date((claim.reply_date - (25567 + 2)) * 86400 * 1000):null,
             company: claim.company? claim.company:"",
-            terminal_location: claim.terminal_location?laim.terminal_location:"",
+            terminal_location: claim.terminal_location?claim.terminal_location:"",
             terminal_id: claim.terminal_id?claim.terminal_id: "",
             card_number: claim.card_number? claim.card_number: "",
             card_bank: claim.card_bank? claim.card_bank: "",

@@ -1,4 +1,4 @@
-
+require('dotenv').config();
 const express = require("express");
 const Claim = require("../models/claim");
 const Customer = require("../models/customer");
@@ -56,9 +56,8 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
   // console.log('reqbody', claimObj)
   // userData was added to checkAuth middleware and passed along
   // console.log('userdata in claim ', req.userData.userId)
-  const alloweds = ['filatei@torama.ng', 'jduke@gtsng.com', 'olawefaodumu@gmail.com', 'princess.filatei@gtsng.com'];
-
   claimObj.creator = req.userData.userId;
+  const alloweds = ['filatei@torama.ng', 'jduke@gtsng.com', 'olawefaodumu@gmail.com', 'princess.filatei@gtsng.com'];
 
   if ( !alloweds.includes(req.userData.email)) {
      return res.status(500).json({message: 'Not allowed'});
@@ -90,7 +89,8 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
         }
     })
   }
-  console.log(typeof claimObj.customer, claimObj.customer)
+  // console.log(typeof claimObj.customer, claimObj.customer)
+
   if ( typeof claimObj.customer != 'object')
     claimObj.customer = JSON.parse(claimObj.customer);
 
@@ -335,17 +335,26 @@ router.post('/import', checkAuth,  function (req, res, next) {
 })
 
 router.put("/:id", checkAuth, upload.any(), (req, res, next) => {
-    const alloweds = ['filatei@torama.ng', 'jduke@gtsng.com', 'olawefaodumu@gmail.com', 'princess.filatei@gtsng.com'];
 
-  if ( !alloweds.includes(req.userData.email)) {
-    return res.status(500).json({message: 'Not allowed'});
-  }
+    const alloweds = process.env.ALLOWEDS
+    if ( alloweds && !alloweds.includes(req.userData.email)) {
+        return res.status(500).json({message: 'Not allowed'});
+    }
 
-  // update bank debit status
-  
-  if (!req.body.customer) return res.status(500).json({message: 'Every Claim must have a customber '});
+    // update bank debit status
+    
+    if (!req.body.customer) return res.status(500).json({message: 'Every Claim must have a customber '});
 
-  let claimObj = req.body;
+    let formFields = Object.keys(req.body)  // an array
+
+  // remove fields from req.body with empty conten
+  let claimObj = formFields.filter(key => req.body[key] !== '')
+            .reduce((obj, key) => {
+              obj[key] = req.body[key];
+              return obj;
+            }, {});
+
+  // let claimObj = req.body;
   claimObj._id = sanitize(req.params.id);
 
   // userData  was added to checkAuth middleware and passed along

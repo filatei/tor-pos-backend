@@ -27,23 +27,6 @@ router.get('',(req, res, next) => {
   
   let fetchedCustomers;
   
-
-  // Customer.findOne({name: new RegExp('^'+byname+'$', "i")}, function(err, doc) {
-  //   console.log(doc)
-  //   if (err) {
-  //     return res.status(500).json({
-  //       message: "Fetching customers failed! " + err
-  //     });
-  //   }
-  //   if (doc) {
-  //     console.log(doc)
-  //     return res.status(200).json({
-  //       message: "Customers fetched successfully!",
-  //       customers: doc,
-  //       maxCustomers: doc.length
-  //     });
-  //   }
-  // })
   custQuery
     .then(documents => {
       
@@ -111,7 +94,14 @@ router.post("", checkAuth, (req, res, next) => {
 });
   
 router.put("/:id", checkAuth, (req, res, next) => {
-  console.log('params ', req.params)
+  const alloweds = ['filatei@torama.ng', 'eadekan@gtsng.com', 
+          'ratimi@gtsng.com', 'dkings@gtsng.com', 'eforcados@gtsng.com', 
+          'olawefaodumu@gmail.com', 'princess.filatei@gtsng.com'];
+
+  if ( !alloweds.includes(req.userData.email)) {
+    return res.status(500).json({message: 'Not allowed'});
+  }
+  
   let cust = req.body;
   cust._id = req.params.id;
   cust.updater = req.userData.userId; 

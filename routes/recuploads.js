@@ -1,10 +1,11 @@
+require('dotenv').config();
 const express = require("express");
 const Recupload = require("../models/recupload");
 const Customer = require("../models/customer");
 const router = express.Router();
-const path = require('path')
 const fs = require('fs');
 const mime = require('mime');
+var sanitize = require('mongo-sanitize');
 
 const env = process.env.NODE_ENV || 'development';
 
@@ -52,134 +53,108 @@ var upload = multer({
 const checkAuth = require('../middleware/check-auth');
 
 router.post('', checkAuth, upload.any(), function (req, res, next) {
-    let path = ""
-    let url = ""
-    let recObj = req.body;
 
-    recObj.userid = req.userData.userId;
-    let customerName = recObj.customer;
-    console.log(recObj.products, ' before')
-    recObj.products = JSON.parse(recObj.products)
-    console.log(recObj.products, ' after')
-    const recupload = new Recupload(recObj);
+  const alloweds = ['filatei@torama.ng', 'eforcados@gtsng.com','eadekan@gtsng.com','ratimi@gtsng.com', 'dkings@gtsng.com', 'princess.filatei@gtsng.com'];
 
-    console.log(req.body.image, 'image')
+  if ( !alloweds.includes(req.userData.email)) {
+     return res.status(500).json({message: 'Not allowed'});
+  }
+
+  let recObj = req.body;
+  if ( !recObj.customer || recObj.customer === undefined )
+    return res.status(500).json({message: 'check your data. empty customer?'});
+
+  if ( typeof recObj.customer != 'object')
+    recObj.customer = JSON.parse(recObj.customer);
+  
+  recObj.userid = req.userData.userId;
+  recObj.products = JSON.parse(recObj.products)
+
+  if (req.files) {
     let fileName;
-   
-    console.log(req.file, 'file')
-    console.log(req.files, 'files')
-    if (req.files) {
-        // console.log('files', req.files)
-        if (env != 'development') {
-            url = 'https://api.torama.ng'
+    req.files.forEach(file => {
+        console.log(file, ' file in array')
+        if (file.originalname == 'blob') {
+            fileName = 'uploads/recuploads/'  + req.userData.userId + '/' + file.filename 
         } else {
-            url = req.protocol + '://' + req.get('host')
+            fileName = 'uploads/recuploads/'  + req.userData.userId + '/' + file.filename
         }
-        // url = req.protocol + '://' + 'api.torama.ng:4000' //for prod
 
-        req.files.forEach(file => {
-            console.log(file, ' file in array')
-            if (file.originalname == 'blob') {
-                fileName = 'uploads/recuploads/'  + req.userData.userId + '/' + file.filename 
-            }
-                
-            else {
-                fileName = 'uploads/recuploads/'  + req.userData.userId + '/' + file.filename
-            }
-                
-            path = url + '/' + fileName;
+        url = req.protocol + '://' + req.get('host')
+        // url = 'https://api.torama.ng'    
+        path = url + '/' + fileName;
+
+        if (file.fieldname === 'image') {
+            recObj.image = path;
+        }
+    })
+  }
+  
+  if (recObj.customer._id){
+    console.log( 'customer already be in db')
+    // store customer id and save claim
+    recObj.customer = recObj.customer._id;
+    saveReceipt(recObj);
     
-            if (file.fieldname === 'image') {
-                recupload.image = path;
-            }
-        })
-    }
-    // }
-    console.log('path: ', path)
+  } else {
+    console.log( 'customer may not  be in db')
+    // store customer name and return _id,  before save claim
+    saveCustomer(recObj.customer);
+  }
 
-    recupload.save()
-    .then((result) => {
-        res.status(201).json({
-            message: 'Receipt  Uploaded successfully',
-            Recupload: {
-                ...result,
-                id: result._id
-            }
-        });
+  
+    /**
+   * saves customer cust to customer collection if not exist already
+   * and sets claimObj.customer to savedcustomer._id
+   * @param {*} cust 
+   */
+  function saveCustomer( cust ) {
+    Customer.findOne({name: new RegExp('^'+cust.name+'$', "i")})
+    .then( (result) => {
+      if (result) {
+      //  console.log(result, ' cust find result')
+        recObj.customer = result._id
+        saveReceipt(recObj)
+      } else {
+        let custObj = new Customer(cust);
+        console.log(custObj, ' new customer obj')
+        custObj.save()
+        .then((sres) => {
+         recObj.customer = sres._id;
+          console.log(recObj, ' recObj in customerloop')
+          saveReceipt(recObj)
+        })
+        .catch(err => {
+          console.log(err, ' customer save err')
+          // throw err
+        })
+      }
+    })
+    .catch( (err) => {
+      console.log (err, 'customer find  find err')
+      // throw err
+    })
+  }
+
+  function saveReceipt(recobj) {
+    receipt = new Recupload(recobj);
+    console.log('receipt new ', receipt)
+    receipt.save()
+    .then(result => {
+      res.status(201).json({
+        message: 'Receipt  Uploaded successfully',
+        Recupload: {
+            ...result,
+            id: result._id
+        }
+      });
     })
     .catch(error => {
-        res.status(500).json({
-            message: "Creating a Recupload failed! " + error
-        });
-    });
-    
-  // if customer is object, it exists in our db
-  // get object_id of customer
-  console.log( typeof recObj.customer, 'typeof custobj', recObj.customer)
-    // if (typeof recObj.customer === 'object') {
-        // recupload.customer = recupload.customer._id;
-        
-    // else {
-    //     // is customer in db? If not create in customers db them create rec
-    //    Customer.findOne({name: new RegExp('^'+customerName+'$', "i")}, function(err, doc) {
-    //      if (err) {
-    //        console.error(err, 'err in customer find') 
-    //        return res.status(500).json({
-    //          message: "error in customer find" + err 
-    //        });
-    //      } 
-    //      if (doc) {
-    //        // console.log('customer exists - ' + doc);
-    //        recObj.customer = doc._id
-    //        recupload = new Recupload(recObj);
-    //        // console.log('creating claim 1')
-    //        recupload.save()
-    //        .then(result => {
-    //          res.status(201).json({
-    //            message: "Creating  rec succeeded!" + result
-    //          });
-    //        })
-    //        .catch(error => {
-    //          console.error(error )
-    //          res.status(500).json({
-    //            message: "Creating a rec failed!" + error 
-    //          });
-    //        });  
-          
-    //      } else {
-    //        // create customer
-           
-    //        let custObj = new Customer({name: recObj.customer})
-    //         // we need to embed customer obj in claims doc
-           
-    //        custObj.save()
-    //        .then(ress => {
-             
-    //          recObj.customer = ress._id;
-    //          recupload = new Recupload(recObj);
-    //           console.log(ress, ' ress', recObj)
-    //           console.log('creating rec 2')
-    //          recupload.save()
-    //          .then(result => {
-    //             console.log (' rec 2 success', result)
-    //            res.status(201).json({
-    //              message: "Creating  rec succeeded!" + result
-    //            });
-    //          })
-    //          .catch(error => {
-    //            console.error(error )
-    //            res.status(500).json({
-    //              message: "Creating a rec failed!" + error 
-    //            });
-    //          });  
-    //        })
-    //        .catch(err => {
-    //          console.error ('error creating customer', err)
-    //          throw err
-    //        }) 
-    //      }
-    //    })
-    //  }
+      res.status(500).json({
+        message: "Creating a Recupload failed! " + error
+      });
+    }); 
+  }
   
 })
  
@@ -217,7 +192,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
 
  });
 
-router.get('',(req, res, next) => {
+router.get('', (req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
   const coyQuery = Recupload.find().sort({updatedAt:-1}).
@@ -236,7 +211,7 @@ router.get('',(req, res, next) => {
       res.status(200).json({
         message: "records fetched successfully!",
         records: fetchedRecords,
-        maxCompanys: count
+        maxCount: count
       });
     })
    .catch(error => {
@@ -261,8 +236,112 @@ router.get("/:id", (req, res, next) => {
       });
     });
   });
+
+
+router.put("/:id", checkAuth, (req, res, next) => {
+
+  // const alloweds = ['filatei@torama.ng', 'eadekan@gtsng.com', 
+  //         'ratimi@gtsng.com', 'dkings@gtsng.com', 'eforcados@gtsng.com', 
+  //         'olawefaodumu@gmail.com', 'princess.filatei@gtsng.com'];
+  const alloweds = process.env.ALLOWEDS
+
+  if ( !alloweds.includes(req.userData.email)) {
+    return res.status(500).json({message: 'Not allowed'});
+  }
+
+  // update bank debit status
   
+  if (!req.body.customer) return res.status(500).json({message: 'Every Receipt must have a customber '});
 
+  let formFields = Object.keys(req.body)  // an array
 
+  // remove fields from req.body with empty conten
+  let recObj = formFields.filter(key => req.body[key] !== '')
+            .reduce((obj, key) => {
+              obj[key] = req.body[key];
+              return obj;
+            }, {});
 
+  // console.log(recObj)
+
+  recObj._id = sanitize(req.params.id);
+
+  // userData  was added to checkAuth middleware and passed along
+  recObj.updater = req.userData.userId; 
+    // console.log(claimObj.customer, typeof claimObj.customer)
+  if (typeof recObj.customer != 'object')
+    recObj.customer = JSON.parse(recObj.customer)
+
+  if (recObj.customer._id){
+    // console.log( 'customer  already be in db')
+    // store customer id and save claim
+    recObj.customer = recObj.customer._id;
+    saveReceipt(recObj);
+  } else {
+   // console.log( 'customer may not  be in db')
+    // store customer name and return _id,  before save claim
+    saveCustomer(recObj.customer);
+  }
+
+   /**
+   * saves customer cust to customer collection if not exist already
+   * and sets claimObj.customer to savedcustomer._id
+   * @param {*} cust 
+   */
+  function saveCustomer( cust ) {
+    Customer.findOne({name: new RegExp('^'+cust.name+'$', "i")})
+    .then( (result) => {
+      if (result) {
+      //  console.log(result, ' cust find result')
+        claimObj.customer = result._id
+        saveReceipt(recObj)
+      } else {
+        let custObj = new Customer(cust);
+       // console.log(custObj, ' new customer obj')
+        custObj.save()
+        .then((sres) => {
+          recObj.customer = sres._id;
+         //  console.log(claimObj, ' recObj in customerloop')
+          saveReceipt(recObj)
+        })
+        .catch(err => {
+          console.log(err, ' customer save err')
+          // throw err
+        })
+      }
+    })
+    .catch( (err) => {
+      console.log (err, 'customer find  find err')
+      // throw err
+    })
+  }
+
+  /**
+   * saves recObj to Recuploads collection
+   * @param {*} recobj 
+   */
+  function saveReceipt(recobj) {
+      // handle image upload
+
+    receipt = new Recupload(recobj);
+    Recupload.updateOne({ _id: req.params.id }, { $set: receipt })
+    .then(result => {
+        // console.log(result)
+      if (result.n > 0) {
+        res.status(200).json({ message: "Update successful!" });
+      } else {
+        res.status(401).json({ message: "Not authorized!" });
+      }
+    })
+    .catch(error => {
+      console.log(error)
+      res.status(500).json({
+        message: "Couldn't udpate receipt! " + error
+      });
+    });
+  }
+
+});
+
+  
 module.exports = router;

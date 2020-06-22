@@ -54,7 +54,7 @@ const checkAuth = require('../middleware/check-auth');
 
 router.post('', checkAuth, upload.any(), function (req, res, next) {
 
-  const alloweds = ['filatei@torama.ng', 'eforcados@gtsng.com','eadekan@gtsng.com','ratimi@gtsng.com', 'dkings@gtsng.com', 'princess.filatei@gtsng.com'];
+  const alloweds = process.env.ALLOWEDS;
 
   if ( !alloweds.includes(req.userData.email)) {
      return res.status(500).json({message: 'Not allowed'});

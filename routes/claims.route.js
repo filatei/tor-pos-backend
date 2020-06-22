@@ -57,7 +57,7 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
   // userData was added to checkAuth middleware and passed along
   // console.log('userdata in claim ', req.userData.userId)
   claimObj.creator = req.userData.userId;
-  const alloweds = ['filatei@torama.ng', 'jduke@gtsng.com', 'olawefaodumu@gmail.com', 'princess.filatei@gtsng.com'];
+  const alloweds = process.env.ALLOWEDS;
 
   if ( !alloweds.includes(req.userData.email)) {
      return res.status(500).json({message: 'Not allowed'});

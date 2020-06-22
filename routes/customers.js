@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require("express");
 const Customer = require("../models/customer");
 const router = express.Router();
@@ -68,6 +69,11 @@ router.get("/:id",  (req, res, next) => {
 });
 
 router.post("", checkAuth, (req, res, next) => {
+  const alloweds = process.env.ALLOWEDS;
+
+  if ( !alloweds.includes(req.userData.email)) {
+    return res.status(500).json({message: 'Not allowed'});
+  }
   let cust = req.body;
   cust.barcode = req.body.name;
 
@@ -94,9 +100,7 @@ router.post("", checkAuth, (req, res, next) => {
 });
   
 router.put("/:id", checkAuth, (req, res, next) => {
-  const alloweds = ['filatei@torama.ng', 'eadekan@gtsng.com', 
-          'ratimi@gtsng.com', 'dkings@gtsng.com', 'eforcados@gtsng.com', 
-          'olawefaodumu@gmail.com', 'princess.filatei@gtsng.com'];
+  const alloweds = process.env.ALLOWEDS;
 
   if ( !alloweds.includes(req.userData.email)) {
     return res.status(500).json({message: 'Not allowed'});
@@ -123,7 +127,11 @@ router.put("/:id", checkAuth, (req, res, next) => {
 });
 
 router.delete("/:id", (req, res, next) => {
-    console.log('params ', req.params)
+  const alloweds = ['filatei@torama.ng'];  
+  if ( !alloweds.includes(req.userData.email)) {
+    return res.status(500).json({message: 'Not allowed'});
+  }
+
    Customer.deleteOne({ _id: req.params.id })
    .then(result => {
     console.log(result);
@@ -141,6 +149,10 @@ router.delete("/:id", (req, res, next) => {
 });
 
 router.post("/import", checkAuth, (req, res, next) => {
+  const alloweds = ['filatei@torama.ng']  
+  if ( !alloweds.includes(req.userData.email)) {
+    return res.status(500).json({message: 'Not allowed'});
+  }
 // exports.importClaim =  (req, res, next) => {
   // console.log(req)
   let customerArr = req.body;  // array of customer objs

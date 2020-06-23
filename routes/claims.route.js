@@ -215,8 +215,10 @@ router.get("/:id", (req, res, next) => {
     });
     Claim.
     findById(req.params.id).
-    populate('customer').
-    exec(function (err, claim) {
+    populate('customer')
+    .populate('creator')
+    .populate('updater')
+    .exec(function (err, claim) {
         // if (err) return handleError(err);
         if (err)  {
             return res.status(500).json({

@@ -9,4 +9,5 @@ router.post('/login', userController.userLogin);
 router.put("/:id", checkAuth, userController.updateUser);
 router.post("/getuser", checkAuth, userController.getUser);
 
+
 module.exports = router;

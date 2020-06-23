@@ -67,7 +67,8 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
   if ( typeof recObj.customer != 'object')
     recObj.customer = JSON.parse(recObj.customer);
   
-  recObj.userid = req.userData.userId;
+  // recObj.userid = req.userData.userId;
+  recObj.creator = req.userData.userId;
   recObj.products = JSON.parse(recObj.products)
 
   if (req.files) {
@@ -224,6 +225,8 @@ router.get('', (req, res, next) => {
 router.get("/:id", (req, res, next) => {
     Recupload.findById(req.params.id).
     populate('customer')
+    .populate('creator')
+    .populate('updater')
     .then(record => {
       if (record) {
         res.status(200).json(record);

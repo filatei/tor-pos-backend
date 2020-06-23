@@ -39,6 +39,7 @@ const recuploadSchema = mongoose.Schema({
     products: [],
 
     creator: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
+    updater: {type: mongoose.Schema.Types.ObjectId, ref: 'User'}
    
 },
 {

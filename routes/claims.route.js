@@ -158,7 +158,7 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
 })
 
 router.delete("/:id", checkAuth, (req, res, next) => {
-    const alloweds = ['filatei@torama.ng', 'princess.filatei@gtsng.com'];
+  const alloweds = ['filatei@torama.ng', 'princess.filatei@gtsng.com'];
 
   if ( !alloweds.includes(req.userData.email)) {
     return res.status(500).json({message: 'Not allowed'});

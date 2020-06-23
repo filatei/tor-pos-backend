@@ -160,6 +160,16 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
 })
  
 router.delete("/:id", checkAuth, (req, res, next) => {
+
+  if(!req.params.id) return res.status(401).json({error: 'empty id'});
+
+  const alloweds = process.env.DELALLOWEDS;
+
+  if ( !alloweds.includes(req.userData.email)) {
+     return res.status(500).json({message: 'Not allowed'});
+  }
+
+
   let filePath;
   Recupload.findById(req.params.id)
   .then (company => {
@@ -187,7 +197,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   .catch(error => {
     console.error(error)
     res.status(500).json({
-      message: "Deleting Company failed!"
+      message: "Deleting receipt failed!"
     });
   });
 

@@ -5,6 +5,8 @@ const Customer = require("../models/customer");
 const router = express.Router();
 const fs = require('fs');
 const mime = require('mime');
+const Accesslog = require("../models/accesslog");
+
 var sanitize = require('mongo-sanitize');
 
 const env = process.env.NODE_ENV || 'development';
@@ -50,6 +52,17 @@ var upload = multer({
   }
 });
 
+function logIncident(email, description) {
+  const logObj = new Accesslog({email: email, description: description})
+  logObj.save(logObj).
+  then(result => {
+    console.log ('access incident logged for user', result)
+  })
+  .catch(err => {
+    console.log ('access logging error for user ', err)
+  })
+}
+
 const checkAuth = require('../middleware/check-auth');
 
 router.post('', checkAuth, upload.any(), function (req, res, next) {
@@ -57,6 +70,7 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
   const alloweds = process.env.ALLOWEDS;
 
   if ( !alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, 'Not allowed to create Receipts')
      return res.status(500).json({message: 'Not allowed'});
   }
 
@@ -166,6 +180,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   const alloweds = process.env.DELALLOWEDS;
 
   if ( !alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, 'Not allowed to delete Receipts')
      return res.status(500).json({message: 'Not allowed'});
   }
 
@@ -259,6 +274,7 @@ router.put("/:id", checkAuth, (req, res, next) => {
   const alloweds = process.env.ALLOWEDS
 
   if ( !alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, 'Not allowed to update Receipts')
     return res.status(500).json({message: 'Not allowed'});
   }
 

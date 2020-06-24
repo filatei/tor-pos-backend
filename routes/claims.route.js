@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require("express");
 const Claim = require("../models/claim");
+const Accesslog = require("../models/accesslog");
 const Customer = require("../models/customer");
 const router = express.Router();
 
@@ -51,24 +52,37 @@ var upload = multer({
   }
 });
 
+function logIncident(email, description) {
+  const logObj = new Accesslog({email: email, description: description})
+  logObj.save(logObj).
+  then(result => {
+    console.log ('access incident logged for user', result)
+  })
+  .catch(err => {
+    console.log ('access logging error for user ', err)
+  })
+}
+
 router.post('', checkAuth, upload.any(), function (req, res, next) {
     let claimObj = req.body;
   // console.log('reqbody', claimObj)
   // userData was added to checkAuth middleware and passed along
   // console.log('userdata in claim ', req.userData.userId)
   claimObj.creator = req.userData.userId;
-  const alloweds = process.env.ALLOWEDS;
+  const alloweds = process.env.CLAIMALLOWEDS;
 
   if ( !alloweds.includes(req.userData.email)) {
-     return res.status(500).json({message: 'Not allowed'});
+     logIncident(req.userData.email, 'Not allowed to Add Claims')
+     return res.status(500).json({message: 'Not allowed to Add Claims'});
   }
+
   if ( !claimObj.customer || claimObj.customer === undefined )
     return res.status(500).json({message: 'check your data. empty customer?'});
 
   claimObj.avatar = claimObj.stan + '.jpg'
   // file upload handing
   if (req.files) {
-    console.log('files', req.files)
+    // console.log('files', req.files)
 
     req.files.forEach(file => {
         console.log(file, ' file in array')
@@ -79,8 +93,9 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
         else {
             fileName = 'uploads/claims/'  + req.userData.userId + '/' + file.filename
         }
-        // url = 'https://api.torama.ng'
+       
         url = req.protocol + '://' + req.get('host')
+        // url = 'https://api.torama.ng'
 
         path = url + '/' + fileName;
 
@@ -154,6 +169,8 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
       });
     }); 
   }
+
+  
     
 })
 
@@ -161,6 +178,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   const alloweds = ['filatei@torama.ng', 'princess.filatei@gtsng.com'];
 
   if ( !alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, 'Not allowed to Delete Claim')
     return res.status(500).json({message: 'Not allowed'});
   }
   Claim.deleteOne({ _id: req.params.id }).then(result => {
@@ -243,10 +261,11 @@ router.post('/import', checkAuth,  function (req, res, next) {
     const alloweds = ['filatei@torama.ng'];
     
     if ( !alloweds.includes(req.userData.email)) {
-        return res.status(500).json({message: 'Not allowed'});
+      logIncident(req.userData.email, 'Not allowed to import Claims')
+      return res.status(500).json({message: 'Not allowed'});
     }
     let claimsArr = req.body;
-    console.log(claimsArr, claimsArr, req.body)
+    // console.log(claimsArr, claimsArr, req.body)
     let userid = req.userData.userId;
     
     
@@ -338,8 +357,9 @@ router.post('/import', checkAuth,  function (req, res, next) {
 
 router.put("/:id", checkAuth, upload.any(), (req, res, next) => {
 
-    const alloweds = process.env.ALLOWEDS
+    const alloweds = process.env.CLAIMALLOWEDS
     if ( alloweds && !alloweds.includes(req.userData.email)) {
+        logIncident(req.userData.email, 'Not allowed to update Claims')
         return res.status(500).json({message: 'Not allowed'});
     }
 

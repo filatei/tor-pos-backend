@@ -14,7 +14,7 @@ const recuploadSchema = mongoose.Schema({
     date_teller: {type:  Date},
     
     log_code: {type:  String},
-    acquirer: {type:  String, required: true},
+    acquirer: {type:  String},
     stan: {type:  String},
     rrn: {type:  String},
     trans_id: {type:  String },

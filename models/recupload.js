@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const uniqueValidator = require('mongoose-unique-validator');
 
 const recuploadSchema = mongoose.Schema({
     customer: {type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true},
@@ -47,6 +46,5 @@ const recuploadSchema = mongoose.Schema({
 });
 
 recuploadSchema.plugin( uniqueValidator );
-recuploadSchema.plugin(require('mongoose-beautiful-unique-validation'));
 
 module.exports = mongoose.model('Recupload', recuploadSchema)

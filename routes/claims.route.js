@@ -110,7 +110,7 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
     claimObj.customer = JSON.parse(claimObj.customer);
 
   if (claimObj.customer._id){
-    console.log( 'customer may already be in db')
+    // console.log( 'customer may already be in db')
     // store customer id and save claim
     claimObj.customer = claimObj.customer._id;
     saveClaim(claimObj);
@@ -129,16 +129,16 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
     Customer.findOne({name: new RegExp('^'+cust.name+'$', "i")})
     .then( (result) => {
       if (result) {
-        console.log(result, ' cust find result')
+        // console.log(result, ' cust find result')
         claimObj.customer = result._id
         saveClaim(claimObj)
       } else {
         let custObj = new Customer(cust);
-        console.log(custObj, ' new customer obj')
+        //  console.log(custObj, ' new customer obj')
         custObj.save()
         .then((sres) => {
           claimObj.customer = sres._id;
-          console.log(claimObj, ' claimobj in customerloop')
+          //  console.log(claimObj, ' claimobj in customerloop')
           saveClaim(claimObj)
         })
         .catch(err => {
@@ -155,7 +155,7 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
 
   function saveClaim(claimobj) {
     claim = new Claim(claimobj);
-    console.log('claim new ', claim)
+    //  console.log('claim new ', claim)
     claim.save()
     .then(result => {
       res.status(201).json({
@@ -163,7 +163,7 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
       });
     })
     .catch(error => {
-      console.error(error )
+      // console.error(error )
       res.status(500).json({
         message: "Creating a claim failed! " + error 
       });
@@ -182,9 +182,9 @@ router.delete("/:id", checkAuth, (req, res, next) => {
     return res.status(500).json({message: 'Not allowed'});
   }
   Claim.deleteOne({ _id: req.params.id }).then(result => {
-    console.error('claim deleted ', result)
+    //  console.error('claim deleted ', result)
     if (result.n == 1 && result.deletedCount == 1) {
-      console.log(' claim deleted :', result.deletedCount)
+      // console.log(' claim deleted :', result.deletedCount)
       return res.status(200).json({ message: "Claim deleted! " + result });
     }
     else {
@@ -227,7 +227,7 @@ router.get('',(req, res, next) => {
 });
   
 router.get("/:id", (req, res, next) => {
-    console.log(req.params.id )
+    //  console.log(req.params.id )
     if (!req.params.id || req.params.id == undefined) return res.status(500).json({
         message: "claim id blank " 
     });
@@ -298,7 +298,7 @@ router.post('/import', checkAuth,  function (req, res, next) {
             
             return customer.save()
             .then(result => {
-            console.log('customer created')
+            // console.log('customer created')
             customerID = result._id;
             
             })
@@ -386,10 +386,10 @@ router.put("/:id", checkAuth, upload.any(), (req, res, next) => {
         claimObj.customer = JSON.parse(claimObj.customer)
 
   if (req.files) {
-    console.log('files', req.files)
+    // console.log('files', req.files)
 
     req.files.forEach(file => {
-        console.log(file, ' file in array')
+        // console.log(file, ' file in array')
         if (file.originalname == 'blob') {
             fileName = 'uploads/claims/'  + req.userData.userId + '/' + file.filename 
         }
@@ -409,7 +409,7 @@ router.put("/:id", checkAuth, upload.any(), (req, res, next) => {
   }
 
   if (claimObj.customer._id){
-    console.log( 'customer  already be in db')
+    // console.log( 'customer  already be in db')
     // store customer id and save claim
     claimObj.customer = claimObj.customer._id;
     saveClaim(claimObj);
@@ -428,12 +428,12 @@ router.put("/:id", checkAuth, upload.any(), (req, res, next) => {
     Customer.findOne({name: new RegExp('^'+cust.name+'$', "i")})
     .then( (result) => {
       if (result) {
-        console.log(result, ' cust find result')
+       // console.log(result, ' cust find result')
         claimObj.customer = result._id
         saveClaim(claimObj)
       } else {
         let custObj = new Customer(cust);
-        console.log(custObj, ' new customer obj')
+        //console.log(custObj, ' new customer obj')
         custObj.save()
         .then((sres) => {
           claimObj.customer = sres._id;

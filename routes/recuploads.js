@@ -88,7 +88,7 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
   if (req.files) {
     let fileName;
     req.files.forEach(file => {
-        console.log(file, ' file in array')
+        // console.log(file, ' file in array')
         if (file.originalname == 'blob') {
             fileName = 'uploads/recuploads/'  + req.userData.userId + '/' + file.filename 
         } else {
@@ -112,7 +112,7 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
     saveReceipt(recObj);
     
   } else {
-    console.log( 'customer may not  be in db')
+    // console.log( 'customer may not  be in db')
     // store customer name and return _id,  before save claim
     saveCustomer(recObj.customer);
   }
@@ -127,16 +127,13 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
     Customer.findOne({name: new RegExp('^'+cust.name+'$', "i")})
     .then( (result) => {
       if (result) {
-      //  console.log(result, ' cust find result')
         recObj.customer = result._id
         saveReceipt(recObj)
       } else {
         let custObj = new Customer(cust);
-        console.log(custObj, ' new customer obj')
         custObj.save()
         .then((sres) => {
          recObj.customer = sres._id;
-          console.log(recObj, ' recObj in customerloop')
           saveReceipt(recObj)
         })
         .catch(err => {
@@ -146,14 +143,13 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
       }
     })
     .catch( (err) => {
-      console.log (err, 'customer find  find err')
+      console.log (err, 'customer find err')
       // throw err
     })
   }
 
   function saveReceipt(recobj) {
     receipt = new Recupload(recobj);
-    console.log('receipt new ', receipt)
     receipt.save()
     .then(result => {
       res.status(201).json({
@@ -184,7 +180,6 @@ router.delete("/:id", checkAuth, (req, res, next) => {
      return res.status(500).json({message: 'Not allowed'});
   }
 
-
   let filePath;
   Recupload.findById(req.params.id)
   .then (company => {
@@ -193,7 +188,6 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   .catch(err => {
     return res.status(401).json({ message: "receipt not found in db!" });
   })
-  // console.log('params ', req.params)
   Recupload.deleteOne({ _id: req.params.id })
   .then(result => {
   if (result.n > 0) {

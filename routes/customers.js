@@ -31,7 +31,7 @@ router.get('',(req, res, next) => {
   custQuery
     .then(documents => {
       
-       console.log(documents.length)
+      //  console.log(documents.length)
       fetchedCustomers = documents;
       return Customer.countDocuments();
     })
@@ -81,9 +81,9 @@ router.post("", checkAuth, (req, res, next) => {
   cust.name = cust.name.toUpperCase();
 
   const customer = new Customer(cust);
-  console.log(customer);
+  //  console.log(customer);
   customer.save().then ((result)=> {
-    console.log(result)
+    // console.log(result)
     res.status(201).json({
       message: "Customer added successfully",
       customer: {
@@ -134,7 +134,7 @@ router.delete("/:id", (req, res, next) => {
 
    Customer.deleteOne({ _id: req.params.id })
    .then(result => {
-    console.log(result);
+    // console.log(result);
     if (result.n > 0) {
       res.status(200).json({ message: "Deletion successful!" });
     } else {
@@ -172,7 +172,7 @@ router.post("/import", checkAuth, (req, res, next) => {
   let uniqcusts = uniqcust(customerArr)
   Customer.collection.insertMany(uniqcusts, {ordered: true})
   .then(result => {
-    console.log('insertcount', result.insertedCount)
+    // console.log('insertcount', result.insertedCount)
     res.status(200).json({message: 'customers insertered ' + result.insertedCount })
   })
   .catch(err => {

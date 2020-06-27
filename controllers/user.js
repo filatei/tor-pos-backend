@@ -98,4 +98,22 @@ exports.updateUser = (req, res, next) => {
    
   }
 
+  exports.getUsers = (req, res, next) => {
+    //verify the JWT token generated for the user
+    // console.log(req.userData)
+    User.find({}).
+    then( result => {
+      console.log (result, 'of users')
+      result.map((r) =>  {
+        return {name: r.name, email: r.email}
+      })
+
+      res.status(200).json({
+        users: result
+      });
+    })
+   
+}
+
+
  

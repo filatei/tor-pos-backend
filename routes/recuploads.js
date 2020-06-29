@@ -216,7 +216,8 @@ router.get('', (req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
   const coyQuery = Recupload.find().sort({updatedAt:-1}).
-  populate('customer')
+  populate('customer').populate('creator').populate('updater')
+  
   let fetchedRecords;
   if (pageSize && currentPage) {
     coyQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);

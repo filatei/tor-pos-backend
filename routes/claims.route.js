@@ -204,7 +204,10 @@ router.get('',(req, res, next) => {
   const dateBegin = req.query.datebegin;
   const dateEnd = req.query.dateend;
   const currentPage = +req.query.page;
-  const claimQuery = Claim.find().sort({ updatedAt:-1 }).populate('customer');
+  const claimQuery = Claim.find().sort({ updatedAt:-1 })
+  .populate('customer')
+  .populate('creator')
+  .populate('updater')
   let fetchedClaims;
   if (pageSize && currentPage) {
     claimQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);

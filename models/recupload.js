@@ -26,7 +26,7 @@ const recuploadSchema = mongoose.Schema({
     reply_date: {type:  Date},
     received_date: {type:  Date},
     receipt_id: {type: String},
-    
+    auth_id: {type:  String},
     expiry_date: {type:  Date},
     company: {type:  String},
     remarks: {type:  String},

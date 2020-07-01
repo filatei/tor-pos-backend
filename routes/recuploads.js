@@ -279,7 +279,7 @@ router.put("/:id", checkAuth, (req, res, next) => {
 
   let formFields = Object.keys(req.body)  // an array
 
-  // remove fields from req.body with empty conten
+  // remove fields from req.body with empty content
   let recObj = formFields.filter(key => req.body[key] !== '')
             .reduce((obj, key) => {
               obj[key] = req.body[key];
@@ -366,6 +366,60 @@ router.put("/:id", checkAuth, (req, res, next) => {
   }
 
 });
+
+
+router.put('/imageupdate/:id', checkAuth, upload.any(), function (req, res, next) {
+
+  const alloweds = process.env.ALLOWEDS;
+
+  if ( !alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, 'Not allowed to create Receipts')
+     return res.status(500).json({message: 'Not allowed'});
+  }
+
+  
+  let updater = req.userData.userId;
+  
+
+  if (req.files) {
+    let fileName;
+    req.files.forEach(file => {
+        // console.log(file, ' file in array')
+        if (file.originalname == 'blob') {
+            fileName = 'uploads/recuploads/'  + req.userData.userId + '/' + file.filename 
+        } else {
+            fileName = 'uploads/recuploads/'  + req.userData.userId + '/' + file.filename
+        }
+
+        url = req.protocol + '://' + req.get('host')
+        // url = 'https://api.torama.ng'    
+        path = url + '/' + fileName;
+
+        // if (file.fieldname === 'image') {
+        //     recObj.image = path;
+        // }
+    })
+  }
+  
+  let recId = req.params.id
+  Recupload.findByIdAndUpdate({ _id: recId },{"image": path, "updater": updater})
+  .then( result => {
+    res.status(201).json({
+      message: 'Receipt  image updated successfully',
+      Recupload: {
+          ...result,
+          id: result._id
+      }
+    });
+
+  })
+  .catch(error => {
+    res.status(500).json({
+      message: "Creating a Recupload failed! " + error
+    });
+  }); 
+    
+})
 
   
 module.exports = router;

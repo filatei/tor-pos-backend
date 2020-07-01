@@ -30,6 +30,7 @@ const claimSchema = mongoose.Schema({
     expiry_date: {type:  Date},
     expiry_time: {type:  String},
     auth_id: {type:  String},
+    receipt_id: {type:  String},
   
     company: {type:  String},
     remarks: {type:  String},

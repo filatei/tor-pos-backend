@@ -212,6 +212,79 @@ router.delete("/:id", checkAuth, (req, res, next) => {
 
  });
 
+ router.get('/summary', (req, res, next) => {
+  const pageSize = +req.query.pagesize;
+  const currentPage = +req.query.page;
+  const coyQuery = Recupload.find().sort({updatedAt:-1})
+  .populate('customer').populate('creator').populate('updater')
+
+  /**
+   * compute sum of all txn_amounts per site given
+   * @param {*} site 
+   * @param {*} receipts 
+   */
+  function computeTotal(site, receipts, action) {
+    let sum = 0
+    const rc = receipts.filter(r => r.terminal_location == site &&
+          new Date(r.createdAt).toDateString() === new Date().toDateString() 
+            && r.action_taken === action)
+    rc.forEach( rrr => {
+      sum += rrr.txn_amount;
+    })
+    return sum
+  }
+  
+  let fetchedRecords;
+  if (pageSize && currentPage) {
+    coyQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
+  }
+  coyQuery
+    .then(documents => {
+        console.log(documents.count)
+        fetchedRecords = documents;
+        // compute summaries
+
+        const kptotToday = computeTotal('KPANSIA', fetchedRecords, 'PRODUCT RELEASED')
+        const obtotToday = computeTotal('OBUNNA', fetchedRecords, 'PRODUCT RELEASED')
+        const swtotToday = computeTotal('SWALI', fetchedRecords, 'PRODUCT RELEASED')
+        const oktotToday = computeTotal('OKUTUKUTU', fetchedRecords, 'PRODUCT RELEASED')
+        const ygtotToday = computeTotal('YENEGWE', fetchedRecords, 'PRODUCT RELEASED')
+        const kptotDecToday = computeTotal('KPANSIA', fetchedRecords, 'PRODUCT NOT RELEASED')
+        const obtotDecToday = computeTotal('OBUNNA', fetchedRecords, 'PRODUCT NOT RELEASED')
+        const swtotDecToday = computeTotal('SWALI', fetchedRecords, 'PRODUCT NOT RELEASED')
+        const oktotDecToday = computeTotal('OKUTUKUTU', fetchedRecords, 'PRODUCT NOT RELEASED')
+        const ygtotDecToday = computeTotal('YENEGWE', fetchedRecords, 'PRODUCT NOT RELEASED')
+
+        let result = {
+          kpansia: kptotToday,
+          kpansiadec: kptotDecToday,  
+
+          swali: swtotToday,
+          swalidec: swtotDecToday,
+
+          okutukutu: oktotToday,
+          okutukutudec: oktotDecToday,
+          yenegwe: ygtotToday,
+          yenegwedec: ygtotDecToday,
+          obunna: obtotToday,
+          obunnadec: obtotDecToday
+          
+        }
+        console.log(result, 'result')
+        res.status(200).json({
+          message: "Summaries",
+          records: result
+        });
+
+      // return Recupload.countDocuments();
+    })
+    .catch(error => {
+      res.status(500).json({
+        message: "Fetching records failed!" + error
+      });
+    });
+});
+
 router.get('', (req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
@@ -255,7 +328,7 @@ router.get("/:id", (req, res, next) => {
       }
     }).catch(error => {
       res.status(500).json({
-        message: "Fetching record failed!"
+        message: "Fetching record failed!" + error
       });
     });
   });
@@ -367,9 +440,7 @@ router.put("/:id", checkAuth, (req, res, next) => {
 
 });
 
-
 router.put('/imageupdate/:id', checkAuth, upload.any(), function (req, res, next) {
-
   const alloweds = process.env.ALLOWEDS;
 
   if ( !alloweds.includes(req.userData.email)) {
@@ -377,10 +448,8 @@ router.put('/imageupdate/:id', checkAuth, upload.any(), function (req, res, next
      return res.status(500).json({message: 'Not allowed'});
   }
 
-  
   let updater = req.userData.userId;
   
-
   if (req.files) {
     let fileName;
     req.files.forEach(file => {
@@ -417,9 +486,9 @@ router.put('/imageupdate/:id', checkAuth, upload.any(), function (req, res, next
     res.status(500).json({
       message: "Creating a Recupload failed! " + error
     });
-  }); 
-    
+  });   
 })
+
 
   
 module.exports = router;

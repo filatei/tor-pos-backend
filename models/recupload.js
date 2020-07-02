@@ -42,8 +42,16 @@ const recuploadSchema = mongoose.Schema({
    
 },
 {
-    timestamps: true
+    timestamps: true,
+    autoindex: true
 });
+
+recuploadSchema.index({ stan: 'text', terminal_location: 'text', acquirer: 'text',
+    card_number: 'text', action_taken: 'text', customer: 'text'
+})
+
+const rc = mongoose.model('Recupload', recuploadSchema)
+rc.createIndexes();
 
 recuploadSchema.plugin( uniqueValidator );
 

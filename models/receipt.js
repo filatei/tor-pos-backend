@@ -37,6 +37,13 @@ const receiptSchema = mongoose.Schema({
 
 });
 
+receiptSchema.index({ stan: 'text', terminal_location: 'text', acquirer: 'text',
+    card_number: 'text', action_taken: 'text', customer: 'text'
+})
+
+const rc = mongoose.model('Receipt', receiptSchema)
+rc.createIndexes();
+
 receiptSchema.plugin( uniqueValidator );
 
 module.exports = mongoose.model('Receipt', receiptSchema)

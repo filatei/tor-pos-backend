@@ -39,7 +39,7 @@ const storage = multer.diskStorage({
 var upload = multer({
   storage: storage,
   limits: {
-    fileSize: 1024 * 1024 * 2
+    fileSize: 1024 * 1024 * 5
   },
   fileFilter: (req, file, cb) => {
     // console.log(file.mimetype)
@@ -254,7 +254,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
         const swtotDecToday = computeTotal('SWALI', fetchedRecords, 'PRODUCT NOT RELEASED')
         const oktotDecToday = computeTotal('OKUTUKUTU', fetchedRecords, 'PRODUCT NOT RELEASED')
         const ygtotDecToday = computeTotal('YENEGWE', fetchedRecords, 'PRODUCT NOT RELEASED')
-
+        
         let result = {
           kpansia: kptotToday,
           kpansiadec: kptotDecToday,  
@@ -288,16 +288,29 @@ router.delete("/:id", checkAuth, (req, res, next) => {
 router.get('', (req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
-  const coyQuery = Recupload.find().sort({updatedAt:-1}).
+  const site = req.query.site;
+  const idate = req.query.idate
+  let today = new Date().toDateString()
+  // console.log(new Date(idate), idate, site)
+  let coyQuery 
+  // if (site && idate) {
+  //    coyQuery = Recupload.find({terminal_location:site, createdAt:new Date(idate)}).sort({createdAt:-1}).
+  //   populate('customer').populate('creator').populate('updater')
+  // } else {
+  //    coyQuery = Recupload.find().sort({createdAt:-1}).
+  //   populate('customer').populate('creator').populate('updater')
+  // }
+
+  coyQuery = Recupload.find().sort({createdAt:-1}).
   populate('customer').populate('creator').populate('updater')
-  
+
   let fetchedRecords;
   if (pageSize && currentPage) {
     coyQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
   }
   coyQuery
     .then(documents => {
-        console.log(documents.count)
+       //  console.log(documents.count)
         fetchedRecords = documents;
       return Recupload.countDocuments();
     })
@@ -314,7 +327,35 @@ router.get('', (req, res, next) => {
     });
   });
 });
-
+router.get("/getByText", (req, res, next) => {
+  let stan = req.query.stan
+  // get array
+  let records 
+  Recupload.find().populate('customer')
+        .then( rec => {
+          records = rec.filter(r => r.customer.name.toLowerCase().includes(stan.toLowerCase()))
+          console.log(records)
+          Recupload.find({ $text: { $search: stan } })
+            .then(record => {
+              if (record) {
+                res.status(200).json([...record, ...records]);
+              } else {
+                res.status(404).json({ message: "record not found!" });
+              }
+            }).catch(error => {
+              res.status(500).json({
+                message: "Fetching record failed!" + error
+              });
+            });
+        })
+        .catch(error => {
+          res.status(500).json({
+            message: "Fetching record failed!" + error
+          });
+        });
+  
+  
+});
 router.get("/:id", (req, res, next) => {
     Recupload.findById(req.params.id).
     populate('customer')

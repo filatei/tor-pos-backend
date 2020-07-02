@@ -3,6 +3,8 @@ const express = require("express");
 const Recupload = require("../models/recupload");
 const Customer = require("../models/customer");
 const router = express.Router();
+const moment = require('moment')
+
 const fs = require('fs');
 const mime = require('mime');
 const Accesslog = require("../models/accesslog");
@@ -290,9 +292,30 @@ router.get('', (req, res, next) => {
   const currentPage = +req.query.page;
   const site = req.query.site;
   const idate = req.query.idate
-  let today = new Date().toDateString()
-  // console.log(new Date(idate), idate, site)
+  const today = moment().startOf('day')
   let coyQuery 
+
+  // condition for today results
+  let cond1 = {
+      createdAt: {
+        $gte: today.toDate(),
+        $lte: moment(today).endOf('day').toDate()
+      }
+  }
+  // if (idate) {
+  //   coyQuery = Recupload.find(cond1).sort({createdAt:-1}).
+  //   populate('customer').populate('creator').populate('updater')
+
+  // } else {
+   
+
+  // }
+
+  coyQuery = Recupload.find().sort({createdAt:-1}).
+  populate('customer').populate('creator').populate('updater')
+
+  // console.log(new Date(idate), idate, site)
+  
   // if (site && idate) {
   //    coyQuery = Recupload.find({terminal_location:site, createdAt:new Date(idate)}).sort({createdAt:-1}).
   //   populate('customer').populate('creator').populate('updater')
@@ -301,9 +324,7 @@ router.get('', (req, res, next) => {
   //   populate('customer').populate('creator').populate('updater')
   // }
 
-  coyQuery = Recupload.find().sort({createdAt:-1}).
-  populate('customer').populate('creator').populate('updater')
-
+  
   let fetchedRecords;
   if (pageSize && currentPage) {
     coyQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
@@ -335,7 +356,7 @@ router.get("/getByText", (req, res, next) => {
         .then( rec => {
           records = rec.filter(r => r.customer.name.toLowerCase().includes(stan.toLowerCase()))
           console.log(records)
-          Recupload.find({ $text: { $search: stan } })
+          Recupload.find({ $text: { $search: stan } }).populate('customer')
             .then(record => {
               if (record) {
                 res.status(200).json([...record, ...records]);

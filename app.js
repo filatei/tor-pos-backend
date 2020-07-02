@@ -19,6 +19,7 @@ const receiptRoutes = require("./routes/receipts");
 const settingRoutes = require("./routes/settings");
 const claimRoutes = require("./routes/claims.route");
 const recUploadRoutes = require("./routes/recuploads");
+const recsummary = require("./routes/recsummary");
 
 //let connectStr =  'mongodb://localhost:27017/torposdb';
 let connectStr = process.env.CONNECT_STR
@@ -76,6 +77,7 @@ app.use("/api/receipts", receiptRoutes);
 app.use("/api/settings", settingRoutes);
 app.use("/api/claims", claimRoutes);
 app.use("/api/recuploads", recUploadRoutes);
+app.use("/api/recsummary", recsummary);
 
 
 module.exports = app;

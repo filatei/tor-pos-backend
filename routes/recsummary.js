@@ -73,16 +73,11 @@ Recupload.aggregate([{
             action_taken: "$action_taken",
             product: "$products.name"
         },
-       
-        
+        totalqty: {$sum: "$products.qty"},
+        totalamt: {$sum: { $multiply: [ "$products.qty", "$products.price" ] }}
     },
     
-},{$sort:{"_id.action_taken":1}},
-
-{ "$addFields": {
-    totalqty: {$sum: "$products.qty"},
-    totalamt: {$sum: { $multiply: [ "$products.qty", "$products.price" ] }}
-} },
+},{$sort:{"_id.site":1,"_id.action_taken":-1, "_id.product":-1, }},
 {
     $group: {
         _id: {
@@ -101,7 +96,7 @@ Recupload.aggregate([{
         }
     }
     
-    },{$sort:{"_id.site":1,"_id.year":-1,"_id.month":-1, "_id.day":-1}} 
+    },{$sort:{"_id.year":-1,"_id.month":-1, "_id.day":-1}} 
 
 ]
 ).then( result => {

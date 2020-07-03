@@ -77,7 +77,7 @@ Recupload.aggregate([{
         totalamt: {$sum: { $multiply: [ "$products.qty", "$products.price" ] }}
     },
     
-},{$sort:{"_id.site":-1 }},
+},{$sort:{"_id.action_taken":1}},
 {
     $group: {
         _id: {
@@ -96,7 +96,7 @@ Recupload.aggregate([{
         }
     }
     
-    },{$sort:{"_id.year":-1,"_id.month":-1, "_id.day":-1}} 
+    },{$sort:{"_id.site":1,"_id.year":-1,"_id.month":-1, "_id.day":-1}} 
 
 ]
 ).then( result => {

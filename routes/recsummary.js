@@ -73,11 +73,16 @@ Recupload.aggregate([{
             action_taken: "$action_taken",
             product: "$products.name"
         },
-        totalqty: {$sum: "$products.qty"},
-        totalamt: {$sum: { $multiply: [ "$products.qty", "$products.price" ] }}
+       
+        
     },
     
 },{$sort:{"_id.action_taken":1}},
+
+{ "$addFields": {
+    totalqty: {$sum: "$products.qty"},
+    totalamt: {$sum: { $multiply: [ "$products.qty", "$products.price" ] }}
+} },
 {
     $group: {
         _id: {

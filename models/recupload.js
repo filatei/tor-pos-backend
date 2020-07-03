@@ -35,7 +35,11 @@ const recuploadSchema = mongoose.Schema({
     terminal_location: {type:  String},
     comments: {type:  String},
     image: {type:  String},
-    products: [],
+    products: [{
+        name: {type: String},
+        qty: {type: Number},
+        price: {type: Number}
+    }],
 
     creator: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
     updater: {type: mongoose.Schema.Types.ObjectId, ref: 'User'}

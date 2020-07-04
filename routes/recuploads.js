@@ -77,14 +77,17 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
   }
 
   let recObj = req.body;
+  console.log('before ',recObj)
   // convert to number what is number
+  recObj.products = JSON.parse(recObj.products)
   recObj.products.map(p => {
     p.qty = parseInt(p.qty)
     p.price = parseInt(p.price)
   })
   recObj.txn_amount = parseInt(recObj.txn_amount)
+  recObj.amt_teller = parseInt(recObj.amt_teller)
+  console.log('after ', recObj)
   
-
   if ( !recObj.customer || recObj.customer === undefined )
     return res.status(500).json({message: 'check your data. empty customer?'});
 
@@ -93,7 +96,14 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
   
   // recObj.userid = req.userData.userId;
   recObj.creator = req.userData.userId;
-  recObj.products = JSON.parse(recObj.products)
+ // recObj.products = JSON.parse(recObj.products)
+  // convert to number what is number
+  // recObj.products.map(p => {
+  //   p.qty = parseInt(p.qty)
+  //   p.price = parseInt(p.price)
+  // })
+  // recObj.txn_amount = parseInt(recObj.txn_amount)
+  console.log(recObj)
 
   if (req.files) {
     let fileName;

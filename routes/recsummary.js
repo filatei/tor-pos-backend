@@ -62,23 +62,25 @@ const checkAuth = require('../middleware/check-auth');
    * }
    */
 Recupload.aggregate([
-    {$unwind: "$products"}, {
+    {$unwind: "$products"}, 
+    {$match: { action_taken:'PRODUCT RELEASED' } }, 
+    
+    {
     $group: {
         _id: {
             month: {$month: "$createdAt"},
             day: {$dayOfMonth: "$createdAt"},
             year: {$year: "$createdAt"},
             site: "$terminal_location",
-            action_taken: "$action_taken",
+            // action_taken: "$action_taken",
             product: "$products.name"
         },
         totalqty: {$sum: { $toInt: "$products.qty" }},
         totalamt: {$sum: { $multiply: [ { $toInt: "$products.qty" }, { $toInt: "$products.price" } ] }}
     },
-    
 },
 
-{$sort:{"_id.site":1,"_id.action_taken":-1, "_id.product":-1, }},
+{$sort:{"_id.site":1,"_id.product":-1, }},
 {
     $group: {
         _id: {
@@ -86,18 +88,21 @@ Recupload.aggregate([
             day: "$_id.day",
             year: "$_id.year",
             site:"$_id.site",
-            action:"$_id.action_taken"
+           
         },
         products: {
             $push: {
                 name: "$_id.product",
                 totalqty: "$totalqty",
-                totalamt: "$totalamt"
+                totalamt: "$totalamt",
+               
+                // action:"$_id.action_taken"
             }
         }
     }
     
-    },{$sort: {"_id.year":-1,"_id.month":-1, "_id.day":-1, "_id.site":1,  "_id.action":-1 } } 
+    },{$sort: {"_id.year":-1,"_id.month":-1, "_id.day":-1, "_id.site":1 } },
+    
 
 ]
 ).then( result => {

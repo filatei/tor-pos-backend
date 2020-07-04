@@ -61,9 +61,8 @@ const checkAuth = require('../middleware/check-auth');
    * }
    * }
    */
-Recupload.aggregate([{
-    $unwind: "$products"
-}, {
+Recupload.aggregate([
+    {$unwind: "$products"}, {
     $group: {
         _id: {
             month: {$month: "$createdAt"},
@@ -73,11 +72,13 @@ Recupload.aggregate([{
             action_taken: "$action_taken",
             product: "$products.name"
         },
-        totalqty: {$sum: "$products.qty"},
-        totalamt: {$sum: { $multiply: [ "$products.qty", "$products.price" ] }}
+        totalqty: {$sum: { $toInt: "$products.qty" }},
+        totalamt: {$sum: { $multiply: [ { $toInt: "$products.qty" }, { $toInt: "$products.price" } ] }}
     },
     
-},{$sort:{"_id.site":1,"_id.action_taken":-1, "_id.product":-1, }},
+},
+
+{$sort:{"_id.site":1,"_id.action_taken":-1, "_id.product":-1, }},
 {
     $group: {
         _id: {
@@ -96,7 +97,7 @@ Recupload.aggregate([{
         }
     }
     
-    },{$sort:{"_id.year":-1,"_id.month":-1, "_id.day":-1}} 
+    },{$sort: {"_id.year":-1,"_id.month":-1, "_id.day":-1, "_id.site":1,  "_id.action":-1 } } 
 
 ]
 ).then( result => {

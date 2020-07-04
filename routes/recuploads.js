@@ -77,6 +77,14 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
   }
 
   let recObj = req.body;
+  // convert to number what is number
+  recObj.products.map(p => {
+    p.qty = parseInt(p.qty)
+    p.price = parseInt(p.price)
+  })
+  recObj.txn_amount = parseInt(recObj.txn_amount)
+  
+
   if ( !recObj.customer || recObj.customer === undefined )
     return res.status(500).json({message: 'check your data. empty customer?'});
 
@@ -231,7 +239,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
           new Date(r.createdAt).toDateString() === new Date().toDateString() 
             && r.action_taken === action)
     rc.forEach( rrr => {
-      sum += rrr.txn_amount;
+      sum += parseInt(rrr.txn_amount +'');
     })
     return sum
   }

@@ -41,7 +41,7 @@ const storage = multer.diskStorage({
 var upload = multer({
   storage: storage,
   limits: {
-    fileSize: 1024 * 1024 * 5
+    fileSize: 1024 * 1024 * 10
   },
   fileFilter: (req, file, cb) => {
     // console.log(file.mimetype)
@@ -85,8 +85,9 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
     p.price = parseInt(p.price)
   })
   recObj.txn_amount = parseInt(recObj.txn_amount)
-  recObj.amt_teller = parseInt(recObj.amt_teller)
-  console.log('after ', recObj)
+  // if ( recObj.amt_teller)
+  //   recObj.amt_teller = parseInt(recObj.amt_teller)
+  // console.log('after ', recObj)
   
   if ( !recObj.customer || recObj.customer === undefined )
     return res.status(500).json({message: 'check your data. empty customer?'});
@@ -203,7 +204,8 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   let filePath;
   Recupload.findById(req.params.id)
   .then (company => {
-    filePath = 'uploads/' + company.image.split('uploads')[1];
+    filePath = 'uploads/' + company.image.split('/uploads/')[1];
+    console.log('filepath', filePath)
   })
   .catch(err => {
     return res.status(401).json({ message: "receipt not found in db!" });

@@ -181,30 +181,54 @@ router.delete("/:id", checkAuth, (req, res, next) => {
     logIncident(req.userData.email, 'Not allowed to Delete Claim')
     return res.status(500).json({message: 'Not allowed'});
   }
-  Claim.deleteOne({ _id: req.params.id }).then(result => {
-    //  console.error('claim deleted ', result)
-    if (result.n == 1 && result.deletedCount == 1) {
-      // console.log(' claim deleted :', result.deletedCount)
-      return res.status(200).json({ message: "Claim deleted! " + result });
-    }
-    else {
-      return res.status(401).json({ message: "Not Authorised!" });
-    }
+  
+  let filePath;
+  Claim.findById(req.params.id)
+  .then (claim => {
+    filePath = 'uploads/' + claim.image.split('/uploads/')[1];
+    console.log('filepath claim', filePath)
+    deleteClaim(filePath);
   })
-    .catch(error => {
-      return res.status(500).json({
-        message: "Deleting claim failed! - " + error
+  .catch(err => {
+    return res.status(401).json({ message: "receipt not found in db!" });
+  })
+
+
+  function deleteClaim(filepath) {
+    Claim.deleteOne({ _id: req.params.id }).then(result => {
+      //  console.error('claim deleted ', result)
+      if (result.n == 1 && result.deletedCount == 1) {
+        // console.log(' claim deleted :', result.deletedCount)
+        fs.unlink(filepath, (err) => {
+          if (err) {
+            console.error(err)
+            return;
+          }
+          console.log('related file deleted')
+        })
+       
+        return res.status(200).json({ message: "Claim deleted! " + result });
+      }
+      else {
+        return res.status(401).json({ message: "Not Authorised!" });
+      }
+    })
+      .catch(error => {
+        return res.status(500).json({
+          message: "Deleting claim failed! - " + error
+        });
       });
-    });
+  }
+  
   
 });
   
 router.get('',(req, res, next) => {
-    const pageSize = +req.query.pagesize;
+  const pageSize = +req.query.pagesize;
   const dateBegin = req.query.datebegin;
   const dateEnd = req.query.dateend;
   const currentPage = +req.query.page;
-  const claimQuery = Claim.find().sort({ updatedAt:-1 })
+  const claimQuery = Claim.find().sort({ createdAt:-1 })
   .populate('customer')
   .populate('creator')
   .populate('updater')

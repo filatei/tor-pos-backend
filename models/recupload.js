@@ -50,8 +50,8 @@ const recuploadSchema = mongoose.Schema({
     autoindex: true
 });
 
-recuploadSchema.index({ stan: 'text', terminal_location: 'text', acquirer: 'text',
-    card_number: 'text', action_taken: 'text', customer: 'text'
+recuploadSchema.index({ stan: 'text', rrn: 'text', auth_id: 'text', receipt_id: 'text', terminal_location: 'text', acquirer: 'text',
+    card_number: 'text', action_taken: 'text', trans_date: 'text', company: 'text'
 })
 
 const rc = mongoose.model('Recupload', recuploadSchema)

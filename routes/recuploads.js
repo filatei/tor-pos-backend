@@ -66,6 +66,7 @@ function logIncident(email, description) {
 }
 
 const checkAuth = require('../middleware/check-auth');
+const { deleteReceipt } = require('../controllers/receipt');
 
 router.post('', checkAuth, upload.any(), function (req, res, next) {
 
@@ -205,32 +206,39 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   Recupload.findById(req.params.id)
   .then (company => {
     filePath = 'uploads/' + company.image.split('/uploads/')[1];
-    console.log('filepath', filePath)
+    console.log('filepath', filePath);
+    deleteReceipt(filePath);
   })
   .catch(err => {
-    return res.status(401).json({ message: "receipt not found in db!" });
+    return res.status(401).json({ message: "receipt not found in db!" + err });
   })
-  Recupload.deleteOne({ _id: req.params.id })
-  .then(result => {
-  if (result.n > 0) {
-    // delete product.icon
-    fs.unlink(filePath, (err) => {
-      if (err) {
-        console.error(err)
-      }
-      console.log('related file deleted')
+
+  function deleteReceipt(filepath) {
+    Recupload.deleteOne({ _id: req.params.id })
+    .then(result => {
+    if (result.n > 0) {
+      // delete product.icon
+      fs.unlink(filepath, (err) => {
+        if (err) {
+          console.error(err)
+          return;
+        }
+        console.log('related file deleted')
+        
+      })
+      res.status(200).json({ message: "Deletion successful!" });
+    } else {
+      res.status(401).json({ message: "Not authorized!" });
+    }
     })
-    res.status(200).json({ message: "Deletion successful!" });
-  } else {
-    res.status(401).json({ message: "Not authorized!" });
-  }
-  })
-  .catch(error => {
-    console.error(error)
-    res.status(500).json({
-      message: "Deleting receipt failed!"
+    .catch(error => {
+      console.error(error)
+      res.status(500).json({
+        message: "Deleting receipt failed!"
+      });
     });
-  });
+  }
+  
 
  });
 

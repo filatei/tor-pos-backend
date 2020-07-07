@@ -106,7 +106,7 @@ Recupload.aggregate([
 
 ]
 ).then( result => {
-    console.log(result)
+    // console.log(result)
     res.status(200).json({
         message: "Summaries",
         records: result
@@ -277,7 +277,7 @@ router.get("/getByText", (req, res, next) => {
   Recupload.find().populate('customer')
         .then( rec => {
           records = rec.filter(r => r.customer.name.toLowerCase().includes(stan.toLowerCase()))
-          console.log(records)
+          // console.log(records)
           Recupload.find({ $text: { $search: stan } })
             .then(record => {
               if (record) {

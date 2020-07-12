@@ -376,6 +376,7 @@ router.get('', (req, res, next) => {
     });
   });
 });
+
 router.get("/getByText", (req, res, next) => {
   let stan = req.query.stan
   // get array

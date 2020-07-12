@@ -103,7 +103,7 @@ exports.updateUser = (req, res, next) => {
     // console.log(req.userData)
     User.find({}).
     then( result => {
-      console.log (result, 'of users')
+      // console.log (result, 'of users')
       result.map((r) =>  {
         return {name: r.name, email: r.email}
       })

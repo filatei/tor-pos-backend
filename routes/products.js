@@ -3,7 +3,6 @@ const Product = require("../models/product");
 const router = express.Router();
 const path = require('path')
 const fs = require('fs')
-const os = require('os')
 var multer  = require('multer')
 const DIR = './uploads/productimages/';
 const storage = multer.diskStorage({
@@ -11,7 +10,7 @@ const storage = multer.diskStorage({
     cb(null, DIR);
   },
   filename: (req, file, cb) => {
-    const fileName = new Date().getTime() + '-' + file.originalname.toLowerCase().split(' ').join('-');
+    const fileName =  new Date().getTime() + '-' + file.originalname.toLowerCase().split(' ').join('-');
     console.log(fileName)
     cb(null, fileName)
   }
@@ -22,7 +21,7 @@ const storage = multer.diskStorage({
 var upload = multer({
   storage: storage,
   limits: {
-    fileSize: 1024 * 1024 * 5
+    fileSize: 1024 * 1024 * 1
   },
   fileFilter: (req, file, cb) => {
     if (file.mimetype == "image/gif" || file.mimetype == "image/png" || file.mimetype == "image/jpg" || file.mimetype == "image/jpeg") {
@@ -36,20 +35,29 @@ var upload = multer({
 
 const checkAuth = require('../middleware/check-auth');
 
-router.post('', checkAuth, upload.single('icon'), function (req, res, next) {
+router.post('', checkAuth, upload.single('image'), function (req, res, next) {
   let path = ""
   let url= ""
   if (req.file) { 
     url = req.protocol + '://' + req.get('host')
-    console.log(url)
+    // url = 'https://api.torama.ng'
+    // console.log(url)
     path = url + '/uploads/productimages/' + req.file.filename; 
-    // path = 'https://api.torama.ng' + '/uploads/productimages/' + req.file.filename;
+    // console.log(path)
   }
   
   console.log('path: ', path)
   console.log('req.body', req.body)
+
   let prodObj = req.body;
   prodObj.creator = req.userData.userId;
+
+
+  // if ( typeof prodObj.categoryId != 'object'){
+  //   prodObj.categoryId = JSON.parse(prodObj.categoryId);
+  //   prodObj.categoryId = prodObj.categoryId._id;
+  // }
+
   const product = new Product(prodObj);
   product.icon = path;
 
@@ -70,9 +78,7 @@ router.post('', checkAuth, upload.single('icon'), function (req, res, next) {
   
 })
 
-
-
-router.put("/:id", checkAuth, upload.single('icon'), (req, res, next) => {
+router.put("/:id", checkAuth, upload.single('image'), (req, res, next) => {
     let path = ""
     let url= ""
     let prodObj = req.body;
@@ -80,11 +86,11 @@ router.put("/:id", checkAuth, upload.single('icon'), (req, res, next) => {
     const taxRate = req.body.taxRate;
     const description = req.body.description;
     const name = req.body.name;
-    const updatedAt = req.body.updatedAt;
+    // const updatedAt = req.body.updatedAt;
     const updater = req.userData.userId;
     const id = req.params.id;
-    prodObj._id = id
-    prodObj.updater = updater
+    prodObj._id = req.params.id;
+    prodObj.updater = req.userData.userId;
     const product = new Product(prodObj);
     if (req.file && req.file.filename && req.file.filename.length > 0) {
       url = req.protocol + '://' + req.get('host')
@@ -116,17 +122,26 @@ router.put("/:id", checkAuth, upload.single('icon'), (req, res, next) => {
       })
       .catch(error => {
         res.status(500).json({
-          message: "Couldn't udpate product! " + error
+          message: "Couldn't update product! " + error
         });
       });
     }   
 });
 
 router.delete("/:id", checkAuth, (req, res, next) => {
+
+  const alloweds = process.env.DELALLOWEDS;
+
+  if ( !alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, 'Not allowed to delete ')
+     return res.status(500).json({message: 'Not allowed'});
+  }
+
   let filePath;
   Product.findById(req.params.id)
   .then (product => {
-    filePath = 'uploads/' + product.icon.split('uploads')[1];
+    filePath = 'uploads/' + product.icon.split('/uploads/')[1];
+    console.log(filePath)
   })
   .catch(err => {
     return res.status(401).json({ message: "product not found in db!" + err });
@@ -159,7 +174,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
 router.get('',(req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
-  const productQuery = Product.find();
+  const productQuery = Product.find().populate('categoryId');
   let fetchedProducts;
   if (pageSize && currentPage) {
     productQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
@@ -184,7 +199,7 @@ router.get('',(req, res, next) => {
 });
 
 router.get("/:id", (req, res, next) => {
-    Product.findById(req.params.id)
+    Product.findById(req.params.id).populate('categoryId')
     .then(product => {
       if (product) {
         res.status(200).json(product);

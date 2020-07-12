@@ -20,6 +20,7 @@ const settingRoutes = require("./routes/settings");
 const claimRoutes = require("./routes/claims.route");
 const recUploadRoutes = require("./routes/recuploads");
 const recsummary = require("./routes/recsummary");
+const category = require("./routes/category");
 
 //let connectStr =  'mongodb://localhost:27017/torposdb';
 let connectStr = process.env.CONNECT_STR
@@ -78,6 +79,7 @@ app.use("/api/settings", settingRoutes);
 app.use("/api/claims", claimRoutes);
 app.use("/api/recuploads", recUploadRoutes);
 app.use("/api/recsummary", recsummary);
+app.use("/api/productcategory", category);
 
 
 module.exports = app;

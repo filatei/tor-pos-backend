@@ -15,7 +15,11 @@ const siteSchema = mongoose.Schema({
     email: String,
     icon: String,
     taxRate: Number
-});
+},
+{
+    timestamp: true
+}
+);
 
 siteSchema.plugin( uniqueValidator );
 

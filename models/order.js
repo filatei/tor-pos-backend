@@ -28,7 +28,11 @@ const orderSchema = mongoose.Schema({
         newValues: {}
     }]
 
-});
+},
+{
+    timestamp: true
+}
+);
 
 orderSchema.plugin( uniqueValidator );
 

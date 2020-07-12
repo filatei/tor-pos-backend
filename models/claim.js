@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 const uniqueValidator = require('mongoose-unique-validator');
 
 const claimSchema = mongoose.Schema({
-  
     customer: {type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true},
     txn_amount: {type:  Number, required: true},
     trans_id: {type:  String },
@@ -46,8 +45,16 @@ const claimSchema = mongoose.Schema({
     updater: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
 },
 {
-    timestamps: true
+    timestamps: true,
+    autoindex: true
 });
+
+claimSchema.index({ stan: 'text', rrn: 'text', auth_id: 'text', receipt_id: 'text', terminal_location: 'text', acquirer: 'text',
+    card_number: 'text', action_taken: 'text', trans_date: 'text', company: 'text'
+})
+
+const cl = mongoose.model('Claim', claimSchema)
+cl.createIndexes();
 
 claimSchema.plugin( uniqueValidator );
 claimSchema.plugin(require('mongoose-beautiful-unique-validation'));

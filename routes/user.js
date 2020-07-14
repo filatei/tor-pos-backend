@@ -74,7 +74,7 @@ router.post("/login", (req, res, next) => {
 });
 
 
-router.post('/signup', (req, user, next) => {
+router.post('/signup', (req, res, next) => {
     bcrypt.hash(req.body.password,10).then( hash => {
         const user = new User({
             name: req.body.name,

@@ -86,9 +86,6 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
     p.price = parseInt(p.price)
   })
   recObj.txn_amount = parseInt(recObj.txn_amount)
-  // if ( recObj.amt_teller)
-  //   recObj.amt_teller = parseInt(recObj.amt_teller)
-  // console.log('after ', recObj)
   
   if ( !recObj.customer || recObj.customer === undefined )
     return res.status(500).json({message: 'check your data. empty customer?'});
@@ -96,21 +93,13 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
   if ( typeof recObj.customer != 'object')
     recObj.customer = JSON.parse(recObj.customer);
   
-  // recObj.userid = req.userData.userId;
   recObj.creator = req.userData.userId;
- // recObj.products = JSON.parse(recObj.products)
-  // convert to number what is number
-  // recObj.products.map(p => {
-  //   p.qty = parseInt(p.qty)
-  //   p.price = parseInt(p.price)
-  // })
-  // recObj.txn_amount = parseInt(recObj.txn_amount)
+ 
   console.log(recObj)
 
   if (req.files) {
     let fileName;
     req.files.forEach(file => {
-        // console.log(file, ' file in array')
         if (file.originalname == 'blob') {
             fileName = 'uploads/recuploads/'  + req.userData.userId + '/' + file.filename 
         } else {
@@ -270,10 +259,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   }
   coyQuery
     .then(documents => {
-        console.log(documents.count)
         fetchedRecords = documents;
-        // compute summaries
-
         const kptotToday = computeTotal('KPANSIA', fetchedRecords, 'PRODUCT RELEASED')
         const obtotToday = computeTotal('OBUNNA', fetchedRecords, 'PRODUCT RELEASED')
         const swtotToday = computeTotal('SWALI', fetchedRecords, 'PRODUCT RELEASED')
@@ -300,7 +286,6 @@ router.delete("/:id", checkAuth, (req, res, next) => {
           obunnadec: obtotDecToday
           
         }
-        console.log(result, 'result')
         res.status(200).json({
           message: "Summaries",
           records: result
@@ -341,17 +326,6 @@ router.get('', (req, res, next) => {
 
   coyQuery = Recupload.find().sort({createdAt:-1}).
   populate('customer').populate('creator').populate('updater')
-
-  // console.log(new Date(idate), idate, site)
-  
-  // if (site && idate) {
-  //    coyQuery = Recupload.find({terminal_location:site, createdAt:new Date(idate)}).sort({createdAt:-1}).
-  //   populate('customer').populate('creator').populate('updater')
-  // } else {
-  //    coyQuery = Recupload.find().sort({createdAt:-1}).
-  //   populate('customer').populate('creator').populate('updater')
-  // }
-
   
   let fetchedRecords;
   if (pageSize && currentPage) {
@@ -381,11 +355,11 @@ router.get("/getByText", (req, res, next) => {
   let stan = req.query.stan
   // get array
   let records 
-  Recupload.find().populate('customer')
+  Recupload.find().populate('customer').populate('creator').populate('updater')
         .then( rec => {
           records = rec.filter(r => r.customer.name.toLowerCase().includes(stan.toLowerCase()))
           console.log(records)
-          Recupload.find({ $text: { $search: stan } }).populate('customer')
+          Recupload.find({ $text: { $search: stan } }).populate('customer').populate('creator').populate('updater')
             .then(record => {
               if (record) {
                 res.status(200).json([...record, ...records]);
@@ -426,10 +400,6 @@ router.get("/:id", (req, res, next) => {
 
 
 router.put("/:id", checkAuth, (req, res, next) => {
-
-  // const alloweds = ['filatei@torama.ng', 'eadekan@gtsng.com', 
-  //         'ratimi@gtsng.com', 'dkings@gtsng.com', 'eforcados@gtsng.com', 
-  //         'olawefaodumu@gmail.com', 'princess.filatei@gtsng.com'];
   const alloweds = process.env.ALLOWEDS
 
   if ( !alloweds.includes(req.userData.email)) {
@@ -579,7 +549,5 @@ router.put('/imageupdate/:id', checkAuth, upload.any(), function (req, res, next
     });
   });   
 })
-
-
   
 module.exports = router;

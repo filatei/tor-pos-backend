@@ -115,33 +115,6 @@ Recupload.aggregate([
 
 })
 
-// Recupload.aggregate([
-//     {
-        
-//         $group: {
-//             _id: "$terminal_location",
-            
-//             totalSum: { $sum: "$txn_amount"  },
-//             count: { $sum: 1 },
-                   
-//         },
-       
-//     //   $group:
-//     //     {
-//     //       _id: { day: { $dayOfYear: "$trans_date"}, year: { $year: "$trans_date" } },
-//     //       totalAmount: { $sum: "$txn_amount"  },
-//     //       count: { $sum: 1 }
-//     //     },
-//         // $project: {
-//         //     purewatertotalamt: { $sum: { $multiply: [ "$products.qty", "$products.price" ] }},
-//         //     purewatertotqty: { $sum: "$products.qty" },
-            
-//         //   }
-//     }
-//   ]).then( result => {
-//       console.log(result)
-//   })
- 
 
   /**
    * compute sum of all txn_amounts per site given
@@ -235,18 +208,7 @@ router.get('/misc', (req, res, next) => {
   // }
 
   coyQuery = Recupload.find().sort({createdAt:-1}).
-  populate('customer').populate('creator').populate('updater')
-
-  // console.log(new Date(idate), idate, site)
-  
-  // if (site && idate) {
-  //    coyQuery = Recupload.find({terminal_location:site, createdAt:new Date(idate)}).sort({createdAt:-1}).
-  //   populate('customer').populate('creator').populate('updater')
-  // } else {
-  //    coyQuery = Recupload.find().sort({createdAt:-1}).
-  //   populate('customer').populate('creator').populate('updater')
-  // }
-
+  populate('customer').populate('creator').populate('updater');
   
   let fetchedRecords;
   if (pageSize && currentPage) {

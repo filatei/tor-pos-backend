@@ -131,7 +131,6 @@ router.put('/:id', checkAuth, upload.single('image'), (req, res, next) => {
     });
 })
 
-
 router.post('/getuser', checkAuth, (req, res, next) => {
     res.json({
         email: req.userData.email,

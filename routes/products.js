@@ -181,14 +181,9 @@ router.get('',(req, res, next) => {
   }
   productQuery
     .then(documents => {
-      fetchedProducts = documents;
-      return Product.countDocuments();
-    })
-    .then(count => {
       res.status(200).json({
         message: "Products fetched successfully!",
-        products: fetchedProducts,
-        maxProducts: count
+        products: documents
       });
     })
    .catch(error => {

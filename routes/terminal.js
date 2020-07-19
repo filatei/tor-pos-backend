@@ -106,7 +106,7 @@ router.put("/:id", checkAuth, (req, res, next) => {
 });
 
 router.delete("/:id", checkAuth, (req, res, next) => {
-  const alloweds = process.env.DELALLOWEDS;
+  const alloweds = process.env.DELALLOWEDST;
   if ( !alloweds.includes(req.userData.email)) {
     return res.status(500).json({message: 'Not allowed'});
   }

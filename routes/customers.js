@@ -4,8 +4,6 @@ const Customer = require("../models/customer");
 const router = express.Router();
 const checkAuth = require('../middleware/check-auth');
 
-
-
 router.get('',(req, res, next) => {
   const pageSize = +req.query.pagesize ;
   const currentPage = +req.query.currentpage;
@@ -63,7 +61,7 @@ router.get("/:id",  (req, res, next) => {
   })
   .catch(error => {
     res.status(500).json({
-      message: "Fetching customer failed!"
+      message: "Fetching customer failed! " + error
     });
   });
 });
@@ -121,7 +119,7 @@ router.put("/:id", checkAuth, (req, res, next) => {
   })
   .catch(error => {
     res.status(500).json({
-      message: "Couldn't udpate customer!"
+      message: "Couldn't udpate customer! " + error
     });
   });
 });
@@ -143,7 +141,7 @@ router.delete("/:id", (req, res, next) => {
    })
    .catch(error => {
     res.status(500).json({
-      message: "Deleting customer failed!"
+      message: "Deleting customer failed! " + error
     });
   });
 });

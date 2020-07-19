@@ -57,7 +57,7 @@ router.post("", checkAuth, (req, res, next) => {
   console.log(eodObj, 'eodobj');
 
   eodObj.creator = req.userData.userId;
-  eodObj.terminal_id = eodObj.terminal_id._id
+  eodObj.terminal_id = eodObj.terminal_id._id;
 
   const eod = new Eod(eodObj);
   //  console.log(eod);

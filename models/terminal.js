@@ -7,8 +7,7 @@ const terminalSchema = mongoose.Schema({
     bank: {type: String}, 
     terminal_location: {type: String},
     company: {type: String},
-    sn: {type: String}
-
+    sn: {type: String, required: true, unique: true},
 },
 {
     timestamp: true,

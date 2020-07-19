@@ -315,15 +315,6 @@ router.get('', (req, res, next) => {
         $lte: moment(today).endOf('day').toDate()
       }
   }
-  // if (idate) {
-  //   coyQuery = Recupload.find(cond1).sort({createdAt:-1}).
-  //   populate('customer').populate('creator').populate('updater')
-
-  // } else {
-   
-
-  // }
-
   coyQuery = Recupload.find().sort({createdAt:-1}).
   populate('customer').populate('creator').populate('updater')
   

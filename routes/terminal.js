@@ -105,7 +105,7 @@ router.put("/:id", checkAuth, (req, res, next) => {
   });
 });
 
-router.delete("/:id", (req, res, next) => {
+router.delete("/:id", checkAuth, (req, res, next) => {
   const alloweds = process.env.DELALLOWEDS;
   if ( !alloweds.includes(req.userData.email)) {
     return res.status(500).json({message: 'Not allowed'});
@@ -114,6 +114,7 @@ router.delete("/:id", (req, res, next) => {
   Terminal.deleteOne({ _id: req.params.id })
     .then(result => {
       if (result.n > 0) {
+        console.log('term deleted', req.params.id)
         res.status(200).json({ message: "Deletion successful!" });
       } else {
         res.status(401).json({ message: "Not authorized!" });

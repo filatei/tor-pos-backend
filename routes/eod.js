@@ -10,7 +10,7 @@ router.get('',(req, res, next) => {
   const currentPage = +req.query.currentpage;
   const sort = req.query.sort;
 
-  let eodQuery = Eod.find().populate('terminal_id');
+  let eodQuery = Eod.find().sort({ date:-1 }).populate('terminal_id');
   if (pageSize && currentPage) {
     eodQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
   }

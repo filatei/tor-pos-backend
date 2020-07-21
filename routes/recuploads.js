@@ -69,7 +69,6 @@ const checkAuth = require('../middleware/check-auth');
 const { deleteReceipt } = require('../controllers/receipt');
 
 router.post('', checkAuth, upload.any(), function (req, res, next) {
-
   const alloweds = process.env.ALLOWEDS;
 
   if ( !alloweds.includes(req.userData.email)) {
@@ -95,7 +94,7 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
   
   recObj.creator = req.userData.userId;
  
-  console.log(recObj)
+  // console.log(recObj)
 
   if (req.files) {
     let fileName;

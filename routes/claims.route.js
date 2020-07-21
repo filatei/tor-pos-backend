@@ -15,7 +15,6 @@ var multer  = require('multer')
 const DIR = './uploads/claims/';
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    // console.log('req ', req.userData)
     userid = req.userData.userId
     const myDir = DIR + userid + '/'
     try {
@@ -42,7 +41,6 @@ var upload = multer({
     fileSize: 1024 * 1024 * 2
   },
   fileFilter: (req, file, cb) => {
-    // console.log(file.mimetype)
     if (file.mimetype == "image/png" || file.mimetype == "image/jpeg" || file.mimetype == "image/jpg") {
       cb(null, true);
     } else {
@@ -64,10 +62,7 @@ function logIncident(email, description) {
 }
 
 router.post('', checkAuth, upload.any(), function (req, res, next) {
-    let claimObj = req.body;
-  // console.log('reqbody', claimObj)
-  // userData was added to checkAuth middleware and passed along
-  // console.log('userdata in claim ', req.userData.userId)
+  let claimObj = req.body;
   claimObj.creator = req.userData.userId;
   const alloweds = process.env.CLAIMALLOWEDS;
 
@@ -82,7 +77,6 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
   claimObj.avatar = claimObj.stan + '.jpg'
   // file upload handing
   if (req.files) {
-    // console.log('files', req.files)
 
     req.files.forEach(file => {
         console.log(file, ' file in array')
@@ -104,7 +98,6 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
         }
     })
   }
-  // console.log(typeof claimObj.customer, claimObj.customer)
 
   if ( typeof claimObj.customer != 'object')
     claimObj.customer = JSON.parse(claimObj.customer);
@@ -239,7 +232,7 @@ router.get('',(req, res, next) => {
   claimQuery
 
     .then(documents => {
-      // console.log(documents[0])
+     // console.log(documents[0])
       res.status(200).json({
         message: "claims fetched successfully!",
         claims: documents,
@@ -485,7 +478,7 @@ router.put("/:id", checkAuth, upload.any(), (req, res, next) => {
     claim = new Claim(claimobj);
     Claim.updateOne({ _id: req.params.id }, claim)
     .then(result => {
-        console.log(result)
+        // console.log(result)
       if (result.n > 0) {
         res.status(200).json({ message: "Update successful!" });
       } else {
@@ -495,7 +488,7 @@ router.put("/:id", checkAuth, upload.any(), (req, res, next) => {
     .catch(error => {
       console.log(error)
       res.status(500).json({
-        message: "Couldn't udpate claim! " + error
+        message: "Couldn't update claim! " + error
       });
     });
   }

@@ -5,10 +5,15 @@ const Accesslog = require("../models/accesslog");
 const Customer = require("../models/customer");
 const router = express.Router();
 
+
 const fs = require('fs');
+const os = require("os");
+const hostname = os.hostname();
+
 const mime = require('mime');
 const checkAuth = require('../middleware/check-auth');
 var sanitize = require('mongo-sanitize');
+
 
 // multer
 var multer  = require('multer')
@@ -88,8 +93,11 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
             fileName = 'uploads/claims/'  + req.userData.userId + '/' + file.filename
         }
        
-        url = req.protocol + '://' + req.get('host')
-        // url = 'https://api.torama.ng'
+        if ( hostname.includes('torama.ng')) {
+          url = 'https://api.torama.ng'
+        } else {
+          url = req.protocol + '://' + req.get('host')
+        }
 
         path = url + '/' + fileName;
 
@@ -413,12 +421,15 @@ router.put("/:id", checkAuth, upload.any(), (req, res, next) => {
         if (file.originalname == 'blob') {
             fileName = 'uploads/claims/'  + req.userData.userId + '/' + file.filename 
         }
-            
         else {
             fileName = 'uploads/claims/'  + req.userData.userId + '/' + file.filename
         }
-        // url = 'https://api.torama.ng'
-        url = req.protocol + '://' + req.get('host')
+
+        if (hostname.includes('torama.ng')) {
+          url = 'https://api.torama.ng'
+        } else {
+          url = req.protocol + '://' + req.get('host')
+        }
 
         path = url + '/' + fileName;
 

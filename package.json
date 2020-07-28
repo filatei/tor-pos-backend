@@ -29,6 +29,7 @@
     "mongo-sanitize": "^1.1.0",
     "mongoose": "^5.8.11",
     "mongoose-beautiful-unique-validation": "^7.1.1",
+    "mongoose-sequence": "^5.2.2",
     "mongoose-unique-validator": "^2.0.3",
     "multer": "^1.4.2",
     "node-lp": "^1.0.1",

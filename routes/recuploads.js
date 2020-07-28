@@ -6,6 +6,8 @@ const router = express.Router();
 const moment = require('moment')
 
 const fs = require('fs');
+const os = require("os");
+const hostname = os.hostname();
 const mime = require('mime');
 const Accesslog = require("../models/accesslog");
 
@@ -81,8 +83,9 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
   // convert to number what is number
   recObj.products = JSON.parse(recObj.products)
   recObj.products.map(p => {
-    p.qty = parseInt(p.qty)
-    p.price = parseInt(p.price)
+    
+    p.qty = parseInt(p.qty + '')
+    p.price = parseInt(p.price + '')
   })
   recObj.txn_amount = parseInt(recObj.txn_amount)
   
@@ -105,15 +108,50 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
             fileName = 'uploads/recuploads/'  + req.userData.userId + '/' + file.filename
         }
 
-        url = req.protocol + '://' + req.get('host')
-        // url = 'https://api.torama.ng'    
+        if (hostname.includes('torama.ng')) {
+          url = 'https://api.torama.ng'    
+        } else {
+          url = req.protocol + '://' + req.get('host')
+        }
         path = url + '/' + fileName;
+
 
         if (file.fieldname === 'image') {
             recObj.image = path;
         }
     })
   }
+
+  if ( typeof recObj.driver != 'object')
+    recObj.driver = JSON.parse(recObj.driver);
+
+  if (!recObj.driver._id) {
+    saveDriver(recObj.driver)
+  }
+
+   // drivers are also customers
+  function saveDriver( drvr ) {
+    Customer.findOne({name: new RegExp('^'+ drvr.name+'$', "i")})
+    .then( (result) => {
+      if (result) {
+        recObj.driver = result._id
+      } else {
+      let custObj = new Customer(drvr);
+      custObj.save()
+        .then((sres) => {
+          recObj.driver = sres._id;
+        })
+        .catch(err => {
+          console.log(err, ' driver save err')
+          // throw err
+        })
+      }
+    })
+    .catch( (err) => {
+      console.log (err, 'driver find err')
+      // throw err
+    })
+}
   
   if (recObj.customer._id){
     console.log( 'customer already be in db')
@@ -506,13 +544,17 @@ router.put('/imageupdate/:id', checkAuth, upload.any(), function (req, res, next
     req.files.forEach(file => {
         // console.log(file, ' file in array')
         if (file.originalname == 'blob') {
-            fileName = 'uploads/recuploads/'  + req.userData.userId + '/' + file.filename 
+          fileName = 'uploads/recuploads/'  + req.userData.userId + '/' + file.filename 
         } else {
-            fileName = 'uploads/recuploads/'  + req.userData.userId + '/' + file.filename
+          fileName = 'uploads/recuploads/'  + req.userData.userId + '/' + file.filename
         }
 
-        url = req.protocol + '://' + req.get('host')
-        // url = 'https://api.torama.ng'    
+        if (hostname.includes('torama.ng')) {
+          url = 'https://api.torama.ng';    
+        } else {
+          url = req.protocol + '://' + req.get('host')
+        }
+
         path = url + '/' + fileName;
 
         // if (file.fieldname === 'image') {

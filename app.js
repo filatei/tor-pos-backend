@@ -25,6 +25,7 @@ const card = require("./routes/card");
 const terminal = require("./routes/terminal");
 const siteRoutes = require("./routes/fidosites");
 const eodRoutes = require("./routes/eod");
+const shopordersRoutes = require("./routes/shoporders");
 
 //let connectStr =  'mongodb://localhost:27017/torposdb';
 let connectStr = process.env.CONNECT_STR
@@ -88,6 +89,7 @@ app.use("/api/cards", card);
 app.use("/api/terminals", terminal);
 app.use("/api/sites", siteRoutes);
 app.use("/api/eod", eodRoutes);
+app.use("/api/shoporders", shopordersRoutes);
 
 
 module.exports = app;

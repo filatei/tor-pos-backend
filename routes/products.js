@@ -50,6 +50,13 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
   console.log('req.body', req.body)
 
   let prodObj = req.body;
+  if (prodObj.price) {
+    prodObj.price = parseInt(prodObj.price);
+  }
+  if (prodObj.taxRate) {
+    prodObj.taxRate = parseInt(prodObj.taxRate);
+  }
+
   prodObj.creator = req.userData.userId;
 
 
@@ -112,7 +119,7 @@ router.put("/:id", checkAuth, upload.single('image'), (req, res, next) => {
       });
     } else {
       Product.updateOne({ _id: req.params.id }, 
-        {name: name, price: price, description: description, taxRate: taxRate, updatedAt: updatedAt})
+        {name: name, price: price, description: description, taxRate: taxRate})
       .then(result => {
         if (result.n > 0) {
           res.status(200).json({ message: "Update successful!" });

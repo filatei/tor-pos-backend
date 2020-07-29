@@ -167,7 +167,7 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
       res.status(201).json({
         message: 'Order added successfully',
         shoporder: {...result,
-          id: result._id
+          id: result.id
         }
       });
     })

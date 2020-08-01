@@ -11,6 +11,12 @@ const customerSchema = mongoose.Schema({
     barcode: {type: String},
     biometric: {type: String},
     phones: [],
+    cards:[{
+        card_name: {type: String},
+        card_number: {type: String},
+        card_type: {type: String},
+        card_bank: {type: String},
+    }],
     address: {
         street: String,
         city: String,

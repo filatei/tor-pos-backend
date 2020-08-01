@@ -102,11 +102,8 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
   if (req.files) {
     let fileName;
     req.files.forEach(file => {
-        if (file.originalname == 'blob') {
-            fileName = 'uploads/recuploads/'  + req.userData.userId + '/' + file.filename 
-        } else {
-            fileName = 'uploads/recuploads/'  + req.userData.userId + '/' + file.filename
-        }
+       
+        fileName = 'uploads/recuploads/'  + req.userData.userId + '/' + file.filename
 
         if (hostname.includes('torama.ng')) {
           url = 'https://api.torama.ng'    

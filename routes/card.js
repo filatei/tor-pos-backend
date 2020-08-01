@@ -11,7 +11,7 @@ router.get('',(req, res, next) => {
   const currentPage = +req.query.currentpage;
   const sort = req.query.sort;
 
-  let cardQuery = Card.find();
+  let cardQuery = Card.find().populate('customerId')
   if (pageSize && currentPage) {
     cardQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
   }
@@ -62,8 +62,12 @@ router.post("", checkAuth, (req, res, next) => {
   let cardObj = req.body;
 
 
-  if ( cardObj && cardObj.holder ) {
-    cardObj.holder = cardObj.holder.toUpperCase();
+  if ( cardObj && cardObj.card_name ) {
+    cardObj.card_name = cardObj.card_name.toUpperCase();
+  }
+
+  if ( cardObj && cardObj.customer  &&  cardObj.customer._id) {
+    cardObj.customerId = cardObj.customer._id;
   }
   cardObj.creator = req.userData.userId;
 

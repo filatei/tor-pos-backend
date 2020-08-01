@@ -55,14 +55,14 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
   let shopObj = req.body;
   shopObj.creator = req.userData.userId;
   shopObj.orderId = new Date().getTime();
-  // if (shopObj.products) {
-  //   shopObj.products = shopObj.products.map(p => {
-  //     return {id:p._id, qty:p.qty, price:p.price, amount:p.amount}
-  //   })
-  // }
+  
   // handle customer issues
   if ( !shopObj.customer || shopObj.customer === undefined )
     return res.status(500).json({message: 'check your data. empty customer?'});
+
+  if (shopObj.card_number) {
+    updateCustomerCard()
+  }
   if ( typeof shopObj.customer != 'object')
     shopObj.customer = JSON.parse(shopObj.customer);
 
@@ -70,7 +70,10 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
     shopObj.driver = JSON.parse(shopObj.driver);
 
   if (!shopObj.driver._id) {
+    console.log ('saving new driver..', shopObj.driver)
     saveDriver(shopObj.driver)
+  } else {
+    shopObj.driver = shopObj.driver._id;
   }
 
   if (shopObj.customer._id){
@@ -94,10 +97,13 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
     .then( (result) => {
       if (result) {
         shopObj.driver = result._id
+        console.log(' new  driver exists', result, shopObj.driver)
+
       } else {
       let custObj = new Customer(drvr);
       custObj.save()
         .then((sres) => {
+          console.log(' new saved drive', sres)
           shopObj.driver = sres._id;
         })
         .catch(err => {
@@ -146,9 +152,9 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
     Customer.updateOne({_id: cust._id}, cust)
     .then( (result) => {
       if (result.n > 0) {
-        console.log('customer update successful')
-      } else {
-        console.log('customer update unsuccessful')
+        console.log('customer update 1 successful')
+      } else { 
+        console.log('customer update 1 unsuccessful')
 
       }
     })
@@ -156,6 +162,7 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
       console.log(err, ' customer save err')
       // throw err
     })
+    
   }
     
   function saveOrder(shopObj) {
@@ -164,10 +171,12 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
 
     shoporder.save()
     .then ((result)=> {
+      console.log('order added', result)
       res.status(201).json({
         message: 'Order added successfully',
         shoporder: {...result,
-          id: result.id
+          id: result.id,
+          paidAmount: result.paidAmount
         }
       });
     })
@@ -176,6 +185,38 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
         message: "Creating a shoporder failed! " + error
       });
     });
+  }
+
+  function updateCustomerCard() {
+    let cust = shopObj.customer;
+    let cardObj = {card_number: shopObj.card_number, card_bank: shopObj.card_bank, card_name: shopObj.card_name, card_type: shopObj.card_type};
+    let found = false
+    if (cust.cards && cust.cards.length > 0) {
+      cust.cards.forEach(element => {
+        if ( shopObj.card_number.includes(element.card_number)) {
+          found = true;
+        }
+        
+      });
+      if (!found) {
+        cust.cards.push(cardObj)
+      }
+    } else {
+      cust.cards.push(cardObj);
+    }
+    Customer.updateOne({_id: cust._id}, cust)
+    .then( (result) => {
+      if (result.n > 0) {
+        console.log('customer card update successful')
+      } else {
+        console.log('customer card update unsuccessful')
+
+      }
+    })
+    .catch(err => {
+      console.log(err, ' customer save err')
+      // throw err
+    })
   }
   
   

@@ -4,6 +4,8 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const fs = require('fs')
+const os = require("os");
+const hostname = os.hostname();
 var multer  = require('multer')
 const DIR = './uploads/userimages/';
 const storage = multer.diskStorage({
@@ -11,7 +13,7 @@ const storage = multer.diskStorage({
     cb(null, DIR);
   },
   filename: (req, file, cb) => {
-    const fileName =  new Date().getTime() + '-' + file.originalname.toLowerCase().split(' ').join('-');
+    const fileName =  new Date().getTime() + '-' + file.originalname.toLowerCase().split(' ').join('-') +'.jpg';
     console.log(fileName)
     cb(null, fileName)
   }
@@ -55,7 +57,7 @@ router.post("/login", (req, res, next) => {
           });
         }
         const token = jwt.sign(
-            { email: fetchedUser.email, userId: fetchedUser._id, name: fetchedUser.name },
+            { email: fetchedUser.email, userId: fetchedUser._id, name: fetchedUser.name},
             process.env.ACCESS_TOKEN_SECRET,
             {expiresIn:'1000h'}
         );
@@ -64,7 +66,8 @@ router.post("/login", (req, res, next) => {
             expiresIn: 360000,
             userId: fetchedUser._id,
             email: fetchedUser.email,
-            name: fetchedUser.name
+            name: fetchedUser.name,
+            image: fetchedUser.image 
         });
     })
     .catch(err => {
@@ -105,18 +108,33 @@ router.put('/:id', checkAuth, upload.single('image'), (req, res, next) => {
     let userObj = req.body;
     userObj._id = req.params.id;
     // userData  was added to checkAuth middleware and passed along
-
-    let path = ""
+    // console.log('id params', req.params.id)
     let url= ""
+    if (!req.body.name || !req.body.email ) {
+      return res.status(500).json({
+        message: "Empty Uodate request. name or email cant be empty " + error
+      });
+    }
     if ( req.file ) { 
-        url = req.protocol + '://' + req.get('host')
-        // url = 'https://api.torama.ng'
+
+        if (hostname.includes('torama')) {
+          url = 'https://api.torama.ng'
+
+        } else {
+          url = req.protocol + '://' + req.get('host')
+        }
         path = url + '/uploads/userimages/' + req.file.filename; 
         // console.log(path)
     }
 
     userObj.updater = req.userData.userId;
-    userObj.image = path;
+    console.log('image ', req.body.image)
+    if (path ) {
+      userObj.image = path;
+
+    }
+
+    console.log (userObj);
     const user = new User(userObj);
     User.updateOne({ _id: req.params.id }, user)
     .then(result => {

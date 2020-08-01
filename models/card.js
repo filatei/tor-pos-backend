@@ -2,14 +2,14 @@ const mongoose = require('mongoose');
 uniqueValidator = require('mongoose-unique-validator');
 
 const cardSchema = mongoose.Schema({
-    name: {type: String, required: true},
     creator: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
-    icon: {type: String},
-    brand: {type: String},
-    holder: {type: String},
-    bank: {type: String},
+    customerId: {type: mongoose.Schema.Types.ObjectId, ref: 'Customer'},
+    image: {type: String},
+    card_type: {type: String},
+    card_name: {type: String},  // name on card
+    card_bank: {type: String},
     cvc: {type: Number},
-    number: {type: Number},
+    card_number: {type: Number},
     expiry: {type: Date},
 
 },

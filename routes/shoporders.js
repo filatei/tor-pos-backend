@@ -167,7 +167,7 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
     
   function saveOrder(shopObj) {
     const shoporder = new Order(shopObj);
-    shoporder.icon = path;
+    shoporder.image = path;
 
     shoporder.save()
     .then ((result)=> {
@@ -243,7 +243,7 @@ router.put("/:id", checkAuth, upload.single('image'), (req, res, next) => {
         url = req.protocol + '://' + req.get('host')
         path = url + '/uploads/shoporderimages/' + req.file.filename; 
       }
-      shoporder.icon = path;
+      shoporder.image = path;
       Order.updateOne({ _id: req.params.id }, shoporder)
       .then(result => {
         if (result.n > 0) {
@@ -287,8 +287,11 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   let filePath;
   Order.findById(req.params.id)
   .then (shoporder => {
-    filePath = 'uploads/' + shoporder.icon.split('/uploads/')[1];
-    console.log(filePath)
+    if (shoporder && shoporder.image) {
+      filePath = 'uploads/' + shoporder.image.split('/uploads/')[1];
+      console.log(filePath)
+    }
+    
   })
   .catch(err => {
     return res.status(401).json({ message: "shoporder not found in db!" + err });
@@ -297,13 +300,16 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   Order.deleteOne({ _id: req.params.id })
   .then(result => {
   if (result.n > 0) {
-    // delete shoporder.icon
-    fs.unlink(filePath, (err) => {
-      if (err) {
-        console.error(err)
-      }
-      console.log('related file deleted')
-    })
+    // delete shoporder.image
+    if (filePath) {
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          console.error(err)
+        }
+        console.log('related file deleted')
+      })
+    }
+    
     res.status(200).json({ message: "Deletion successful!" });
   } else {
     res.status(401).json({ message: "Not authorized!" });

@@ -158,8 +158,11 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   let filePath;
   Product.findById(req.params.id)
   .then (product => {
-    filePath = 'uploads/' + product.icon.split('/uploads/')[1];
-    console.log(filePath)
+    if (product && product.icon) {
+      filePath = 'uploads/' + product.icon.split('/uploads/')[1];
+      console.log(filePath)
+    }
+    
   })
   .catch(err => {
     return res.status(401).json({ message: "product not found in db!" + err });
@@ -169,12 +172,15 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   .then(result => {
   if (result.n > 0) {
     // delete product.icon
-    fs.unlink(filePath, (err) => {
-      if (err) {
-        console.error(err)
-      }
-      console.log('related file deleted')
-    })
+    if (filePath) {
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          console.error(err)
+        } else {
+          console.log('related file deleted')
+        }
+      })
+    }
     res.status(200).json({ message: "Deletion successful!" });
   } else {
     res.status(401).json({ message: "Not authorized!" });

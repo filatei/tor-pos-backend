@@ -3,6 +3,8 @@ const Product = require("../models/product");
 const router = express.Router();
 const path = require('path')
 const fs = require('fs')
+const os = require("os");
+const hostname = os.hostname();
 var multer  = require('multer')
 const DIR = './uploads/productimages/';
 const storage = multer.diskStorage({
@@ -15,7 +17,6 @@ const storage = multer.diskStorage({
     cb(null, fileName)
   }
 });
-
 
 // Multer Mime Type Validation
 var upload = multer({
@@ -39,7 +40,12 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
   let path = ""
   let url= ""
   if (req.file) { 
-    url = req.protocol + '://' + req.get('host')
+    
+    if (hostname.includes('torama')) {
+      url = 'https://api.torama.ng'
+    } else {
+      url = req.protocol + '://' + req.get('host')
+    }
     // url = 'https://api.torama.ng'
     // console.log(url)
     path = url + '/uploads/productimages/' + req.file.filename; 
@@ -100,9 +106,14 @@ router.put("/:id", checkAuth, upload.single('image'), (req, res, next) => {
     prodObj.updater = req.userData.userId;
     const product = new Product(prodObj);
     if (req.file && req.file.filename && req.file.filename.length > 0) {
-      url = req.protocol + '://' + req.get('host')
+
+      if (hostname.includes('torama')) {
+        url = 'https://api.torama.ng';
+      } else {
+        url = req.protocol + '://' + req.get('host');
+      }
+      
       path = url + '/uploads/productimages/' + req.file.filename; 
-      // path = 'https://api.torama.ng' + '/uploads/productimages/' + req.file.filename;
       product.icon = path;
       Product.updateOne({ _id: req.params.id }, product)
       .then(result => {

@@ -109,7 +109,8 @@ router.put('/:id', checkAuth, upload.single('image'), (req, res, next) => {
     userObj._id = req.params.id;
     // userData  was added to checkAuth middleware and passed along
     // console.log('id params', req.params.id)
-    let url= ""
+    let url= "";
+    let path;
     if (!req.body.name || !req.body.email ) {
       return res.status(500).json({
         message: "Empty Uodate request. name or email cant be empty " + error
@@ -124,11 +125,12 @@ router.put('/:id', checkAuth, upload.single('image'), (req, res, next) => {
           url = req.protocol + '://' + req.get('host')
         }
         path = url + '/uploads/userimages/' + req.file.filename; 
-        // console.log(path)
+       
     }
 
+    console.log(path, 'path')
+
     userObj.updater = req.userData.userId;
-    console.log('image ', req.body.image)
     if (path ) {
       userObj.image = path;
 

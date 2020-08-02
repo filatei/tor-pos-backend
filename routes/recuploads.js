@@ -119,11 +119,13 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
     })
   }
 
-  if ( typeof recObj.driver != 'object')
+  if (  recObj.driver && typeof recObj.driver != 'object')
     recObj.driver = JSON.parse(recObj.driver);
 
-  if (!recObj.driver._id) {
+  if ( recObj.driver && !recObj.driver._id) {
     saveDriver(recObj.driver)
+  } else {
+    recObj.driver = recObj.driver._id
   }
 
    // drivers are also customers

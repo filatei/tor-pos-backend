@@ -8,8 +8,15 @@ const moment = require('moment')
 const fs = require('fs');
 const os = require("os");
 const hostname = os.hostname();
+const homedir = os.homedir();
+const tokens = require(`${homedir}/.token.json`);
+const nodemailer = require("nodemailer");
+const { google } = require("googleapis");
+const OAuth2 = google.auth.OAuth2;
+
 const mime = require('mime');
 const Accesslog = require("../models/accesslog");
+// const mymailer = require('./mymailer');
 
 var sanitize = require('mongo-sanitize');
 
@@ -56,6 +63,65 @@ var upload = multer({
   }
 });
 
+
+
+async function sendMail(order) {
+  // console.log(order.products)
+  customer = await Customer.findById(order.customer).exec()
+  customer = customer.name;
+  const smtpTransport = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+          type: "OAuth2",
+          user: process.env.tormail, 
+          clientId: tokens.clientID,
+          clientSecret: tokens.clientSecret,
+          refreshToken: tokens.refresh_token,
+          accessToken: tokens.access_token
+      }
+ });
+
+ // some content
+ let orderId = order.rec_id 
+ orderId = orderId.toString().padStart(5, '0')
+ let subject = `ShopTorama Order Confirmation for Order (# ${orderId})`
+ let curr = order.curr || process.env.naira
+ let total = order.txn_amount;
+ let date = new Date().toString();
+ 
+ let products = order.products 
+
+ let product = `<table><tr> <th>Product</th> <th></th> <th></th><th>Amount</th></tr>`;
+ 
+ products.forEach(p => {
+  amount = (p.qty * p.price).toLocaleString();
+  product += `<tr><td>${p.qty} x ${p.name} </td> <td colspan="3" style="text-align:right;">${curr} ${amount} </td><tr>`;
+ })
+
+ product += `</table>`;
+
+ let html = `<div style=" margin: auto;width: 70%;border: 3px solid rgba(0, 128, 0,0.5);padding: 10px;"><p>${date}</p><h2>ORDER CONFIRMED</h2><p> Hi ${customer},</p>`;
+ html += `<p>We received your order # ${orderId} for ${curr} ${total.toLocaleString()} </p>`;
+ html += `${product}`;
+ html += `<h3>Order summary</h3><p> Subtotal: ${curr} ${total.toLocaleString()} </p> <p>Tax: ${curr} 0.00</p> <p>Total: ${curr} ${total.toLocaleString()}</p>`;
+ 
+ html += `<h4 style="background:rgba(0, 128, 0,0.3);text-align:center">ShopTorama - All rights reserved</h4> </div>`;
+
+ const mailOptions = {
+      from: `ShopTorama ${process.env.tormail}`,
+      to: process.env.tormail,
+      subject: subject,
+      generateTextFromHTML: true,
+      html: html
+  };
+
+  // send mail
+  smtpTransport.sendMail(mailOptions, (error, response) => {
+    error ? console.log(error) : console.log(response);
+    smtpTransport.close();
+  });
+}
+
 function logIncident(email, description) {
   const logObj = new Accesslog({email: email, description: description})
   logObj.save(logObj).
@@ -69,6 +135,8 @@ function logIncident(email, description) {
 
 const checkAuth = require('../middleware/check-auth');
 const { deleteReceipt } = require('../controllers/receipt');
+const mail = require('../models/mail');
+const { Console } = require('console');
 
 router.post('', checkAuth, upload.any(), function (req, res, next) {
   const alloweds = process.env.ALLOWEDS;
@@ -77,7 +145,7 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
     logIncident(req.userData.email, 'Not allowed to create Receipts')
      return res.status(500).json({message: 'Not allowed'});
   }
-
+  let customerName;
   let recObj = req.body;
   console.log('before ',recObj)
   // convert to number what is number
@@ -92,8 +160,13 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
   if ( !recObj.customer || recObj.customer === undefined )
     return res.status(500).json({message: 'check your data. empty customer?'});
 
-  if ( typeof recObj.customer != 'object')
+  if ( typeof recObj.customer != 'object') {
     recObj.customer = JSON.parse(recObj.customer);
+  }
+
+  customerName = recObj.customer.name
+
+    
   
   recObj.creator = req.userData.userId;
  
@@ -119,43 +192,48 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
     })
   }
 
-  if (  recObj.driver && typeof recObj.driver != 'object')
-    recObj.driver = JSON.parse(recObj.driver);
+  // if (  recObj.driver && typeof recObj.driver != 'object') {
+  //   recObj.driver = JSON.parse(recObj.driver);
+  // }
 
-  if ( recObj.driver && !recObj.driver._id) {
-    saveDriver(recObj.driver)
-  } else {
-    recObj.driver = recObj.driver._id
+  try {
+    recObj.driver = JSON.parse(recObj.driver);
+    recObj.driver = recObj.driver.name;
+
+  } catch (exception) {
+    recObj.driver = req.body.driver
   }
 
-   // drivers are also customers
-  function saveDriver( drvr ) {
-    Customer.findOne({name: new RegExp('^'+ drvr.name+'$', "i")})
-    .then( (result) => {
-      if (result) {
-        recObj.driver = result._id
-      } else {
-      let custObj = new Customer(drvr);
-      custObj.save()
-        .then((sres) => {
-          recObj.driver = sres._id;
-        })
-        .catch(err => {
-          console.log(err, ' driver save err')
-          // throw err
-        })
-      }
-    })
-    .catch( (err) => {
-      console.log (err, 'driver find err')
-      // throw err
-    })
-}
-  
+//    // drivers are also customers
+//   function saveDriver( drvr ) {
+//     Customer.findOne({name: new RegExp('^'+ drvr.name+'$', "i")})
+//     .then( (result) => {
+//       if (result) {
+//         recObj.driver = result._id
+//       } else {
+//       let custObj = new Customer(drvr);
+//       custObj.save()
+//         .then((sres) => {
+//           recObj.driver = sres._id;
+//         })
+//         .catch(err => {
+//           console.log(err, ' driver save err')
+//           // throw err
+//         })
+//       }
+//     })
+//     .catch( (err) => {
+//       console.log (err, 'driver find err')
+//       // throw err
+//     })
+// }
+ 
   if (recObj.customer._id){
     console.log( 'customer already be in db')
     // store customer id and save claim
     recObj.customer = recObj.customer._id;
+    
+   
     saveReceipt(recObj);
     
   } else {
@@ -199,6 +277,9 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
     receipt = new Recupload(recobj);
     receipt.save()
     .then(result => {
+      console.log(result, 'result')
+      // mailobject = {...result, customerName: customerName};
+      // console.log(mailobject, 'mailobject')
       res.status(201).json({
         message: 'Receipt  Uploaded successfully',
         Recupload: {
@@ -206,6 +287,9 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
             id: result._id
         }
       });
+      // sendMail( result );
+
+      
     })
     .catch(error => {
       res.status(500).json({
@@ -213,13 +297,10 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
       });
     }); 
   }
-  
 })
  
 router.delete("/:id", checkAuth, (req, res, next) => {
-
   if(!req.params.id) return res.status(401).json({error: 'empty id'});
-
   const alloweds = process.env.DELALLOWEDS;
 
   if ( !alloweds.includes(req.userData.email)) {
@@ -249,7 +330,6 @@ router.delete("/:id", checkAuth, (req, res, next) => {
           return;
         }
         console.log('related file deleted')
-        
       })
       res.status(200).json({ message: "Deletion successful!" });
     } else {
@@ -263,8 +343,6 @@ router.delete("/:id", checkAuth, (req, res, next) => {
       });
     });
   }
-  
-
  });
 
  router.get('/summary', (req, res, next) => {
@@ -582,3 +660,6 @@ router.put('/imageupdate/:id', checkAuth, upload.any(), function (req, res, next
 })
   
 module.exports = router;
+
+
+

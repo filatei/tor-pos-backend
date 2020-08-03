@@ -7,6 +7,12 @@ const path = require('path')
 const fs = require('fs')
 const os = require("os");
 const hostname = os.hostname();
+const homedir = os.homedir();
+const tokens = require(`${homedir}/.token.json`);
+const nodemailer = require("nodemailer");
+const { google } = require("googleapis");
+const OAuth2 = google.auth.OAuth2;
+
 var multer  = require('multer')
 const DIR = './uploads/shoporderimages/';
 const storage = multer.diskStorage({
@@ -35,6 +41,66 @@ var upload = multer({
     }
   }
 });
+
+async function sendMail(order) {
+  // console.log(order.products)
+  customer = await Customer.findById(order.customer).exec()
+  customer = customer.name;
+  const smtpTransport = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+          type: "OAuth2",
+          user: process.env.tormail, 
+          clientId: tokens.clientID,
+          clientSecret: tokens.clientSecret,
+          refreshToken: tokens.refresh_token,
+          accessToken: tokens.access_token
+      }
+ });
+
+ // some content
+ let orderId = order.id 
+ orderId = orderId.toString().padStart(5, '0')
+ let subject = `ShopTorama Order Confirmation for Order (# ${orderId})`
+ let curr = order.curr || process.env.naira
+ let total = order.paidAmount;
+ let payType = order.paymentMethod;
+ let date = new Date().toString();
+ 
+ let products = order.products 
+
+ let product = `<table><thead><tr> <th>Product</th> <th></th> <th></th><th>Amount</th></tr></thead><tbody>`;
+ let derived_total = 0
+ products.forEach(p => {
+  amount = (p.qty * p.price).toLocaleString();
+  product += `<tr><td>${p.qty} x ${p.name} </td> <td colspan="3" style="text-align:right;">${curr} ${amount} </td><tr>`;
+  derived_total += p.qty * p.price
+ })
+ derived_total = derived_total.toLocaleString();
+
+ product += `</tbody><tfoot><tr><td colspan="4" style="text-align:right;"> Sum: ${derived_total}</td></tr></tfoot></table>`;
+
+ let html = `<div style=" margin: auto;width: 70%;border: 3px solid rgba(0, 128, 0,0.5);padding: 10px;"><p>${date}</p><h2>ORDER CONFIRMED</h2><p> Hi ${customer},</p>`;
+ html += `<p>We received your order # ${orderId} for ${curr} ${total.toLocaleString()} </p>`;
+ html += `${product} `;
+ html += `<h3>Order summary</h3><p>Pay Type: ${payType}</p><p> Subtotal: ${curr} ${total.toLocaleString()} </p> <p>Tax: ${curr} 0.00</p> <p>Total: ${curr} ${total.toLocaleString()}</p>`;
+ 
+ html += `<h4 style="background:rgba(0, 128, 0,0.3);text-align:center">ShopTorama - All rights reserved</h4> </div>`;
+
+ const mailOptions = {
+      from: `ShopTorama ${process.env.tormail}`,
+      to: process.env.tormail,
+      subject: subject,
+      generateTextFromHTML: true,
+      html: html
+  };
+
+  // send mail
+  smtpTransport.sendMail(mailOptions, (error, response) => {
+    error ? console.log(error) : console.log(response);
+    smtpTransport.close();
+  });
+}
 
 const checkAuth = require('../middleware/check-auth');
 
@@ -68,13 +134,14 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
 
   if ( typeof shopObj.driver != 'object')
     shopObj.driver = JSON.parse(shopObj.driver);
+    shopObj.driver = shopObj.driver.name
 
-  if (!shopObj.driver._id) {
-    console.log ('saving new driver..', shopObj.driver)
-    saveDriver(shopObj.driver)
-  } else {
-    shopObj.driver = shopObj.driver._id;
-  }
+  // if (!shopObj.driver._id) {
+  //   console.log ('saving new driver..', shopObj.driver)
+  //   saveDriver(shopObj.driver)
+  // } else {
+  //   shopObj.driver = shopObj.driver._id;
+  // }
 
   if (shopObj.customer._id){
     if (shopObj.contactEmail || shopObj.contactPhone) {
@@ -91,32 +158,6 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
     saveCustomer(shopObj.customer);
   }
 
-  // drivers are also customers
-  function saveDriver( drvr ) {
-    Customer.findOne({name: new RegExp('^'+ drvr.name+'$', "i")})
-    .then( (result) => {
-      if (result) {
-        shopObj.driver = result._id
-        console.log(' new  driver exists', result, shopObj.driver)
-
-      } else {
-      let custObj = new Customer(drvr);
-      custObj.save()
-        .then((sres) => {
-          console.log(' new saved drive', sres)
-          shopObj.driver = sres._id;
-        })
-        .catch(err => {
-          console.log(err, ' driver save err')
-          // throw err
-        })
-      }
-    })
-    .catch( (err) => {
-      console.log (err, 'driver find err')
-      // throw err
-    })
-  }
 
   /**
    * saves customer cust to customer collection if not exist already
@@ -179,6 +220,7 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
           paidAmount: result.paidAmount
         }
       });
+      sendMail(result);
     })
     .catch(error => {
       res.status(500).json({

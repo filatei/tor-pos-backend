@@ -1,8 +1,10 @@
 const mongoose = require('mongoose');
+const AutoIncrement = require('mongoose-sequence')(mongoose);
+
 
 const recuploadSchema = mongoose.Schema({
     customer: {type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true},
-    driver: {type: mongoose.Schema.Types.ObjectId, ref: 'Customer'},
+    driver: {},
     pay_type: {type: String},
     transfer_from_bank: {type: String},
     transfer_from_account_name: {type: String},
@@ -49,6 +51,9 @@ const recuploadSchema = mongoose.Schema({
     timestamps: true,
     autoindex: true
 });
+
+recuploadSchema.plugin(AutoIncrement, {inc_field: 'rec_id'});
+
 
 recuploadSchema.index({ stan: 'text', rrn: 'text', auth_id: 'text', receipt_id: 'text', terminal_location: 'text', acquirer: 'text',
     card_number: 'text', action_taken: 'text', trans_date: 'text', company: 'text'

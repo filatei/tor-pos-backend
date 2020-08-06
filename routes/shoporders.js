@@ -60,12 +60,17 @@ async function sendMail(order) {
 
  // some content
  let orderId = order.id 
+ let toEmail = order.customer.email || 'emptymail@torama.ng';
  orderId = orderId.toString().padStart(5, '0')
  let subject = `ShopTorama Order Confirmation for Order (# ${orderId})`
  let curr = order.curr || process.env.naira
  let total = order.paidAmount;
  let payType = order.paymentMethod;
- let date = new Date().toString();
+ 
+ let location = order.terminal_location;
+ let date = (order.createdAt).toString() || new Date().toString();
+ let logo = 'https://api.torama.ng/uploads/productimages/fidologo.png'
+
  
  let products = order.products 
 
@@ -73,23 +78,24 @@ async function sendMail(order) {
  let derived_total = 0
  products.forEach(p => {
   amount = (p.qty * p.price).toLocaleString();
-  product += `<tr><td>${p.qty} x ${p.name} </td> <td colspan="3" style="text-align:right;">${curr} ${amount} </td><tr>`;
+  product += `<tr><td>${p.qty} x ${p.name} </td> <td colspan="3" style="text-align:right;">${amount} ${curr}</td><tr>`;
   derived_total += p.qty * p.price
  })
  derived_total = derived_total.toLocaleString();
 
- product += `</tbody><tfoot><tr><td colspan="4" style="text-align:right;"> Sum: ${derived_total}</td></tr></tfoot></table>`;
+ product += `</tbody><tfoot><tr><td colspan="4" style="text-align:right;"> Sum: ${derived_total} ${curr}</td></tr></tfoot></table>`;
 
- let html = `<div style=" margin: auto;width: 70%;border: 3px solid rgba(0, 128, 0,0.5);padding: 10px;"><p>${date}</p><h2>ORDER CONFIRMED</h2><p> Hi ${customer},</p>`;
- html += `<p>We received your order # ${orderId} for ${curr} ${total.toLocaleString()} </p>`;
- html += `${product} `;
- html += `<h3>Order summary</h3><p>Pay Type: ${payType}</p><p> Subtotal: ${curr} ${total.toLocaleString()} </p> <p>Tax: ${curr} 0.00</p> <p>Total: ${curr} ${total.toLocaleString()}</p>`;
+ let html = `<!DOCTYPE html><html><body><div style=" margin: auto; align=center;padding: 10px;"><img src=${logo} alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">${date}</p><div ><h2>ORDER CONFIRMED</h2><p> Hi ${customer},</p>`;
+ html += `<p>We received your order # ${orderId} for ${curr} ${total.toLocaleString()} </p> <p>Factory Location: ${location}</p>`;
+ html += `${product}`;
+ html += `<h3>Order summary</h3><p>Pay Type: ${payType}</p><p> Subtotal: ${curr} ${total.toLocaleString()} </p> <p>Tax: ${curr} 0.00</p> <p>Total: ${curr} ${total.toLocaleString()}</p></p>`;
  
- html += `<h4 style="background:rgba(0, 128, 0,0.3);text-align:center">ShopTorama - All rights reserved</h4> </div>`;
+ html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center">ShopTorama - All rights reserved</h4> </div></body></html>`;
 
  const mailOptions = {
       from: `ShopTorama ${process.env.tormail}`,
-      to: process.env.tormail,
+      to: toEmail,
+      bcc: process.env.tormail, 
       subject: subject,
       generateTextFromHTML: true,
       html: html

@@ -91,7 +91,7 @@ app.use("/api/terminals", terminal);
 app.use("/api/sites", siteRoutes);
 app.use("/api/eod", eodRoutes);
 app.use("/api/shoporders", shopordersRoutes);
-app.use("/api/sendmail", mailRoutes);
+app.use("/api/mailer", mailRoutes);
 
 
 

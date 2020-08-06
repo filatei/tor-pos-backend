@@ -41,6 +41,12 @@ const shoporderSchema = mongoose.Schema({
     products: [],
     receipt: {},
     totalAmount: {type:  Number},
+    delivery: {
+        status: {type: Boolean}, 
+        supervisor: {type: String}, 
+        site: {type: String},  
+        deliveryTime: {type: Date, default: Date.now} 
+    },
     paymentMethod: {type:  String},
     image: {type:  String},
     creator: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},

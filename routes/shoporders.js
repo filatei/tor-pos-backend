@@ -85,7 +85,7 @@ async function sendMail(order) {
 
  product += `</tbody><tfoot><tr><td colspan="4"> Sum: ${derived_total} ${curr}</td></tr></tfoot></table>`;
 
- let html = `<!DOCTYPE html><html><body style="text-align:right;"><div style="magin-left: auto; margin-right:auto;"><img src=${logo} alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">${date}</p><div ><h2>ORDER CONFIRMED</h2><p> Hi ${customer},</p>`;
+ let html = `<!DOCTYPE html><html><body style="text-align:center;"><div style="magin-left: auto; margin-right:auto;"><img src=${logo} alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">${date}</p><div ><h2>ORDER CONFIRMED</h2><p> Hi ${customer},</p>`;
  html += `<p>We received your order # ${orderId} for ${curr} ${total.toLocaleString()} </p> <p>Factory Location: ${location}</p>`;
  html += `${product}`;
  html += `<h3>Order summary</h3><p>Pay Type: ${payType}</p><p> Subtotal: ${curr} ${total.toLocaleString()} </p> <p>Tax: ${curr} 0.00</p> <p>Total: ${curr} ${total.toLocaleString()}</p></p>`;

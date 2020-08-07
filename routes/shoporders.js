@@ -74,7 +74,7 @@ async function sendMail(order) {
  
  let products = order.products 
 
- let product = `<table><thead><tr> <th>Product</th> <th></th> <th></th><th>Amount</th></tr></thead><tbody>`;
+ let product = `<table style="margin-left:auto; margin-right:auto"><thead><tr> <th>Product</th> <th></th> <th></th><th>Amount</th></tr></thead><tbody>`;
  let derived_total = 0
  products.forEach(p => {
   amount = (p.qty * p.price).toLocaleString();
@@ -83,14 +83,14 @@ async function sendMail(order) {
  })
  derived_total = derived_total.toLocaleString();
 
- product += `</tbody><tfoot><tr><td colspan="4" style="text-align:right;"> Sum: ${derived_total} ${curr}</td></tr></tfoot></table>`;
+ product += `</tbody><tfoot><tr><td colspan="4"> Sum: ${derived_total} ${curr}</td></tr></tfoot></table>`;
 
- let html = `<!DOCTYPE html><html><body><div style=" margin: auto; align=center;padding: 10px;"><img src=${logo} alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">${date}</p><div ><h2>ORDER CONFIRMED</h2><p> Hi ${customer},</p>`;
+ let html = `<!DOCTYPE html><html><body style="text-align:right;"><div style="magin-left: auto; margin-right:auto;"><img src=${logo} alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">${date}</p><div ><h2>ORDER CONFIRMED</h2><p> Hi ${customer},</p>`;
  html += `<p>We received your order # ${orderId} for ${curr} ${total.toLocaleString()} </p> <p>Factory Location: ${location}</p>`;
  html += `${product}`;
  html += `<h3>Order summary</h3><p>Pay Type: ${payType}</p><p> Subtotal: ${curr} ${total.toLocaleString()} </p> <p>Tax: ${curr} 0.00</p> <p>Total: ${curr} ${total.toLocaleString()}</p></p>`;
  
- html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center">ShopTorama - All rights reserved</h4> </div></body></html>`;
+ html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center">ShopTorama - All rights reserved. ${new Date().getFullYear()}</h4> </div></body></html>`;
 
  const mailOptions = {
       from: `ShopTorama ${process.env.tormail}`,

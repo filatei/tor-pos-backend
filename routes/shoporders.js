@@ -74,11 +74,11 @@ async function sendMail(order) {
  
  let products = order.products 
 
- let product = `<table style="margin-left:auto; margin-right:auto"><thead><tr> <th>Product</th> <th></th> <th></th><th>Amount</th></tr></thead><tbody>`;
+ let product = `<table style="margin-left:auto; margin-right:auto"><thead><tr style="text-align:left;"> <th>Product</th> <th></th> <th></th><th>Amount</th></tr></thead><tbody>`;
  let derived_total = 0
  products.forEach(p => {
   amount = (p.qty * p.price).toLocaleString();
-  product += `<tr><td>${p.qty} x ${p.name} </td> <td colspan="3" style="text-align:right;">${amount} ${curr}</td><tr>`;
+  product += `<tr style="text-align:left;"><td>${p.qty} x ${p.name} </td> <td colspan="3" style="text-align:right;">${amount} ${curr}</td><tr>`;
   derived_total += p.qty * p.price
  })
  derived_total = derived_total.toLocaleString();
@@ -88,11 +88,11 @@ async function sendMail(order) {
  let html = `<!DOCTYPE html><html><body style="text-align:center;"><div style="margin-left:auto;margin-right:auto;"><img src=${logo} alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">${date}</p><div ><h2>ORDER CONFIRMED</h2><p> Hi ${customer},</p>`;
  html += `<p>We received your order # ${orderId} for ${curr} ${total.toLocaleString()} </p> <p>Factory Location: ${location}</p>`;
  html += `${product}`;
- html += `<table style="margin-left:auto; margin-right:auto"><tr><td><h3>Order summary</h3></td></tr><tr><td>Pay Type:</td><td> ${payType}</td></tr><tr><td> Subtotal:</td><td> ${curr} ${total.toLocaleString()} </td></tr>
- <tr> <td>Tax: </td><td>${curr} 0.00</td><tr> <tr><td>Total: </td><td>${curr} ${total.toLocaleString()}</td></tr></table>`;
+ html += `<table style="margin-left:auto; margin-right:auto"><tr style="text-align:left;"><td><h3>Order summary</h3></td></tr><tr style="text-align:left;"><td>Pay Type:</td><td> ${payType}</td></tr><tr style="text-align:left;"><td> Subtotal:</td><td> ${curr} ${total.toLocaleString()} </td></tr>
+ <tr style="text-align:left;"> <td>Tax: </td><td>${curr} 0.00</td></tr> <tr style="text-align:left;"><td>Total: </td><td>${curr} ${total.toLocaleString()}</td></tr></table>`;
  
- html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center">ShopTorama - All rights reserved. ${new Date().getFullYear()}</h4> </div></body></html>`;
-
+ html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama - All rights reserved. &#169; ${new Date().getFullYear()}</h4> </div></body></html>`;
+console.log (html, 'html')
  const mailOptions = {
       from: `ShopTorama ${process.env.tormail}`,
       to: toEmail,

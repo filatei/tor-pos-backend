@@ -76,13 +76,24 @@ router.post("", (req, res, next) =>  {
 
    // some content
    let logo = 'https://api.torama.ng/uploads/productimages/fidologo.png' || mailObj.logo;
-   let date = new Date(mailObj.date).toDateString() || new Date().toDateString()
-   let header = `<!DOCTYPE html><html><body><div style=" margin: auto; align=center;padding: 10px;"><img src=${logo} alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">${date}</p>`;
-   let mailBody = mailObj.html || new Date().getTime();
+   let theDate = mailObj.date || new Date().toString()
+   let dateEl = `<p style="background:rgba(0, 128, 0,0.051); text-align:center;">${theDate}</p>`
+   
+   let html = `<!DOCTYPE html><html><body style="text-align:center;">
+      <img src=${logo} alt="logoimg" width="50">
+      <table style=" margin-left: auto; margin-right:auto;">`;
+
+   let mailBody = mailObj.html;
+   console.log (mailBody)
+   html += `<tr><td>${dateEl}</td></tr>`;
+   html += `<tr><td>${mailBody} </td></tr>`;
+   let footer = `<h6 style="text-align:center; background-color:rgba(225,225,225,0.2)"><b>ShopTorama</b> - All rights reserved. ${new Date().getFullYear()}</h6>`;
+   html += `<tr><td>${footer}</td></tr>`;
+   html += `</table> </body></html>`
+   console.log(html)
    let subject = mailObj.subject || `Message from ShopTorama App`
    // let customer = mailObj.customer 
    let toEmail = mailObj.email
-   let footer = `<h6><b>ShopTorama</b>- All rights reserved.${new Date().getFullYear()}</h6>`;
 
    const mailOptions = {
         from: `ShopTorama ${process.env.tormail}`,
@@ -90,7 +101,7 @@ router.post("", (req, res, next) =>  {
         bcc: process.env.tormail,
         subject: subject,
         generateTextFromHTML: true,
-        html:  `${header} ${mailBody} ${footer} </body></html>`
+        html:  html
     };
 
 // send mail
@@ -105,12 +116,7 @@ router.post("", (req, res, next) =>  {
           smtpTransport.close();
           return res.status(200).json({ message: "Mail successful sent!", response });
         }
-        
     });
-    
-
-
-  
 });
   
 router.put("/:id", checkAuth, (req, res, next) => {

@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const uniqueValidator = require('mongoose-unique-validator');
+const AutoIncrement = require('mongoose-sequence')(mongoose);
 
 const claimSchema = mongoose.Schema({
     customer: {type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true},
@@ -48,6 +49,8 @@ const claimSchema = mongoose.Schema({
     timestamps: true,
     autoindex: true
 });
+
+claimSchema.plugin(AutoIncrement, {inc_field: 'claim_id'});
 
 claimSchema.index({ stan: 'text', rrn: 'text', auth_id: 'text', receipt_id: 'text', terminal_location: 'text', acquirer: 'text',
     card_number: 'text', action_taken: 'text', trans_date: 'text', company: 'text'

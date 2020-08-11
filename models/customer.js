@@ -6,11 +6,17 @@ const customerSchema = mongoose.Schema({
     name: {type: String, required: true},
     creator: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
     phone: {type: String},
+    drivers: [{
+        name: {type: String},
+        phone:  {type: String}
+    }],
+    
     email: {type: String},
     icon: {type: String},
     barcode: {type: String},
     biometric: {type: String},
     phones: [],
+    emails: [],
     cards:[{
         card_name: {type: String},
         card_number: {type: String},

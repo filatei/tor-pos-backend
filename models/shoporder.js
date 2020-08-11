@@ -5,6 +5,8 @@ const shoporderSchema = mongoose.Schema({
     orderId: {type:  Number, required: true},
     customer: {type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true},
     driver: {type: String},
+    contactPhone: {type: String},
+    contactEmail: {type: String},
     pay_type: {type: String},
     transfer_from_bank: {type: String},
     transfer_from_account_name: {type: String},

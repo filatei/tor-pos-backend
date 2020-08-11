@@ -71,7 +71,6 @@ async function sendMail(order) {
  let date = (order.createdAt).toString() || new Date().toString();
  let logo = 'https://api.torama.ng/uploads/productimages/fidologo.png'
 
- 
  let products = order.products 
 
  let product = `<table style="margin-left:auto; margin-right:auto"><thead><tr style="text-align:left;"> <th>Product</th> <th></th> <th></th><th>Amount</th></tr></thead><tbody>`;
@@ -85,14 +84,14 @@ async function sendMail(order) {
 
  product += `</tbody><tfoot><tr><td colspan="4" style="text-align:right;" > Sum: ${derived_total} ${curr}</td></tr></tfoot></table>`;
 
- let html = `<!DOCTYPE html><html><body style="text-align:center;"><div style="margin-left:auto;margin-right:auto;"><img src=${logo} alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">${date}</p><div ><h2>ORDER CONFIRMED</h2><p> Hi ${customer},</p>`;
+ let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src=${logo} alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">${date}</p>< ><h2>ORDER CONFIRMED</h2><p> Hi ${customer},</p>`;
  html += `<p>We received your order # ${orderId} for ${curr} ${total.toLocaleString()} </p> <p>Factory Location: ${location}</p>`;
  html += `${product}`;
  html += `<table style="margin-left:auto; margin-right:auto"><tr style="text-align:left;"><td><h3>Order summary</h3></td></tr><tr style="text-align:left;"><td>Pay Type:</td><td> ${payType}</td></tr><tr style="text-align:left;"><td> Subtotal:</td><td> ${curr} ${total.toLocaleString()} </td></tr>
  <tr style="text-align:left;"> <td>Tax: </td><td>${curr} 0.00</td></tr> <tr style="text-align:left;"><td>Total: </td><td>${curr} ${total.toLocaleString()}</td></tr></table>`;
  
- html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama - All rights reserved. &#169; ${new Date().getFullYear()}</h4> </div></body></html>`;
-console.log (html, 'html')
+ html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama - All rights reserved. &#169; ${new Date().getFullYear()}</h4> </body></html>`;
+// console.log (html, 'html')
  const mailOptions = {
       from: `ShopTorama ${process.env.tormail}`,
       to: toEmail,
@@ -128,6 +127,7 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
   let shopObj = req.body;
   shopObj.creator = req.userData.userId;
   shopObj.orderId = new Date().getTime();
+  let customerUpdate = false;
   
   // handle customer issues
   if ( !shopObj.customer || shopObj.customer === undefined )
@@ -136,13 +136,36 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
   if (shopObj.card_number) {
     updateCustomerCard()
   }
-  if ( typeof shopObj.customer != 'object')
+
+  if ( typeof shopObj.customer != 'object') {
     shopObj.customer = JSON.parse(shopObj.customer);
+  }
+    
 
-  if ( typeof shopObj.driver != 'object')
+  if ( shopObj.driver && typeof shopObj.driver != 'object') {
     shopObj.driver = JSON.parse(shopObj.driver);
-    shopObj.driver = shopObj.driver.name
+  }
+  shopObj.driver = shopObj.driver.name.trim();
+  // if ( !shopObj.customer.driver ) {
+  //   shopObj.customer.driver = shopObj.driver.toUpperCase();
+  // }
 
+  if ( shopObj.customer.drivers && shopObj.customer.drivers.length) {
+    console.log('drvers ', shopObj.customer.drivers)
+
+    if ( !shopObj.customer.drivers.map((a) => { return a.name.toLowerCase() }).includes( shopObj.driver.toLowerCase() ) ) {
+      shopObj.customer.drivers.push( { name: shopObj.driver.toUpperCase() } );
+      customerUpdate = true;
+    }
+  } else {
+    console.log('drvers empty ', shopObj.customer.drivers)
+
+    shopObj.customer.drivers = new Array({ name: shopObj.driver.toUpperCase() })
+    console.log('drvers filled ', shopObj.customer.drivers)
+    customerUpdate = true;
+
+  }
+   
   // if (!shopObj.driver._id) {
   //   console.log ('saving new driver..', shopObj.driver)
   //   saveDriver(shopObj.driver)
@@ -150,21 +173,63 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
   //   shopObj.driver = shopObj.driver._id;
   // }
 
+  
   if (shopObj.customer._id){
-    if (shopObj.contactEmail || shopObj.contactPhone) {
-      updateCustomer(shopObj.customer)
-    }
-    console.log( 'customer already be in db')
-    // store customer id and save claim
-    shopObj.customer = shopObj.customer._id;
-    saveOrder(shopObj);
     
+    if( setCustomerEmail() ) { customerUpdate = true; }
+    if( setCustomerPhone() ) { customerUpdate = true; }
+    if ( customerUpdate ) {
+      console.log('updating customer ... ', shopObj.customer)
+      updateCustomer(shopObj.customer)
+    } else {
+      console.log( 'customer already be in db')
+      // store customer id and save order
+      shopObj.customer = shopObj.customer._id;
+      saveOrder(shopObj);
+    }
   } else {
     // console.log( 'customer may not  be in db')
     // store customer name and return _id,  before save claim
+    setCustomerEmail()
+    setCustomerPhone()
     saveCustomer(shopObj.customer);
   }
 
+  /**
+   * set customer email if contact email provided
+   */
+  function setCustomerEmail() {
+    if ( shopObj.contactEmail ) {
+      if ( !shopObj.customer.email ) { 
+        shopObj.customer.email = shopObj.contactEmail;
+        return true;
+      }
+      if ( shopObj.customer.email  && ( shopObj.customer.email  !== shopObj.contactEmail ) ) { 
+        shopObj.customer.email = shopObj.contactEmail;
+        return true;
+      }
+    } 
+    return false;
+  }
+
+  /**
+   * set customer phone if contactPhone
+   */
+  function setCustomerPhone() {
+
+    if ( shopObj.contactPhone ) {
+      if ( !shopObj.customer.phone ) { 
+        shopObj.customer.phone = shopObj.contactPhone;
+        return true;
+      }
+      if ( shopObj.customer.phone  && ( shopObj.customer.phone  !== shopObj.contactPhone ) ) { 
+        shopObj.customer.phone = shopObj.contactPhone;
+        return true;
+      }
+
+    }
+    return false;
+  }
 
   /**
    * saves customer cust to customer collection if not exist already
@@ -201,16 +266,20 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
     .then( (result) => {
       if (result.n > 0) {
         console.log('customer update 1 successful')
+        shopObj.customer = shopObj.customer._id
+        saveOrder(shopObj)
       } else { 
         console.log('customer update 1 unsuccessful')
+        shopObj.customer = shopObj.customer._id
+        saveOrder(shopObj)
 
       }
     })
     .catch(err => {
       console.log(err, ' customer save err')
+      return;
       // throw err
     })
-    
   }
     
   function saveOrder(shopObj) {
@@ -361,7 +430,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
     
     res.status(200).json({ message: "Deletion successful!" });
   } else {
-    res.status(401).json({ message: "Not authorized!" });
+    res.status(401).json({ message: "deletion failed ...id may not exist!" });
   }
   })
   .catch(error => {

@@ -160,7 +160,11 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
     claim.save()
     .then(result => {
       res.status(201).json({
-        message: "Creating  claim succeeded!" + result
+        message: "Creating  claim succeeded!" + result,
+        claim: {
+          ...result,
+          id: result._id
+        }
       });
     })
     .catch(error => {

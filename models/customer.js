@@ -33,7 +33,7 @@ const customerSchema = mongoose.Schema({
     // updatedAt: {type: Date, Default: Date.now},
 },
 {
-    timestamp: true,
+    timestamps: true,
     strict: true
 });
 

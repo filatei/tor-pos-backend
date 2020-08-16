@@ -15,7 +15,7 @@ const mailSchema = mongoose.Schema({
     messageSize: {type: String}
 },
 {
-    timestamp: true,
+    timestamps: true,
     strict: true
 });
 

@@ -15,7 +15,7 @@ const fidositeSchema = mongoose.Schema({
     icon: String,
 },
 {
-    timestamp: true
+    timestamps: true
 }
 );
 

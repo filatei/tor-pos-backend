@@ -27,6 +27,9 @@ const siteRoutes = require("./routes/fidosites");
 const eodRoutes = require("./routes/eod");
 const shopordersRoutes = require("./routes/shoporders");
 const mailRoutes = require("./routes/mail");
+const inventoryRoutes = require("./routes/inventory");
+const stockitemRoutes = require("./routes/stockitem");
+const contactRoutes = require("./routes/contact");
 
 //let connectStr =  'mongodb://localhost:27017/torposdb';
 let connectStr = process.env.CONNECT_STR
@@ -92,6 +95,10 @@ app.use("/api/sites", siteRoutes);
 app.use("/api/eod", eodRoutes);
 app.use("/api/shoporders", shopordersRoutes);
 app.use("/api/mailer", mailRoutes);
+app.use("/api/inventory", inventoryRoutes);
+app.use("/api/stockitem", stockitemRoutes);
+app.use("/api/contact", contactRoutes);
+
 
 
 

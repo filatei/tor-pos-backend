@@ -67,6 +67,7 @@ router.post("/login", (req, res, next) => {
             userId: fetchedUser._id,
             email: fetchedUser.email,
             name: fetchedUser.name,
+            site: fetchedUser.site,
             image: fetchedUser.image 
         });
     })

@@ -8,7 +8,7 @@ const categorySchema = mongoose.Schema({
     icon: {type: String},
 },
 {
-    timestamp: true,
+    timestamps: true,
     strict: true
 });
 

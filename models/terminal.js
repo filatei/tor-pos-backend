@@ -10,7 +10,7 @@ const terminalSchema = mongoose.Schema({
     sn: {type: String, required: true, unique: true},
 },
 {
-    timestamp: true,
+    timestamps: true,
     strict: true
 });
 

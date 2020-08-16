@@ -7,7 +7,7 @@ const paymethodSchema = mongoose.Schema({
 
 },
 {
-    timestamp: true
+    timestamps: true
 });
 
 module.exports = mongoose.model('Paymethod', paymethodSchema)

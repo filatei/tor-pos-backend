@@ -10,7 +10,7 @@ const settingSchema = mongoose.Schema({
 
 },
 {
-    timestamp: true
+    timestamps: true
 }
 );
 

@@ -1,6 +1,7 @@
 const express = require("express");
 
 const Stockitem = require("../models/stockitem");
+const Inventory = require("../models/inventory");
 const router = express.Router();
 const path = require('path')
 const fs = require('fs')
@@ -36,6 +37,7 @@ var upload = multer({
 });
 
 const checkAuth = require('../middleware/check-auth');
+const inventory = require("../models/inventory");
 
 router.post('', checkAuth, upload.single('image'), function (req, res, next) {
   let path = ""
@@ -91,7 +93,11 @@ router.put("/:id", checkAuth, upload.single('image'), (req, res, next) => {
     const unit = req.body.unit;
     // const updatedAt = req.body.updatedAt;
     const id = req.params.id;
+
+    
     stockObj._id = req.params.id;
+
+    
     stockObj.updater = req.userData.userId;
     const stockitem = new Stockitem(stockObj);
     if (req.file && req.file.filename && req.file.filename.length > 0) {
@@ -119,7 +125,7 @@ router.put("/:id", checkAuth, upload.single('image'), (req, res, next) => {
       });
     } else {
       Stockitem.updateOne({ _id: req.params.id }, 
-        { name, qty, description, icon, unit })
+        stockitem)
       .then(result => {
         if (result.n > 0) {
           res.status(200).json({ message: "Update successful!" });
@@ -141,6 +147,23 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   if ( !alloweds.includes(req.userData.email)) {
     logIncident(req.userData.email, 'Not allowed to delete ')
      return res.status(500).json({message: 'Not allowed'});
+  }
+
+  const id = req.params.id;
+  // is id in inventory?
+  if (checkInventory(id)) { 
+    return res.status(500).json({message: 'item already in inventory, not deleted'});
+  }
+
+  async function checkInventory(id) {
+    let response;
+    response = await Inventory.findById(id).exec();
+    console.log (response)
+    if (response) {
+      return true
+    }
+    return false;
+
   }
 
   let filePath;

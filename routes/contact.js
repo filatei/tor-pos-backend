@@ -1,6 +1,8 @@
 const express = require("express");
+const mongoose = require('mongoose');
 
 const Contact = require("../models/contact");
+const Inventory = require("../models/inventory");
 const router = express.Router();
 const path = require('path')
 const fs = require('fs')
@@ -119,7 +121,7 @@ router.put("/:id", checkAuth, upload.single('image'), (req, res, next) => {
       });
     } else {
       Contact.updateOne({ _id: req.params.id }, 
-        { name, qty, description, icon, unit })
+        contact)
       .then(result => {
         if (result.n > 0) {
           res.status(200).json({ message: "Update successful!" });
@@ -142,44 +144,72 @@ router.delete("/:id", checkAuth, (req, res, next) => {
     logIncident(req.userData.email, 'Not allowed to delete ')
      return res.status(500).json({message: 'Not allowed'});
   }
+  // in contact in inventory, dont delete
+  const sender = req.body.sender;
+  const receiver = req.body.receiver;
+  const id = req.params.id;
+  // console.log (id)
 
-  let filePath;
-  Contact.findById(req.params.id)
-  .then (contact => {
-    if (contact && contact.icon) {
-      filePath = 'uploads/' + contact.icon.split('/uploads/')[1];
-      console.log(filePath)
+  // is id  in sender or receiver fields in inventory?
+  checkInventory(id);
+
+  async function checkInventory(id) {
+    let response1;
+    let response2;
+    let ret = false;
+
+    response1 = await Inventory.exists({receiver:  id });
+    response12= await Inventory.exists({sender:  id });
+    // console.log (response1,  'res1' , response2)
+    if (response1  || response2) {
+      console.log(true, 'not deleting... ')
+      return res.status(500).json({message: 'Contact already in inventory, not deleted'});
+    } else {
+      console.log(false, ' deleting... ')
+
+      deleteContact()
     }
-    
-  })
-  .catch(err => {
-    return res.status(401).json({ message: "contact not found in db!" + err });
-  })
-  // console.log('params ', req.params)
-  Contact.deleteOne({ _id: req.params.id })
-  .then(result => {
-  if (result.n > 0) {
-    // delete contact.icon
-    if (filePath) {
-      fs.unlink(filePath, (err) => {
-        if (err) {
-          console.error(err)
-        } else {
-          console.log('related file deleted')
-        }
-      })
-    }
-    res.status(200).json({ message: "Deletion successful!" });
-  } else {
-    res.status(401).json({ message: "Not authorized!" });
   }
-  })
-  .catch(error => {
-    console.error(error)
-    res.status(500).json({
-      message: "Deleting contact failed! " + error
+  
+  function deleteContact() {
+    let filePath;
+    Contact.findById(req.params.id)
+    .then (contact => {
+      if (contact && contact.icon) {
+        filePath = 'uploads/' + contact.icon.split('/uploads/')[1];
+        console.log(filePath)
+      }
+      
+    })
+    .catch(err => {
+      return res.status(401).json({ message: "contact not found in db!" + err });
+    })
+    // console.log('params ', req.params)
+    Contact.deleteOne({ _id: req.params.id })
+    .then(result => {
+    if (result.n > 0) {
+      // delete contact.icon
+      if (filePath) {
+        fs.unlink(filePath, (err) => {
+          if (err) {
+            console.error(err, 'file unlink err')
+          } else {
+            console.log('related file deleted')
+          }
+        })
+      }
+      res.status(200).json({ message: "Deletion successful!" });
+    } else {
+      res.status(401).json({ message: "Not authorized!" });
+    }
+    })
+    .catch(error => {
+      console.error(error, 'catch err')
+      res.status(500).json({
+        message: "Deleting contact failed! " + error
+      });
     });
-  });
+  }
 
  });
 

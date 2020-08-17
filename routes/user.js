@@ -134,7 +134,6 @@ router.put('/:id', checkAuth, upload.single('image'), (req, res, next) => {
     userObj.updater = req.userData.userId;
     if (path ) {
       userObj.image = path;
-
     }
 
     console.log (userObj);

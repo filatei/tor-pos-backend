@@ -125,7 +125,6 @@ router.put("/:id", checkAuth, (req, res, next) => {
         message: "Couldn't update inventory! " + error
       });
     });
-     
 });
 
 router.delete("/:id", checkAuth, (req, res, next) => {
@@ -136,6 +135,14 @@ router.delete("/:id", checkAuth, (req, res, next) => {
      return res.status(500).json({message: 'Not allowed'});
   }
 
+  const id = req.params.id;
+
+  async function getInventory() {
+    return await Inventory.findById(id)
+  }
+
+  let stockObj = getInventory();
+
   async function updateQty() {
     // subtract qty being deleted from quantities
     const quant = await Quantity.findOne({name: stockObj.name, store: stockObj.store})
@@ -145,7 +152,6 @@ router.delete("/:id", checkAuth, (req, res, next) => {
       await quant.save();
     }
   }
-
   
   // console.log('params ', req.params)
   Inventory.deleteOne({ _id: req.params.id })

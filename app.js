@@ -30,6 +30,7 @@ const mailRoutes = require("./routes/mail");
 const inventoryRoutes = require("./routes/inventory");
 const stockitemRoutes = require("./routes/stockitem");
 const contactRoutes = require("./routes/contact");
+const qtyRoutes = require("./routes/quantity");
 
 //let connectStr =  'mongodb://localhost:27017/torposdb';
 let connectStr = process.env.CONNECT_STR
@@ -52,7 +53,7 @@ app.use(bodyParser.json({ limit: "1mb" }))
 app.use(cors())
 mongoose.set('useUnifiedTopology', true );
 mongoose.set('useCreateIndex', true);
-mongoose.connect(connectStr, { useNewUrlParser: true })
+mongoose.connect(connectStr, { useNewUrlParser: true, useFindAndModify: false, useUnifiedTopology: true })
 .then (()=>{
     console.log("Connected to DB")
 })
@@ -98,8 +99,6 @@ app.use("/api/mailer", mailRoutes);
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/stockitem", stockitemRoutes);
 app.use("/api/contact", contactRoutes);
-
-
-
+app.use("/api/quantity", qtyRoutes);
 
 module.exports = app;

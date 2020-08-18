@@ -59,6 +59,8 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
   // console.log('req.body', req.body)
 
   let stockObj = req.body;
+  stockObj.name = stockObj.name.toUpperCase()
+
 
   stockObj.creator = req.userData.userId;
 
@@ -86,11 +88,11 @@ router.put("/:id", checkAuth, upload.single('image'), (req, res, next) => {
     let path = ""
     let url= ""
     let stockObj = req.body;
-    
-    const description = req.body.description;
-    const name = req.body.name;
-    const qty = req.body.qty;
-    const unit = req.body.unit;
+    stockObj.name = stockObj.name.toUpperCase()
+    // const description = req.body.description;
+    // const name = req.body.name;
+    // const qty = req.body.qty;
+    // const unit = req.body.unit;
     // const updatedAt = req.body.updatedAt;
     const id = req.params.id;
 
@@ -150,59 +152,61 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   }
 
   const id = req.params.id;
-  // is id in inventory?
-  if (checkInventory(id)) { 
-    return res.status(500).json({message: 'item already in inventory, not deleted'});
-  }
+  // is id in inventory as name?
+  checkInventory(id);
 
   async function checkInventory(id) {
     let response;
-    response = await Inventory.findById(id).exec();
-    console.log (response)
+    response = await Inventory.exists({name: id});
+    console.log ('item in inventory, not deleted')
     if (response) {
-      return true
+      return res.status(500).json({message: 'item already in inventory, not deleted'});
+    } else {
+      console.log ('deleting item...')
+      deleteItem()
     }
-    return false;
-
   }
 
-  let filePath;
-  Stockitem.findById(req.params.id)
-  .then (stockitem => {
-    if (stockitem && stockitem.icon) {
-      filePath = 'uploads/' + stockitem.icon.split('/uploads/')[1];
-      console.log(filePath)
+  function deleteItem() {
+    let filePath;
+    Stockitem.findById(req.params.id)
+    .then (stockitem => {
+      if (stockitem && stockitem.icon) {
+        filePath = 'uploads/' + stockitem.icon.split('/uploads/')[1];
+        console.log(filePath)
+      }
+      
+    })
+    .catch(err => {
+      return res.status(401).json({ message: "stockitem not found in db!" + err });
+    })
+    // console.log('params ', req.params)
+    Stockitem.deleteOne({ _id: req.params.id })
+    .then(result => {
+    if (result.n > 0) {
+      // delete stockitem.icon
+      if (filePath) {
+        fs.unlink(filePath, (err) => {
+          if (err) {
+            console.error(err)
+          } else {
+            console.log('related file deleted')
+          }
+        })
+      }
+      res.status(200).json({ message: "Deletion successful!" });
+    } else {
+      res.status(401).json({ message: "Not authorized!" });
     }
-    
-  })
-  .catch(err => {
-    return res.status(401).json({ message: "stockitem not found in db!" + err });
-  })
-  // console.log('params ', req.params)
-  Stockitem.deleteOne({ _id: req.params.id })
-  .then(result => {
-  if (result.n > 0) {
-    // delete stockitem.icon
-    if (filePath) {
-      fs.unlink(filePath, (err) => {
-        if (err) {
-          console.error(err)
-        } else {
-          console.log('related file deleted')
-        }
-      })
-    }
-    res.status(200).json({ message: "Deletion successful!" });
-  } else {
-    res.status(401).json({ message: "Not authorized!" });
-  }
-  })
-  .catch(error => {
-    console.error(error)
-    res.status(500).json({
-      message: "Deleting stockitem failed! " + error
+    })
+    .catch(error => {
+      console.error(error)
+      res.status(500).json({
+        message: "Deleting stockitem failed! " + error
+      });
     });
-  });
+
+  }
 
  });
 

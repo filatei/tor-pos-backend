@@ -59,6 +59,7 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
   // console.log('req.body', req.body)
 
   let contactObj = req.body;
+  contactObj.name = contactObj.name.toUpperCase();
 
   contactObj.creator = req.userData.userId;
 
@@ -86,6 +87,7 @@ router.put("/:id", checkAuth, upload.single('image'), (req, res, next) => {
     let path = ""
     let url= ""
     let contactObj = req.body;
+    contactObj.name = contactObj.name.toUpperCase();
     
     const description = req.body.description;
     const name = req.body.name;
@@ -156,7 +158,6 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   async function checkInventory(id) {
     let response1;
     let response2;
-    let ret = false;
 
     response1 = await Inventory.exists({receiver:  id });
     response12= await Inventory.exists({sender:  id });

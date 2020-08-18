@@ -160,17 +160,17 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
   // }
 
   if ( shopObj.customer.drivers && shopObj.customer.drivers.length) {
-    console.log('drvers ', shopObj.customer.drivers)
+   // console.log('drvers ', shopObj.customer.drivers)
 
     if ( !shopObj.customer.drivers.map((a) => { return a.name.toLowerCase() }).includes( shopObj.driver.toLowerCase() ) ) {
       shopObj.customer.drivers.push( { name: shopObj.driver.toUpperCase() } );
       customerUpdate = true;
     }
   } else {
-    console.log('drvers empty ', shopObj.customer.drivers)
+   // console.log('drvers empty ', shopObj.customer.drivers)
 
     shopObj.customer.drivers = new Array({ name: shopObj.driver.toUpperCase() })
-    console.log('drvers filled ', shopObj.customer.drivers)
+    // console.log('drvers filled ', shopObj.customer.drivers)
     customerUpdate = true;
 
   }
@@ -297,7 +297,7 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
 
     shoporder.save()
     .then ((result)=> {
-      console.log('order added', result)
+      console.log('order added')
       res.status(201).json({
         message: 'Order added successfully',
         shoporder: {...result,
@@ -337,7 +337,6 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
         console.log('customer card update successful')
       } else {
         console.log('customer card update unsuccessful')
-
       }
     })
     .catch(err => {
@@ -346,11 +345,9 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
     })
   }
   
-  
 })
 
 router.post('/mail', checkAuth, function (req, res, next) {
-
   let orderObj = req.body;
   orderObj.creator = req.userData.userId;
   
@@ -418,7 +415,6 @@ router.put("/:id", checkAuth, upload.single('image'), (req, res, next) => {
 });
 
 router.delete("/:id", checkAuth, (req, res, next) => {
-
   const alloweds = process.env.DELALLOWEDS;
 
   if ( !alloweds.includes(req.userData.email)) {

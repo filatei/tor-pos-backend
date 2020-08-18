@@ -1,6 +1,7 @@
 const express = require("express");
 const Inventory = require("../models/inventory");
 const Stockitem = require("../models/stockitem");
+const Quantity = require("../models/quantity");
 const router = express.Router();
 const path = require('path')
 const fs = require('fs')
@@ -48,76 +49,83 @@ router.post('', checkAuth,  function (req, res, next) {
   const inventory = new Inventory(stockObj);
   // inventory.icon = path || null;
 
-  inventory.save()
-  .then ((result)=> {
-    res.status(201).json({
-      message: 'Inventory added successfully',
-      inventory: { ...result,
-        id: result._id
+  saveInventory()
+
+  // uodate quantities in Quantity
+  async function updateQty() {
+    let quantity;
+    const quant = await Quantity.findOne({name: stockObj.name, store: stockObj.store})
+    console.log(quant, 'quant')
+    if (!quant ){
+      // new Inventory
+      quantity = new Quantity({name: stockObj.name, store: stockObj.store, qty: stockObj.qty})
+      await quantity.save();
+    } else {
+      if (stockObj.ops == 'OUTFLOW') {
+        quant.qty = quant.qty - stockObj.qty
       }
-    });
-  })
-  .catch(error => {
-    res.status(500).json({
-      message: "Creating an inventory failed! " + error
-    });
-  });
-  
+      if (stockObj.ops == 'INFLOW') {
+        quant.qty = quant.qty + stockObj.qty
+      }
+      await quant.save();
+
+    }
+    
+  }
+
+  async function saveInventory() {
+    try {
+      await updateQty()
+      const invSave = await inventory.save()
+      res.status(201).json({
+        message: 'Inventory added successfully',
+        inventory: { ...invSave,
+          id: invSave._id
+        }
+      });
+      
+    } catch (err) {
+      if (err) {
+        res.status(500).json({
+          message: "Creating an inventory failed! " + err
+        });
+      } 
+    }
+
+  }
 })
 
-router.put("/:id", checkAuth, upload.single('image'), (req, res, next) => {
+router.put("/:id", checkAuth, (req, res, next) => {
     let path = ""
     let url= ""
     let stockObj = req.body;
     
-    const description = req.body.description;
-    const name = req.body.name;
-    const qty = req.body.qty;
-    const unit = req.body.unit;
+    // const description = req.body.description;
+    // const name = req.body.name;
+    // const qty = req.body.qty;
+    // const unit = req.body.unit;
     // const updatedAt = req.body.updatedAt;
     const id = req.params.id;
     stockObj._id = req.params.id;
     stockObj.updater = req.userData.userId;
     const inventory = new Inventory(stockObj);
-    if (req.file && req.file.filename && req.file.filename.length > 0) {
 
-      if (hostname.includes('torama')) {
-        url = 'https://api.torama.ng';
+    // wont allow update to quantities
+
+    Inventory.updateOne({ _id: req.params.id }, inventory)
+    .then(result => {
+      if (result.n > 0) {
+        res.status(200).json({ message: "Update successful!" });
       } else {
-        url = req.protocol + '://' + req.get('host');
+        res.status(401).json({ message: "Not authorized!" });
       }
-      
-      path = url + '/uploads/inventoryimages/' + req.file.filename; 
-      inventory.icon = path;
-      Inventory.updateOne({ _id: req.params.id }, inventory)
-      .then(result => {
-        if (result.n > 0) {
-          res.status(200).json({ message: "Update successful!" });
-        } else {
-          res.status(401).json({ message: "Not authorized!" });
-        }
-      })
-      .catch(error => {
-        res.status(500).json({
-          message: "Couldn't update inventory! " + error
-        });
+    })
+    .catch(error => {
+      res.status(500).json({
+        message: "Couldn't update inventory! " + error
       });
-    } else {
-      Inventory.updateOne({ _id: req.params.id }, 
-        { name, qty, description, icon, unit })
-      .then(result => {
-        if (result.n > 0) {
-          res.status(200).json({ message: "Update successful!" });
-        } else {
-          res.status(401).json({ message: "Not authorized!" });
-        }
-      })
-      .catch(error => {
-        res.status(500).json({
-          message: "Couldn't update inventory! " + error
-        });
-      });
-    }   
+    });
+     
 });
 
 router.delete("/:id", checkAuth, (req, res, next) => {
@@ -128,32 +136,22 @@ router.delete("/:id", checkAuth, (req, res, next) => {
      return res.status(500).json({message: 'Not allowed'});
   }
 
-  let filePath;
-  Inventory.findById(req.params.id)
-  .then (inventory => {
-    if (inventory && inventory.icon) {
-      filePath = 'uploads/' + inventory.icon.split('/uploads/')[1];
-      console.log(filePath)
+  async function updateQty() {
+    // subtract qty being deleted from quantities
+    const quant = await Quantity.findOne({name: stockObj.name, store: stockObj.store})
+    console.log(quant, 'quant')
+    if (quant ){
+      quant.qty = quant.qty - stockObj.qty
+      await quant.save();
     }
-    
-  })
-  .catch(err => {
-    return res.status(401).json({ message: "inventory not found in db!" + err });
-  })
+  }
+
+  
   // console.log('params ', req.params)
   Inventory.deleteOne({ _id: req.params.id })
   .then(result => {
   if (result.n > 0) {
-    // delete inventory.icon
-    if (filePath) {
-      fs.unlink(filePath, (err) => {
-        if (err) {
-          console.error(err)
-        } else {
-          console.log('related file deleted')
-        }
-      })
-    }
+    updateQty()    
     res.status(200).json({ message: "Deletion successful!" });
   } else {
     res.status(401).json({ message: "Not authorized!" });

@@ -10,6 +10,8 @@ const inventorySchema = mongoose.Schema({
     ops: {type: String},
     qty: {type: Number, required: true},
     unit: {type: String},
+    rollsUnit: {type: String},
+    rollsQty: {type: Number},
     category: {type: String},
     sender: {type: mongoose.Schema.Types.ObjectId, ref: 'Contact'},
     receiver: {type: mongoose.Schema.Types.ObjectId, ref: 'Contact'},

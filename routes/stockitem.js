@@ -37,7 +37,19 @@ var upload = multer({
 });
 
 const checkAuth = require('../middleware/check-auth');
-const inventory = require("../models/inventory");
+
+const Accesslog = require("../models/accesslog");
+
+function logIncident(email, description) {
+  const logObj = new Accesslog({email: email, description: description})
+  logObj.save(logObj).
+  then(result => {
+    console.log ('access incident logged for user', result)
+  })
+  .catch(err => {
+    console.log ('access logging error for user ', err)
+  })
+}
 
 router.post('', checkAuth, upload.single('image'), function (req, res, next) {
   let path = ""

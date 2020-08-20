@@ -1,6 +1,7 @@
 const express = require("express");
 const Inventory = require("../models/inventory");
 const Stockitem = require("../models/stockitem");
+const Accesslog = require("../models/accesslog");
 const Quantity = require("../models/quantity");
 const router = express.Router();
 const path = require('path')
@@ -37,6 +38,17 @@ var upload = multer({
 });
 
 const checkAuth = require('../middleware/check-auth');
+
+function logIncident(email, description) {
+  const logObj = new Accesslog({email: email, description: description})
+  logObj.save(logObj).
+  then(result => {
+    console.log ('access incident logged for user', result)
+  })
+  .catch(err => {
+    console.log ('access logging error for user ', err)
+  })
+}
 
 router.post('', checkAuth,  function (req, res, next) {
   

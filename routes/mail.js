@@ -55,12 +55,10 @@ router.get("/:id",  (req, res, next) => {
 });
 
 router.post("", (req, res, next) =>  {
-    
    
     let mailObj = req.body;
     // const mail = new Mail(mailObj);
     console.log("Mail request came", mailObj);
-
 
     const smtpTransport = nodemailer.createTransport({
         service: "gmail",

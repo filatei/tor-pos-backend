@@ -42,6 +42,19 @@ var upload = multer({
   }
 });
 
+const Accesslog = require("../models/accesslog");
+
+function logIncident(email, description) {
+  const logObj = new Accesslog({email: email, description: description})
+  logObj.save(logObj).
+  then(result => {
+    console.log ('access incident logged for user', result)
+  })
+  .catch(err => {
+    console.log ('access logging error for user ', err)
+  })
+}
+
 async function sendMail(order) {
   // console.log(order.products)
   customer = await Customer.findById(order.customer).exec()

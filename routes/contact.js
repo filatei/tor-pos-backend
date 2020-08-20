@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 
 const Contact = require("../models/contact");
 const Inventory = require("../models/inventory");
+const Accesslog = require("../models/accesslog");
 const router = express.Router();
 const path = require('path')
 const fs = require('fs')
@@ -36,6 +37,17 @@ var upload = multer({
     }
   }
 });
+
+function logIncident(email, description) {
+  const logObj = new Accesslog({email: email, description: description})
+  logObj.save(logObj).
+  then(result => {
+    console.log ('access incident logged for user', result)
+  })
+  .catch(err => {
+    console.log ('access logging error for user ', err)
+  })
+}
 
 const checkAuth = require('../middleware/check-auth');
 
@@ -89,13 +101,13 @@ router.put("/:id", checkAuth, upload.single('image'), (req, res, next) => {
     let contactObj = req.body;
     contactObj.name = contactObj.name.toUpperCase();
     
-    const description = req.body.description;
-    const name = req.body.name;
-    const qty = req.body.qty;
-    const unit = req.body.unit;
+    // const description = req.body.description;
+    // const name = req.body.name;
+    // const qty = req.body.qty;
+    // const unit = req.body.unit;
     // const updatedAt = req.body.updatedAt;
     const id = req.params.id;
-    contactObj._id = req.params.id;
+    contactObj._id = id;
     contactObj.updater = req.userData.userId;
     const contact = new Contact(contactObj);
     if (req.file && req.file.filename && req.file.filename.length > 0) {
@@ -140,6 +152,7 @@ router.put("/:id", checkAuth, upload.single('image'), (req, res, next) => {
 });
 
 router.delete("/:id", checkAuth, (req, res, next) => {
+
   const alloweds = process.env.DELALLOWEDS;
 
   if ( !alloweds.includes(req.userData.email)) {
@@ -173,6 +186,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   }
   
   function deleteContact() {
+
     let filePath;
     Contact.findById(req.params.id)
     .then (contact => {

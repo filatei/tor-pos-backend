@@ -17,6 +17,7 @@ const contactSchema = mongoose.Schema({
     biometric: {type: String},
     phones: [],
     emails: [],
+    category: {type: String},
     site: {type: String},
     jobname: {type: String},
     type: {type: String},

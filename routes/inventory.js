@@ -57,7 +57,7 @@ router.post('', checkAuth,  function (req, res, next) {
 
   let stockObj = req.body;
   stockObj.creator = req.userData.userId;
-  console.log(stockObj, 'inventory route')
+  // console.log(stockObj, 'inventory route')
   const inventory = new Inventory(stockObj);
   // inventory.icon = path || null;
 
@@ -80,9 +80,7 @@ router.post('', checkAuth,  function (req, res, next) {
         quant.qty = quant.qty + stockObj.qty
       }
       await quant.save();
-
     }
-    
   }
 
   async function saveInventory() {
@@ -112,11 +110,6 @@ router.put("/:id", checkAuth, (req, res, next) => {
     let url= ""
     let stockObj = req.body;
     
-    // const description = req.body.description;
-    // const name = req.body.name;
-    // const qty = req.body.qty;
-    // const unit = req.body.unit;
-    // const updatedAt = req.body.updatedAt;
     const id = req.params.id;
     stockObj._id = req.params.id;
     stockObj.updater = req.userData.userId;

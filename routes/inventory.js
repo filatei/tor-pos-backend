@@ -52,8 +52,12 @@ function logIncident(email, description) {
 
 router.post('', checkAuth,  function (req, res, next) {
   
-  // console.log('path: ', path)
-  // console.log('req.body', req.body)
+  const alloweds = process.env.STOREALLOWEDS;
+
+  if ( !alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, 'Not allowed to create Receipts')
+     return res.status(500).json({message: 'Not allowed to create inventory'});
+  }
 
   let stockObj = req.body;
   stockObj.creator = req.userData.userId;
@@ -106,6 +110,12 @@ router.post('', checkAuth,  function (req, res, next) {
 })
 
 router.put("/:id", checkAuth, (req, res, next) => {
+  const alloweds = process.env.STOREALLOWEDS;
+
+  if ( !alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, 'Not allowed to create Receipts')
+     return res.status(500).json({message: 'Not allowed to create inventory'});
+  }
     let path = ""
     let url= ""
     let stockObj = req.body;

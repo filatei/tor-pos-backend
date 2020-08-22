@@ -3,7 +3,7 @@ uniqueValidator = require('mongoose-unique-validator');
 const AutoIncrement = require('mongoose-sequence')(mongoose);
 
 const contactSchema = mongoose.Schema({
-    name: {type: String, required: true, unique: true, collation:{ locale: "en", strength: 3 }},
+    name: {type: String, required: true, unique: true, lowercase: false, trim: true, collation:{ locale: "en", strength: 3 }},
     creator: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
     phone: {type: String},
     department: {type: String},

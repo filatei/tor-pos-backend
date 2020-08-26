@@ -76,10 +76,10 @@ router.post("", checkAuth, (req, res, next) => {
   cust.barcode = req.body.name;
 
   cust.creator = req.userData.userId; 
-  cust.name = cust.name.toUpperCase();
+  // cust.name = cust.name.toUpperCase();
 
   const customer = new Customer(cust);
-  //  console.log(customer);
+  console.log(customer);
   customer.save().then ((result)=> {
     // console.log(result)
     res.status(201).json({

@@ -55,7 +55,7 @@ router.post('', checkAuth,  function (req, res, next) {
   const alloweds = process.env.STOREALLOWEDS;
 
   if ( !alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, 'Not allowed to create Receipts')
+    logIncident(req.userData.email, 'Not allowed to create Inventory')
      return res.status(500).json({message: 'Not allowed to create inventory'});
   }
 

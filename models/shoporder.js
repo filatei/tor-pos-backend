@@ -4,19 +4,20 @@ const AutoIncrement = require('mongoose-sequence')(mongoose);
 const shoporderSchema = mongoose.Schema({
     orderId: {type:  Number, required: true},
     customer: {type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true},
-    driver: {type: String},
+    driver: {type: mongoose.Schema.Types.ObjectId, ref: 'Customer'},
+    // driver: {type: String, lowercase: false, trim: true},
+
     contactPhone: {type: String},
     contactEmail: {type: String},
     pay_type: {type: String},
     transfer_from_bank: {type: String},
     transfer_from_account_name: {type: String},
-
-    name_teller: {type: String},
     txn_amount: {type:  Number, required: true},
     paidAmount: {type:  Number, required: true},
+    name_teller: {type: String},
+    teller_id: {type: String, lowercase:true, trim: true, index: true, unique: true, sparse: true},
     amt_teller: {type:  Number},
     date_teller: {type:  Date},
-    
     log_code: {type:  String},
     acquirer: {type:  String},
     stan: {type:  String},

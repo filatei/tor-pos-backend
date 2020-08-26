@@ -11,6 +11,7 @@ const inventorySchema = mongoose.Schema({
     qty: {type: Number, required: true},
     unit: {type: String},
     remarks: {type: String},
+    machine: {type: String},
     rollsUnit: {type: String},
     rollsQty: {type: Number},
     category: {type: String},

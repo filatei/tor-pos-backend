@@ -9,6 +9,7 @@ const expenseSchema = mongoose.Schema({
     updater: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
     unit: {type: String},
     site: {type: String},
+    status: {type: String},
     qty: {type: Number},
     rate: {type: Number},
     date: {type: Date},

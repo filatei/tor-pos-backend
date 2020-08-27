@@ -21,7 +21,7 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const fileName =  new Date().getTime() + '-' + file.originalname.toLowerCase().split(' ').join('-');
-    console.log(fileName)
+    // console.log(fileName)
     cb(null, fileName)
   }
 });
@@ -122,7 +122,7 @@ async function sendMail(order) {
       console.log(error)
       result = false;
     } else {
-      console.log(response)
+      // console.log(response)
       result = true
     }
     smtpTransport.close();
@@ -188,116 +188,9 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
     shopObj.customer = shopObj.customer._id;
   }
   if (!shopObj.teller_id) { delete shopObj.teller_id}
-  console.log(shopObj)
+  // console.log(shopObj)
   saveOrder(shopObj);
   
-  // if (shopObj.customer._id){
-    
-  //   if( setCustomerEmail() ) { customerUpdate = true; }
-  //   if( setCustomerPhone() ) { customerUpdate = true; }
-  //   if ( customerUpdate ) {
-  //     console.log('updating customer ... ', shopObj.customer)
-  //     updateCustomer(shopObj.customer)
-  //   } else {
-  //     console.log( 'customer already be in db')
-  //     // store customer id and save order
-  //     shopObj.customer = shopObj.customer._id;
-  //     saveOrder(shopObj);
-  //   }
-  // } else {
-  //   // console.log( 'customer may not  be in db')
-  //   // store customer name and return _id,  before save claim
-  //   setCustomerEmail()
-  //   setCustomerPhone()
-  //   saveCustomer(shopObj.customer);
-  // }
-
-  // /**
-  //  * set customer email if contact email provided
-  //  */
-  // function setCustomerEmail() {
-  //   if ( shopObj.contactEmail ) {
-  //     if ( !shopObj.customer.email ) { 
-  //       shopObj.customer.email = shopObj.contactEmail;
-  //       return true;
-  //     }
-  //     if ( shopObj.customer.email  && ( shopObj.customer.email  !== shopObj.contactEmail ) ) { 
-  //       shopObj.customer.email = shopObj.contactEmail;
-  //       return true;
-  //     }
-  //   } 
-  //   return false;
-  // }
-
-  // /**
-  //  * set customer phone if contactPhone
-  //  */
-  // function setCustomerPhone() {
-
-  //   if ( shopObj.contactPhone ) {
-  //     if ( !shopObj.customer.phone ) { 
-  //       shopObj.customer.phone = shopObj.contactPhone;
-  //       return true;
-  //     }
-  //     if ( shopObj.customer.phone  && ( shopObj.customer.phone  !== shopObj.contactPhone ) ) { 
-  //       shopObj.customer.phone = shopObj.contactPhone;
-  //       return true;
-  //     }
-
-  //   }
-  //   return false;
-  // }
-
-  // /**
-  //  * saves customer cust to customer collection if not exist already
-  //  * and sets claimObj.customer to savedcustomer._id
-  //  * @param {*} cust 
-  //  */
-  // function saveCustomer( cust ) {
-  //   Customer.findOne({name: new RegExp('^'+cust.name+'$', "i")})
-  //   .then( (result) => {
-  //     if (result) {
-  //       shopObj.customer = result._id
-  //       saveOrder(shopObj)
-  //     } else {
-  //       let custObj = new Customer(cust);
-  //       custObj.save()
-  //       .then((sres) => {
-  //         shopObj.customer = sres._id;
-  //         saveOrder(shopObj)
-  //       })
-  //       .catch(err => {
-  //         console.log(err, ' customer save err')
-  //         // throw err
-  //       })
-  //     }
-  //   })
-  //   .catch( (err) => {
-  //     console.log (err, 'customer find err')
-  //     // throw err
-  //   })
-  // }
-
-  // function updateCustomer( cust ) {
-  //   Customer.updateOne({_id: cust._id}, cust)
-  //   .then( (result) => {
-  //     if (result.n > 0) {
-  //       console.log('customer update 1 successful')
-  //       shopObj.customer = shopObj.customer._id
-  //       saveOrder(shopObj)
-  //     } else { 
-  //       console.log('customer update 1 unsuccessful')
-  //       shopObj.customer = shopObj.customer._id
-  //       saveOrder(shopObj)
-
-  //     }
-  //   })
-  //   .catch(err => {
-  //     console.log(err, ' customer save err')
-  //     return;
-  //     // throw err
-  //   })
-  // }
     
   function saveOrder(shopObj) {
     const shoporder = new Order(shopObj);
@@ -322,36 +215,6 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
     });
   }
 
-  // function updateCustomerCard() {
-  //   let cust = shopObj.customer;
-  //   let cardObj = {card_number: shopObj.card_number, card_bank: shopObj.card_bank, card_name: shopObj.card_name, card_type: shopObj.card_type};
-  //   let found = false
-  //   if (cust.cards && cust.cards.length > 0) {
-  //     cust.cards.forEach(element => {
-  //       if ( shopObj.card_number.includes(element.card_number)) {
-  //         found = true;
-  //       }
-        
-  //     });
-  //     if (!found) {
-  //       cust.cards.push(cardObj)
-  //     }
-  //   } else {
-  //     cust.cards.push(cardObj);
-  //   }
-  //   Customer.updateOne({_id: cust._id}, cust)
-  //   .then( (result) => {
-  //     if (result.n > 0) {
-  //       console.log('customer card update successful')
-  //     } else {
-  //       console.log('customer card update unsuccessful')
-  //     }
-  //   })
-  //   .catch(err => {
-  //     console.log(err, ' customer save err')
-  //     // throw err
-  //   })
-  // }
   
 })
 

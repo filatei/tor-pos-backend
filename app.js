@@ -33,6 +33,8 @@ const expenseitemRoutes = require("./routes/expenseitem");
 const contactRoutes = require("./routes/contact");
 const qtyRoutes = require("./routes/quantity");
 const expenseRoutes = require("./routes/expense");
+const shopsettingsRoutes = require("./routes/shopsettings");
+
 
 //let connectStr =  'mongodb://localhost:27017/torposdb';
 let connectStr = process.env.CONNECT_STR
@@ -104,5 +106,6 @@ app.use("/api/expenseitem", expenseitemRoutes);
 app.use("/api/contact", contactRoutes);
 app.use("/api/quantity", qtyRoutes);
 app.use("/api/expense", expenseRoutes);
+app.use("/api/shopsettings", shopsettingsRoutes);
 
 module.exports = app;

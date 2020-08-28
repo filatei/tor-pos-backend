@@ -20,6 +20,7 @@ const orderSchema = mongoose.Schema({
     createdAt: Number,
     updatedAt: Number,
     status: String,
+    trans_date: Date,
     orderRef: {type: String, required: true, unique: true},
     updateLog: [{
         date: Number,

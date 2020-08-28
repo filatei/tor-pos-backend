@@ -463,7 +463,7 @@ router.get("/getByText", (req, res, next) => {
   Recupload.find().populate('customer').populate('creator').populate('updater')
         .then( rec => {
           records = rec.filter(r => r.customer.name.toLowerCase().includes(stan.toLowerCase()))
-          console.log(records)
+          // console.log(records)
           Recupload.find({ $text: { $search: stan } }).populate('customer').populate('creator').populate('updater')
             .then(record => {
               if (record) {

@@ -130,9 +130,10 @@ router.post('', checkAuth, function (req, res, next) {
   }
 
   let expenseObj = req.body;
-  console.log(expenseObj)
+  // console.log(expenseObj)
 
   expenseObj.creator = req.userData.userId;
+  expenseObj.status = 'DRAFT';
 
   const expense = new Expense(expenseObj);
 
@@ -233,7 +234,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
 router.get('',(req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
-  const expenseQuery = Expense.find().sort({createdAt:-1}).populate('vendor').populate('name').populate('creator');
+  const expenseQuery = Expense.find().sort({createdAt:-1}).populate('vendor').populate('products.name').populate('name').populate('creator');
   if (pageSize && currentPage) {
     expenseQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
   }

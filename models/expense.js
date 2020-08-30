@@ -3,17 +3,27 @@ uniqueValidator = require('mongoose-unique-validator');
 const AutoIncrement = require('mongoose-sequence')(mongoose);
 
 const expenseSchema = mongoose.Schema({
-    name: {type: mongoose.Schema.Types.ObjectId, ref: 'Stockitem'},
+    products: [{
+        name: {type: mongoose.Schema.Types.ObjectId, ref: 'Stockitem'},
+        qty: {type: Number},
+        price: {type: Number},
+        unit: {type: String},
+
+    }],
     vendor: {type: mongoose.Schema.Types.ObjectId, ref: 'Contact'},
     creator: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
     updater: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
-    unit: {type: String},
+    // unit: {type: String},
     site: {type: String},
     status: {type: String},
-    qty: {type: Number},
-    rate: {type: Number},
+    category: {type: String},
+    payment: {},
+    // qty: {type: Number},
+    // rate: {type: Number},
+    
     date: {type: Date},
     type: {type: String},
+    txn_amount: { type: Number },
     remarks: {type: String}
 },
 {

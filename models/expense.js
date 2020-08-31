@@ -4,10 +4,13 @@ const AutoIncrement = require('mongoose-sequence')(mongoose);
 
 const expenseSchema = mongoose.Schema({
     products: [{
-        name: {type: mongoose.Schema.Types.ObjectId, ref: 'Stockitem'},
+        name: {type: String},
+        description: {type: String},
+        category: {type: String},
+
         qty: {type: Number},
-        price: {type: Number},
         unit: {type: String},
+        price: {type: Number},
 
     }],
     vendor: {type: mongoose.Schema.Types.ObjectId, ref: 'Contact'},
@@ -18,8 +21,6 @@ const expenseSchema = mongoose.Schema({
     status: {type: String},
     category: {type: String},
     payment: {},
-    // qty: {type: Number},
-    // rate: {type: Number},
     
     date: {type: Date},
     type: {type: String},

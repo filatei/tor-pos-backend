@@ -43,7 +43,7 @@ async function sendMail(expense) {
  expenseId = expenseId.toString().padStart(5, '0')
  let subject = `ShopTorama Expense Confirmation for (# ${expenseId})`
  let curr =  process.env.naira
- let total = expense.qty * expense.rate;
+ let total = expense.txn_amount;
  let status = expense.status;
  let location = expense.site;
  let user = await User.findById(expense.creator);
@@ -71,7 +71,7 @@ async function sendMail(expense) {
 
  let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
             ${date}</p><h2>EXPENSE CONFIRMED</h2><p> Hi ${userName},</p>`;
- html += `<p>We received your Expense Request # ${expenseId} for ${curr} ${total.toLocaleString()} </p><p>Vendor: ${vendor}</p> <p>Factory Location: ${location}</p>`;
+ html += `<p>The Status of your Expense Request # ${expenseId} for ${curr} ${total.toLocaleString()}  is now ${status}</p><p>Vendor: ${vendor}</p> <p>Factory Location: ${location}</p>`;
  html += `Product: ${product}`;
  html += `<table style="margin-left:auto; margin-right:auto"><tr style="text-align:left;"><td><h3>Expense summary</h3></td></tr><tr style="text-align:left;"><td>Status:</td><td> ${status}</td></tr><tr style="text-align:left;"><td> Subtotal:</td><td> ${curr} ${total.toLocaleString()} </td></tr>
  <tr style="text-align:left;"> <td>Tax: </td><td>${curr} 0.00</td></tr> <tr style="text-align:left;"><td>Total: </td><td>${curr} ${total.toLocaleString()}</td></tr></table>`;
@@ -172,12 +172,12 @@ router.put("/:id", checkAuth, (req, res, next) => {
        console.log(mailStat, 'mailstat')
     }
   }
-   isOpen().then(sm => {
+  isOpen().then(sm => {
     console.log(mailStat, 'mailstat2')
-   })
-   .catch(err => {
-     console.log(err, 'sedm err')
-   })
+  })
+  .catch(err => {
+    console.log(err, 'sedm err')
+  })
   
 
   const id = req.params.id;

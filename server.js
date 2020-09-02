@@ -57,15 +57,15 @@ app.set("port", port);
 var http = require('http').Server(app);
 const server = http;
 
-if (hostname.includes('torama')) {
-  var options = {
-      key: fs.readFileSync('/var/www/letsencrypt/live/api.torama.ng/privkey.pem'),
-      cert: fs.readFileSync('/var/www//letsencrypt/live/api.torama.ng/cert.pem'),
-      ca: fs.readFileSync(' /var/www/letsencrypt/live/api.torama.ng/fullchain.pem')
-  };
+// if (hostname.includes('torama')) {
+//   var options = {
+//       key: fs.readFileSync('/var/www/letsencrypt/live/api.torama.ng/privkey.pem'),
+//       cert: fs.readFileSync('/var/www//letsencrypt/live/api.torama.ng/cert.pem'),
+//       ca: fs.readFileSync(' /var/www/letsencrypt/live/api.torama.ng/fullchain.pem')
+//   };
 
-  http = require('https').Server(options, app);
-}
+//   http = require('https').Server(options, app);
+// }
 
 var io = require('socket.io')(http);
 

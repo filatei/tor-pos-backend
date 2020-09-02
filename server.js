@@ -1,4 +1,7 @@
 const app = require("./app");
+const fs = require('fs');
+const os = require("os");
+const hostname = os.hostname();
 const debug = require("debug")("node-angular");
 // const http = require("http");
 
@@ -55,6 +58,17 @@ app.set("port", port);
 
 var http = require('http').Server(app);
 const server = http;
+
+if (hostname.includes('torama')) {
+  var options = {
+      key: fs.readFileSync('/etc/letsencrypt/live/api.torama.ng/privkey.pem'),
+      cert: fs.readFileSync('/etc/letsencrypt/live/api.torama.ng/cert.pem'),
+      ca: fs.readFileSync(' /etc/letsencrypt/live/api.torama.ng/chain.pem')
+  };
+
+  http = require('https').Server(options, app);
+}
+
 var io = require('socket.io')(http);
 
 io.on('connection', function (socket){

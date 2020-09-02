@@ -26,7 +26,6 @@ var multer  = require('multer')
 const DIR = './uploads/recuploads/';
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    // console.log('req ', req.userData)
     userid = req.userData.userId
     const myDir = DIR + userid + '/'
     try {
@@ -147,7 +146,7 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
   }
   let customerName;
   let recObj = req.body;
-  console.log('before ',recObj)
+  // console.log('before ',recObj)
   // convert to number what is number
   recObj.products = JSON.parse(recObj.products)
   recObj.products.map(p => {
@@ -165,8 +164,6 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
   }
 
   customerName = recObj.customer.name
-
-    
   
   recObj.creator = req.userData.userId;
  
@@ -204,32 +201,9 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
     recObj.driver = req.body.driver
   }
 
-//    // drivers are also customers
-//   function saveDriver( drvr ) {
-//     Customer.findOne({name: new RegExp('^'+ drvr.name+'$', "i")})
-//     .then( (result) => {
-//       if (result) {
-//         recObj.driver = result._id
-//       } else {
-//       let custObj = new Customer(drvr);
-//       custObj.save()
-//         .then((sres) => {
-//           recObj.driver = sres._id;
-//         })
-//         .catch(err => {
-//           console.log(err, ' driver save err')
-//           // throw err
-//         })
-//       }
-//     })
-//     .catch( (err) => {
-//       console.log (err, 'driver find err')
-//       // throw err
-//     })
-// }
  
   if (recObj.customer._id){
-    console.log( 'customer already be in db')
+    // console.log( 'customer already be in db')
     // store customer id and save claim
     recObj.customer = recObj.customer._id;
     
@@ -277,7 +251,7 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
     receipt = new Recupload(recobj);
     receipt.save()
     .then(result => {
-      console.log(result, 'result')
+      //  console.log(result, 'result')
       // mailobject = {...result, customerName: customerName};
       // console.log(mailobject, 'mailobject')
       res.status(201).json({
@@ -312,7 +286,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   Recupload.findById(req.params.id)
   .then (company => {
     filePath = 'uploads/' + company.image.split('/uploads/')[1];
-    console.log('filepath', filePath);
+    // console.log('filepath', filePath);
     deleteReceipt(filePath);
   })
   .catch(err => {
@@ -619,7 +593,6 @@ router.put('/imageupdate/:id', checkAuth, upload.any(), function (req, res, next
   if (req.files) {
     let fileName;
     req.files.forEach(file => {
-        // console.log(file, ' file in array')
         if (file.originalname == 'blob') {
           fileName = 'uploads/recuploads/'  + req.userData.userId + '/' + file.filename 
         } else {

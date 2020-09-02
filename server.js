@@ -61,7 +61,7 @@ if (hostname.includes('torama')) {
   var options = {
       key: fs.readFileSync('/var/www/letsencrypt/live/api.torama.ng/privkey.pem'),
       cert: fs.readFileSync('/var/www//letsencrypt/live/api.torama.ng/cert.pem'),
-      ca: fs.readFileSync(' /var/www/letsencrypt/live/api.torama.ng/chain.pem')
+      ca: fs.readFileSync(' /var/www/letsencrypt/live/api.torama.ng/fullchain.pem')
   };
 
   http = require('https').Server(options, app);

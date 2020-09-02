@@ -21,7 +21,7 @@ const moment =   require('moment');
 
 
 async function sendMail(expense) {
-  console.log(expense)
+  // console.log(expense)
   vendor = expense.vendor.name;
 
   const smtpTransport = nodemailer.createTransport({
@@ -92,16 +92,16 @@ async function sendMail(expense) {
   // send mail
   smtpTransport.sendMail(mailOptions, (error, response) => {
     let result;
-    console.log(error, response)
+    // console.log(error, response)
     if (error) {
       console.log(error)
       result = false;
     } else {
-      console.log(response)
+      // console.log(response)
       result = true
     }
     smtpTransport.close();
-    console.log(result)
+    // console.log(result)
     return result;
   });
 }
@@ -137,7 +137,7 @@ router.post('', checkAuth, function (req, res, next) {
 
   expense.save()
   .then ((result)=> {
-    console.log(result)
+    // console.log(result)
     res.status(201).json({
       message: 'Expense added successfully',
       expense: { ...result,
@@ -164,16 +164,16 @@ router.put("/:id", checkAuth, (req, res, next) => {
   let expenseObj = req.body;
   let status = expenseObj.status;
   let mailStat;
-  console.log('status', status)
+  // console.log('status', status)
   async function isOpen() {
     if ( status === 'OPEN' ||  status === 'APPROVED' ||  status === 'PAID') {
       //  send mail
        mailStat = await sendMail(expenseObj);
-       console.log(mailStat, 'mailstat')
+      //  console.log(mailStat, 'mailstat')
     }
   }
   isOpen().then(sm => {
-    console.log(mailStat, 'mailstat2')
+    // console.log(mailStat, 'mailstat2')
   })
   .catch(err => {
     console.log(err, 'sedm err')

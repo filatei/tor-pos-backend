@@ -11,6 +11,7 @@
   "author": "Torama Innovation Hub",
   "license": "MIT",
   "dependencies": {
+    "@types/socket.io": "^2.1.11",
     "bcrypt": "^3.0.8",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.19.0",
@@ -42,6 +43,7 @@
     "qz-tray": "^2.1.0-2",
     "read-excel-file": "^4.0.6",
     "rsvp": "^4.8.5",
+    "socket.io": "^2.3.0",
     "util": "^0.12.2",
     "ws": "^7.2.1"
   },

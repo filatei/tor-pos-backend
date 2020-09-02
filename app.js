@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors')
 const mongoose = require('mongoose');
 
+
 const app = express();
 
 const paymethodsRoutes = require("./routes/paymethods");
@@ -34,7 +35,6 @@ const contactRoutes = require("./routes/contact");
 const qtyRoutes = require("./routes/quantity");
 const expenseRoutes = require("./routes/expense");
 const shopsettingsRoutes = require("./routes/shopsettings");
-
 
 //let connectStr =  'mongodb://localhost:27017/torposdb';
 let connectStr = process.env.CONNECT_STR

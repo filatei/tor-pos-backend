@@ -21,7 +21,6 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const fileName =  new Date().getTime() + '-' + file.originalname.toLowerCase().split(' ').join('-');
-    // console.log(fileName)
     cb(null, fileName)
   }
 });
@@ -56,7 +55,6 @@ function logIncident(email, description) {
 }
 
 async function sendMail(order) {
-  // console.log(order.products)
   customer = await Customer.findById(order.customer).exec()
   customer = customer.name;
   const smtpTransport = nodemailer.createTransport({
@@ -105,7 +103,6 @@ async function sendMail(order) {
  <tr style="text-align:left;"> <td>Tax: </td><td>${curr} 0.00</td></tr> <tr style="text-align:left;"><td>Total: </td><td>${curr} ${total.toLocaleString()}</td></tr></table>`;
  
  html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama - All rights reserved. &#169; ${new Date().getFullYear()}</h4> </body></html>`;
-// console.log (html, 'html')
  const mailOptions = {
       from: `ShopTorama ${process.env.tormail}`,
       to: toEmail,
@@ -122,7 +119,6 @@ async function sendMail(order) {
       console.log(error)
       result = false;
     } else {
-      // console.log(response)
       result = true
     }
     smtpTransport.close();
@@ -159,8 +155,6 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
     }
     shopObj.icon = path;
   }
-  // console.log('path: ', path)
-  // console.log('req.body', req.body)
 
   shopObj.creator = req.userData.userId;
   let customerUpdate = false;
@@ -168,9 +162,9 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
   // handle customer issues
   
 
-  if (shopObj.card_number) {
-    updateCustomerCard()
-  }
+  // if (shopObj.card_number) {
+  //   updateCustomerCard()
+  // }
 
   if ( typeof shopObj.customer != 'object') {
     shopObj.customer = JSON.parse(shopObj.customer);
@@ -188,7 +182,6 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
     shopObj.customer = shopObj.customer._id;
   }
   if (!shopObj.teller_id) { delete shopObj.teller_id}
-  // console.log(shopObj)
   saveOrder(shopObj);
   
     
@@ -298,14 +291,13 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   .then (shoporder => {
     if (shoporder && shoporder.image) {
       filePath = 'uploads/' + shoporder.image.split('/uploads/')[1];
-      console.log(filePath)
+      // console.log(filePath)
     }
     
   })
   .catch(err => {
     return res.status(401).json({ message: "shoporder not found in db!" + err });
   })
-  // console.log('params ', req.params)
   Order.deleteOne({ _id: req.params.id })
   .then(result => {
   if (result.n > 0) {

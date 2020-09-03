@@ -59,9 +59,12 @@ app.use(bodyParser.json({ limit: "1mb" }))
 
 const allowedOrigins = [
     'capacitor://localhost',
+    'capacitor://api.torama.ng',
+    'ionic://api.torama.ng',
     'ionic://localhost',
     'http://localhost',
     'https://posclaims.torama.ng',
+    'https://api.torama.ng',
     
     'http://localhost:8080',
     'http://localhost:8100',

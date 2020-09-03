@@ -30,7 +30,7 @@ router.post('', checkAuth,  function (req, res, next) {
 
   let stockObj = req.body;
   stockObj.creator = req.userData.userId;
-  console.log(stockObj, 'quantity route')
+  // console.log(stockObj, 'quantity route')
   const quantity = new Quantity(stockObj);
   // quantity.icon = path || null;
 
@@ -98,7 +98,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   .then (quantity => {
     if (quantity && quantity.icon) {
       filePath = 'uploads/' + quantity.icon.split('/uploads/')[1];
-      console.log(filePath)
+      // console.log(filePath)
     }
     
   })

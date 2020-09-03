@@ -84,7 +84,6 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
   if (req.files) {
 
     req.files.forEach(file => {
-        console.log(file, ' file in array')
         if (file.originalname == 'blob') {
             fileName = 'uploads/claims/'  + req.userData.userId + '/' + file.filename 
         }
@@ -111,13 +110,10 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
     claimObj.customer = JSON.parse(claimObj.customer);
 
   if (claimObj.customer._id){
-    // console.log( 'customer may already be in db')
-    // store customer id and save claim
     claimObj.customer = claimObj.customer._id;
     saveClaim(claimObj);
   } else {
     console.log( 'customer may not  be in db')
-    // store customer name and return _id,  before save claim
     saveCustomer(claimObj.customer);
   }
 
@@ -130,16 +126,13 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
     Customer.findOne({name: new RegExp('^'+cust.name+'$', "i")})
     .then( (result) => {
       if (result) {
-        // console.log(result, ' cust find result')
         claimObj.customer = result._id
         saveClaim(claimObj)
       } else {
         let custObj = new Customer(cust);
-        //  console.log(custObj, ' new customer obj')
         custObj.save()
         .then((sres) => {
           claimObj.customer = sres._id;
-          //  console.log(claimObj, ' claimobj in customerloop')
           saveClaim(claimObj)
         })
         .catch(err => {
@@ -156,7 +149,6 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
 
   function saveClaim(claimobj) {
     claim = new Claim(claimobj);
-    //  console.log('claim new ', claim)
     claim.save()
     .then(result => {
       res.status(201).json({
@@ -191,7 +183,6 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   Claim.findById(req.params.id)
   .then (claim => {
     filePath = 'uploads/' + claim.image.split('/uploads/')[1];
-    console.log('filepath claim', filePath)
     deleteClaim(filePath);
   })
   .catch(err => {
@@ -201,9 +192,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
 
   function deleteClaim(filepath) {
     Claim.deleteOne({ _id: req.params.id }).then(result => {
-      //  console.error('claim deleted ', result)
       if (result.n == 1 && result.deletedCount == 1) {
-        // console.log(' claim deleted :', result.deletedCount)
         fs.unlink(filepath, (err) => {
           if (err) {
             console.error(err)
@@ -244,7 +233,6 @@ router.get('',(req, res, next) => {
   claimQuery
 
     .then(documents => {
-     // console.log(documents[0])
       res.status(200).json({
         message: "claims fetched successfully!",
         claims: documents,
@@ -259,7 +247,6 @@ router.get('',(req, res, next) => {
 });
   
 router.get("/:id", (req, res, next) => {
-    //  console.log(req.params.id )
     if (!req.params.id || req.params.id == undefined) return res.status(500).json({
         message: "claim id blank " 
     });
@@ -277,13 +264,9 @@ router.get("/:id", (req, res, next) => {
         }
 
         if (claim) {
-        // let nc = JSON.parse(JSON.stringify(claim))
-        // nc.customer = claim.customer.name;
-        // console.log(nc)
-        // console.log('The customer is now %s', nc.customer);
-        res.status(200).json(claim);
+          res.status(200).json(claim);
         } else {
-        res.status(404).json({ message: "claim not found!" });
+          res.status(404).json({ message: "claim not found!" });
         }
     });
 });
@@ -297,7 +280,6 @@ router.post('/import', checkAuth,  function (req, res, next) {
       return res.status(500).json({message: 'Not allowed'});
     }
     let claimsArr = req.body;
-    // console.log(claimsArr, claimsArr, req.body)
     let userid = req.userData.userId;
     
     
@@ -330,7 +312,6 @@ router.post('/import', checkAuth,  function (req, res, next) {
             
             return customer.save()
             .then(result => {
-            // console.log('customer created')
             customerID = result._id;
             
             })
@@ -375,7 +356,7 @@ router.post('/import', checkAuth,  function (req, res, next) {
         let newClaimObj = new Claim(nc);
         newClaimObj.save()
         .then( result => {
-            console.log('claim saved', result.card_number)
+            // console.log('claim saved', result.card_number)
             // res.status(201).jsom({message: 'claim saved'})
         })
         .catch(err => {
@@ -463,16 +444,13 @@ router.put("/:id", checkAuth, upload.any(), (req, res, next) => {
     Customer.findOne({name: new RegExp('^'+cust.name+'$', "i")})
     .then( (result) => {
       if (result) {
-       // console.log(result, ' cust find result')
         claimObj.customer = result._id
         saveClaim(claimObj)
       } else {
         let custObj = new Customer(cust);
-        //console.log(custObj, ' new customer obj')
         custObj.save()
         .then((sres) => {
           claimObj.customer = sres._id;
-          console.log(claimObj, ' claimobj in customerloop')
           saveClaim(claimObj)
         })
         .catch(err => {

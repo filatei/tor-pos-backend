@@ -47,30 +47,6 @@ exports.createReceipt =  (req, res, next) => {
   }
 
   exports.getReceipts = (req, res, next) => {
-
-    // get receipt if orderid query parameter provided 
-    // eg http://localhost:3000/api/receipts?orderid=jhdfjf is defined
-    
-  //   if ( req.query  && req.query.orderid ) {  // check for a valid objectid
-  //     // check if req.query.orderid is a valid ObjectId
-  //     orderid = req.query.orderid;
-  //     console.log('order id', orderid)
-  //   //   Receipt.findOne({orderId: orderid})
-  //   //   .then (receipt => {
-  //   //     if (receipt) {
-  //   //       return res.status(200).json(receipt);
-  //   //     } else {
-  //   //       return res.status(404).json({ message: "receipt not found!" });
-  //   //     }
-  //   //   })
-  //   //   .catch(err => {
-  //   //     console.log(err);
-  //   //     return res.status(404).json({ message: "Probable non-existent orderid! - " + err });
-  //   //   } )
-  //   //   return 1;
-  //  }
-    // send all receipts if no req.query
-    
       const pageSize = +req.query.pagesize;
       const dateBegin = req.query.datebegin;
       const dateEnd = req.query.dateend;
@@ -121,7 +97,7 @@ exports.createReceipt =  (req, res, next) => {
   exports.deleteReceipt = (req, res, next) => {
    // console.log('params ', req.params)
     Receipt.deleteOne({ _id: req.params.id }).then(result => {
-      console.log('deletereceipt ', result)
+      // console.log('deletereceipt ', result)
         if (result.n > 0){
         res.status(200).json({ message: "Receipt deleted!" });
         }

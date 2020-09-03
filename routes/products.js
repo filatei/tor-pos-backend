@@ -13,7 +13,7 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const fileName =  new Date().getTime() + '-' + file.originalname.toLowerCase().split(' ').join('-');
-    console.log(fileName)
+    // console.log(fileName)
     cb(null, fileName)
   }
 });
@@ -64,8 +64,6 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
     // console.log(path)
   }
   
-  console.log('path: ', path)
-  console.log('req.body', req.body)
 
   let prodObj = req.body;
   if (prodObj.price) {
@@ -172,7 +170,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   .then (product => {
     if (product && product.icon) {
       filePath = 'uploads/' + product.icon.split('/uploads/')[1];
-      console.log(filePath)
+      // console.log(filePath)
     }
     
   })

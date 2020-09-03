@@ -16,7 +16,6 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const fileName =  new Date().getTime() + '-' + file.originalname.toLowerCase().split(' ').join('-');
-    console.log(fileName)
     cb(null, fileName)
   }
 });
@@ -71,7 +70,7 @@ router.post('', checkAuth,  function (req, res, next) {
   async function updateQty() {
     let quantity;
     const quant = await Quantity.findOne({name: stockObj.name, store: stockObj.store})
-    console.log(quant, 'quant')
+    // console.log(quant, 'quant')
     if (!quant ){
       // new Inventory
       quantity = new Quantity({name: stockObj.name, store: stockObj.store, qty: stockObj.qty})
@@ -161,7 +160,6 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   async function updateQty() {
     // subtract qty being deleted from quantities
     const quant = await Quantity.findOne({name: stockObj.name, store: stockObj.store})
-    console.log(quant, 'quant')
     if (quant ){
       quant.qty = quant.qty - stockObj.qty
       await quant.save();

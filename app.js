@@ -4,6 +4,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors')
 const mongoose = require('mongoose');
+var SocketService = require('./SocketService');
+
 
 
 const app = express();
@@ -54,7 +56,35 @@ app.use(bodyParser.urlencoded({ limit: "50mb", extended: true, parameterLimit: 5
 // app.use(express.json());
 
 app.use(bodyParser.json({ limit: "1mb" }))
+
+const allowedOrigins = [
+    'capacitor://localhost',
+    'ionic://localhost',
+    'http://localhost',
+    
+    'http://localhost:8080',
+    'http://localhost:8100',
+    'http://localhost:8200'
+  ];
+  
+// Reflect the origin if it's in the allowed list or not defined (cURL, Postman, etc.)
+const corsOptions = {
+    origin: (origin, callback) => {
+        if (allowedOrigins.includes(origin) || !origin) {
+        callback(null, true);
+        } else {
+        callback(new Error('Origin not allowed by CORS'));
+        }
+    }
+}
+
+// Enable preflight requests for all routes
+app.options('*', cors(corsOptions));
 app.use(cors())
+
+
+
+
 mongoose.set('useUnifiedTopology', true );
 mongoose.set('useCreateIndex', true);
 mongoose.connect(connectStr, { useNewUrlParser: true, useFindAndModify: false, useUnifiedTopology: true })
@@ -107,5 +137,23 @@ app.use("/api/contact", contactRoutes);
 app.use("/api/quantity", qtyRoutes);
 app.use("/api/expense", expenseRoutes);
 app.use("/api/shopsettings", shopsettingsRoutes);
+
+
+// var mySocket = new SocketService(app, 3003);
+// mySocket.initServer();
+// mySocket.io.on('connection', socket => {
+//    console.log('client connected');
+//    // define more events here...
+   
+//    socket.on('disconnect', reason => {
+//     console.log('client disconnected');
+//     console.log(reason);
+//   });
+
+//     socket.on('KPANSIA', function (from, msg) {
+//     console.log('MSG', from, ' saying ', msg);
+//     io.emit('KPANSIA', from);
+//   });
+// })
 
 module.exports = app;

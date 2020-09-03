@@ -150,7 +150,7 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
     if (hostname.includes('torama.ng')) {
       path = 'https://api.torama.ng' + '/uploads/shoporderimages/' + req.file.filename;
     } else {
-      url = req.protocol + '://' + req.get('host')
+      url = req.protocol + 's://' + req.get('host')
       path = url + '/uploads/shoporderimages/' + req.file.filename; 
     }
     shopObj.icon = path;
@@ -160,19 +160,17 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
   let customerUpdate = false;
   
   // handle customer issues
-  
-
   // if (shopObj.card_number) {
   //   updateCustomerCard()
   // }
 
-  if ( typeof shopObj.customer != 'object') {
-    shopObj.customer = JSON.parse(shopObj.customer);
-  }
+  // if ( typeof shopObj.customer != 'object') {
+  //   shopObj.customer = JSON.parse(shopObj.customer);
+  // }
     
-  if ( shopObj.driver && typeof shopObj.driver != 'object') {
-    shopObj.driver = JSON.parse(shopObj.driver);
-  }
+  // if ( shopObj.driver && typeof shopObj.driver != 'object') {
+  //   shopObj.driver = JSON.parse(shopObj.driver);
+  // }
 
   if ( shopObj.driver && typeof shopObj.driver === 'object' ) {
     shopObj.driver = shopObj.driver._id;
@@ -183,7 +181,6 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
   }
   if (!shopObj.teller_id) { delete shopObj.teller_id}
   saveOrder(shopObj);
-  
     
   function saveOrder(shopObj) {
     const shoporder = new Order(shopObj);
@@ -207,8 +204,6 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
       });
     });
   }
-
-  
 })
 
 router.post('/mail', checkAuth, function (req, res, next) {
@@ -243,7 +238,7 @@ router.put("/:id", checkAuth, upload.single('image'), (req, res, next) => {
       if (hostname.includes('torama.ng')) {
         path = 'https://api.torama.ng' + '/uploads/shoporderimages/' + req.file.filename;
       } else {
-        url = req.protocol + '://' + req.get('host')
+        url = req.protocol + 's://' + req.get('host')
         path = url + '/uploads/shoporderimages/' + req.file.filename; 
       }
       shoporder.image = path;
@@ -291,7 +286,6 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   .then (shoporder => {
     if (shoporder && shoporder.image) {
       filePath = 'uploads/' + shoporder.image.split('/uploads/')[1];
-      // console.log(filePath)
     }
     
   })

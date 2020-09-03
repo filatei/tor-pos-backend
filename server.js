@@ -3,6 +3,7 @@ const fs = require('fs');
 const os = require("os");
 const hostname = os.hostname();
 const debug = require("debug")("node-angular");
+
 // const http = require("http");
 
 const normalizePort = val => {
@@ -54,9 +55,26 @@ app.set("port", port);
 // server.on("listening", onListening);
 // server.listen(port);
 
-var http = require('http').Server(app);
-const server = http;
+// var http = require('http').Server(app);
+// const server = http;
 
+
+var https = require('https');
+var http = require('https');
+
+var options = {
+        key: fs.readFileSync('./ssl/localhost.key'),
+        cert: fs.readFileSync('./ssl/localhost.crt'),
+        ca: fs.readFileSync('./ssl/cadb.pem'),
+        requestCert: false,
+        rejectUnauthorized: false
+    };
+var serverPort = 3000;
+var server = https.createServer(options, app);
+var io = require('socket.io').listen(server);
+// port = process.env.PORT || 3000;
+server.listen(port);
+console.log('Server running *:'+port);
 // if (hostname.includes('torama')) {
 //   var options = {
 //       key: fs.readFileSync('/var/www/letsencrypt/live/api.torama.ng/privkey.pem'),
@@ -67,12 +85,30 @@ const server = http;
 //   http = require('https').Server(options, app);
 // }
 
-var io = require('socket.io')(http);
+// var io = require('socket.io')(http);
 
-io.on('connection', function (socket){
+io.on('connection', (socket) => {
    console.log('socket connected');
-   socket.on('disconnect', () => {
-    console.log('user disconnected');
+  //  socket.on('disconnect', () => {
+  //   console.log('socket disconnected');
+  // });
+
+  // socket.on('disconnect', () => {
+  //   console.log('socket disconnected');
+    
+  // });
+  socket.on('connect_error', () => {
+    console.log ('error, will reconnect in 2s')
+    setTimeout(() => {
+      socket.connect();
+    }, 2000);
+  });
+  
+  socket.on('disconnect', () => {
+    console.log ('disconnected, will reconnect in .5s')
+    setTimeout(() => {
+      socket.connect();
+    }, 500);
   });
 
   socket.on('error', (error) => { console.log (error) });
@@ -82,15 +118,15 @@ io.on('connection', function (socket){
   // });
 
    // This will emit the event to all connected sockets
-   const receipt = {
-      _id: '5f4e985540429627fcd63bbd',
-      name: 'DIESEL',
-      qty: 1000,
-      unit: 'kg',
-      price: 160,
-      description: 'DIESEL',
-      category: 'General'
-    }
+  //  const receipt = {
+  //     _id: '5f4e985540429627fcd63bbd',
+  //     name: 'DIESEL',
+  //     qty: 1000,
+  //     unit: 'kg',
+  //     price: 160,
+  //     description: 'DIESEL',
+  //     category: 'General'
+  //   }
 
   // io.emit('event', receipt);
   
@@ -140,10 +176,12 @@ io.on('connection', function (socket){
 
 });
 
-http.on("error", onError);
-http.on("listening", onListening);
 
-http.listen(port, function () {
-  console.log('listening on *:', port);
-});
+
+// http.on("error", onError);
+// http.on("listening", onListening);
+
+// http.listen(port, function () {
+//   console.log('listening on *:', port);
+// });
 

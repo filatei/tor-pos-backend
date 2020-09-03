@@ -57,34 +57,34 @@ app.use(bodyParser.urlencoded({ limit: "50mb", extended: true, parameterLimit: 5
 
 app.use(bodyParser.json({ limit: "1mb" }))
 
-const allowedOrigins = [
-    '*',
-    'capacitor://localhost',
-    'capacitor://api.torama.ng',
-    'ionic://api.torama.ng',
-    'ionic://localhost',
-    'http://localhost',
-    'https://posclaims.torama.ng',
-    'https://api.torama.ng',
+// const allowedOrigins = [
+//     '*',
+//     'capacitor://localhost',
+//     'capacitor://api.torama.ng',
+//     'ionic://api.torama.ng',
+//     'ionic://localhost',
+//     'http://localhost',
+//     'https://posclaims.torama.ng',
+//     'https://api.torama.ng',
     
-    'http://localhost:8080',
-    'http://localhost:8100',
-    'http://localhost:8200'
-  ];
+//     'http://localhost:8080',
+//     'http://localhost:8100',
+//     'http://localhost:8200'
+//   ];
   
-// Reflect the origin if it's in the allowed list or not defined (cURL, Postman, etc.)
-const corsOptions = {
-    origin: (origin, callback) => {
-        if (allowedOrigins.includes(origin) || !origin) {
-        callback(null, true);
-        } else {
-        callback(new Error('Origin not allowed by CORS'));
-        }
-    }
-}
+// // Reflect the origin if it's in the allowed list or not defined (cURL, Postman, etc.)
+// const corsOptions = {
+//     origin: (origin, callback) => {
+//         if (allowedOrigins.includes(origin) || !origin) {
+//         callback(null, true);
+//         } else {
+//         callback(new Error('Origin not allowed by CORS'));
+//         }
+//     }
+// }
 
-// Enable preflight requests for all routes
-app.options('*', cors(corsOptions));
+// // Enable preflight requests for all routes
+// app.options('*', cors(corsOptions));
 app.use(cors())
 
 

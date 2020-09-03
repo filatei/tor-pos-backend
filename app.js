@@ -4,7 +4,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors')
 const mongoose = require('mongoose');
-var SocketService = require('./SocketService');
+// var SocketService = require('./SocketService');
 
 
 

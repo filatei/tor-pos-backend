@@ -58,6 +58,7 @@ app.use(bodyParser.urlencoded({ limit: "50mb", extended: true, parameterLimit: 5
 app.use(bodyParser.json({ limit: "1mb" }))
 
 const allowedOrigins = [
+    '*',
     'capacitor://localhost',
     'capacitor://api.torama.ng',
     'ionic://api.torama.ng',

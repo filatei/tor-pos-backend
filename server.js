@@ -4,7 +4,7 @@ const os = require("os");
 const hostname = os.hostname();
 const debug = require("debug")("node-angular");
 
-// const http = require("http");
+const http = require("http");
 
 const normalizePort = val => {
   var port = parseInt(val, 10);
@@ -50,31 +50,31 @@ const onListening = () => {
 const port = normalizePort(process.env.PORT || "3000");
 app.set("port", port);
 
-// const server = http.createServer(app);
-// server.on("error", onError);
-// server.on("listening", onListening);
-// server.listen(port);
+const server = http.createServer(app);
+server.on("error", onError);
+server.on("listening", onListening);
+server.listen(port);
 
 // var http = require('http').Server(app);
 // const server = http;
 
 
-var https = require('https');
-var http = require('https');
+// var https = require('https');
+// var http = require('https');
 
-var options = {
-        key: fs.readFileSync('./ssl/localhost.key'),
-        cert: fs.readFileSync('./ssl/localhost.crt'),
-        ca: fs.readFileSync('./ssl/cadb.pem'),
-        requestCert: false,
-        rejectUnauthorized: false
-    };
-var serverPort = 3000;
-var server = https.createServer(options, app);
-var io = require('socket.io').listen(server);
-// port = process.env.PORT || 3000;
-server.listen(port);
-console.log('Server running *:'+port);
+// var options = {
+//         key: fs.readFileSync('./ssl/localhost.key'),
+//         cert: fs.readFileSync('./ssl/localhost.crt'),
+//         ca: fs.readFileSync('./ssl/cadb.pem'),
+//         requestCert: false,
+//         rejectUnauthorized: false
+//     };
+// var serverPort = 3000;
+// var server = https.createServer(options, app);
+// var io = require('socket.io').listen(server);
+// // port = process.env.PORT || 3000;
+// server.listen(port);
+// console.log('Server running *:'+port);
 // if (hostname.includes('torama')) {
 //   var options = {
 //       key: fs.readFileSync('/var/www/letsencrypt/live/api.torama.ng/privkey.pem'),
@@ -85,7 +85,7 @@ console.log('Server running *:'+port);
 //   http = require('https').Server(options, app);
 // }
 
-// var io = require('socket.io')(http);
+var io = require('socket.io')(http);
 
 io.on('connection', (socket) => {
    console.log('socket connected');

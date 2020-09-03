@@ -84,7 +84,7 @@ app.use(bodyParser.json({ limit: "1mb" }))
 // }
 
 // // Enable preflight requests for all routes
-app.options('*', cors());
+// app.options('*', cors());
 app.use(cors())
 
 

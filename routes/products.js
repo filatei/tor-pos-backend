@@ -75,12 +75,6 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
 
   prodObj.creator = req.userData.userId;
 
-
-  // if ( typeof prodObj.categoryId != 'object'){
-  //   prodObj.categoryId = JSON.parse(prodObj.categoryId);
-  //   prodObj.categoryId = prodObj.categoryId._id;
-  // }
-
   const product = new Product(prodObj);
   product.icon = path;
 

@@ -136,12 +136,12 @@ router.put('/:id', checkAuth, upload.single('image'), (req, res, next) => {
       userObj.image = path;
     }
 
-    console.log (userObj);
+    // console.log (userObj);
     const user = new User(userObj);
     User.updateOne({ _id: req.params.id }, user)
     .then(result => {
         if (result.n > 0) {
-            res.status(200).json({ message: "Update successful!" });
+            res.status(200).json({ message: "Update successful!",  user: user });
         } else {
             res.status(401).json({ message: "Not authorized!" });
         }

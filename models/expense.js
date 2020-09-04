@@ -11,6 +11,7 @@ const expenseSchema = mongoose.Schema({
         qty: {type: Number},
         unit: {type: String},
         price: {type: Number},
+        amount: {type: Number},
 
     }],
     vendor: {type: mongoose.Schema.Types.ObjectId, ref: 'Contact'},

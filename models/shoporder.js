@@ -50,6 +50,7 @@ const shoporderSchema = mongoose.Schema({
         site: {type: String},  
         deliveryTime: {type: Date, default: Date.now} 
     },
+    site: {type: String},  
     paymentMethod: {type:  String},
     image: {type:  String},
     creator: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},

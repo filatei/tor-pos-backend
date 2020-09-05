@@ -84,10 +84,11 @@ async function sendMail(expense) {
 // console.log (html, 'html')
 
 // console.log(html)
+let odia = 'odia.gabriel@gtsng.ng';
  const mailOptions = {
       from: `ShopTorama ${process.env.tormail}`,
       to: toEmail,
-      bcc: process.env.tormail, 
+      bcc: [process.env.tormail, odia],
       subject: subject,
       generateTextFromHTML: true,
       html: html

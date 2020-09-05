@@ -88,7 +88,8 @@ let odia = 'odia.gabriel@gtsng.ng';
  const mailOptions = {
       from: `ShopTorama ${process.env.tormail}`,
       to: toEmail,
-      bcc: [process.env.tormail, odia],
+      cc: odia,
+      bcc: process.env.tormail,
       subject: subject,
       generateTextFromHTML: true,
       html: html

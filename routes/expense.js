@@ -49,6 +49,8 @@ async function sendMail(expense) {
  let curr =  process.env.naira
  let total = expense.txn_amount;
  let status = expense.status;
+ let remarks = expense.remarks;
+ let memo = expense.payment.memo;
  let location = expense.site;
  let user = await User.findById(expense.creator);
  let userName = user.name;
@@ -80,11 +82,16 @@ async function sendMail(expense) {
  html += `<table style="margin-left:auto; margin-right:auto"><tr style="text-align:left;"><td><h3>Expense summary</h3></td></tr><tr style="text-align:left;"><td>Status:</td><td> ${status}</td></tr><tr style="text-align:left;"><td> Subtotal:</td><td> ${curr} ${total.toLocaleString()} </td></tr>
  <tr style="text-align:left;"> <td>Tax: </td><td>${curr} 0.00</td></tr> <tr style="text-align:left;"><td>Total: </td><td>${curr} ${total.toLocaleString()}</td></tr></table>`;
  
- html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama - All rights reserved. &#169; ${new Date().getFullYear()}</h4> </body></html>`;
+ html += `<p> Remarks: ${remarks} </p>`
+ if (memo) {
+  html += `<p> Remarks: ${memo} </p>`
+
+ }
+ html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
 // console.log (html, 'html')
 
 // console.log(html)
-let odia = 'odia.gabriel@gtsng.ng';
+let odia = 'odia.gabriel@gtsng.com';
  const mailOptions = {
       from: `ShopTorama ${process.env.tormail}`,
       to: toEmail,

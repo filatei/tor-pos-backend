@@ -22,7 +22,11 @@ const moment =   require('moment');
 
 async function sendMail(expense) {
   // console.log(expense)
-  vendor = expense.vendor.name;
+  let vendor;
+  if (expense && expense.vendor) {
+    vendor = expense.vendor.name;
+  }
+  
 
   const smtpTransport = nodemailer.createTransport({
       service: "gmail",
@@ -176,7 +180,7 @@ router.put("/:id", checkAuth, (req, res, next) => {
     // console.log(mailStat, 'mailstat2')
   })
   .catch(err => {
-    console.log(err, 'sedm err')
+    console.log(err, 'send err')
   })
   
 

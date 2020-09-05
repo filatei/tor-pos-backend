@@ -14,12 +14,18 @@ const expenseSchema = mongoose.Schema({
         amount: {type: Number},
 
     }],
+    notes: [{
+        text: {type: String},
+        author: {type: String},
+        date: {type: Date},
+    }],
     vendor: {type: mongoose.Schema.Types.ObjectId, ref: 'Contact'},
     creator: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
     updater: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
     // unit: {type: String},
     site: {type: String},
     status: {type: String},
+    approvalComment: {type: String},
     category: {type: String},
     payment: {},
     

@@ -144,21 +144,4 @@ app.use("/api/expense", expenseRoutes);
 app.use("/api/shopsettings", shopsettingsRoutes);
 
 
-// var mySocket = new SocketService(app, 3003);
-// mySocket.initServer();
-// mySocket.io.on('connection', socket => {
-//    console.log('client connected');
-//    // define more events here...
-   
-//    socket.on('disconnect', reason => {
-//     console.log('client disconnected');
-//     console.log(reason);
-//   });
-
-//     socket.on('KPANSIA', function (from, msg) {
-//     console.log('MSG', from, ' saying ', msg);
-//     io.emit('KPANSIA', from);
-//   });
-// })
-
 module.exports = app;

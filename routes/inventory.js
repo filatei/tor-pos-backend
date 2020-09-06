@@ -8,6 +8,7 @@ const path = require('path')
 const fs = require('fs')
 const os = require("os");
 const hostname = os.hostname();
+const Mail = require('../mail.js');
 var multer  = require('multer')
 const DIR = './uploads/inventoryimages/';
 const storage = multer.diskStorage({
@@ -90,6 +91,7 @@ router.post('', checkAuth,  function (req, res, next) {
     try {
       await updateQty()
       const invSave = await inventory.save()
+      Mail.sendInventory(invSave);
       res.status(201).json({
         message: 'Inventory added successfully',
         inventory: { ...invSave,
@@ -195,6 +197,7 @@ router.get('', (req, res, next) => {
   }
   inventoryQuery
     .then(documents => {
+      // console.log(documents[0])
       res.status(200).json({
         message: "Inventories fetched successfully!",
         inventory: documents

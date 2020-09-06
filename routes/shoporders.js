@@ -1,6 +1,7 @@
 const express = require("express");
 const Order = require("../models/shoporder");
 const Customer = require("../models/customer");
+const User = require("../models/user");
 
 const router = express.Router();
 const path = require('path')
@@ -77,6 +78,11 @@ async function sendMail(order) {
  let curr = order.curr || process.env.naira
  let total = order.paidAmount;
  let payType = order.paymentMethod;
+ if (order && order.creator) {
+    user = await User.findById(order.creator);
+    userName = user.name;
+    userEmail = user.email;
+}
  
  let location = order.terminal_location;
  let date = (order.createdAt).toString() || new Date().toString();
@@ -97,7 +103,7 @@ async function sendMail(order) {
  product += `</tbody><tfoot><tr><td colspan="4" style="text-align:right;" > Sum: ${derived_total} ${curr}</td></tr></tfoot></table>`;
 
  let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">${date}</p><h2>ORDER CONFIRMED</h2><p> Hi ${customer},</p>`;
- html += `<p>We received your order # ${orderId} for ${curr} ${total.toLocaleString()} </p> <p>Factory Location: ${location}</p>`;
+ html += `<p>We received your order # ${orderId} for ${curr} ${total.toLocaleString()} </p> <p>Factory Location: ${location}</p> <p>User: ${userName}</p>`;
  html += `${product}`;
  html += `<table style="margin-left:auto; margin-right:auto"><tr style="text-align:left;"><td><h3>Order summary</h3></td></tr><tr style="text-align:left;"><td>Pay Type:</td><td> ${payType}</td></tr><tr style="text-align:left;"><td> Subtotal:</td><td> ${curr} ${total.toLocaleString()} </td></tr>
  <tr style="text-align:left;"> <td>Tax: </td><td>${curr} 0.00</td></tr> <tr style="text-align:left;"><td>Total: </td><td>${curr} ${total.toLocaleString()}</td></tr></table>`;

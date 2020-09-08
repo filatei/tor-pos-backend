@@ -51,9 +51,33 @@ const port = normalizePort(process.env.PORT || "3000");
 app.set("port", port);
 
 const server = http.createServer(app);
+
+var io = require('socket.io')(server);
+
+io.on('connection', (socket) => {
+   console.log('socket connected');
+  socket.on('disconnect', () => {
+    console.log('socket disconnected');
+  });
+  
+  socket.on('connect_error', () => {
+    console.log ('error, will reconnect ')
+  });
+
+  socket.on('error', (error) => { console.log (error) });
+  
+  let recept;
+  // receive newnote and emit to event bearing author name
+  socket.on('newNote', function (from, msg) {
+    console.log('MSG', from, ' saying ', msg);
+    io.emit(`${from.author}`, from);
+  });
+});
+
+
 server.on("error", onError);
 server.on("listening", onListening);
-server.listen(port);
+server.listen(port, () => { console.log( `listening on port ${port}` ) });
 
 // var http = require('http').Server(app);
 // const server = http;

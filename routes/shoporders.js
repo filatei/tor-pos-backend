@@ -135,7 +135,6 @@ async function sendMail(order) {
 const checkAuth = require('../middleware/check-auth');
 
 router.post('', checkAuth, upload.single('image'), function (req, res, next) {
-
   const alloweds = process.env.SHOPALLOWEDS;
 
   if ( !alloweds.includes(req.userData.email)) {
@@ -165,19 +164,6 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
   shopObj.creator = req.userData.userId;
   let customerUpdate = false;
   
-  // handle customer issues
-  // if (shopObj.card_number) {
-  //   updateCustomerCard()
-  // }
-
-  // if ( typeof shopObj.customer != 'object') {
-  //   shopObj.customer = JSON.parse(shopObj.customer);
-  // }
-    
-  // if ( shopObj.driver && typeof shopObj.driver != 'object') {
-  //   shopObj.driver = JSON.parse(shopObj.driver);
-  // }
-
   if ( shopObj.driver && typeof shopObj.driver === 'object' ) {
     shopObj.driver = shopObj.driver._id;
   }

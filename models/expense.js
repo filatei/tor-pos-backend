@@ -7,7 +7,6 @@ const expenseSchema = mongoose.Schema({
         name: {type: String},
         description: {type: String},
         category: {type: String},
-
         qty: {type: Number},
         unit: {type: String},
         price: {type: Number},
@@ -18,17 +17,23 @@ const expenseSchema = mongoose.Schema({
         text: {type: String},
         author: {type: String},
         date: {type: Date},
+        image: { type: String }
     }],
     vendor: {type: mongoose.Schema.Types.ObjectId, ref: 'Contact'},
     creator: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
     updater: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
-    // unit: {type: String},
     site: {type: String},
     status: {type: String},
     approvalComment: {type: String},
     category: {type: String},
     payment: {},
-    
+    payHistory: [{
+        bankAcct:{type: String},
+        paymentDate: {type: Date},
+        memo: {type: String},
+        paidAmount: {type: Number},
+        date: {type: Date, default: Date.now}
+    }],
     date: {type: Date},
     type: {type: String},
     txn_amount: { type: Number },

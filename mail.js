@@ -146,9 +146,10 @@ async function sendInventory(inventory) {
     let total = expense.txn_amount;
     let status = expense.status;
     let balance = 0;
+    let paidAmount = 0;
     
     if ( expense.payment && expense.payment.paidAmount) {
-        let paidAmount = expense.payment.paidAmount;
+        paidAmount = expense.payment.paidAmount;
         if ( status !== 'PAID' ) {
             status = 'PARTIALLY PAID'
         }

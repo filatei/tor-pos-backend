@@ -206,8 +206,8 @@ async function sendInventory(inventory) {
     let odia;
     const mailOptions = {
           from: `ShopTorama ${process.env.tormail}`,
-          to: toEmail,
-          cc: odia,
+          to: userEmail,
+          cc: toEmail,
           bcc: process.env.tormail,
           subject: subject,
           generateTextFromHTML: true,

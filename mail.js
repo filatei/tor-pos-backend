@@ -153,7 +153,7 @@ async function sendInventory(inventory) {
         if ( status !== 'PAID' ) {
             status = 'PARTIALLY PAID'
         }
-        balance = total - paidAmount;
+        balance = expense.balance
     }
     if (expense.remarks) {
       remarks = expense.remarks;
@@ -192,7 +192,7 @@ async function sendInventory(inventory) {
     html += `<p>The Status of your Expense Request # ${expenseId} for ${curr} ${total.toLocaleString()}  is now ${status}</p><p>Vendor: ${vendor}</p> <p>Factory Location: ${location}</p>`;
     html += `Product: ${product}`;
     html += `<table style="margin-left:auto; margin-right:auto"><tr style="text-align:left;"><td><h3>Expense summary</h3></td></tr><tr style="text-align:left;"><td>Status:</td><td> ${status}</td></tr><tr style="text-align:left;"><td> Subtotal:</td><td> ${curr} ${total.toLocaleString()} </td></tr>
-    <tr style="text-align:left;"> <td>Paid: </td><td>${curr} ${paidAmount}</td></tr> <tr style="text-align:left;"><td>Bal: </td><td>${curr} ${balance.toLocaleString()}</td></tr></table>`;
+    <tr style="text-align:left;"> <td>Paid: </td><td>${curr} ${paidAmount}</td></tr> <tr style="text-align:left;"><td>Balance: </td><td>${curr} ${balance.toLocaleString()}</td></tr></table>`;
     
     html += `<p> Remarks: ${remarks} </p>`
     if (memo) {

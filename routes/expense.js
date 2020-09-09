@@ -327,7 +327,14 @@ router.get("/:id", (req, res, next) => {
         let expObj = await Expense.findById(recId);
         let notes =  expObj.notes
         notes.push(note)
-        Expense.findByIdAndUpdate({ _id: recId }, {"notes": notes, "updater": updater})
+        log = expObj.log;
+        log.push({
+          updater: note.author,
+          status:  expObj.status,
+          date: new Date(),
+          note
+        })
+        Expense.findByIdAndUpdate({ _id: recId }, {"notes": notes, "updater": updater, "log": log})
         .then( result => {
           res.status(201).json({
             message: ' note with image updated successfully',

@@ -26,17 +26,20 @@ const expenseSchema = mongoose.Schema({
     status: {type: String},
     approvalComment: {type: String},
     category: {type: String},
+    log: [{}],
     payment: {},
     payHistory: [{
         bankAcct:{type: String},
         paymentDate: {type: Date},
         memo: {type: String},
         paidAmount: {type: Number},
-        date: {type: Date, default: Date.now}
+        date: {type: Date, default: Date.now},
+        payer:  {type: String},
     }],
     date: {type: Date},
     type: {type: String},
     txn_amount: { type: Number },
+    balance: { type: Number, default: 0 },
     remarks: {type: String}
 },
 {

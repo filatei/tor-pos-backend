@@ -13,7 +13,6 @@ const Stockitem = require('./models/stockitem');
 
 async function sendInventory(inventory) {
     
-    console.log(inventory)
     let name;
     let supplier, sender;
     let receiver;
@@ -50,7 +49,6 @@ async function sendInventory(inventory) {
             accessToken: tokens.access_token
         }
     });
-    // console.log(smtpTransport)
   
     // some content
     let remarks;
@@ -87,9 +85,7 @@ async function sendInventory(inventory) {
     <tr style="text-align:left;"> <td>Remarks: ${remarks} </td><td> </td></tr> <tr style="text-align:left;"><td> </td><td></td></tr></table>`;
     
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
-    // console.log (html, 'html')
   
-    // console.log(html)
     // let odia = 'odia.gabriel@gtsng.com';
     let odia;
     const mailOptions = {
@@ -105,22 +101,18 @@ async function sendInventory(inventory) {
       // send mail
       smtpTransport.sendMail(mailOptions, (error, response) => {
         let result;
-        // console.log(error, response)
         if (error) {
           console.log(error)
           result = false;
         } else {
-          // console.log(response)
           result = true
         }
         smtpTransport.close();
-        // console.log(result)
         return result;
       });
   }
 
  async function sendExpense(expense){
-    console.log(expense)
     let vendor;
     if (expense && expense.vendor) {
       vendor = expense.vendor.name;
@@ -137,7 +129,6 @@ async function sendInventory(inventory) {
             accessToken: tokens.access_token
         }
     });
-    // console.log(smtpTransport)
   
     // some content
     let expenseId = expense.expense_id
@@ -212,9 +203,7 @@ async function sendInventory(inventory) {
       html += `<p> Remarks: ${memo} </p>`
     }
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
-    // console.log (html, 'html')
   
-    // console.log(html)
     // let odia = 'odia.gabriel@gtsng.com';
     let odia;
     const mailOptions = {
@@ -230,16 +219,13 @@ async function sendInventory(inventory) {
       // send mail
       smtpTransport.sendMail(mailOptions, (error, response) => {
         let result;
-        // console.log(error, response)
         if (error) {
           console.log(error)
           result = false;
         } else {
-          // console.log(response)
           result = true
         }
         smtpTransport.close();
-        // console.log(result)
         return result;
       });  
   }

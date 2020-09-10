@@ -64,8 +64,12 @@ async function sendInventory(inventory) {
     if (inventory.remarks) {
       remarks = inventory.remarks;
     }
+    let toEmail;
   
-    let toEmail = userEmail || 'expenses@torama.ng';
+    if (hostname.includes('torama')) {
+      toEmail =  'expenses@torama.ng';
+    } else { toEmail = userEmail || 'expenses@torama.ng';}
+    
     let format1 = "DD-MM-YYYY hh:mm:ss";
     let date;
     date = moment(inventory.createdAt).format(format1);
@@ -167,7 +171,16 @@ async function sendInventory(inventory) {
     let user = await User.findById(expense.creator);
     let userName = user.name;
     let userEmail = user.email;
-    let toEmail = 'expenses@torama.ng';
+
+    let toEmail;
+  
+    if ( hostname.includes('torama') ) {
+      toEmail =  'expenses@torama.ng';
+    } else 
+    { 
+      toEmail = userEmail || 'expenses@torama.ng';
+    }
+    
     let format1 = "DD-MM-YYYY hh:mm:ss";
     let date;
     date = moment(expense.createdAt).format(format1);

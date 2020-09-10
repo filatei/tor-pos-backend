@@ -65,10 +65,10 @@ async function sendInventory(inventory) {
       remarks = inventory.remarks;
     }
     let toEmail;
-  
-    if (hostname.includes('torama')) {
-      toEmail =  'expenses@torama.ng';
-    } else { toEmail = userEmail || 'expenses@torama.ng';}
+    toEmail = userEmail ;
+    // if (hostname.includes('torama')) {
+    //   toEmail =  'expenses@torama.ng';
+    // } else { toEmail = userEmail || 'expenses@torama.ng';}
     
     let format1 = "DD-MM-YYYY hh:mm:ss";
     let date;

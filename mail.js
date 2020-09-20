@@ -169,7 +169,8 @@ async function sendInventory(inventory) {
       toEmail =  'expenses@torama.ng';
     } else 
     { 
-      toEmail = userEmail || 'expenses@torama.ng';
+      return;
+      toEmail = userEmail ;
     }
     
     let format1 = "DD-MM-YYYY hh:mm:ss";

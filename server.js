@@ -3,6 +3,11 @@ const fs = require('fs');
 const os = require("os");
 const hostname = os.hostname();
 const debug = require("debug")("node-angular");
+const ShopSetting = require('./models/shopsetting')
+const Expense = require('./models/expense')
+const User = require('./models/user')
+
+require('longjohn');
 
 const http = require("http");
 
@@ -51,161 +56,72 @@ const port = normalizePort(process.env.PORT || "3000");
 app.set("port", port);
 
 const server = http.createServer(app);
+socketOptions = {pingTimeout: 120000, pingInterval:5000}
 
-var io = require('socket.io')(server);
+var io = require('socket.io')(server, socketOptions);
+
 
 io.on('connection', (socket) => {
    console.log('socket connected');
-  socket.on('disconnect', () => {
-    console.log('socket disconnected');
-  });
-  
-  socket.on('connect_error', () => {
-    console.log ('error, will reconnect ')
+  socket.on('disconnect', (reason) => {
+    console.log('socket disconnected', reason);
+    
   });
 
-  socket.on('error', (error) => { console.log (error) });
-  
-  let recept;
+  socket.on('error', (error) => {
+    console.log('socket error', error);
+
+  });
+
+  socket.on('disconnecting', (reason) => {
+    // let rooms = Object.keys(socket.rooms);
+    console.log('socket disconnecting...', reason);
+    // ...
+  });
+ 
+  // socket.on('err', (error) => { console.log('socket error ' +  error) });
+  let settings;
+  let user;
+   socket.on('getSettings',  async (from, msg)  =>  {
+    console.log('data', from, ' saying ', msg);
+      if (from ) {
+        user = await User.find({email: from.message})
+        console.log(user)
+        // settings = await ShopSetting.find({ creator: user._id })
+        settings = await ShopSetting.find({ creator: user[0]._id })
+        io.emit('getSettings2',  settings);
+      }
+    });
   // receive newnote and emit to event bearing author name
   socket.on('newNote', function (from, msg) {
     console.log('MSG', from, ' saying ', msg);
-    io.emit(`${from.author}`, from);
+    io.emit('newNote2', from);
   });
+
+  // events getExpenses and getExpensesAll
+  socket.on('getExpenses',  async (from, msg)  =>  {
+    console.log('data', from, ' saying ', msg);
+      if (from ) {
+        const expenses = await Expense.find();
+        console.log(expenses[0])
+        io.emit('getExpensesAll',  expenses);
+      }
+    });
+
+    // get one expense given id
+    socket.on('getExpense',  async (from, msg)  =>  {
+      console.log('expeneOne data', from, ' saying ', msg);
+        if (from ) {
+          const expense = await Expense.findById(from.message);
+          console.log(expense, 'one')
+          io.emit('getExpenseOne',  expense);
+        }
+      });
 });
+
 
 
 server.on("error", onError);
 server.on("listening", onListening);
 server.listen(port, () => { console.log( `listening on port ${port}` ) });
-
-// var http = require('http').Server(app);
-// const server = http;
-
-
-// var https = require('https');
-// var http = require('https');
-
-// var options = {
-//         key: fs.readFileSync('./ssl/localhost.key'),
-//         cert: fs.readFileSync('./ssl/localhost.crt'),
-//         ca: fs.readFileSync('./ssl/cadb.pem'),
-//         requestCert: false,
-//         rejectUnauthorized: false
-//     };
-// var serverPort = 3000;
-// var server = https.createServer(options, app);
-// var io = require('socket.io').listen(server);
-// // port = process.env.PORT || 3000;
-// server.listen(port);
-// console.log('Server running *:'+port);
-// if (hostname.includes('torama')) {
-//   var options = {
-//       key: fs.readFileSync('/var/www/letsencrypt/live/api.torama.ng/privkey.pem'),
-//       cert: fs.readFileSync('/var/www//letsencrypt/live/api.torama.ng/cert.pem'),
-//       ca: fs.readFileSync(' /var/www/letsencrypt/live/api.torama.ng/fullchain.pem')
-//   };
-
-//   http = require('https').Server(options, app);
-// }
-
-// var io = require('socket.io')(http);
-
-// io.on('connection', (socket) => {
-//   //  console.log('socket connected');
-//   // //  socket.on('disconnect', () => {
-//   // //   console.log('socket disconnected');
-//   // // });
-
-//   // // socket.on('disconnect', () => {
-//   // //   console.log('socket disconnected');
-    
-//   // // });
-//   // socket.on('connect_error', () => {
-//   //   console.log ('error, will reconnect in 2s')
-//   //   setTimeout(() => {
-//   //     socket.connect();
-//   //   }, 2000);
-//   // });
-  
-//   // socket.on('disconnect', () => {
-//   //   console.log ('disconnected, will reconnect in .5s')
-//   //   setTimeout(() => {
-//   //     socket.connect();
-//   //   }, 500);
-//   // });
-
-//   // socket.on('error', (error) => { console.log (error) });
-
-//   // io.on('connection', (socket) => {
-//   //   socket.broadcast.emit('hi');
-//   // });
-
-//    // This will emit the event to all connected sockets
-//   //  const receipt = {
-//   //     _id: '5f4e985540429627fcd63bbd',
-//   //     name: 'DIESEL',
-//   //     qty: 1000,
-//   //     unit: 'kg',
-//   //     price: 160,
-//   //     description: 'DIESEL',
-//   //     category: 'General'
-//   //   }
-
-//   // io.emit('event', receipt);
-  
-//   // let recept;
-//   // socket.on('KPANSIA', function (from, msg) {
-//   //   console.log('MSG', from, ' saying ', msg);
-//   //   io.emit('KPANSIA', from);
-//   // });
-
-//   // socket.on('OKUTUKUTU', function (from, msg) {
-//   //   console.log('MSG', from, ' saying ', msg);
-//   //   io.emit('OKUTUKUTU', from);
-//   // });
-
-//   // socket.on('SWALI', function (from, msg) {
-//   //   console.log('MSG', from, ' saying ', msg);
-//   //   io.emit('SWALI', from);
-//   // });
-
-//   // socket.on('YENEGWE', function (from, msg) {
-//   //   console.log('MSG', from, ' saying ', msg);
-//   //   io.emit('YENEGWE', from);
-//   // });
-
-//   // socket.on('OBUNNA', function (from, msg) {
-//   //   console.log('MSG', from, ' saying ', msg);
-//   //   io.emit('OBUNNA', from);
-//   // });
-
-//   // socket.on('ABUJA', function (from, msg) {
-//   //   console.log('MSG', from, ' saying ', msg);
-//   //   io.emit('ABUJA', from);
-//   // });
-
-//   // socket.on('BOMADI', function (from, msg) {
-//   //   console.log('MSG', from, ' saying ', msg);
-//   //   io.emit('BOMADI', from);
-//   // });
-
-
-
-//   // io.emit('event', recept);
-
-//   // socket.on('event', (msg) => {
-//   //   io.emit('event', msg);
-//   // });
-
-// });
-
-
-
-// http.on("error", onError);
-// http.on("listening", onListening);
-
-// http.listen(port, function () {
-//   console.log('listening on *:', port);
-// });
 

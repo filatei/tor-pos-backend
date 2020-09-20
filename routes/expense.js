@@ -193,7 +193,7 @@ router.put("/:id", checkAuth, (req, res, next) => {
     }
   }
   isOpen().then(sm => {
-    console.log(mailStat, 'mailstat sent')
+    console.log(sm, 'mailstat sent')
   })
   .catch(err => {
     console.log(err, 'send err')

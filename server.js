@@ -7,7 +7,9 @@ const ShopSetting = require('./models/shopsetting')
 const Expense = require('./models/expense')
 const User = require('./models/user')
 
-require('longjohn');
+if (hostname.includes('torama')) {
+  require('longjohn');
+}
 
 const http = require("http");
 

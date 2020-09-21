@@ -7,10 +7,6 @@ const ShopSetting = require('./models/shopsetting')
 const Expense = require('./models/expense')
 const User = require('./models/user')
 
-if (hostname.includes('torama')) {
-  require('longjohn');
-}
-
 const http = require("http");
 
 const normalizePort = val => {

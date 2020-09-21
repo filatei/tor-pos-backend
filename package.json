@@ -48,7 +48,5 @@
     "util": "^0.12.2",
     "ws": "^7.2.1"
   },
-  "devDependencies": {
-    "longjohn": "^0.2.12"
-  }
+  "devDependencies": {}
 }

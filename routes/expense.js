@@ -140,6 +140,7 @@ function logIncident(email, description) {
 const checkAuth = require('../middleware/check-auth');
 const expense = require("../models/expense");
 
+
 router.post('', checkAuth, function (req, res, next) {
   const alloweds = process.env.STOREALLOWEDS;
 
@@ -248,25 +249,44 @@ router.delete("/:id", checkAuth, (req, res, next) => {
 
  });
 
-router.get('',(req, res, next) => {
+router.get('', checkAuth, (req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
-  const expenseQuery = Expense.find().sort({createdAt:-1}).populate('vendor').populate('creator');
-  if (pageSize && currentPage) {
-    expenseQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
+  const userEmail  = req.userData.email;
+  console.log(userEmail)
+  
+  const directors = process.env.DIRECTORS;
+  let expenseQuery;
+
+  async  function userQuery() {
+    user = await User.find({email: userEmail});
+    if ( directors.includes(userEmail) ) {
+      expenseQuery = Expense.find().sort({createdAt:-1}).populate('vendor').populate('creator');
+    } else {
+      expenseQuery =  Expense.find({creator: user[0]._id}).sort({createdAt:-1}).populate('vendor').populate('creator');
+    }
+
   }
-  expenseQuery
-    .then(documents => {
-      res.status(200).json({
-        message: "Expenses fetched successfully!",
-        expense: documents
+
+  userQuery().then (() => {
+    if (pageSize && currentPage) {
+      expenseQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
+    }
+    expenseQuery
+      .then(documents => {
+        res.status(200).json({
+          message: "Expenses fetched successfully!",
+          expense: documents
+        });
+      })
+     .catch(error => {
+      res.status(500).json({
+        message: "Fetching inventories failed! " + error
       });
-    })
-   .catch(error => {
-    res.status(500).json({
-      message: "Fetching inventories failed! " + error
     });
-  });
+  })
+
+  
 });
 
 

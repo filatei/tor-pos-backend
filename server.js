@@ -63,63 +63,112 @@ socketOptions = {pingTimeout: 120000, pingInterval:5000}
 var io = require('socket.io')(server, socketOptions);
 
 
-io.on('connection', (socket) => {
-   console.log('socket connected');
-  socket.on('disconnect', (reason) => {
-    console.log('socket disconnected', reason);
-    
-  });
-
-  socket.on('error', (error) => {
-    console.log('socket error', error);
-
-  });
-
-  socket.on('disconnecting', (reason) => {
-    // let rooms = Object.keys(socket.rooms);
-    console.log('socket disconnecting...', reason);
-    // ...
-  });
- 
-  // socket.on('err', (error) => { console.log('socket error ' +  error) });
-  let settings;
-  let user;
-   socket.on('getSettings',  async (from, msg)  =>  {
-    console.log('data', from, ' saying ', msg);
-      if (from ) {
-        user = await User.find({email: from.message})
-        console.log(user)
-        // settings = await ShopSetting.find({ creator: user._id })
-        settings = await ShopSetting.find({ creator: user[0]._id })
-        io.emit('getSettings2',  settings);
-      }
+function ioFunc() {
+  io.on('connection', (socket) => {
+    console.log('socket connected');
+    socket.on('disconnect', (reason) => {
+      console.log('socket disconnected', reason);
+      // runInterval(reason)
+      
     });
-  // receive newnote and emit to event bearing author name
-  socket.on('newNote', function (from, msg) {
-    console.log('MSG', from, ' saying ', msg);
-    io.emit('newNote2', from);
-  });
-
-  // events getExpenses and getExpensesAll
-  socket.on('getExpenses',  async (from, msg)  =>  {
-    console.log('data', from, ' saying ', msg);
-      if (from ) {
-        const expenses = await Expense.find();
-        console.log(expenses[0])
-        io.emit('getExpensesAll',  expenses);
-      }
+  
+    socket.on('error', (error) => {
+      console.log('socket error', error);
+  
     });
-
-    // get one expense given id
-    socket.on('getExpense',  async (from, msg)  =>  {
-      console.log('expeneOne data', from, ' saying ', msg);
+  
+    socket.on('disconnecting', (reason) => {
+      // let rooms = Object.keys(socket.rooms);
+      console.log('socket disconnecting...', reason);
+      // ...
+    });
+   
+    // socket.on('err', (error) => { console.log('socket error ' +  error) });
+    let settings;
+    let user;
+     socket.on('getSettings',  async (from, msg)  =>  {
+      console.log('data', from, ' saying ', msg);
         if (from ) {
-          const expense = await Expense.findById(from.message);
-          console.log(expense, 'one')
-          io.emit('getExpenseOne',  expense);
+          user = await User.find({email: from.message})
+          console.log(user)
+          // settings = await ShopSetting.find({ creator: user._id })
+          settings = await ShopSetting.find({ creator: user[0]._id })
+          io.emit('getSettings2',  settings);
         }
       });
-});
+    // receive newnote and emit to event bearing author name
+    socket.on('newNote', function (from, msg) {
+      console.log('MSG', from, ' saying ', msg);
+      io.emit('newNote2', from);
+    });
+  
+    // events getExpenses and getExpensesAll
+    socket.on('getExpenses',  async (from, msg)  =>  {
+      console.log('data', from, ' saying ', msg);
+        if (from ) {
+          user = await User.find({email: from.email})
+          console.log(user)
+          const expenses = await Expense.find({ creator: user[0]._id }).sort({ createdAt:-1 }).populate('vendor').populate('creator');
+          console.log(expenses[0])
+          io.emit('getExpensesAll',  expenses);
+        }
+      });
+  
+      // get one expense given id
+      socket.on('getExpense',  async (from, msg)  =>  {
+        console.log('expeneOne data', from, ' saying ', msg);
+          if (from ) {
+            const expense = await Expense.findById(from.message);
+            console.log(expense, 'one')
+            io.emit('getExpenseOne',  expense);
+          }
+        });
+  });
+
+  
+  
+}
+
+ioFunc();
+
+function runInterval(reason) {
+  const socketConnectInterval = setInterval( () => {
+    console.log ('restarting socket ', reason)
+
+    if (iBool) {
+        clearInterval(socketConnectInterval);
+
+    }
+    
+    // io.close();
+    // const serv = io.onconnection();
+    // console.log(io.sockets)
+    // io.on('connection', (socket) => {
+    //   console.log('socket connected 2', socket.connected);
+      if ( socket.connected ) {
+        clearInterval(socketConnectInterval);
+      }
+    //   // socket.on('disconnect', (reason) => {
+    //   //   console.log('socket disconnected 2', reason);
+    //   //  runInterval(reason)
+        
+    //   // });
+
+    //    // get one expense given id
+    // // socket.on('getExpense',  async (from, msg)  =>  {
+    // //   console.log('expeneOne data', from, ' saying ', msg);
+    // //     if (from ) {
+    // //       const expense = await Expense.findById(from.message);
+    // //       console.log(expense, 'one')
+    // //       io.emit('getExpenseOne',  expense);
+    // //     }
+    // //   });
+
+
+    // })
+      
+  }, 3000);
+}
 
 
 

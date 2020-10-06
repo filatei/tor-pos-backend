@@ -181,7 +181,7 @@ async function sendInventory(inventory) {
   
     let products = expense.products 
   
-    let product = `<table style="margin-left:auto; margin-right:auto"><thead><tr style="text-align:left;"> <th>Product</th> <th></th> <th>Rate</th><th>Amount</th></tr></thead><tbody>`;
+    let product = `<table style="margin-left:auto; margin-right:auto"><thead><tr style="text-align:left;"> <th>Product</th> <th>Rate</th> <th></th><th>Amount</th></tr></thead><tbody>`;
     let derived_total = 0
     products.forEach(p => {
       amount = (p.qty * p.price).toLocaleString();

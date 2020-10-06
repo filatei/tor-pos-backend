@@ -26,7 +26,7 @@ const inventorySchema = mongoose.Schema({
 });
 
 inventorySchema.plugin(AutoIncrement, { inc_field: 'stock_id' });
-
+inventorySchema.set('autoIndex', process.env.Node_Env != 'production');
 // inventorySchema.plugin( uniqueValidator );
 
 module.exports = mongoose.model('Inventory', inventorySchema)

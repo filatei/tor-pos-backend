@@ -39,7 +39,6 @@ const expenseRoutes = require("./routes/expense");
 const shopsettingsRoutes = require("./routes/shopsettings");
 
 //let connectStr =  'mongodb://localhost:27017/torposdb';
-let connectStr = process.env.CONNECT_STR
 
 const DB = 'torposedb';
 // if prod use this
@@ -89,6 +88,7 @@ app.use(cors())
 
 
 
+let connectStr = process.env.CONNECT_STR
 
 mongoose.set('useUnifiedTopology', true );
 mongoose.set('useCreateIndex', true);

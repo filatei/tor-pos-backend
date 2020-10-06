@@ -24,105 +24,6 @@ const env = process.env.NODE_ENV || 'development';
 
 const Utils = require('../utils');
 
-// var multer  = require('multer')
-// const DIR = './uploads/recuploads/';
-// const storage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     userid = req.userData.userId
-//     const myDir = DIR + userid + '/'
-//     try {
-//       if (!fs.existsSync(myDir)){
-//         fs.mkdirSync(myDir, {recursive: true});
-//       }
-//     }
-//     catch (err) {
-//       throw err
-//     }
-//     cb(null, myDir);
-//   },
-//   filename: (req, file, cb) => {
-//     const fileName = req.userData.userId + '-' + new Date().getTime() + file.originalname.toLowerCase().split(' ').join('-');
-   
-//     cb(null, fileName)
-//   }
-// });
-
-// // Multer Mime Type Validation
-// var upload = multer({
-//   storage: storage,
-//   limits: {
-//     fileSize: 1024 * 1024 * 10
-//   },
-//   fileFilter: (req, file, cb) => {
-//     // console.log(file.mimetype)
-//     if (file.mimetype == "image/png" || file.mimetype == "image/jpeg" || file.mimetype == "image/jpg") {
-//       cb(null, true);
-//     } else {
-//       cb(null, false);
-//       return cb(new Error('Only .png or .jpg format allowed!'));
-//     }
-//   }
-// });
-
-
-
-// async function sendMail(order) {
-//   // console.log(order.products)
-//   customer = await Customer.findById(order.customer).exec()
-//   customer = customer.name;
-//   const smtpTransport = nodemailer.createTransport({
-//       service: "gmail",
-//       auth: {
-//           type: "OAuth2",
-//           user: process.env.tormail, 
-//           clientId: tokens.clientID,
-//           clientSecret: tokens.clientSecret,
-//           refreshToken: tokens.refresh_token,
-//           accessToken: tokens.access_token
-//       }
-//  });
-
-//  // some content
-//  let orderId = order.rec_id 
-//  orderId = orderId.toString().padStart(5, '0')
-//  let subject = `ShopTorama Order Confirmation for Order (# ${orderId})`
-//  let curr = order.curr || process.env.naira
-//  let total = order.txn_amount;
-//  let date = new Date().toString();
- 
-//  let products = order.products 
-
-//  let product = `<table><tr> <th>Product</th> <th></th> <th></th><th>Amount</th></tr>`;
- 
-//  products.forEach(p => {
-//   amount = (p.qty * p.price).toLocaleString();
-//   product += `<tr><td>${p.qty} x ${p.name} </td> <td colspan="3" style="text-align:right;">${curr} ${amount} </td><tr>`;
-//  })
-
-//  product += `</table>`;
-
-//  let html = `<div style=" margin: auto;width: 70%;border: 3px solid rgba(0, 128, 0,0.5);padding: 10px;"><p>${date}</p><h2>ORDER CONFIRMED</h2><p> Hi ${customer},</p>`;
-//  html += `<p>We received your order # ${orderId} for ${curr} ${total.toLocaleString()} </p>`;
-//  html += `${product}`;
-//  html += `<h3>Order summary</h3><p> Subtotal: ${curr} ${total.toLocaleString()} </p> <p>Tax: ${curr} 0.00</p> <p>Total: ${curr} ${total.toLocaleString()}</p>`;
- 
-//  html += `<h4 style="background:rgba(0, 128, 0,0.3);text-align:center">ShopTorama - All rights reserved</h4> </div>`;
-
-//  const mailOptions = {
-//       from: `ShopTorama ${process.env.tormail}`,
-//       to: process.env.tormail,
-//       subject: subject,
-//       generateTextFromHTML: true,
-//       html: html
-//   };
-
-//   // send mail
-//   smtpTransport.sendMail(mailOptions, (error, response) => {
-//     error ? console.log(error) : console.log(response);
-//     smtpTransport.close();
-//   });
-// }
-
 function logIncident(email, description) {
   const logObj = new Accesslog({email: email, description: description})
   logObj.save(logObj).
@@ -427,7 +328,7 @@ router.get('', (req, res, next) => {
     })
    .catch(error => {
     res.status(500).json({
-      message: "Fetching companies failed!"
+      message: "Fetching companies failed! " + error
     });
   });
 });
@@ -458,9 +359,8 @@ router.get("/getByText", (req, res, next) => {
             message: "Fetching record failed!" + error
           });
         });
-  
-  
 });
+
 router.get("/:id", (req, res, next) => {
     Recupload.findById(req.params.id).
     populate('customer')
@@ -482,7 +382,6 @@ router.get("/:id", (req, res, next) => {
 
 router.put("/:id", checkAuth, (req, res, next) => {
   const alloweds = process.env.ALLOWEDS
-
   if ( !alloweds.includes(req.userData.email)) {
     logIncident(req.userData.email, 'Not allowed to update Receipts')
     return res.status(500).json({message: 'Not allowed'});
@@ -496,10 +395,10 @@ router.put("/:id", checkAuth, (req, res, next) => {
 
   // remove fields from req.body with empty content
   let recObj = formFields.filter(key => req.body[key] !== '')
-            .reduce((obj, key) => {
-              obj[key] = req.body[key];
-              return obj;
-            }, {});
+        .reduce((obj, key) => {
+          obj[key] = req.body[key];
+          return obj;
+        }, {});
 
   // console.log(recObj)
 
@@ -561,7 +460,6 @@ router.put("/:id", checkAuth, (req, res, next) => {
    */
   function saveReceipt(recobj) {
       // handle image upload
-
     receipt = new Recupload(recobj);
     Recupload.updateOne({ _id: req.params.id }, { $set: receipt })
     .then(result => {
@@ -606,9 +504,7 @@ router.put('/imageupdate/:id', checkAuth, Utils.upload.any(), function (req, res
         } else {
           url = req.protocol + '://' + req.get('host')
         }
-
         path = url + '/' + fileName;
-
         // if (file.fieldname === 'image') {
         //     recObj.image = path;
         // }
@@ -625,7 +521,6 @@ router.put('/imageupdate/:id', checkAuth, Utils.upload.any(), function (req, res
           id: result._id
       }
     });
-
   })
   .catch(error => {
     res.status(500).json({

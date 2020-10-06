@@ -1,3 +1,4 @@
+// 'use strict'
 const app = require("./app");
 const fs = require('fs');
 const os = require("os");
@@ -5,7 +6,9 @@ const hostname = os.hostname();
 const debug = require("debug")("node-angular");
 const ShopSetting = require('./models/shopsetting')
 const Expense = require('./models/expense')
+const Inventory = require('./models/inventory')
 const User = require('./models/user')
+let directors = process.env.DIRECTORS;
 
 const http = require("http");
 
@@ -54,117 +57,91 @@ const port = normalizePort(process.env.PORT || "3000");
 app.set("port", port);
 
 const server = http.createServer(app);
-socketOptions = {pingTimeout: 120000, pingInterval:5000}
+// socketOptions = {pingTimeout: 120000, pingInterval:5000}
 
-var io = require('socket.io')(server, socketOptions);
+// var io = require('socket.io')(server, socketOptions);
+const socketIO = require('socket.io');
+const io = socketIO.listen(server);
 
+// Use Sockets to setup the connection
+io.sockets.on('connection', async (socket) =>  {
+    
+  // const expenses = await Expense.find().sort({ createdAt:-1 }).populate('vendor').populate('creator');
+  // console.log('sending expenses via initial event')
+  // io.sockets.emit('initial',  expenses);
+  let socketId = socket.id;
+  
+  console.log('Socket connected ', socketId)
+  socket.on('disconnect', (reason) => {
+    console.log('socket disconnected', reason);
+  });
 
-function ioFunc() {
-  io.on('connection', (socket) => {
-    console.log('socket connected');
-    socket.on('disconnect', (reason) => {
-      console.log('socket disconnected', reason);
-      // runInterval(reason)
-      
-    });
-  
-    socket.on('error', (error) => {
-      console.log('socket error', error);
-  
-    });
-  
-    socket.on('disconnecting', (reason) => {
-      // let rooms = Object.keys(socket.rooms);
-      console.log('socket disconnecting...', reason);
-      // ...
-    });
-   
-    // socket.on('err', (error) => { console.log('socket error ' +  error) });
-    let settings;
-    let user;
-     socket.on('getSettings',  async (from, msg)  =>  {
-      console.log('data', from, ' saying ', msg);
-        if (from ) {
-          user = await User.find({email: from.message})
-          console.log(user)
-          // settings = await ShopSetting.find({ creator: user._id })
-          settings = await ShopSetting.find({ creator: user[0]._id })
-          io.emit('getSettings2',  settings);
-        }
-      });
-    // receive newnote and emit to event bearing author name
-    socket.on('newNote', function (from, msg) {
-      console.log('MSG', from, ' saying ', msg);
-      io.emit('newNote2', from);
-    });
-  
-    // events getExpenses and getExpensesAll
-    socket.on('getExpenses',  async (from, msg)  =>  {
-      console.log('data', from, ' saying ', msg);
-        if (from ) {
-          user = await User.find({email: from.email})
-          console.log(user)
-          const expenses = await Expense.find({ creator: user[0]._id }).sort({ createdAt:-1 }).populate('vendor').populate('creator');
-          console.log(expenses[0])
-          io.emit('getExpensesAll',  expenses);
-        }
-      });
-  
-      // get one expense given id
-      socket.on('getExpense',  async (from, msg)  =>  {
-        console.log('expeneOne data', from, ' saying ', msg);
-          if (from ) {
-            const expense = await Expense.findById(from.message);
-            console.log(expense, 'one')
-            io.emit('getExpenseOne',  expense);
-          }
-        });
+  socket.on('error', (error) => {
+    console.log('socket error', error);
+
+  });
+
+  socket.on('disconnecting', (reason) => {
+    console.log('socket disconnecting...', reason);
   });
 
   
-  
-}
 
-ioFunc();
-
-function runInterval(reason) {
-  const socketConnectInterval = setInterval( () => {
-    console.log ('restarting socket ', reason)
-
-    if (iBool) {
-        clearInterval(socketConnectInterval);
-
+  socket.on('getStock',  async (from, msg)  =>  {
+    let inventory;
+    
+    console.log(directors, directors.includes(from.email));
+    console.log('data', from, ' saying ', msg);
+      
+    // if ( directors.includes(from.email)) {
+    //     inventory = await Inventory.find().sort({ createdAt:-1 }).populate('name')
+    //     .populate('sender').populate('receiver');
+    // } else {
+    //     if (from && from.store && from.store !== undefined) {
+    //       inventory = await Inventory.find( {store: from.store} ).sort({ createdAt:-1 }).populate('name')
+    //       .populate('sender').populate('receiver');
+    //     } 
+       
+    // }
+    console.log('socket id , store', socketId, from.store)
+    inventory = await Inventory.find( {store: from.store} ).sort({ createdAt:-1 }).populate('name').populate('sender').populate('receiver');
+    if (inventory && inventory.length) {
+      io.to(socketId).emit('getMyInventory',  inventory);
     }
     
-    // io.close();
-    // const serv = io.onconnection();
-    // console.log(io.sockets)
-    // io.on('connection', (socket) => {
-    //   console.log('socket connected 2', socket.connected);
-      if ( socket.connected ) {
-        clearInterval(socketConnectInterval);
+  });
+
+   // events getExpenses and getExpensesAll
+   let expenses;
+   socket.on('getExpenses',  async (from, msg)  =>  {
+    console.log('data', from, ' saying ', msg);
+      if (from ) {
+        user = await User.find({email: from.email})
+        console.log('socket id', socketId)
+        // if ( directors.includes(from.email)) {
+        //    expenses = await Expense.find().sort({ createdAt:-1 }).populate('vendor').populate('creator');
+
+        // } else {
+        //  expenses = await Expense.find({creator: user[0]._id}).sort({ createdAt:-1 }).populate('vendor').populate('creator');
+
+        // }
+      // const expenses = await Expense.find().sort({ createdAt:-1 }).populate('vendor').populate('creator');
+      const expenses = await Expense.find({ creator: user[0]._id }).sort({ createdAt:-1 }).populate('vendor').populate('creator');
+        // console.log(expenses[0])
+        io.to(socketId).emit('getMyExpenses',  expenses);
       }
-    //   // socket.on('disconnect', (reason) => {
-    //   //   console.log('socket disconnected 2', reason);
-    //   //  runInterval(reason)
-        
-    //   // });
+  });
 
-    //    // get one expense given id
-    // // socket.on('getExpense',  async (from, msg)  =>  {
-    // //   console.log('expeneOne data', from, ' saying ', msg);
-    // //     if (from ) {
-    // //       const expense = await Expense.findById(from.message);
-    // //       console.log(expense, 'one')
-    // //       io.emit('getExpenseOne',  expense);
-    // //     }
-    // //   });
+    // receive newnote and emit to event bearing author name
+    socket.on('newNote', function (from, msg) {
+      console.log(`Note ${from.note} made on expense id # ${from.expenseId}`, ' saying ', msg);
+      // we may send email to author of expense from here.
+      // io.to(socketId).emit('newNote2', from);
+    });
+
+});
 
 
-    // })
-      
-  }, 3000);
-}
 
 
 

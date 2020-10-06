@@ -250,25 +250,26 @@ router.get("/:id", (req, res, next) => {
     if (!req.params.id || req.params.id == undefined) return res.status(500).json({
         message: "claim id blank " 
     });
+    
     Claim.
     findById(req.params.id).
     populate('customer')
     .populate('creator')
     .populate('updater')
     .exec(function (err, claim) {
-        // if (err) return handleError(err);
-        if (err)  {
-            return res.status(500).json({
-                message: "Error finding claim " + err
-            });
-        }
+      // if (err) return handleError(err);
+      if (err)  {
+        return res.status(500).json({
+            message: "Error finding claim " + err
+        });
+      }
 
-        if (claim) {
-          res.status(200).json(claim);
-        } else {
-          res.status(404).json({ message: "claim not found!" });
-        }
-    });
+      if (claim) {
+        res.status(200).json(claim);
+      } else {
+        res.status(404).json({ message: "claim not found!" });
+      }
+  });
 });
 
 // claim import
@@ -285,10 +286,10 @@ router.post('/import', checkAuth,  function (req, res, next) {
     
     // unique customer names  .. not used
     function uniqcust(array) {
-        const key = 'name';
-        const arrayUniqueByKey = [...new Map(array.map(item =>
-        [item[key], item])).values()];
-        return arrayUniqueByKey;
+      const key = 'name';
+      const arrayUniqueByKey = [...new Map(array.map(item =>
+      [item[key], item])).values()];
+      return arrayUniqueByKey;
     }
 
     claimsArr.forEach(claim => {
@@ -306,6 +307,7 @@ router.post('/import', checkAuth,  function (req, res, next) {
             console.log (err)
             // throw err
         }
+
         if (!cust) {
             // create customer and
             customer = new Customer({name: customerName})
@@ -327,6 +329,7 @@ router.post('/import', checkAuth,  function (req, res, next) {
             // save claim
             customerID = cust._id
         }
+
         // save claim
         let nc = {
             creator: userid,
@@ -350,9 +353,9 @@ router.post('/import', checkAuth,  function (req, res, next) {
             card_bank: claim.card_bank? claim.card_bank: "",
             bank_action: claim.bank_action? claim.bank_action: "",
             bank_debit_date: claim.bank_debit_date? new Date((claim.bank_debit_date - (25567 + 2)) * 86400 * 1000):null,
-
             avatar: (claim.stan.indexOf('.jpg') > -1)? claim.stan: claim.stan.concat('.jpg'),
         }
+
         let newClaimObj = new Claim(nc);
         newClaimObj.save()
         .then( result => {

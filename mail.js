@@ -205,7 +205,6 @@ async function sendInventory(inventory) {
       html += `<p> Remarks: ${memo} </p>`
     }
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
-    console.log(html)
     // let odia = 'odia.gabriel@gtsng.com';
     let odia;
     const mailOptions = {

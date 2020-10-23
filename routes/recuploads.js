@@ -13,6 +13,7 @@ const tokens = require(`${homedir}/.token.json`);
 const nodemailer = require("nodemailer");
 const { google } = require("googleapis");
 const OAuth2 = google.auth.OAuth2;
+const _ = require("lodash");
 
 const mime = require("mime");
 const Accesslog = require("../models/accesslog");
@@ -391,7 +392,7 @@ router.get("/getByText", (req, res, next) => {
       records = rec.filter((r) =>
         r.customer.name.toLowerCase().includes(stan.toLowerCase())
       );
-      // console.log(records)
+
       Recupload.find({ $text: { $search: stan } })
         .sort({ updatedAt: -1 })
         .populate("customer")

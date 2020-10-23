@@ -384,7 +384,6 @@ router.get("/getByText", (req, res, next) => {
   // get array
   let records;
   Recupload.find()
-    .sort({ updatedAt: -1 })
     .populate("customer")
     .populate("creator")
     .populate("updater")

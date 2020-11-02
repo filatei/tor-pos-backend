@@ -191,12 +191,32 @@ router.get("", checkAuth, (req, res, next) => {
   });
 });
 
+router.get("/expense/:id", (req, res, next) => {
+  const expId = req.params.id;
+  console.log("expid".expId);
+  Expense.find({ expense_id: expId })
+    .populate("creator")
+    .then((expense) => {
+      if (expense) {
+        console.log(expense);
+        res.status(200).json({ expense });
+      } else {
+        res.status(404).json({ message: "expense not found!" });
+      }
+    })
+    .catch((error) => {
+      res.status(500).json({
+        message: "Fetching expense failed! " + error,
+      });
+    });
+});
+
 router.get("/:id", (req, res, next) => {
   Expense.findById(req.params.id)
     .populate("creator")
     .then((expense) => {
       if (expense) {
-        res.status(200).json(expense);
+        res.status(200).json({ expense });
       } else {
         res.status(404).json({ message: "expense not found!" });
       }

@@ -20,6 +20,7 @@ const OAuth2 = google.auth.OAuth2;
 const moment = require("moment");
 const Mail = require("../mail");
 const Utils = require("../utils");
+const HttpError = require("../utils/http-error");
 
 function logIncident(email, description) {
   const logObj = new Accesslog({ email: email, description: description });
@@ -68,7 +69,7 @@ router.post("", checkAuth, function (req, res, next) {
     });
 });
 
-router.put("/:id", checkAuth, (req, res, next) => {
+router.put("/:id", checkAuth, async (req, res, next) => {
   const alloweds = process.env.STOREALLOWEDS;
   if (!alloweds.includes(req.userData.email)) {
     logIncident(req.userData.email, "Not allowed to create Inventory");
@@ -84,9 +85,11 @@ router.put("/:id", checkAuth, (req, res, next) => {
       status === "OPEN" ||
       status === "APPROVED" ||
       status === "PAID" ||
-      status === "DECLINED"
+      status === "DECLINED" ||
+      status === "PART-PAY"
     ) {
       //  send mail
+      console.log(status);
       mailStat = await Mail.sendExpense(expenseObj);
       //  console.log(mailStat, 'mailstat')
     }
@@ -198,10 +201,11 @@ router.get("/expense/:id", (req, res, next) => {
     .populate("creator")
     .then((expense) => {
       if (expense) {
-        console.log(expense);
+        // console.log(expense);
         res.status(200).json({ expense });
       } else {
-        res.status(404).json({ message: "expense not found!" });
+        const error = new HttpError("expense not found!", 404);
+        return next(error);
       }
     })
     .catch((error) => {

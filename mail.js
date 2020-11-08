@@ -200,7 +200,7 @@ async function sendExpense(expense) {
         ph.bankAcct
       }  </td> <td>${ph.paidAmount.toLocaleString()}</td><td  style="text-align:right;">${
         ph.payer
-      }</td><td>${moment(ph.paymentDate).format(format1)}</td> </tr>`;
+      }</td><td>${ph.paymentDate}</td> </tr>`;
     }
   });
 

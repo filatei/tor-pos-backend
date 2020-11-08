@@ -46,7 +46,6 @@ router.post("", checkAuth, function (req, res, next) {
   }
 
   let expenseObj = req.body;
-  // console.log(expenseObj)
 
   expenseObj.creator = req.userData.userId;
   expenseObj.status = "DRAFT";
@@ -56,7 +55,6 @@ router.post("", checkAuth, function (req, res, next) {
   expense
     .save()
     .then((result) => {
-      // console.log(result)
       res.status(201).json({
         message: "Expense added successfully",
         expense: { ...result, id: result._id },
@@ -79,7 +77,7 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   let expenseObj = req.body;
   let status = expenseObj.status;
   let mailStat;
-  // console.log('status', status)
+
   async function isOpen() {
     if (
       status === "OPEN" ||
@@ -89,9 +87,7 @@ router.put("/:id", checkAuth, async (req, res, next) => {
       status === "PART-PAY"
     ) {
       //  send mail
-      console.log(status);
       mailStat = await Mail.sendExpense(expenseObj);
-      //  console.log(mailStat, 'mailstat')
     }
   }
   isOpen()
@@ -155,7 +151,6 @@ router.get("", checkAuth, (req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
   const userEmail = req.userData.email;
-  console.log(userEmail);
 
   const directors = process.env.DIRECTORS;
   let expenseQuery;
@@ -196,12 +191,10 @@ router.get("", checkAuth, (req, res, next) => {
 
 router.get("/expense/:id", (req, res, next) => {
   const expId = req.params.id;
-  console.log("expid".expId);
   Expense.find({ expense_id: expId })
     .populate("creator")
     .then((expense) => {
       if (expense) {
-        // console.log(expense);
         res.status(200).json({ expense });
       } else {
         const error = new HttpError("expense not found!", 404);

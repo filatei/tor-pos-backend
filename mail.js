@@ -194,11 +194,11 @@ async function sendExpense(expense) {
   product += `</tbody><tfoot><tr><td colspan="4" style="text-align:right;" > Sum: ${derived_total} ${curr}</td></tr></tfoot></table>`;
 
   payHistory.forEach((ph, i) => {
-    payHist = `<tr style="text-align:left;"><td>${i + 1}</td>  <td>${
+    payHist = `<tr style="text-align:left;"><td>${i + 1}.</td>  <td>${
       ph.bankAcct
-    }  </td> <td>${ph.paidAmount}</td><td  style="text-align:right;">${
+    }  </td> <td>${ph.paidAmount.toLocaleString()}</td><td  style="text-align:right;">${
       ph.payer
-    }</td><td>${ph.paymentDate}</td> <tr>`;
+    }</td><td>${ph.paymentDate.format(format1)}</td> <tr>`;
   });
 
   let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">

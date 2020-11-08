@@ -198,7 +198,7 @@ async function sendExpense(expense) {
       ph.bankAcct
     }  </td> <td>${ph.paidAmount.toLocaleString()}</td><td  style="text-align:right;">${
       ph.payer
-    }</td><td>${ph.paymentDate.format(format1)}</td> <tr>`;
+    }</td><td>${moment(ph.paymentDate).format(format1)}</td> <tr>`;
   });
 
   let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
@@ -208,7 +208,7 @@ async function sendExpense(expense) {
   html += `<table style="margin-left:auto; margin-right:auto"><tr style="text-align:left;"><td><h3>Expense summary</h3></td></tr><tr style="text-align:left;"><td>Status:</td><td> ${status}</td></tr><tr style="text-align:left;"><td> Subtotal:</td><td> ${curr} ${total.toLocaleString()} </td></tr>
     <tr style="text-align:left;"> <td>Paid: </td><td>${curr} ${paidAmount}</td></tr> <tr style="text-align:left;"><td>Balance: </td><td>${curr} ${balance.toLocaleString()}</td></tr></table>`;
 
-  const payHistTemp = `<h3>Pay History</h3><table> ${payHist} </table>`;
+  const payHistTemp = `<h3>Pay History</h3><table style="margin-left:auto; margin-right:auto"> ${payHist} </table>`;
   // console.log(payHistTemp);
   html += payHistTemp;
 

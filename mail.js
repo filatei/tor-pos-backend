@@ -209,13 +209,11 @@ async function sendExpense(expense) {
   html += `<table style="margin-left:auto; margin-right:auto"><tr style="text-align:left;"><td><h3>Expense summary</h3></td></tr><tr style="text-align:left;"><td>Status:</td><td> ${status}</td></tr><tr style="text-align:left;"><td> Subtotal:</td><td> ${curr} ${total.toLocaleString()} </td></tr>
     <tr style="text-align:left;"> <td>Paid: </td><td>${curr} ${paidAmount}</td></tr> <tr style="text-align:left;"><td>Balance: </td><td>${curr} ${balance.toLocaleString()}</td></tr></table>`;
 
-  const payHistTemp = `<h3>Pay History</h3><table style="margin-left:auto; margin-right:auto"> ${payHist} </table>`;
-  // console.log(payHistTemp);
-  html += payHistTemp;
+  html += `<h3>Pay History</h3><table style="margin-left:auto; margin-right:auto"> ${payHist} </table>`;
 
   html += `<p> Remarks: ${remarks} </p>`;
   if (memo) {
-    html += `<p> Remarks: ${memo} </p>`;
+    html += `<p> Memo: ${memo} </p>`;
   }
 
   html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;

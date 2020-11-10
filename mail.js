@@ -164,13 +164,15 @@ async function sendExpense(expense) {
   let userName = user.name;
   let userEmail = user.email;
 
-  let toEmail;
+  let toEmail = "";
+  let url = "";
 
   if (hostname.includes("torama")) {
     toEmail = "expenses@torama.ng";
+    url = "https://posclaims.torama.ng";
   } else {
-    toEmail = userEmail;
-    return;
+    toEmail = "test@torama.ng";
+    url = "http://localhost:8100";
   }
 
   let format1 = "DD-MM-YYYY hh:mm:ss";
@@ -192,15 +194,18 @@ async function sendExpense(expense) {
   //  derived_total = derived_total.toLocaleString();
 
   product += `</tbody><tfoot><tr><td colspan="4" style="text-align:right;" > Sum: ${derived_total} ${curr}</td></tr></tfoot></table>`;
-  let payHist;
-
+  let payHist = "";
   payHistory.forEach((ph, i) => {
     if (ph) {
+      let payer = ph.payer;
+      if (ph.payer.includes("Akpodigha")) {
+        payer = "MD";
+      }
       payHist += `<tr style="text-align:left;"><td>${i + 1}.</td>  <td>${
         ph.bankAcct
-      }  </td> <td>${ph.paidAmount.toLocaleString()}</td><td  style="text-align:right;">${
-        ph.payer
-      }</td><td>${ph.paymentDate}</td> </tr>`;
+      }  </td> <td>${ph.paidAmount.toLocaleString()}</td><td>${payer}</td><td>${moment(
+        new Date(ph.paymentDate)
+      ).format("DD-MM-YYYY HH:mm:ss")}</td> </tr>`;
     }
   });
 
@@ -211,18 +216,15 @@ async function sendExpense(expense) {
   html += `<table style="margin-left:auto; margin-right:auto"><tr style="text-align:left;"><td><h3>Expense summary</h3></td></tr><tr style="text-align:left;"><td>Status:</td><td> ${status}</td></tr><tr style="text-align:left;"><td> Subtotal:</td><td> ${curr} ${total.toLocaleString()} </td></tr>
     <tr style="text-align:left;"> <td>Paid: </td><td>${curr} ${paidAmount}</td></tr> <tr style="text-align:left;"><td>Balance: </td><td>${curr} ${balance.toLocaleString()}</td></tr></table>`;
 
-  if (payHist) {
-    html += `<h3>Pay History</h3><table style="margin-left:auto; margin-right:auto"> ${payHist} </table>`;
-  }
+  html += `<h3>Pay History</h3><table style="margin-left:auto; margin-right:auto"> ${payHist} </table>`;
 
   html += `<p> Remarks: ${remarks} </p>`;
   if (memo) {
     html += `<p> Memo: ${memo} </p>`;
   }
+  html += `Click <a href="${url}/#/home/expense-detail?id=${expense._id}"> Expense Detail </a> to see expense ticket`;
 
   html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
-  // let odia = 'odia.gabriel@gtsng.com';
-  let odia;
   const mailOptions = {
     from: `ShopTorama ${process.env.tormail}`,
     to: userEmail,

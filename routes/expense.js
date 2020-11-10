@@ -92,7 +92,7 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   }
   isOpen()
     .then((sm) => {
-      console.log(sm, "mailstat sent");
+      console.log("mailstat sent");
     })
     .catch((err) => {
       console.log(err, "send err");

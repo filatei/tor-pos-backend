@@ -1,5 +1,6 @@
 require("dotenv").config();
 const express = require("express");
+const { validationResult } = require('express-validator');
 const Award = require("../models/award");
 const router = express.Router();
 const HttpError = require("../models/http-error");
@@ -54,26 +55,18 @@ router.post("", checkAuth, async (req, res, next) => {
       );
     }
   
-    const { customer, location, position, year, prize } = req.body;
-  
-    // let coordinates;
-    // try {
-    //   coordinates = await getCoordsForAddress(address);
-    // } catch (error) {
-    //   return next(error);
-    // }
+    const { name, location, position, year, prize, qty } = req.body;
   
     const createdAward = new Award({
-      customer,
+      name,
       position,
         location,
       year,
       prize,
+      qty,
       image: req.file.path,
       creator: req.userData.userId
     });
-  
-    
   
     try {
       const sess = await mongoose.startSession();
@@ -156,45 +149,5 @@ router.delete("/:id",  async (req, res, next) => {
     });
 });
 
-router.post("/import", checkAuth, (req, res, next) => {
-  const alloweds = ["filatei@torama.ng"];
-  if (!alloweds.includes(req.userData.email)) {
-    return res.status(500).json({ message: "Not allowed" });
-  }
-  // exports.importClaim =  (req, res, next) => {
-  // console.log(req)
-  let customerArr = req.body; // array of award objs
-  // zawsw console.log('claimObj ',req)
-  // userData was added to checkAuth middleware and passed along
-  // console.log('userdata in claim ', req.userData)
-
-  // unique award names
-  function uniqcust(array) {
-    const key = "name";
-    const arrayUniqueByKey = [
-      ...new Map(array.map((item) => [item[key], item])).values(),
-    ];
-
-    return arrayUniqueByKey;
-  }
-
-  let uniqcusts = uniqcust(customerArr);
-  Award.collection
-    .insertMany(uniqcusts, { ordered: true })
-    .then((result) => {
-      // console.log('insertcount', result.insertedCount)
-      res
-        .status(200)
-        .json({ message: "customers insertered " + result.insertedCount });
-    })
-    .catch((err) => {
-      // console.error(err)
-      res.status(500).json({
-        message: "Creating  customers failed!" + err,
-      });
-
-      throw err;
-    });
-});
 
 module.exports = router;

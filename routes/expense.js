@@ -225,7 +225,7 @@ router.get("/:id", (req, res, next) => {
     });
 });
 
-router.put("/notes/:id", checkAuth, Utils.upload2.any(), function (
+router.put("/notes/:id", checkAuth, Utils.upload2.any(), async function (
   req,
   res,
   next
@@ -262,7 +262,7 @@ router.put("/notes/:id", checkAuth, Utils.upload2.any(), function (
   const note = req.body;
 
   let recId = req.params.id;
-  saveExpense();
+  await saveExpense();
 
   async function saveExpense() {
     try {
@@ -271,6 +271,10 @@ router.put("/notes/:id", checkAuth, Utils.upload2.any(), function (
       }
 
       let expObj = await Expense.findById(recId);
+
+      // send mail with Note image
+      await Mail.sendNote(note, expObj);
+
       let notes = expObj.notes;
       notes.push(note);
       log = expObj.log;

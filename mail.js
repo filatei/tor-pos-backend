@@ -316,7 +316,7 @@ async function sendNote(note, expense) {
   product += `</tbody><tfoot><tr><td colspan="4" style="text-align:right;" > Sum: ${derived_total} ${curr}</td></tr></tfoot></table>`;
 
   let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
-                ${date}</p><h2>EXPENSE ${status}</h2><p> Hi ${userName},</p>`;
+                ${date}</p><h2>Expense Status: ${status}</h2><p> Hi ${userName},</p>`;
   html += `<p>Note is added to expense # ${expenseId} </p><p>Author: ${author}</p>`;
 
   html += `<p> Note: ${note.text} </p> `;

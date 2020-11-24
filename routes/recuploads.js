@@ -74,7 +74,6 @@ router.post("", checkAuth, Utils.upload.any(), function (req, res, next) {
   recObj.creator = req.userData.userId;
 
   // console.log(recObj)
-
   if (req.files) {
     let fileName;
     req.files.forEach((file) => {

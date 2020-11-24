@@ -1,12 +1,10 @@
-require('dotenv').config();
-const path = require('path');
-const express = require('express');
-const bodyParser = require('body-parser');
-const cors = require('cors')
-const mongoose = require('mongoose');
+require("dotenv").config();
+const path = require("path");
+const express = require("express");
+const bodyParser = require("body-parser");
+const cors = require("cors");
+const mongoose = require("mongoose");
 // var SocketService = require('./SocketService');
-
-
 
 const app = express();
 
@@ -37,24 +35,34 @@ const contactRoutes = require("./routes/contact");
 const qtyRoutes = require("./routes/quantity");
 const expenseRoutes = require("./routes/expense");
 const shopsettingsRoutes = require("./routes/shopsettings");
+const awardsRoutes = require("./routes/award");
 
 //let connectStr =  'mongodb://localhost:27017/torposdb';
 
-const DB = 'torposedb';
+const DB = "torposedb";
 // if prod use this
 // connectStr ='mongodb+srv://user1:RwyT4Eyw799tQUKF@cluster0-j4gfg.gcp.mongodb.net/torposedb?retryWrites=true&w=majority'
 // app.use('/', express.static(path.join(__dirname, 'www')));
-app.use(require('express-status-monitor')());
+app.use(require("express-status-monitor")());
 
-app.use('/data', express.static(path.join(__dirname, 'data')));
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use('/uploads/productimages', express.static(path.join(__dirname, 'uploads', 'productimages')));
+app.use("/data", express.static(path.join(__dirname, "data")));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use(
+  "/uploads/productimages",
+  express.static(path.join(__dirname, "uploads", "productimages"))
+);
 
 // app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.urlencoded({ limit: "50mb", extended: true, parameterLimit: 50000 }))
+app.use(
+  bodyParser.urlencoded({
+    limit: "50mb",
+    extended: true,
+    parameterLimit: 50000,
+  })
+);
 // app.use(express.json());
 
-app.use(bodyParser.json({ limit: "1mb" }))
+app.use(bodyParser.json({ limit: "1mb" }));
 
 // const allowedOrigins = [
 //     '*',
@@ -65,12 +73,12 @@ app.use(bodyParser.json({ limit: "1mb" }))
 //     'http://localhost',
 //     'https://posclaims.torama.ng',
 //     'https://api.torama.ng',
-    
+
 //     'http://localhost:8080',
 //     'http://localhost:8100',
 //     'http://localhost:8200'
 //   ];
-  
+
 // // Reflect the origin if it's in the allowed list or not defined (cURL, Postman, etc.)
 // const corsOptions = {
 //     origin: (origin, callback) => {
@@ -84,37 +92,39 @@ app.use(bodyParser.json({ limit: "1mb" }))
 
 // // Enable preflight requests for all routes
 // app.options('*', cors());
-app.use(cors())
+app.use(cors());
 
+let connectStr = process.env.CONNECT_STR;
 
-
-let connectStr = process.env.CONNECT_STR
-
-mongoose.set('useUnifiedTopology', true );
-mongoose.set('useCreateIndex', true);
-mongoose.connect(connectStr, { useNewUrlParser: true, useFindAndModify: false, useUnifiedTopology: true })
-.then (()=>{
-    console.log("Connected to DB")
-})
-.catch (err => {
+mongoose.set("useUnifiedTopology", true);
+mongoose.set("useCreateIndex", true);
+mongoose
+  .connect(connectStr, {
+    useNewUrlParser: true,
+    useFindAndModify: false,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log("Connected to DB");
+  })
+  .catch((err) => {
     console.log(err);
+  });
+
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Header",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+  res.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PATCH, DELETE, POST, PUT, OPTIONS"
+  );
+
+  //  res.setHeader({'Feature-Policy': layout-animations 'none'; unoptimized-images 'none'; oversized-images 'none'; sync-script 'none'; sync-xhr 'none'; unsized-media 'none';
+  next();
 });
-
-app.use((req,res,next) => {
-    res.setHeader('Access-Control-Allow-Origin','*');
-    res.setHeader(
-        'Access-Control-Allow-Header',
-        'Origin, X-Requested-With, Content-Type, Accept, Authorization'
-    );
-    res.setHeader(
-        'Access-Control-Allow-Methods',
-        'GET, POST, PATCH, DELETE, POST, PUT, OPTIONS'
-    );
-
-   //  res.setHeader({'Feature-Policy': layout-animations 'none'; unoptimized-images 'none'; oversized-images 'none'; sync-script 'none'; sync-xhr 'none'; unsized-media 'none';
-    next();
-})
-
 
 app.use("/api/paymethods", paymethodsRoutes);
 app.use("/api/products", productsRoutes);
@@ -142,6 +152,6 @@ app.use("/api/contact", contactRoutes);
 app.use("/api/quantity", qtyRoutes);
 app.use("/api/expense", expenseRoutes);
 app.use("/api/shopsettings", shopsettingsRoutes);
-
+app.use("/api/awards", awardsRoutes);
 
 module.exports = app;

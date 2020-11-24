@@ -7,6 +7,7 @@ const fs = require("fs");
 const os = require("os");
 const hostname = os.hostname();
 const homedir = os.homedir();
+const Accesslog = require("./models/accesslog");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -111,4 +112,16 @@ var upload2 = multer({
   },
 });
 
-module.exports = { upload, upload2 };
+const logIncident = (email, description) => {
+  const logObj = new Accesslog({ email: email, description: description });
+  logObj
+    .save(logObj)
+    .then((result) => {
+      console.log("access incident logged for user", result);
+    })
+    .catch((err) => {
+      console.log("access logging error for user ", err);
+    });
+};
+
+module.exports = { upload, upload2, logIncident };

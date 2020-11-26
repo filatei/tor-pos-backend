@@ -18,16 +18,11 @@ const { getDefaultSettings } = require("http2");
 router.get("", async (req, res, next) => {
   let awards;
   try {
-    awards = await Award.find();
+    awards = await Award.find().sort({ rank: 1 });
   } catch (err) {
     return res.status(500).json({
       message: "Fetching awards failed, please try again later." + err,
     });
-    // const error = new HttpError(
-    //   "Fetching awards failed, please try again later.",
-    //   500
-    // );
-    // return next(error);
   }
   res.json({ awards: awards });
 });
@@ -143,11 +138,9 @@ router.post(
     try {
       await createdAward.save();
     } catch (err) {
-      const error = new HttpError(
-        "Creating Award failed, please try again." + err,
-        500
-      );
-      return next(error);
+      return res
+        .status(500)
+        .json({ message: "Creating Award failed, please try again" + err });
     }
     res
       .status(201)
@@ -155,50 +148,87 @@ router.post(
   }
 );
 
-router.put("/:id", checkAuth, async (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return next(
-      new HttpError("Invalid inputs passed, please check your data.", 422)
-    );
+router.put(
+  "/:id",
+  checkAuth,
+  fileUpload.single("image"),
+  [
+    check("name").not().isEmpty(),
+    check("qty").not().isEmpty(),
+    check("year").not().isEmpty(),
+    check("location").not().isEmpty(),
+    check("rank").not().isEmpty(),
+  ],
+  async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(422).json({
+        message:
+          "Invalid inputs passed, please check your data." +
+          JSON.stringify(errors),
+      });
+    }
+    // console.log("reqbody", req.body);
+    let filePath;
+
+    if (req.file) {
+      const fileName = req.file.path;
+
+      if (hostname.includes("torama.ng")) {
+        url = "https://api.torama.ng";
+      } else {
+        url = req.protocol + "://" + req.get("host");
+      }
+      filePath = url + "/" + fileName;
+    }
+
+    const newAward = { ...req.body };
+    const awardId = req.params.id;
+    let award;
+    try {
+      award = await Award.findById(awardId);
+      console.log(award);
+    } catch (err) {
+      return res.status(500).json({
+        message: "Something went wrong, could not find award." + err,
+      });
+    }
+
+    if (award && award.creator.toString() !== req.userData.userId) {
+      const error = new HttpError(
+        "You are not allowed to edit this place.",
+        401
+      );
+      return next(error);
+    }
+
+    award.name = newAward.name;
+    award.rank = newAward.rank;
+    award.category = newAward.category;
+    award.location = newAward.location;
+    award.year = newAward.year;
+    award.qty = newAward.qty;
+    award.prize = newAward.prize;
+    award.remarks = newAward.remarks;
+    if (filePath) {
+      award.image = filePath;
+    }
+
+    console.log(award, "again");
+
+    try {
+      const saveRes = await award.save();
+      res.status(200).json({
+        award: award,
+        message: "award updated successfully: " + saveRes,
+      });
+    } catch (err) {
+      return res
+        .status(500)
+        .json({ message: "Could not update award - " + err });
+    }
   }
-
-  const { rank, location, year, qty } = req.body;
-  const awardId = req.params.id;
-
-  let award;
-  try {
-    award = await Award.findById(awardId);
-  } catch (err) {
-    const error = new HttpError(
-      "Something went wrong, could not update place.",
-      500
-    );
-    return next(error);
-  }
-
-  if (award.creator.toString() !== req.userData.userId) {
-    const error = new HttpError("You are not allowed to edit this place.", 401);
-    return next(error);
-  }
-
-  award.rank = rank;
-  place.location = location;
-  award.year = year;
-  award.qty = qty;
-
-  try {
-    await award.save();
-  } catch (err) {
-    const error = new HttpError(
-      "Something went wrong, could not update place.",
-      500
-    );
-    return next(error);
-  }
-
-  res.status(200).json({ award: award.toObject({ getters: true }) });
-});
+);
 
 router.delete("/:id", async (req, res, next) => {
   const alloweds = ["filatei@torama.ng"];

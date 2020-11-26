@@ -77,7 +77,7 @@ router.post(
     const alloweds = process.env.DIRECTORS;
 
     if (!alloweds.includes(req.userData.email)) {
-      Utils.logIncident(req.userData.email, "Not allowed to create Receipts");
+      Utils.logIncident(req.userData.email, "Not allowed to create Award");
       return res.status(500).json({ message: "Not allowed" });
     }
     const errors = validationResult(req);
@@ -160,6 +160,13 @@ router.put(
     check("rank").not().isEmpty(),
   ],
   async (req, res, next) => {
+    const alloweds = process.env.DIRECTORS;
+
+    if (!alloweds.includes(req.userData.email)) {
+      Utils.logIncident(req.userData.email, "Not allowed to update Awards");
+      return res.status(500).json({ message: "Not allowed" });
+    }
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(422).json({

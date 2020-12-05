@@ -540,59 +540,63 @@ router.put("/:id", checkAuth, (req, res, next) => {
   }
 });
 
-router.put("/imageupdate/:id", checkAuth, Utils.upload.any(), function (
-  req,
-  res,
-  next
-) {
-  const alloweds = process.env.ALLOWEDS;
+router.put(
+  "/imageupdate/:id",
+  checkAuth,
+  Utils.upload.any(),
+  function (req, res, next) {
+    const alloweds = process.env.ALLOWEDS;
 
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to create Receipts");
-    return res.status(500).json({ message: "Not allowed" });
-  }
+    if (!alloweds.includes(req.userData.email)) {
+      logIncident(req.userData.email, "Not allowed to create Receipts");
+      return res.status(500).json({ message: "Not allowed" });
+    }
 
-  let updater = req.userData.userId;
+    let updater = req.userData.userId;
 
-  if (req.files) {
-    let fileName;
-    req.files.forEach((file) => {
-      if (file.originalname == "blob") {
-        fileName =
-          "uploads/recuploads/" + req.userData.userId + "/" + file.filename;
-      } else {
-        fileName =
-          "uploads/recuploads/" + req.userData.userId + "/" + file.filename;
-      }
+    if (req.files) {
+      let fileName;
+      req.files.forEach((file) => {
+        if (file.originalname == "blob") {
+          fileName =
+            "uploads/recuploads/" + req.userData.userId + "/" + file.filename;
+        } else {
+          fileName =
+            "uploads/recuploads/" + req.userData.userId + "/" + file.filename;
+        }
 
-      if (hostname.includes("torama.ng")) {
-        url = "https://api.torama.ng";
-      } else {
-        url = req.protocol + "://" + req.get("host");
-      }
-      path = url + "/" + fileName;
-      // if (file.fieldname === 'image') {
-      //     recObj.image = path;
-      // }
-    });
-  }
-
-  let recId = req.params.id;
-  Recupload.findByIdAndUpdate({ _id: recId }, { image: path, updater: updater })
-    .then((result) => {
-      res.status(201).json({
-        message: "Receipt  image updated successfully",
-        Recupload: {
-          ...result,
-          id: result._id,
-        },
+        if (hostname.includes("torama.ng")) {
+          url = "https://api.torama.ng";
+        } else {
+          url = req.protocol + "://" + req.get("host");
+        }
+        path = url + "/" + fileName;
+        // if (file.fieldname === 'image') {
+        //     recObj.image = path;
+        // }
       });
-    })
-    .catch((error) => {
-      res.status(500).json({
-        message: "Creating a Recupload failed! " + error,
+    }
+
+    let recId = req.params.id;
+    Recupload.findByIdAndUpdate(
+      { _id: recId },
+      { image: path, updater: updater }
+    )
+      .then((result) => {
+        res.status(201).json({
+          message: "Receipt  image updated successfully",
+          Recupload: {
+            ...result,
+            id: result._id,
+          },
+        });
+      })
+      .catch((error) => {
+        res.status(500).json({
+          message: "Creating a Recupload failed! " + error,
+        });
       });
-    });
-});
+  }
+);
 
 module.exports = router;

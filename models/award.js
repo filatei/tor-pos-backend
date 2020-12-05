@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const { stringify } = require("uuid");
 uniqueValidator = require("mongoose-unique-validator");
 
 const awardSchema = mongoose.Schema(
@@ -19,6 +20,7 @@ const awardSchema = mongoose.Schema(
     prize: { type: String },
     remarks: { type: String },
     image: { type: String },
+    images: [{ imageId: String, description: String, imagePath: String }],
   },
   {
     timestamps: true,

@@ -11,6 +11,7 @@ const router = express.Router();
 const HttpError = require("../models/http-error");
 const checkAuth = require("../middleware/check-auth");
 const fileUpload = require("../middleware/file-upload");
+const Recupload = require("../models/recupload");
 const Utils = require("../utils");
 const { getHeapSnapshot } = require("v8");
 const { getDefaultSettings } = require("http2");
@@ -25,6 +26,83 @@ router.get("", async (req, res, next) => {
     });
   }
   res.json({ awards: awards });
+});
+
+router.get("/top20ForMonth", async (req, res, next) => {
+  try {
+    const { site, month, year, product } = req.query;
+    let monthInt = parseInt(month);
+    let yearInt = parseInt(year);
+
+    // console.log("query params", site.trim(), month, year, product);
+    Recupload.aggregate([
+      { $unwind: "$products" },
+      { $unwind: "$products.name" },
+      { $unwind: "$products.qty" },
+      { $unwind: "$products.price" },
+      {
+        $lookup: {
+          from: "customers",
+          localField: "customer",
+          foreignField: "_id",
+          as: "customer",
+        },
+      },
+
+      {
+        $group: {
+          _id: {
+            month: { $month: "$createdAt" },
+            year: { $year: "$createdAt" },
+            customer: "$customer.name",
+            site: "$terminal_location",
+            product: "$products.name",
+          },
+
+          totalSalesAmount: {
+            $sum: {
+              $multiply: [
+                { $toInt: "$products.price" },
+                { $toInt: "$products.qty" },
+              ],
+            },
+          },
+          totalQty: { $sum: "$products.qty" },
+        },
+      },
+      {
+        $match: {
+          $and: [
+            {
+              "_id.site": site,
+              "_id.month": monthInt,
+              "_id.year": yearInt,
+              "_id.product": product,
+            },
+          ],
+        },
+      },
+
+      { $sort: { "_id.year": 1, "_id.month": -1, totalQty: -1 } },
+      { $limit: 10 },
+    ]).exec((err, result) => {
+      if (err) {
+        console.log("error ", err);
+        return res.status(500).json({ message: "aggregate error: " + err });
+      }
+      if (result) {
+        // console.log("result ", result);
+        return res.status(200).json({
+          message: "top 10 sales for month",
+          records: result,
+        });
+      }
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Fetching records failed, please try again later." + err,
+    });
+  }
 });
 
 router.get("/:id", async (req, res, next) => {
@@ -222,6 +300,71 @@ router.put(
     }
 
     console.log(award, "again");
+
+    try {
+      const saveRes = await award.save();
+      res.status(200).json({
+        award: award,
+        message: "award updated successfully: " + saveRes,
+      });
+    } catch (err) {
+      return res
+        .status(500)
+        .json({ message: "Could not update award - " + err });
+    }
+  }
+);
+
+router.put(
+  "/images/:id",
+  checkAuth,
+  fileUpload.any(""),
+  async (req, res, next) => {
+    const alloweds = process.env.DIRECTORS;
+
+    if (!alloweds.includes(req.userData.email)) {
+      Utils.logIncident(req.userData.email, "Not allowed to update Awards");
+      return res.status(500).json({ message: "Not allowed" });
+    }
+
+    const awardId = req.params.id;
+    let award;
+    try {
+      award = await Award.findById(awardId);
+      console.log(award);
+    } catch (err) {
+      return res.status(500).json({
+        message: "Something went wrong, could not find award." + err,
+      });
+    }
+
+    let filePath;
+    if (req.files) {
+      req.files.forEach((file) => {
+        const fileName = file.filename;
+        if (hostname.includes("torama.ng")) {
+          url = "https://api.torama.ng";
+        } else {
+          url = req.protocol + "://" + req.get("host");
+        }
+        filePath = url + "/uploads/awards/" + fileName;
+
+        if (award && award.images && typeof award.images === "object") {
+          award.images.push({
+            imageId: new Date().getTime(),
+            imagePath: filePath,
+            description: req.body.description,
+          });
+        } else {
+          award.images = [];
+          award.images.push({
+            imageId: new Date().getTime(),
+            imagePath: filePath,
+            description: req.body.description,
+          });
+        }
+      });
+    }
 
     try {
       const saveRes = await award.save();

@@ -84,7 +84,7 @@ router.get("/top20ForMonth", async (req, res, next) => {
       },
 
       { $sort: { "_id.year": 1, "_id.month": -1, totalQty: -1 } },
-      { $limit: 20 },
+      { $limit: 200 },
     ]).exec((err, result) => {
       if (err) {
         console.log("error ", err);
@@ -93,7 +93,7 @@ router.get("/top20ForMonth", async (req, res, next) => {
       if (result) {
         // console.log("result ", result);
         return res.status(200).json({
-          message: "top 20 sales for month",
+          message: "top 200 sales for month",
           records: result,
         });
       }

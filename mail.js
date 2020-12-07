@@ -88,7 +88,7 @@ async function sendInventory(inventory) {
   // let odia = 'odia.gabriel@gtsng.com';
   let odia;
   const mailOptions = {
-    from: `TIMS  ${process.env.tormail}`,
+    from: `TIMS  `,
     to: toEmail,
     cc: odia,
     bcc: process.env.tormail,
@@ -226,7 +226,7 @@ async function sendExpense(expense) {
 
   html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
   const mailOptions = {
-    from: `ShopTorama ${process.env.tormail}`,
+    from: `ShopTorama `,
     to: userEmail,
     cc: toEmail,
     bcc: process.env.tormail,
@@ -329,7 +329,7 @@ async function sendNote(note, expense) {
   console.log(html);
 
   const mailOptions = {
-    from: `ShopTorama ${process.env.tormail}`,
+    from: `ShopTorama `,
     to: creatorEmail,
     cc: notesEmail,
     bcc: toEmail,

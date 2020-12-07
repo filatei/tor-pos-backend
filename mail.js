@@ -11,6 +11,16 @@ const User = require("./models/user");
 const Contact = require("./models/contact");
 const Stockitem = require("./models/stockitem");
 
+const oauth2Client = new google.auth.OAuth2(
+  tokens.clientID,
+  tokens.clientSecret,
+  tokens.redirectURL
+);
+
+oauth2Client.setCredentials({
+  refresh_token: tokens.refresh_token,
+});
+
 async function sendInventory(inventory) {
   let name;
   let supplier, sender;
@@ -36,18 +46,6 @@ async function sendInventory(inventory) {
     userName = user.name;
     userEmail = user.email;
   }
-
-  const smtpTransport = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      type: "OAuth2",
-      user: process.env.tormail,
-      clientId: tokens.clientID,
-      clientSecret: tokens.clientSecret,
-      refreshToken: tokens.refresh_token,
-      accessToken: tokens.access_token,
-    },
-  });
 
   // some content
   let remarks;
@@ -87,28 +85,47 @@ async function sendInventory(inventory) {
 
   // let odia = 'odia.gabriel@gtsng.com';
   let odia;
-  const mailOptions = {
-    from: `TIMS  ${process.env.tormail}`,
-    to: toEmail,
-    cc: odia,
-    bcc: process.env.tormail,
-    subject: subject,
-    generateTextFromHTML: true,
-    html: html,
-  };
 
-  // send mail
-  smtpTransport.sendMail(mailOptions, (error, response) => {
-    let result;
-    if (error) {
-      console.log(error);
-      result = false;
-    } else {
-      result = true;
-    }
-    smtpTransport.close();
-    return result;
-  });
+  try {
+    const mailOptions = {
+      from: `TIMS  ${process.env.tormail}`,
+      to: toEmail,
+      cc: odia,
+      bcc: process.env.tormail,
+      subject: subject,
+      generateTextFromHTML: true,
+      html: html,
+    };
+
+    const accessToken = await oauth2Client.getAccessToken();
+
+    const smtpTransport = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        type: "OAuth2",
+        user: process.env.tormail,
+        clientId: tokens.clientID,
+        clientSecret: tokens.clientSecret,
+        refreshToken: tokens.refresh_token,
+        accessToken: accessToken,
+      },
+    });
+
+    // send mail
+    smtpTransport.sendMail(mailOptions, (error, response) => {
+      let result;
+      if (error) {
+        console.log(error);
+        result = false;
+      } else {
+        result = true;
+      }
+      smtpTransport.close();
+      return result;
+    });
+  } catch (err) {
+    console.log(err);
+  }
 }
 
 async function sendExpense(expense) {
@@ -118,18 +135,6 @@ async function sendExpense(expense) {
     vendor = expense.vendor.name;
     payHistory = expense.payHistory;
   }
-
-  const smtpTransport = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      type: "OAuth2",
-      user: process.env.tormail,
-      clientId: tokens.clientID,
-      clientSecret: tokens.clientSecret,
-      refreshToken: tokens.refresh_token,
-      accessToken: tokens.access_token,
-    },
-  });
 
   // some content
   let expenseId = expense.expense_id;
@@ -225,28 +230,46 @@ async function sendExpense(expense) {
   html += `Click <a href="${url}/#/home/expense-detail?id=${expense._id}"> Expense Detail </a> to see expense ticket`;
 
   html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
-  const mailOptions = {
-    from: `ShopTorama ${process.env.tormail}`,
-    to: userEmail,
-    cc: toEmail,
-    bcc: process.env.tormail,
-    subject: subject,
-    generateTextFromHTML: true,
-    html: html,
-  };
 
-  // send mail
-  smtpTransport.sendMail(mailOptions, (error, response) => {
-    let result;
-    if (error) {
-      console.log(error);
-      result = false;
-    } else {
-      result = true;
-    }
-    smtpTransport.close();
-    return result;
-  });
+  try {
+    const accessToken = await oauth2Client.getAccessToken();
+    const smtpTransport = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        type: "OAuth2",
+        user: process.env.tormail,
+        clientId: tokens.clientID,
+        clientSecret: tokens.clientSecret,
+        refreshToken: tokens.refresh_token,
+        accessToken: accessToken,
+      },
+    });
+
+    const mailOptions = {
+      from: `ShopTorama ${process.env.tormail}`,
+      to: userEmail,
+      cc: toEmail,
+      bcc: process.env.tormail,
+      subject: subject,
+      generateTextFromHTML: true,
+      html: html,
+    };
+
+    // send mail
+    smtpTransport.sendMail(mailOptions, (error, response) => {
+      let result;
+      if (error) {
+        console.log(error);
+        result = false;
+      } else {
+        result = true;
+      }
+      smtpTransport.close();
+      return result;
+    });
+  } catch (err) {
+    console.log(err);
+  }
 }
 
 async function sendNote(note, expense) {
@@ -255,18 +278,6 @@ async function sendNote(note, expense) {
     author = note.author;
   }
   console.log("note author in mail sendnote ", author);
-
-  const smtpTransport = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      type: "OAuth2",
-      user: process.env.tormail,
-      clientId: tokens.clientID,
-      clientSecret: tokens.clientSecret,
-      refreshToken: tokens.refresh_token,
-      accessToken: tokens.access_token,
-    },
-  });
 
   // some content
   let expenseId = expense.expense_id;
@@ -328,28 +339,45 @@ async function sendNote(note, expense) {
   html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
   console.log(html);
 
-  const mailOptions = {
-    from: `ShopTorama ${process.env.tormail}`,
-    to: creatorEmail,
-    cc: notesEmail,
-    bcc: toEmail,
-    subject: subject,
-    generateTextFromHTML: true,
-    html: html,
-  };
+  try {
+    const accessToken = await oauth2Client.getAccessToken();
+    const smtpTransport = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        type: "OAuth2",
+        user: process.env.tormail,
+        clientId: tokens.clientID,
+        clientSecret: tokens.clientSecret,
+        refreshToken: tokens.refresh_token,
+        accessToken: accessToken,
+      },
+    });
 
-  // send mail
-  smtpTransport.sendMail(mailOptions, (error, response) => {
-    let result;
-    if (error) {
-      console.log(error);
-      result = false;
-    } else {
-      result = true;
-    }
-    smtpTransport.close();
-    return result;
-  });
+    const mailOptions = {
+      from: `ShopTorama ${process.env.tormail}`,
+      to: creatorEmail,
+      cc: notesEmail,
+      bcc: toEmail,
+      subject: subject,
+      generateTextFromHTML: true,
+      html: html,
+    };
+
+    // send mail
+    smtpTransport.sendMail(mailOptions, (error, response) => {
+      let result;
+      if (error) {
+        console.log(error);
+        result = false;
+      } else {
+        result = true;
+      }
+      smtpTransport.close();
+      return result;
+    });
+  } catch (err) {
+    console.log(err);
+  }
 }
 
 module.exports = { sendInventory, sendExpense, sendNote };

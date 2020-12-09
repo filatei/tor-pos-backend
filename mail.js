@@ -50,7 +50,7 @@ async function sendInventory(inventory) {
   // some content
   let remarks;
 
-  storeId = inventory.stock_id.toString().padStart(5, "0");
+  let storeId = inventory.stock_id.toString().padStart(5, "0");
   let subject = `Inventory Record for (# ${storeId})`;
   let curr = process.env.naira;
   let ops = inventory.ops;
@@ -130,7 +130,7 @@ async function sendInventory(inventory) {
 
 async function sendExpense(expense) {
   let vendor;
-  let payHistory;
+  let payHistory = [];
   if (expense && expense.vendor) {
     vendor = expense.vendor.name;
     payHistory = expense.payHistory;
@@ -191,7 +191,7 @@ async function sendExpense(expense) {
   let product = `<table style="margin-left:auto; margin-right:auto"><thead><tr style="text-align:left;"> <th>Product</th> <th>Rate</th> <th></th><th>Amount</th></tr></thead><tbody>`;
   let derived_total = 0;
   products.forEach((p) => {
-    amount = (p.qty * p.price).toLocaleString();
+    let amount = (p.qty * p.price).toLocaleString();
     let rate = p.price;
     product += `<tr style="text-align:left;"><td>${p.qty} x ${p.name} </td> <td>${rate}</td><td colspan="2" style="text-align:right;">${amount} ${curr}</td><tr>`;
     derived_total += p.qty * p.price;
@@ -318,7 +318,7 @@ async function sendNote(note, expense) {
   let product = `<table style="margin-left:auto; margin-right:auto"><thead><tr style="text-align:left;"> <th>Product</th> <th></th> <th></th><th>Amount</th></tr></thead><tbody>`;
   let derived_total = 0;
   products.forEach((p) => {
-    amount = (p.qty * p.price).toLocaleString();
+    let amount = (p.qty * p.price).toLocaleString();
     product += `<tr style="text-align:left;"><td>${p.qty} x ${p.name} </td> <td colspan="3" style="text-align:right;">${amount} ${curr}</td><tr>`;
     derived_total += p.qty * p.price;
   });

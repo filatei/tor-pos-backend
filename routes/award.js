@@ -129,12 +129,6 @@ router.get("/:id", async (req, res, next) => {
     return res
       .status(400)
       .json({ message: "could not find a award for id." + awardId });
-
-    // const error = new HttpError(
-    //   "Could not find award for the provided id.",
-    //   404
-    // );
-    // return next(error);
   }
 
   res.json({ award: award.toObject({ getters: true }) });
@@ -169,11 +163,12 @@ router.post(
     }
     let filePath;
     let fileName;
+    let url;
     if (req.file) {
       fileName = req.file.path;
 
       if (hostname.includes("torama.ng")) {
-        url = "https://api.torama.ng";
+        let url = "https://api.torama.ng";
       } else {
         url = req.protocol + "://" + req.get("host");
       }
@@ -255,6 +250,8 @@ router.put(
     }
     // console.log("reqbody", req.body);
     let filePath;
+    let url;
+    s;
 
     if (req.file) {
       const fileName = req.file.path;
@@ -320,7 +317,7 @@ router.put(
   checkAuth,
   fileUpload.any(""),
   async (req, res, next) => {
-    const alloweds = process.env.DIRECTORS;
+    const alloweds = process.env.MANAGERS;
 
     if (!alloweds.includes(req.userData.email)) {
       Utils.logIncident(req.userData.email, "Not allowed to update Awards");
@@ -339,6 +336,7 @@ router.put(
     }
 
     let filePath;
+    let url;
     if (req.files) {
       req.files.forEach((file) => {
         const fileName = file.filename;

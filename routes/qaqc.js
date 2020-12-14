@@ -42,10 +42,10 @@ router.post(
     const alloweds = process.env.QAQCALLOWEDS;
 
     if (!alloweds.includes(req.userData.email)) {
-      logIncident(req.userData.email, "Not allowed to create Inventory");
+      logIncident(req.userData.email, "Not allowed to create QA/QC Ticket");
       return res
         .status(500)
-        .json({ message: "Not allowed to create inventory" });
+        .json({ message: "Not allowed to create qa/qc ticket" });
     }
 
     let qaqcObj = req.body;
@@ -103,10 +103,10 @@ router.put(
   async (req, res, next) => {
     const alloweds = process.env.QAQCALLOWEDS;
     if (!alloweds.includes(req.userData.email)) {
-      logIncident(req.userData.email, "Not allowed to create Inventory");
+      logIncident(req.userData.email, "Not allowed to create qa/qc ticjet");
       return res
         .status(500)
-        .json({ message: "Not allowed to create inventory" });
+        .json({ message: "Not allowed to create qa/qc ticket" });
     }
     const id = req.params.id;
     let qaqcObj = req.body;
@@ -217,7 +217,7 @@ router.get("", checkAuth, async (req, res, next) => {
     })
     .catch((error) => {
       res.status(500).json({
-        message: "Fetching inventories failed! " + error,
+        message: "Fetching qa/qc failed! " + error,
       });
     });
 });

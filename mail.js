@@ -380,4 +380,9 @@ async function sendNote(note, expense) {
   }
 }
 
-module.exports = { sendInventory, sendExpense, sendNote };
+async function sendQaqc(report) {
+  console.log(report);
+  return;
+}
+
+module.exports = { sendInventory, sendExpense, sendNote, sendQaqc };

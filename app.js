@@ -36,6 +36,7 @@ const qtyRoutes = require("./routes/quantity");
 const expenseRoutes = require("./routes/expense");
 const shopsettingsRoutes = require("./routes/shopsettings");
 const awardsRoutes = require("./routes/award");
+const qaqcRoutes = require("./routes/qaqc");
 
 //let connectStr =  'mongodb://localhost:27017/torposdb';
 
@@ -153,5 +154,6 @@ app.use("/api/quantity", qtyRoutes);
 app.use("/api/expense", expenseRoutes);
 app.use("/api/shopsettings", shopsettingsRoutes);
 app.use("/api/awards", awardsRoutes);
+app.use("/api/qaqc", qaqcRoutes);
 
 module.exports = app;

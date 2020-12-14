@@ -13,8 +13,10 @@ const checkAuth = require("../middleware/check-auth");
 const fileUpload = require("../middleware/file-upload");
 const Recupload = require("../models/recupload");
 const Utils = require("../utils");
-const { getHeapSnapshot } = require("v8");
-const { getDefaultSettings } = require("http2");
+// const { getHeapSnapshot } = require("v8");
+// const { getDefaultSettings } = require("http2");
+const moment = require("moment");
+const dateFns = require("date-fns");
 
 router.get("", async (req, res, next) => {
   let awards;
@@ -30,74 +32,76 @@ router.get("", async (req, res, next) => {
 
 router.get("/top20ForMonth", async (req, res, next) => {
   try {
-    const { site, month, year, product } = req.query;
+    const { site, month, year, product, day, week } = req.query;
     let monthInt = parseInt(month);
     let yearInt = parseInt(year);
+    let dayInt = parseInt(day);
+    let weekInt = parseInt(week);
 
-    // console.log("query params", site.trim(), month, year, product);
-    Recupload.aggregate([
-      { $unwind: "$products" },
-      { $unwind: "$products.name" },
-      { $unwind: "$products.qty" },
-      { $unwind: "$products.price" },
-      {
-        $lookup: {
-          from: "customers",
-          localField: "customer",
-          foreignField: "_id",
-          as: "customer",
-        },
-      },
+    //weekly aggregation
+    if (week && week !== "undefined") {
+      console.log("week loop");
+      const aggObject = {
+        weekInt,
+        yearInt,
+        site,
+        product,
+      };
 
-      {
-        $group: {
-          _id: {
-            month: { $month: "$createdAt" },
-            year: { $year: "$createdAt" },
-            customer: "$customer.name",
-            site: "$terminal_location",
-            product: "$products.name",
-          },
+      const aggData = await Utils.weekAgg(aggObject);
 
-          totalSalesAmount: {
-            $sum: {
-              $multiply: [
-                { $toInt: "$products.price" },
-                { $toInt: "$products.qty" },
-              ],
-            },
-          },
-          totalQty: { $sum: "$products.qty" },
-        },
-      },
-      {
-        $match: {
-          $and: [
-            {
-              "_id.site": site,
-              "_id.month": monthInt,
-              "_id.year": yearInt,
-              "_id.product": product,
-            },
-          ],
-        },
-      },
-
-      { $sort: { "_id.year": 1, "_id.month": -1, totalQty: -1 } },
-      // { $limit: 200 },
-    ]).exec((err, result) => {
-      if (err) {
-        console.log("error ", err);
-        return res.status(500).json({ message: "aggregate error: " + err });
-      }
-      if (result) {
-        // console.log("result ", result);
+      if (aggData) {
+        console.log("week agg");
         return res.status(200).json({
-          message: "top 200 sales for month",
-          records: result,
+          message: "top  sales for week",
+          records: aggData,
         });
       }
-    });
+
+      return res.status(500).json({ message: "aggregate error: " });
+    }
+
+    // Daily aggregation
+    if (dayInt !== "undefined" && dayInt && typeof dayInt === "number") {
+      console.log("day loop");
+      const aggObject = {
+        dayInt: dayInt,
+        monthInt,
+        yearInt,
+        site,
+        product,
+      };
+
+      const aggDay = await Utils.dayAgg(aggObject);
+      // console.log(aggDay, "aggDay");
+
+      if (aggDay) {
+        return res.status(200).json({
+          message: "top  sales for Day",
+          records: aggDay,
+        });
+      }
+
+      return res.status(500).json({ message: " Day aggregate error: " });
+    }
+
+    // month aggregation
+    if (monthInt) {
+      let aggObject = {
+        monthInt,
+        yearInt,
+        site,
+        product,
+      };
+      const aggMonth = await Utils.monthAgg(aggObject);
+      if (aggMonth) {
+        return res.status(200).json({
+          message: "top  sales for Month",
+          records: aggMonth,
+        });
+      }
+      return res.status(500).json({ message: " Day aggregate error: " });
+    }
   } catch (err) {
     return res.status(500).json({
       message: "Fetching records failed, please try again later." + err,

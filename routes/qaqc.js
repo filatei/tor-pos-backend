@@ -34,40 +34,67 @@ function logIncident(email, description) {
 const checkAuth = require("../middleware/check-auth");
 const qaqc = require("../models/qaqc");
 
-router.post("", checkAuth, Utils.upload2.any(), async (req, res, next) => {
-  const alloweds = process.env.QAQCALLOWEDS;
+router.post(
+  "",
+  checkAuth,
+  Utils.upload3.single("image"),
+  async (req, res, next) => {
+    const alloweds = process.env.QAQCALLOWEDS;
 
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to create Inventory");
-    return res.status(500).json({ message: "Not allowed to create inventory" });
-  }
+    if (!alloweds.includes(req.userData.email)) {
+      logIncident(req.userData.email, "Not allowed to create Inventory");
+      return res
+        .status(500)
+        .json({ message: "Not allowed to create inventory" });
+    }
 
-  let qaqcObj = req.body;
-  console.log(req.body);
-  qaqcObj.alarm = false;
-  if (parseInt(qaqcObj.observationScale) < parseInt(qaqcObj.refRangescale)) {
-    qaqcObj.alarm = true;
-  }
+    let qaqcObj = req.body;
+    console.log(req.body);
+    qaqcObj.alarm = false;
+    if (parseInt(qaqcObj.observationScale) < parseInt(qaqcObj.refRangescale)) {
+      qaqcObj.alarm = true;
+    }
 
-  qaqcObj.creator = req.userData.userId;
-  qaqcObj.status = "DRAFT";
+    qaqcObj.creator = req.userData.userId;
+    qaqcObj.status = "DRAFT";
 
-  const qaqc = new Qaqc(qaqcObj);
+    let file = req.file;
+    let myPath;
 
-  qaqc
-    .save()
-    .then((result) => {
-      res.status(201).json({
-        message: "QA Report added successfully",
-        qaqc: { ...result, id: result._id },
+    console.log(file);
+    if (file) {
+      let fileName;
+      fileName = "uploads/qaqc/" + req.userData.userId + "/" + file.filename;
+
+      if (hostname.includes("torama.ng")) {
+        url = "https://api.torama.ng";
+      } else {
+        url = req.protocol + "://" + req.get("host");
+      }
+
+      myPath = url + "/" + fileName;
+      qaqcObj.image = myPath;
+      qaqcObj.images = [myPath];
+    }
+
+    console.log(qaqcObj);
+    const qaqc = new Qaqc(qaqcObj);
+
+    qaqc
+      .save()
+      .then((result) => {
+        res.status(201).json({
+          message: "QA Report added successfully",
+          qaqc: { ...result, id: result._id },
+        });
+      })
+      .catch((error) => {
+        res.status(500).json({
+          message: "Creating a QA report failed! " + error,
+        });
       });
-    })
-    .catch((error) => {
-      res.status(500).json({
-        message: "Creating a QA report failed! " + error,
-      });
-    });
-});
+  }
+);
 
 router.put(
   "/:id",

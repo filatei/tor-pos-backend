@@ -37,6 +37,7 @@ router.get("/top20ForMonth", async (req, res, next) => {
     let yearInt = parseInt(year);
     let dayInt = parseInt(day);
     let weekInt = parseInt(week);
+    weekInt = weekInt - 1;
 
     //weekly aggregation
     if (week && week !== "undefined") {

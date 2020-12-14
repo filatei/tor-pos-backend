@@ -210,6 +210,7 @@ async function dayAgg(obj) {
             customer: "$customer.name",
             site: "$terminal_location",
             product: "$products.name",
+            action: "$action_taken",
           },
 
           totalSalesAmount: {
@@ -232,6 +233,7 @@ async function dayAgg(obj) {
               "_id.month": monthInt,
               "_id.year": yearInt,
               "_id.product": product,
+              "_id.action": "PRODUCT RELEASED",
             },
           ],
         },
@@ -287,6 +289,7 @@ async function weekAgg(obj) {
             customer: "$customer.name",
             site: "$terminal_location",
             product: "$products.name",
+            action: "$action_taken",
           },
 
           totalSalesAmount: {
@@ -308,6 +311,7 @@ async function weekAgg(obj) {
               "_id.week": weekNo,
               "_id.site": site,
               "_id.product": product,
+              "_id.action": "PRODUCT RELEASED",
             },
           ],
         },
@@ -351,6 +355,7 @@ async function monthAgg(obj) {
             customer: "$customer.name",
             site: "$terminal_location",
             product: "$products.name",
+            action: "$action_taken",
           },
           totalSalesAmount: {
             $sum: {
@@ -371,6 +376,7 @@ async function monthAgg(obj) {
               "_id.month": monthInt,
               "_id.year": yearInt,
               "_id.product": product,
+              "_id.action": "PRODUCT RELEASED",
             },
           ],
         },

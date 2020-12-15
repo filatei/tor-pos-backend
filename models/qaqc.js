@@ -4,6 +4,7 @@ const AutoIncrement = require("mongoose-sequence")(mongoose);
 const qaqcSchema = mongoose.Schema(
   {
     reportDate: { type: Date },
+    itemName: { type: String },
     location: { type: String },
     report: [
       {

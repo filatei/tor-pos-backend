@@ -108,6 +108,7 @@ async function sendInventory(inventory) {
         clientSecret: tokens.clientSecret,
         refreshToken: tokens.refresh_token,
         accessToken: accessToken,
+        pool: true,
       },
     });
 
@@ -242,6 +243,7 @@ async function sendExpense(expense) {
         clientSecret: tokens.clientSecret,
         refreshToken: tokens.refresh_token,
         accessToken: accessToken,
+        pool: true,
       },
     });
 
@@ -350,6 +352,7 @@ async function sendNote(note, expense) {
         clientSecret: tokens.clientSecret,
         refreshToken: tokens.refresh_token,
         accessToken: accessToken,
+        pool: true,
       },
     });
 

@@ -83,13 +83,14 @@ router.post(
     qaqc
       .save()
       .then((result) => {
-        res.status(201).json({
+        return res.status(201).json({
           message: "QA Report added successfully",
           qaqc: { ...result, id: result._id },
         });
       })
       .catch((error) => {
-        res.status(500).json({
+        console.log(error);
+        return res.status(500).json({
           message: "Creating a QA report failed! " + error,
         });
       });
@@ -160,13 +161,13 @@ router.put(
     Qaqc.updateOne({ _id: id }, qaqc)
       .then((result) => {
         if (result.n > 0) {
-          res.status(200).json({ message: "Update successful!", qaqc });
+          return res.status(200).json({ message: "Update successful!", qaqc });
         } else {
-          res.status(401).json({ message: "Not authorized!" });
+          return res.status(401).json({ message: "Not authorized!" });
         }
       })
       .catch((error) => {
-        res.status(500).json({
+        return res.status(500).json({
           message: "Couldn't update qaqc! " + error,
         });
       });

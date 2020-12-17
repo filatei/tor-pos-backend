@@ -18,7 +18,8 @@ const moment = require("moment");
 const Mail = require("../mail");
 const Utils = require("../utils");
 const HttpError = require("../utils/http-error");
-directors = process.env.DIRECTORS;
+const DIRECTORS = process.env.DIRECTORS;
+const MANAGERS = process.env.MANAGERS;
 
 function logIncident(email, description) {
   const logObj = new Accesslog({ email: email, description: description });
@@ -224,10 +225,8 @@ router.get("", checkAuth, async (req, res, next) => {
   // let qaqcQuery = Qaqc.find().sort({ createdAt: -1 }).limit(pageSize);
   let user = await User.find({ email: userEmail });
 
-  if (directors.includes(userEmail)) {
-    qaqcQuery = Qaqc.find({ creator: user[0]._id })
-      .sort({ createdAt: -1 })
-      .limit(pageSize);
+  if (MANAGERS.includes(userEmail)) {
+    qaqcQuery = Qaqc.find().sort({ createdAt: -1 }).limit(pageSize);
   } else {
     qaqcQuery = Qaqc.find({ creator: user[0]._id })
       .sort({ createdAt: -1 })

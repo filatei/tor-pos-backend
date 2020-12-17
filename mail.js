@@ -338,7 +338,7 @@ async function sendNote(note, expense) {
     html += `<img src="${note.image}" alt="note image" width="300" >`;
   }
 
-  html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
+  html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama&#174; - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
   console.log(html);
 
   try {
@@ -512,8 +512,14 @@ async function sendQaqc(item) {
     html += `<p> Effects: ${item.effects} </p><p> Remarks: ${item.remarks} </p> <p> Action: ${item.actionTaken} - ${item.actionText}</p> `;
     html += `<p> OBS Scale: ${item.observationScale}/ ${item.refRangeScale} </p> `;
     html += `<img src="${item.image}" alt="item image" width="300" >`;
+    if (item.notes) {
+      item.notes.forEach((note) => {
+        html += `<img src="${note.image}" alt="note image" width="300" >`;
+        html += `<p>${item.text}</p>`;
+      });
+    }
 
-    html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
+    html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama&#174; - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
     // console.log(html);
 
     // if (hostname.includes("torama")) {

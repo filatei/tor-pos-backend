@@ -376,7 +376,9 @@ router.put("/action/:id", checkAuth, async function (req, res, next) {
         { _id: recId },
         { actionTaken, actionText, updater: updater }
       )
-        .then((result) => {
+        .then(async (result) => {
+          let nObj = await Qaqc.findById(recId);
+          await Mail.sendQaqc(nObj);
           // console.log("result ", result);
           res.status(201).json({
             message: " action updated successfully",
@@ -399,11 +401,6 @@ router.put("/action/:id", checkAuth, async function (req, res, next) {
       });
     }
   }
-});
-
-router.post("/mail", checkAuth, function (req, res, next) {
-  let qaqcObj = req.body;
-  qaqcObj.creator = req.userData.userId;
 });
 
 module.exports = router;

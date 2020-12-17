@@ -61,7 +61,6 @@ router.post(
     let file = req.file;
     let myPath;
 
-    console.log(file);
     if (file) {
       let fileName;
       fileName = "uploads/qaqc/" + req.userData.userId + "/" + file.filename;
@@ -77,8 +76,9 @@ router.post(
       qaqcObj.images = [myPath];
     }
 
-    console.log(qaqcObj);
+    // console.log(qaqcObj);
     const qaqc = new Qaqc(qaqcObj);
+    console.log(qaqc, "qaqc");
 
     qaqc
       .save()
@@ -88,6 +88,7 @@ router.post(
           qaqc: { ...result, id: result._id },
         });
       })
+
       .catch((error) => {
         console.log(error);
         return res.status(500).json({
@@ -136,7 +137,8 @@ router.put(
       const upstat = await Qaqc.updateOne({ _id: id }, { status: status });
       if (status === "OPEN" || status === "REVIEWED") {
         //  send mail
-        let mailStat = await Mail.sendQaqc(qaqcObj);
+        let mObj = await Qaqc.findById(id);
+        let mailStat = await Mail.sendQaqc(mObj);
       }
       return res
         .status(200)
@@ -163,7 +165,10 @@ router.put(
     const qaqc = new Qaqc(qaqcObj);
 
     Qaqc.updateOne({ _id: id }, qaqc)
-      .then((result) => {
+      .then(async (result) => {
+        let nObj = await Qaqc.findById(id);
+        await Mail.sendQaqc(nObj);
+        // await Mail.sendQaqc(qaqc);
         if (result.n > 0) {
           return res.status(200).json({ message: "Update successful!", qaqc });
         } else {

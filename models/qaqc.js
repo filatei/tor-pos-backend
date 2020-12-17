@@ -14,11 +14,14 @@ const qaqcSchema = mongoose.Schema(
         remarks: { type: String },
       },
     ],
-
     category: { type: String },
     comments: { type: String },
     remarks: { type: String },
     observation: { type: String },
+    effects: { type: String },
+    actionTaken: { type: String },
+    suggestedRemedy: { type: String },
+    actionText: { type: String },
     refRange: { type: String },
     observationScale: { type: Number },
     refRangeScale: { type: Number },
@@ -35,6 +38,8 @@ const qaqcSchema = mongoose.Schema(
         image: { type: String },
       },
     ],
+    log: [{}],
+    review: [{}],
     creator: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     updater: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   },
@@ -57,4 +62,4 @@ rc.createIndexes();
 
 qaqcSchema.plugin(uniqueValidator);
 
-module.exports = mongoose.model("Qaqc", qaqcSchema);
+module.exports = rc;

@@ -256,7 +256,6 @@ router.put(
     // console.log("reqbody", req.body);
     let filePath;
     let url;
-    s;
 
     if (req.file) {
       const fileName = req.file.path;

@@ -383,9 +383,113 @@ async function sendNote(note, expense) {
   }
 }
 
+async function sendQaNote(note, item) {
+  let author;
+  if (note && note.author) {
+    author = note.author;
+  }
+
+  // some content
+  let itemId = item.qaqc_id;
+
+  itemId = itemId.toString().padStart(5, "0");
+  let subject = `Note added to QA/QC(# ${itemId})`;
+  let status = item.status;
+  let location = item.site;
+  let userName = author;
+  let user = await User.find({ name: author });
+  let itemCreator = await User.findById(item.creator);
+
+  let userEmail = user.email;
+  let notesEmail;
+  let creatorEmail;
+
+  let toEmail;
+
+  if (hostname.includes("torama")) {
+    toEmail = "qaqc@torama.ng";
+    notesEmail = userEmail;
+    creatorEmail = itemCreator.email;
+  } else {
+    toEmail = null;
+    notesEmail = user.Email;
+    creatorEmail = null;
+    return;
+  }
+
+  let format1 = "DD-MM-YYYY hh:mm:ss";
+  let date;
+  date = moment(item.createdAt).format(format1);
+  let logo = "https://api.torama.ng/uploads/productimages/fidologo.png";
+
+  let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
+                ${date}</p><h2>Expense Status: ${status}</h2><p> Hi ${userName},</p>`;
+  html += `<p>Note is added to expense # ${itemId} </p><p>Author: ${author}</p> <p>Site: ${location}</p> <p>Item: ${item.itemName}</p> <p>Category: ${item.category}</p> <p>Observation: ${item.observation}</p> <p>Reference: ${item.refRange}</p>`;
+
+  html += `<p> Note: ${note.text} </p> `;
+
+  if (note && note.image) {
+    html += `<img src="${note.image}" alt="note image" width="300" >`;
+  }
+
+  html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
+  console.log(html);
+
+  if (hostname.includes("torama")) {
+    toEmail = "qaqc@torama.ng";
+    notesEmail = userEmail;
+    creatorEmail = itemCreator.email;
+  } else {
+    toEmail = null;
+    notesEmail = user.Email;
+    creatorEmail = null;
+    return;
+  }
+  try {
+    const accessToken = await oauth2Client.getAccessToken();
+    const smtpTransport = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        type: "OAuth2",
+        user: process.env.tormail,
+        clientId: tokens.clientID,
+        clientSecret: tokens.clientSecret,
+        refreshToken: tokens.refresh_token,
+        accessToken: accessToken,
+        pool: true,
+      },
+    });
+
+    const mailOptions = {
+      from: `ToramaQA ${process.env.tormail}`,
+      to: creatorEmail,
+      cc: notesEmail,
+      bcc: toEmail,
+      subject: subject,
+      generateTextFromHTML: true,
+      html: html,
+    };
+
+    // send mail
+    smtpTransport.sendMail(mailOptions, (error, response) => {
+      let result;
+      if (error) {
+        console.log(error, "error in noteqaqc mailer");
+        result = false;
+      } else {
+        result = true;
+      }
+      smtpTransport.close();
+      return result;
+    });
+  } catch (err) {
+    console.log(err, "error in noteqaqc mailer");
+  }
+}
+
 async function sendQaqc(report) {
   console.log(report);
   return;
 }
 
-module.exports = { sendInventory, sendExpense, sendNote, sendQaqc };
+module.exports = { sendInventory, sendExpense, sendNote, sendQaNote, sendQaqc };

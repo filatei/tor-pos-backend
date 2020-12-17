@@ -104,7 +104,7 @@ router.put(
   async (req, res, next) => {
     const alloweds = process.env.QAQCALLOWEDS;
     if (!alloweds.includes(req.userData.email)) {
-      logIncident(req.userData.email, "Not allowed to create qa/qc ticjet");
+      logIncident(req.userData.email, "Not allowed to create qa/qc ticket");
       return res
         .status(500)
         .json({ message: "Not allowed to create qa/qc ticket" });
@@ -112,6 +112,7 @@ router.put(
     const id = req.params.id;
     let qaqcObj = req.body;
     let status = qaqcObj.status;
+
     let file = req.file;
     let myPath;
 
@@ -129,33 +130,36 @@ router.put(
       myPath = url + "/" + fileName;
       qaqcObj.image = myPath;
     }
+    // if just status update
+    if (!qaqcObj.itemName && !qaqcObj.category && !myPath && status) {
+      // update only status
+      const upstat = await Qaqc.updateOne({ _id: id }, { status: status });
+      if (status === "OPEN" || status === "REVIEWED") {
+        //  send mail
+        let mailStat = await Mail.sendQaqc(qaqcObj);
+      }
+      return res
+        .status(200)
+        .json({ message: "Update Status successful! ", upstat });
+    }
     const qaObj = await Qaqc.findById(id);
     const images = qaObj.images;
     if (myPath) images.push(myPath);
-    // if (!qaqcObj.images || typeof qaqcObj.images !== "object") {
-    //   qaqcObj.images = [];
-    // }
+
     console.log(images);
     qaqcObj.images = images;
 
-    let mailStat;
+    qaqcObj._id = id;
+    qaqcObj.updater = req.userData.userId;
 
-    async function isOpen() {
-      if (
-        status === "OPEN" ||
-        status === "APPROVED" ||
-        status === "REVIEWED" ||
-        status === "DECLINED"
-      ) {
-        //  send mail
-        mailStat = await Mail.sendQaqc(qaqcObj);
+    // if any field is blank, dont update it
+    for (const [key, value] of Object.entries(qaqcObj)) {
+      if (!value || value === "undefined") {
+        delete qaqcObj[key];
+        console.log(`${key}: ${value} deleted`);
       }
     }
 
-    const sendStat = await isOpen();
-
-    qaqcObj._id = id;
-    qaqcObj.updater = req.userData.userId;
     const qaqc = new Qaqc(qaqcObj);
 
     Qaqc.updateOne({ _id: id }, qaqc)
@@ -206,6 +210,10 @@ router.get("", checkAuth, async (req, res, next) => {
   const currentPage = +req.query.page;
   const userEmail = req.userData.email;
   const qaqcalloweds = process.env.QAQCALLOWEDS;
+  if (!qaqcalloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, "Not allowed to create Receipts");
+    return res.status(500).json({ message: "Not allowed" });
+  }
 
   let qaqcQuery = Qaqc.find().sort({ createdAt: -1 });
 
@@ -217,27 +225,9 @@ router.get("", checkAuth, async (req, res, next) => {
       });
     })
     .catch((error) => {
+      console.log(error);
       res.status(500).json({
         message: "Fetching qa/qc failed! " + error,
-      });
-    });
-});
-
-router.get("/qaqc/:id", (req, res, next) => {
-  const expId = req.params.id;
-  Qaqc.find({ qaqc_id: expId })
-    .populate("creator")
-    .then((qaqc) => {
-      if (qaqc) {
-        res.status(200).json({ qaqc });
-      } else {
-        const error = new HttpError("qaqc not found!", 404);
-        return next(error);
-      }
-    })
-    .catch((error) => {
-      res.status(500).json({
-        message: "Fetching qaqc failed! " + error,
       });
     });
 });
@@ -253,6 +243,7 @@ router.get("/:id", (req, res, next) => {
       }
     })
     .catch((error) => {
+      console.log(error);
       res.status(500).json({
         message: "Fetching qaqc failed! " + error,
       });
@@ -262,9 +253,9 @@ router.get("/:id", (req, res, next) => {
 router.put(
   "/notes/:id",
   checkAuth,
-  Utils.upload2.any(),
+  Utils.upload3.any(),
   async function (req, res, next) {
-    const alloweds = process.env.ALLOWEDS;
+    const alloweds = process.env.QAQCALLOWEDS;
 
     if (!alloweds.includes(req.userData.email)) {
       logIncident(req.userData.email, "Not allowed to create Receipts");
@@ -278,10 +269,10 @@ router.put(
       req.files.forEach((file) => {
         if (file.originalname == "blob") {
           fileName =
-            "uploads/qaqcs/" + req.userData.userId + "/" + file.filename;
+            "uploads/qaqc/" + req.userData.userId + "/" + file.filename;
         } else {
           fileName =
-            "uploads/qaqcs/" + req.userData.userId + "/" + file.filename;
+            "uploads/qaqc/" + req.userData.userId + "/" + file.filename;
         }
 
         if (hostname.includes("torama.ng")) {
@@ -307,11 +298,11 @@ router.put(
         let expObj = await Qaqc.findById(recId);
 
         // send mail with Note image
-        await Mail.sendNote(note, expObj);
+        await Mail.sendQaNote(note, expObj);
 
-        let notes = expObj.notes;
+        let notes = expObj.notes ? expObj.notes : [];
         notes.push(note);
-        log = expObj.log;
+        log = expObj.log ? expObj.log : [];
         log.push({
           updater: note.author,
           status: expObj.status,
@@ -323,6 +314,7 @@ router.put(
           { notes: notes, updater: updater, log: log }
         )
           .then((result) => {
+            console.log("result ", result);
             res.status(201).json({
               message: " note with image updated successfully",
               qaqc: {
@@ -332,11 +324,13 @@ router.put(
             });
           })
           .catch((error) => {
+            console.log(error);
             res.status(500).json({
               message: "Creating an Image upload failed! " + error,
             });
           });
       } catch (err) {
+        console.log(err);
         res.status(500).json({
           message: "Error with update in try block " + err,
         });
@@ -344,6 +338,52 @@ router.put(
     }
   }
 );
+
+router.put("/action/:id", checkAuth, async function (req, res, next) {
+  const alloweds = process.env.QAQCALLOWEDS;
+
+  if (!alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, "Not allowed to create Receipts");
+    return res.status(500).json({ message: "Not allowed" });
+  }
+
+  let updater = req.userData.userId;
+  console.log(req.body, "reqbody");
+  const { actionTaken, actionText } = req.body;
+
+  let recId = req.params.id;
+  await saveQaqc();
+
+  async function saveQaqc() {
+    try {
+      Qaqc.findByIdAndUpdate(
+        { _id: recId },
+        { actionTaken, actionText, updater: updater }
+      )
+        .then((result) => {
+          // console.log("result ", result);
+          res.status(201).json({
+            message: " action updated successfully",
+            qaqc: {
+              ...result,
+              id: result._id,
+            },
+          });
+        })
+        .catch((error) => {
+          console.log(error);
+          res.status(500).json({
+            message: "action update  failed! " + error,
+          });
+        });
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({
+        message: "Error with update in try block " + err,
+      });
+    }
+  }
+});
 
 router.post("/mail", checkAuth, function (req, res, next) {
   let qaqcObj = req.body;

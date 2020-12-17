@@ -506,10 +506,18 @@ async function sendQaqc(item) {
     let logo = "https://api.torama.ng/uploads/productimages/fidologo.png";
 
     let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
-                ${date}</p><h2>Item Status: ${status}</h2><p> Hi ${userName},</p>`;
-    html += `<p>Update is made to QAQC #${itemId} </p><p>Author: ${author}</p> <p>Site: ${location}</p> <p>Item: ${item.itemName}</p> <p>Category: ${item.category}</p> <p>Observation: ${item.observation}</p> <p>Reference: ${item.refRange}</p>`;
+                ${date}</p><h2>Item Status: ${status}</h2>
+                <h2>Action Taken: ${item.actionTaken} - ${item.actionText}</h2>
+                <p> Hi ${userName},</p>`;
+    html += `<p>Update is made to QAQC #${itemId} </p>
+              <p>Author: ${author}</p> 
+              <p>Site: ${location}</p> 
+              <p>Item: ${item.itemName}</p> 
+              <p>Category: ${item.category}</p>
+              <p>Observation: ${item.observation}</p> 
+              <p>Reference: ${item.refRange}</p>`;
 
-    html += `<p> Effects: ${item.effects} </p><p> Remarks: ${item.remarks} </p> <p> Action: ${item.actionTaken} - ${item.actionText}</p> `;
+    html += `<p> Effects: ${item.effects} </p><p> Remarks: ${item.remarks} </p>  `;
     html += `<p> OBS Scale: ${item.observationScale}/ ${item.refRangeScale} </p> `;
     html += `<img src="${item.image}" alt="item image" width="300" >`;
     if (item.notes) {

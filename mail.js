@@ -489,12 +489,12 @@ async function sendQaqc(item) {
     itemId = itemId.toString().padStart(5, "0");
     let subject = ` QA/QC(# ${itemId})`;
     let status = item.status;
-    let location = item.site;
+    let location = item.location;
     let userName = author;
     let user = await User.find({ name: author });
     let itemCreator = await User.findById(item.creator);
-
-    let userEmail = user.email;
+    console.log(itemCreator, "itemcreat", user, "User");
+    let userEmail = user[0].email;
     let notesEmail;
     let creatorEmail;
 
@@ -506,26 +506,26 @@ async function sendQaqc(item) {
     let logo = "https://api.torama.ng/uploads/productimages/fidologo.png";
 
     let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
-                ${date}</p><h2>Expense Status: ${status}</h2><p> Hi ${userName},</p>`;
-    html += `<p>Note is added to expense # ${itemId} </p><p>Author: ${author}</p> <p>Site: ${location}</p> <p>Item: ${item.itemName}</p> <p>Category: ${item.category}</p> <p>Observation: ${item.observation}</p> <p>Reference: ${item.refRange}</p>`;
+                ${date}</p><h2>Item Status: ${status}</h2><p> Hi ${userName},</p>`;
+    html += `<p>Update is made to QAQC #${itemId} </p><p>Author: ${author}</p> <p>Site: ${location}</p> <p>Item: ${item.itemName}</p> <p>Category: ${item.category}</p> <p>Observation: ${item.observation}</p> <p>Reference: ${item.refRange}</p>`;
 
     html += `<p> Effects: ${item.effects} </p><p> Remarks: ${item.remarks} </p> <p> Action: ${item.actionTaken} - ${item.actionText}</p> `;
     html += `<p> OBS Scale: ${item.observationScale}/ ${item.refRangeScale} </p> `;
     html += `<img src="${item.image}" alt="item image" width="300" >`;
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
-    console.log(html);
+    // console.log(html);
 
-    if (hostname.includes("torama")) {
-      toEmail = "qaqc@torama.ng";
-      notesEmail = userEmail;
-      creatorEmail = itemCreator.email;
-    } else {
-      toEmail = null;
-      notesEmail = user.Email;
-      creatorEmail = null;
-      return;
-    }
+    // if (hostname.includes("torama")) {
+    toEmail = "qaqc@torama.ng";
+    notesEmail = userEmail;
+    creatorEmail = itemCreator.email;
+    // } else {
+    //   toEmail = null;
+    //   notesEmail = user.Email;
+    //   creatorEmail = null;
+    //   return;
+    // }
 
     const accessToken = await oauth2Client.getAccessToken();
     const smtpTransport = nodemailer.createTransport({
@@ -544,7 +544,6 @@ async function sendQaqc(item) {
     const mailOptions = {
       from: `ToramaQA ${process.env.tormail}`,
       to: creatorEmail,
-      cc: notesEmail,
       bcc: toEmail,
       subject: subject,
       generateTextFromHTML: true,
@@ -564,7 +563,7 @@ async function sendQaqc(item) {
       return result;
     });
   } catch (err) {
-    console.log(err, "error in noteqaqc mailer");
+    console.log(err, "error in qaqc mailer");
   }
 }
 

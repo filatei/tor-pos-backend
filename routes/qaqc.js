@@ -18,6 +18,7 @@ const moment = require("moment");
 const Mail = require("../mail");
 const Utils = require("../utils");
 const HttpError = require("../utils/http-error");
+directors = process.env.DIRECTORS;
 
 function logIncident(email, description) {
   const logObj = new Accesslog({ email: email, description: description });
@@ -220,7 +221,18 @@ router.get("", checkAuth, async (req, res, next) => {
     return res.status(500).json({ message: "Not allowed" });
   }
 
-  let qaqcQuery = Qaqc.find().sort({ createdAt: -1 });
+  // let qaqcQuery = Qaqc.find().sort({ createdAt: -1 }).limit(pageSize);
+  let user = await User.find({ email: userEmail });
+
+  if (directors.includes(userEmail)) {
+    qaqcQuery = Qaqc.find({ creator: user[0]._id })
+      .sort({ createdAt: -1 })
+      .limit(pageSize);
+  } else {
+    qaqcQuery = Qaqc.find({ creator: user[0]._id })
+      .sort({ createdAt: -1 })
+      .limit(pageSize);
+  }
 
   qaqcQuery
     .then((documents) => {

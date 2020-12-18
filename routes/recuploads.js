@@ -220,7 +220,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   }
 });
 
-router.get("/summary", (req, res, next) => {
+router.get("/summary", checkAuth, (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
 
   if (!alloweds.includes(req.userData.email)) {
@@ -340,7 +340,7 @@ router.get("/summary", (req, res, next) => {
     });
 });
 
-router.get("", (req, res, next) => {
+router.get("", checkAuth, (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
 
   if (!alloweds.includes(req.userData.email)) {
@@ -391,7 +391,7 @@ router.get("", (req, res, next) => {
     });
 });
 
-router.get("/getByText", (req, res, next) => {
+router.get("/getByText", checkAuth, (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
 
   if (!alloweds.includes(req.userData.email)) {
@@ -435,7 +435,7 @@ router.get("/getByText", (req, res, next) => {
     });
 });
 
-router.get("/:id", (req, res, next) => {
+router.get("/:id", checkAuth, (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
 
   if (!alloweds.includes(req.userData.email)) {

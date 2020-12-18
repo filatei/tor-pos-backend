@@ -4,8 +4,21 @@ const Eod = require("../models/eod");
 const router = express.Router();
 const checkAuth = require("../middleware/check-auth");
 const e = require("express");
+const Accesslog = require("../models/accesslog");
 
-router.get("", (req, res, next) => {
+function logIncident(email, description) {
+  const logObj = new Accesslog({ email: email, description: description });
+  logObj
+    .save(logObj)
+    .then((result) => {
+      console.log("access incident logged for user", result);
+    })
+    .catch((err) => {
+      console.log("access logging error for user ", err);
+    });
+}
+
+router.get("", checkAuth, (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
 
   if (!alloweds.includes(req.userData.email)) {
@@ -34,7 +47,7 @@ router.get("", (req, res, next) => {
     });
 });
 
-router.get("/:id", (req, res, next) => {
+router.get("/:id", checkAuth, (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
 
   if (!alloweds.includes(req.userData.email)) {
@@ -118,7 +131,7 @@ router.put("/:id", checkAuth, (req, res, next) => {
     });
 });
 
-router.delete("/:id", (req, res, next) => {
+router.delete("/:id", checkAuth, (req, res, next) => {
   const alloweds = process.env.DELALLOWEDS;
   if (!alloweds.includes(req.userData.email)) {
     return res.status(500).json({ message: "Not allowed" });

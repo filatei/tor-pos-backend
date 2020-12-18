@@ -125,7 +125,7 @@ router.put("/:id", checkAuth, (req, res, next) => {
   const alloweds = process.env.STOREALLOWEDS;
 
   if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to create Receipts");
+    logIncident(req.userData.email, "Not allowed to update inventory");
     return res.status(500).json({ message: "Not allowed to create inventory" });
   }
   let path = "";
@@ -204,8 +204,8 @@ router.get("", checkAuth, (req, res, next) => {
   const alloweds = process.env.STOREALLOWEDS;
 
   if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to create Receipts");
-    return res.status(500).json({ message: "Not allowed to create inventory" });
+    logIncident(req.userData.email, "Not allowed to see inventory");
+    return res.status(500).json({ message: "Not allowed to see inventory" });
   }
 
   const pageSize = +req.query.pagesize;

@@ -221,6 +221,12 @@ router.delete("/:id", checkAuth, (req, res, next) => {
 });
 
 router.get("/summary", (req, res, next) => {
+  const alloweds = process.env.ALLOWEDS;
+
+  if (!alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, "Not allowed to see Receipts");
+    return res.status(500).json({ message: "Not allowed" });
+  }
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
   const coyQuery = Recupload.find()
@@ -335,6 +341,12 @@ router.get("/summary", (req, res, next) => {
 });
 
 router.get("", (req, res, next) => {
+  const alloweds = process.env.ALLOWEDS;
+
+  if (!alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, "Not allowed to see Receipts");
+    return res.status(500).json({ message: "Not allowed" });
+  }
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
   const site = req.query.site;
@@ -380,6 +392,12 @@ router.get("", (req, res, next) => {
 });
 
 router.get("/getByText", (req, res, next) => {
+  const alloweds = process.env.ALLOWEDS;
+
+  if (!alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, "Not allowed to see Receipts");
+    return res.status(500).json({ message: "Not allowed" });
+  }
   let stan = req.query.stan;
   // get array
   let records;
@@ -418,6 +436,12 @@ router.get("/getByText", (req, res, next) => {
 });
 
 router.get("/:id", (req, res, next) => {
+  const alloweds = process.env.ALLOWEDS;
+
+  if (!alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, "Not allowed to see Receipts");
+    return res.status(500).json({ message: "Not allowed" });
+  }
   Recupload.findById(req.params.id)
     .populate("customer")
     .populate("creator")

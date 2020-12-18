@@ -216,11 +216,11 @@ router.get("", checkAuth, async (req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
   const userEmail = req.userData.email;
-  const qaqcalloweds = process.env.QAQCALLOWEDS;
-  if (!qaqcalloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to create Receipts");
-    return res.status(500).json({ message: "Not allowed" });
-  }
+  // const qaqcalloweds = process.env.QAQCALLOWEDS;
+  // if (!qaqcalloweds.includes(req.userData.email)) {
+  //   logIncident(req.userData.email, "Not allowed to create Receipts");
+  //   return res.status(500).json({ message: "Not allowed" });
+  // }
 
   // let qaqcQuery = Qaqc.find().sort({ createdAt: -1 }).limit(pageSize);
   let user = await User.find({ email: userEmail });

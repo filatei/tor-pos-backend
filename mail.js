@@ -515,7 +515,9 @@ async function sendQaqc(item) {
               <p>Item: ${item.itemName}</p> 
               <p>Category: ${item.category}</p>
               <p>Observation: ${item.observation}</p> 
-              <p>Reference: ${item.refRange}</p>`;
+
+              <p>Reference: ${item.refRange}</p>
+              <p>Suggested Remedy: ${item.suggestedRemedy}</p> `;
 
     html += `<p> Effects: ${item.effects} </p><p> Remarks: ${item.remarks} </p>  `;
     html += `<p> OBS Scale: ${item.observationScale}/ ${item.refRangeScale} </p> `;

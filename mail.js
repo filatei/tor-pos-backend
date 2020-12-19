@@ -507,7 +507,8 @@ async function sendQaqc(item) {
 
     let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
                 ${date}</p><h2>Item Status: ${status}</h2>
-                <h2>Action Taken: ${item.actionTaken} - ${item.actionText}</h2>
+                <h2>Action Taken: ${item.actionTaken}</h2>
+                <h4>  ${item.actionText} </h4>
                 <p> Hi ${userName},</p>`;
     html += `<p>Update is made to QAQC #${itemId} </p>
               <p>Author: ${author}</p> 
@@ -532,6 +533,7 @@ async function sendQaqc(item) {
         html += `<p>${item.text}</p>`;
       });
     }
+    html += `<a href="https://posclaims.torama.ng/#/home/qaqc"> Click here to access the app </a> <br>`;
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama&#174; - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
     // console.log(html);
@@ -564,7 +566,7 @@ async function sendQaqc(item) {
     const mailOptions = {
       from: `ToramaQA ${process.env.tormail}`,
       to: creatorEmail,
-      bcc: toEmail,
+      cc: toEmail,
       subject: subject,
       generateTextFromHTML: true,
       html: html,

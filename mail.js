@@ -519,10 +519,14 @@ async function sendQaqc(item) {
 
     html += `<p> Effects: ${item.effects} </p><p> Remarks: ${item.remarks} </p>  `;
     html += `<p> OBS Scale: ${item.observationScale}/ ${item.refRangeScale} </p> `;
-    html += `<img src="${item.image}" alt="item image" width="300" >`;
+    if (item.image) {
+      html += `<img src="${item.image}" alt="item image" width="300" >`;
+    }
     if (item.notes) {
       item.notes.forEach((note) => {
-        html += `<img src="${note.image}" alt="note image" width="300" >`;
+        if (note.image) {
+          html += `<img src="${note.image}" alt="note image" width="300" >`;
+        }
         html += `<p>${item.text}</p>`;
       });
     }

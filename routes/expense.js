@@ -189,6 +189,45 @@ router.get("", checkAuth, (req, res, next) => {
   });
 });
 
+router.get("/getByText", checkAuth, async (req, res, next) => {
+  const alloweds = process.env.ALLOWEDS;
+
+  if (!alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, "Not allowed to see Receipts");
+    return res.status(500).json({ message: "Not allowed" });
+  }
+
+  const { searchTerm } = req.query;
+  console.log(req.query, " req-query");
+  // get array
+  let records;
+  const result = await Expense.aggregate([
+    { $match: { $text: { $search: searchTerm } } },
+  ]);
+
+  if (result) return res.status(200).json({ expense: result });
+  console.log(result);
+
+  Expense.find({ $text: { $search: searchTerm } })
+    .sort({ updatedAt: -1 })
+    .populate("vendor")
+    .populate("creator")
+    .populate("updater")
+    .then((record) => {
+      if (record) {
+        console.log(record);
+        res.status(200).json({ expense: record });
+      } else {
+        res.status(404).json({ message: "record not found!" });
+      }
+    })
+    .catch((error) => {
+      res.status(500).json({
+        message: "Fetching record failed!" + error,
+      });
+    });
+});
+
 router.get("/expense/:id", (req, res, next) => {
   const expId = req.params.id;
   Expense.find({ expense_id: expId })
@@ -225,90 +264,91 @@ router.get("/:id", (req, res, next) => {
     });
 });
 
-router.put("/notes/:id", checkAuth, Utils.upload2.any(), async function (
-  req,
-  res,
-  next
-) {
-  const alloweds = process.env.ALLOWEDS;
+router.put(
+  "/notes/:id",
+  checkAuth,
+  Utils.upload2.any(),
+  async function (req, res, next) {
+    const alloweds = process.env.ALLOWEDS;
 
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to create Receipts");
-    return res.status(500).json({ message: "Not allowed" });
-  }
+    if (!alloweds.includes(req.userData.email)) {
+      logIncident(req.userData.email, "Not allowed to create Receipts");
+      return res.status(500).json({ message: "Not allowed" });
+    }
 
-  let updater = req.userData.userId;
-  let myPath;
-  if (req.files) {
-    let fileName;
-    req.files.forEach((file) => {
-      if (file.originalname == "blob") {
-        fileName =
-          "uploads/expenses/" + req.userData.userId + "/" + file.filename;
-      } else {
-        fileName =
-          "uploads/expenses/" + req.userData.userId + "/" + file.filename;
-      }
+    let updater = req.userData.userId;
+    let myPath;
+    if (req.files) {
+      let fileName;
+      req.files.forEach((file) => {
+        if (file.originalname == "blob") {
+          fileName =
+            "uploads/expenses/" + req.userData.userId + "/" + file.filename;
+        } else {
+          fileName =
+            "uploads/expenses/" + req.userData.userId + "/" + file.filename;
+        }
 
-      if (hostname.includes("torama.ng")) {
-        url = "https://api.torama.ng";
-      } else {
-        url = req.protocol + "://" + req.get("host");
-      }
+        if (hostname.includes("torama.ng")) {
+          url = "https://api.torama.ng";
+        } else {
+          url = req.protocol + "://" + req.get("host");
+        }
 
-      myPath = url + "/" + fileName;
-    });
-  }
-  const note = req.body;
-
-  let recId = req.params.id;
-  await saveExpense();
-
-  async function saveExpense() {
-    try {
-      if (myPath) {
-        note.image = myPath;
-      }
-
-      let expObj = await Expense.findById(recId);
-
-      // send mail with Note image
-      await Mail.sendNote(note, expObj);
-
-      let notes = expObj.notes;
-      notes.push(note);
-      log = expObj.log;
-      log.push({
-        updater: note.author,
-        status: expObj.status,
-        date: new Date(),
-        note,
-      });
-      Expense.findByIdAndUpdate(
-        { _id: recId },
-        { notes: notes, updater: updater, log: log }
-      )
-        .then((result) => {
-          res.status(201).json({
-            message: " note with image updated successfully",
-            expense: {
-              ...result,
-              id: result._id,
-            },
-          });
-        })
-        .catch((error) => {
-          res.status(500).json({
-            message: "Creating an Image upload failed! " + error,
-          });
-        });
-    } catch (err) {
-      res.status(500).json({
-        message: "Error with update in try block " + err,
+        myPath = url + "/" + fileName;
       });
     }
+    const note = req.body;
+
+    let recId = req.params.id;
+    await saveExpense();
+
+    async function saveExpense() {
+      try {
+        if (myPath) {
+          note.image = myPath;
+        }
+
+        let expObj = await Expense.findById(recId);
+
+        // send mail with Note image
+        await Mail.sendNote(note, expObj);
+
+        let notes = expObj.notes;
+        notes.push(note);
+        log = expObj.log;
+        log.push({
+          updater: note.author,
+          status: expObj.status,
+          date: new Date(),
+          note,
+        });
+        Expense.findByIdAndUpdate(
+          { _id: recId },
+          { notes: notes, updater: updater, log: log }
+        )
+          .then((result) => {
+            res.status(201).json({
+              message: " note with image updated successfully",
+              expense: {
+                ...result,
+                id: result._id,
+              },
+            });
+          })
+          .catch((error) => {
+            res.status(500).json({
+              message: "Creating an Image upload failed! " + error,
+            });
+          });
+      } catch (err) {
+        res.status(500).json({
+          message: "Error with update in try block " + err,
+        });
+      }
+    }
   }
-});
+);
 
 router.post("/mail", checkAuth, function (req, res, next) {
   let expenseObj = req.body;

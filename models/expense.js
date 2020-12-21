@@ -57,7 +57,13 @@ const expenseSchema = mongoose.Schema(
 
 expenseSchema.plugin(AutoIncrement, { inc_field: "expense_id" });
 
+expenseSchema.index({ "$**": "text" });
+// expenseSchema.index({ default: { mappings: { dynamic: true } } });
+
+const rc = mongoose.model("Expense", expenseSchema);
+rc.createIndexes();
+
 expenseSchema.set("autoIndex", process.env.Node_Env != "production");
 expenseSchema.plugin(uniqueValidator);
 
-module.exports = mongoose.model("Expense", expenseSchema);
+module.exports = rc;

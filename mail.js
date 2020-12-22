@@ -339,7 +339,6 @@ async function sendNote(note, expense) {
   }
 
   html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama&#174; - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
-  console.log(html);
 
   try {
     const accessToken = await oauth2Client.getAccessToken();
@@ -537,7 +536,6 @@ async function sendQaqc(item) {
     html += `<a href="https://posclaims.torama.ng/#/home/qaqc-detail/${item._id}"> Click here to access the ticket </a> <br>`;
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama&#174; - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
-    // console.log(html);
 
     // if (hostname.includes("torama")) {
     toEmail = "qaqc@torama.ng";

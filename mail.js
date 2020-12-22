@@ -421,6 +421,8 @@ async function sendQaNote(note, item) {
     html += `<img src="${note.image}" alt="note image" width="300" >`;
   }
 
+  html += `<a href="https://posclaims.torama.ng/#/home/qaqc/${item._id}"> Click here to access the ticket </a> <br>`;
+
   html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
 
   if (hostname.includes("torama")) {
@@ -532,7 +534,7 @@ async function sendQaqc(item) {
         html += `<p>${item.text}</p>`;
       });
     }
-    html += `<a href="https://posclaims.torama.ng/#/home/qaqc"> Click here to access the app </a> <br>`;
+    html += `<a href="https://posclaims.torama.ng/#/home/qaqc/${item._id}"> Click here to access the ticket </a> <br>`;
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama&#174; - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
     // console.log(html);

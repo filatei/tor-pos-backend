@@ -408,6 +408,20 @@ async function sendQaNote(note, item) {
   let format1 = "DD-MM-YYYY hh:mm:ss";
   let date;
   date = moment(item.createdAt).format(format1);
+  let link;
+
+  if (hostname.includes("torama")) {
+    toEmail = "qaqc@torama.ng";
+    notesEmail = userEmail;
+    creatorEmail = itemCreator.email;
+    link = `https://posclaims.torama.ng/#/home/qaqc-detail/${item._id}`;
+  } else {
+    toEmail = null;
+    notesEmail = user.Email;
+    creatorEmail = null;
+    link = `http://localhost:8100/#/home/qaqc-detail/${item._id}`;
+    return;
+  }
   let logo = "https://api.torama.ng/uploads/productimages/fidologo.png";
 
   let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
@@ -420,20 +434,10 @@ async function sendQaNote(note, item) {
     html += `<img src="${note.image}" alt="note image" width="300" >`;
   }
 
-  html += `<a href="https://posclaims.torama.ng/#/home/qaqc-detail/${item._id}"> Click here to access the ticket </a> <br>`;
+  html += `<a href="${link}"> Click here to access the ticket </a> <br>`;
 
   html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
 
-  if (hostname.includes("torama")) {
-    toEmail = "qaqc@torama.ng";
-    notesEmail = userEmail;
-    creatorEmail = itemCreator.email;
-  } else {
-    toEmail = null;
-    notesEmail = user.Email;
-    creatorEmail = null;
-    return;
-  }
   try {
     const accessToken = await oauth2Client.getAccessToken();
     const smtpTransport = nodemailer.createTransport({
@@ -502,7 +506,22 @@ async function sendQaqc(item) {
 
     let format1 = "DD-MM-YYYY hh:mm:ss";
     let date;
+    let link;
     date = moment(item.createdAt).format(format1);
+
+    if (hostname.includes("torama")) {
+      toEmail = "qaqc@torama.ng";
+      notesEmail = userEmail;
+      creatorEmail = itemCreator.email;
+      link = `https://posclaims.torama.ng/#/home/qaqc-detail/${item._id}`;
+    } else {
+      toEmail = null;
+      notesEmail = user.Email;
+      creatorEmail = null;
+      link = `http://localhost:8100/#/home/qaqc-detail/${item._id}`;
+      return;
+    }
+
     let logo = "https://api.torama.ng/uploads/productimages/fidologo.png";
 
     let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
@@ -533,20 +552,9 @@ async function sendQaqc(item) {
         html += `<p>${item.text}</p>`;
       });
     }
-    html += `<a href="https://posclaims.torama.ng/#/home/qaqc-detail/${item._id}"> Click here to access the ticket </a> <br>`;
+    html += `<a href="${link}"> Click here to access the ticket </a> <br>`;
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama&#174; - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
-
-    // if (hostname.includes("torama")) {
-    toEmail = "qaqc@torama.ng";
-    notesEmail = userEmail;
-    creatorEmail = itemCreator.email;
-    // } else {
-    //   toEmail = null;
-    //   notesEmail = user.Email;
-    //   creatorEmail = null;
-    //   return;
-    // }
 
     const accessToken = await oauth2Client.getAccessToken();
     const smtpTransport = nodemailer.createTransport({

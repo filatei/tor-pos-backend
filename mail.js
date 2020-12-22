@@ -413,7 +413,7 @@ async function sendQaNote(note, item) {
 
   let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
                 ${date}</p><h2>Expense Status: ${status}</h2><p> Hi ${userName},</p>`;
-  html += `<p>New ote for QA item #${itemId} </p><p>Author: ${author}</p> <p>Site: ${location}</p> <p>Item: ${item.itemName}</p> <p>Category: ${item.category}</p> <p>Observation: ${item.observation}</p> <p>Reference: ${item.refRange}</p>`;
+  html += `<p>New note for QA item #${itemId} </p><p>Author: ${author}</p> <p>Site: ${location}</p> <p>Item: ${item.itemName}</p> <p>Category: ${item.category}</p> <p>Observation: ${item.observation}</p> <p>Reference: ${item.refRange}</p>`;
 
   html += `<p> Note: ${note.text} </p> `;
 

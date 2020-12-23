@@ -234,7 +234,9 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
   let records;
   const result = await Expense.aggregate([
     { $match: { $text: { $search: searchTerm } } },
-  ]).sort({ createdAt: -1 });
+  ])
+    .sort({ createdAt: -1 })
+    .limit(200);
 
   if (result) return res.status(200).json({ expense: result });
   console.log(result);
@@ -244,6 +246,7 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
     .populate("vendor")
     .populate("creator")
     .populate("updater")
+    .limit(200)
     .then((record) => {
       if (record) {
         console.log(record);

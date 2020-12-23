@@ -67,6 +67,39 @@ router.post("", checkAuth, function (req, res, next) {
     });
 });
 
+router.put("/expenseAcct/:id", checkAuth, async (req, res, next) => {
+  const alloweds = process.env.STOREALLOWEDS;
+  if (!alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, "Not allowed to create Inventory");
+    return res.status(500).json({ message: "Not allowed to create inventory" });
+  }
+
+  const { expenseAccount } = req.body;
+  console.log(expenseAccount, "expenseAcct");
+
+  const id = req.params.id;
+  const updater = req.userData.userId;
+
+  Expense.updateOne(
+    { _id: req.params.id },
+    { expenseAccount: expenseAccount, updater }
+  )
+    .then((result) => {
+      if (result.n > 0) {
+        res
+          .status(200)
+          .json({ message: "Update successful!", expense: result });
+      } else {
+        res.status(401).json({ message: "Not authorized!" });
+      }
+    })
+    .catch((error) => {
+      res.status(500).json({
+        message: "Couldn't update expense! " + error,
+      });
+    });
+});
+
 router.put("/:id", checkAuth, async (req, res, next) => {
   const alloweds = process.env.STOREALLOWEDS;
   if (!alloweds.includes(req.userData.email)) {

@@ -211,7 +211,7 @@ router.get("/mail/mailImprest", checkAuth, async (req, res, next) => {
   );
   const result = await Expense.find({
     createdAt: { $gte: startOfToday },
-    category: "Daily Imprest",
+    expenseAccount: "Daily Imprest",
   }).sort({ createdAt: -1 });
   // mail result
   console.log(result);

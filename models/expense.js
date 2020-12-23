@@ -31,6 +31,7 @@ const expenseSchema = mongoose.Schema(
     status: { type: String },
     approvalComment: { type: String },
     category: { type: String },
+    expenseAccount: { type: String },
 
     payment: {},
     payHistory: [
@@ -58,7 +59,6 @@ const expenseSchema = mongoose.Schema(
 expenseSchema.plugin(AutoIncrement, { inc_field: "expense_id" });
 
 expenseSchema.index({ "$**": "text" });
-// expenseSchema.index({ default: { mappings: { dynamic: true } } });
 
 const rc = mongoose.model("Expense", expenseSchema);
 rc.createIndexes();

@@ -596,4 +596,102 @@ async function sendQaqc(item) {
   }
 }
 
-module.exports = { sendInventory, sendExpense, sendNote, sendQaNote, sendQaqc };
+async function sendImprest(item, user) {
+  try {
+    // some content
+
+    let subject = `Imprests Mailer`;
+    let userName = user.name;
+    let userEmail = user.email;
+    let creatorEmail;
+
+    let toEmail;
+
+    let format1 = "DD-MM-YYYY hh:mm:ss";
+    let date;
+    let link;
+    let imprest;
+    let amountApproved = 0;
+    let amountUnApproved = 0;
+    date = moment(new Date()).format(format1);
+    const tableBegin =
+      "<table><tr><th>Date</th><th>Site</th><th>Amount</th><th>Status</th></tr>";
+    item.forEach((exp) => {
+      imprest += `<tr><td>${exp.createdAt}</td><td>${exp.site}</td> 
+      <td>${exp.txn_amount}</td><td>${exp.status}</td> </tr>`;
+      if (exp.status === "APPROVED") amountApproved += +exp.txn_amount;
+      if (exp.status !== "APPROVED") amountUnApproved += +exp.txn_amount;
+    });
+    const tableEnd = "</table>";
+    const table = tableBegin + imprest + tableEnd;
+
+    let logo = "https://api.torama.ng/uploads/productimages/fidologo.png";
+
+    let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
+                ${date}</p>
+                <p> Hi ${userName},</p>`;
+    html += `<p>Here is list of today's imprest </p> ${table} `;
+    html += `<p>Approved Amount:  <b> ₦ ${amountApproved.toLocaleString()} </b> </p> `;
+    html += `<p>UNApproved Amount:  <b> ₦ ${amountUnApproved.toLocaleString()} </b> </p> `;
+
+    html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
+    console.log(html);
+
+    if (hostname.includes("torama")) {
+      toEmail = "expenses@torama.ng";
+      creatorEmail = userEmail;
+      link = `https://posclaims.torama.ng/#/home/qaqc-detail/${item._id}`;
+    } else {
+      toEmail = null;
+      creatorEmail = null;
+      link = `http://localhost:8100/#/home/qaqc-detail/${item._id}`;
+      return;
+    }
+    const accessToken = await oauth2Client.getAccessToken();
+    const smtpTransport = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        type: "OAuth2",
+        user: process.env.tormail,
+        clientId: tokens.clientID,
+        clientSecret: tokens.clientSecret,
+        refreshToken: tokens.refresh_token,
+        accessToken: accessToken,
+        pool: true,
+      },
+    });
+
+    const mailOptions = {
+      from: `ToramaImprest ${process.env.tormail}`,
+      to: creatorEmail,
+      cc: toEmail,
+      subject: subject,
+      generateTextFromHTML: true,
+      html: html,
+    };
+
+    // send mail
+    smtpTransport.sendMail(mailOptions, (error, response) => {
+      let result;
+      if (error) {
+        console.log(error, "error in  mailer");
+        result = false;
+      } else {
+        result = true;
+      }
+      smtpTransport.close();
+      return result;
+    });
+  } catch (err) {
+    console.log(err, "error in imprest mailer");
+  }
+}
+
+module.exports = {
+  sendInventory,
+  sendExpense,
+  sendNote,
+  sendQaNote,
+  sendQaqc,
+  sendImprest,
+};

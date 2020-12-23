@@ -189,6 +189,37 @@ router.get("", checkAuth, (req, res, next) => {
   });
 });
 
+router.get("/mail/mailImprest", checkAuth, async (req, res, next) => {
+  const alloweds = process.env.ALLOWEDS;
+
+  if (!alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, "Not allowed to see Receipts");
+    return res.status(500).json({ message: "Not allowed" });
+  }
+  const userName = req.userData.name;
+  const userEmail = req.userData.email;
+
+  const { searchTerm } = req.query;
+  console.log(req.query, " req-query");
+  // get array
+  let records;
+  const now = new Date();
+  const startOfToday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate()
+  );
+  const result = await Expense.find({
+    createdAt: { $gte: startOfToday },
+    category: "Daily Imprest",
+  }).sort({ createdAt: -1 });
+  // mail result
+  console.log(result);
+  await Mail.sendImprest(result, { name: userName, email: userEmail });
+  if (result) return res.status(200).json({ expense: result });
+  console.log(result);
+});
+
 router.get("/getByText", checkAuth, async (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
 
@@ -203,7 +234,7 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
   let records;
   const result = await Expense.aggregate([
     { $match: { $text: { $search: searchTerm } } },
-  ]);
+  ]).sort({ createdAt: -1 });
 
   if (result) return res.status(200).json({ expense: result });
   console.log(result);

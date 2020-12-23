@@ -610,17 +610,21 @@ async function sendImprest(item, user) {
     let format1 = "DD-MM-YYYY hh:mm:ss";
     let date;
     let link;
-    let imprest;
+    let imprest = "";
     let amountApproved = 0;
     let amountUnApproved = 0;
     date = moment(new Date()).format(format1);
     const tableBegin =
-      "<table><tr><th>Date</th><th>Site</th><th>Amount</th><th>Status</th></tr>";
+      "<table style='margin-left: auto; margin-right: auto'><tr><th>Site</th><th>Amount</th><th>Status</th><th>Date</th></tr>";
     item.forEach((exp) => {
-      imprest += `<tr><td>${exp.createdAt}</td><td>${exp.site}</td> 
-      <td>${exp.txn_amount}</td><td>${exp.status}</td> </tr>`;
-      if (exp.status === "APPROVED") amountApproved += +exp.txn_amount;
-      if (exp.status !== "APPROVED") amountUnApproved += +exp.txn_amount;
+      if (exp) {
+        imprest += `<tr> <td>${exp.site}</td>
+          <td>${exp.txn_amount.toLocaleString()}</td><td>${
+          exp.status
+        }</td><td>${exp.createdAt}</td> </tr>`;
+        if (exp.status === "APPROVED") amountApproved += +exp.txn_amount;
+        if (exp.status !== "APPROVED") amountUnApproved += +exp.txn_amount;
+      }
     });
     const tableEnd = "</table>";
     const table = tableBegin + imprest + tableEnd;

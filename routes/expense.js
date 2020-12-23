@@ -214,7 +214,7 @@ router.get("/mail/mailImprest", checkAuth, async (req, res, next) => {
     expenseAccount: "Daily Imprest",
   }).sort({ createdAt: -1 });
   // mail result
-  console.log(result);
+  // console.log(result);
   await Mail.sendImprest(result, { name: userName, email: userEmail });
   if (result) return res.status(200).json({ expense: result });
   console.log(result);

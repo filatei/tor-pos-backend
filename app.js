@@ -37,6 +37,7 @@ const expenseRoutes = require("./routes/expense");
 const shopsettingsRoutes = require("./routes/shopsettings");
 const awardsRoutes = require("./routes/award");
 const qaqcRoutes = require("./routes/qaqc");
+const cashdepositRoutes = require("./routes/cashdeposit");
 
 //let connectStr =  'mongodb://localhost:27017/torposdb';
 
@@ -155,5 +156,6 @@ app.use("/api/expense", expenseRoutes);
 app.use("/api/shopsettings", shopsettingsRoutes);
 app.use("/api/awards", awardsRoutes);
 app.use("/api/qaqc", qaqcRoutes);
+app.use("/api/cashdeposit", cashdepositRoutes);
 
 module.exports = app;

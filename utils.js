@@ -150,8 +150,66 @@ const storage3 = multer.diskStorage({
   },
 });
 
+const storage4 = multer.diskStorage({
+  destination: (req, file, cb) => {
+    userid = req.userData.userId;
+    const myDir = "uploads/cashdeposit/" + userid + "/";
+    try {
+      if (!fs.existsSync(myDir)) {
+        fs.mkdirSync(myDir, { recursive: true });
+      }
+    } catch (err) {
+      throw err;
+    }
+    cb(null, myDir);
+  },
+  filename: (req, file, cb) => {
+    console.log(path.extname(file.originalname));
+    let fileName;
+    if (path.extname(file.originalname)) {
+      fileName =
+        req.userData.userId +
+        "-" +
+        new Date().getTime() +
+        file.originalname.toLowerCase(file.originalname).split(" ").join("-") +
+        path.extname(file.originalname);
+      console.log(fileName);
+    } else {
+      fileName =
+        req.userData.userId +
+        "-" +
+        new Date().getTime() +
+        file.originalname.toLowerCase().split(" ").join("-") +
+        ".png";
+      console.log(fileName);
+    }
+
+    cb(null, fileName);
+  },
+});
+
 var upload3 = multer({
   storage: storage3,
+  limits: {
+    fileSize: 1024 * 1024 * 1,
+  },
+  fileFilter: (req, file, cb) => {
+    // console.log(file.mimetype)
+    if (
+      file.mimetype == "image/png" ||
+      file.mimetype == "image/jpeg" ||
+      file.mimetype == "image/jpg"
+    ) {
+      cb(null, true);
+    } else {
+      cb(null, false);
+      return cb(new Error("Only .png or .jpg format allowed!"));
+    }
+  },
+});
+
+var upload4 = multer({
+  storage: storage4,
   limits: {
     fileSize: 1024 * 1024 * 1,
   },
@@ -394,6 +452,7 @@ module.exports = {
   upload,
   upload2,
   upload3,
+  upload4,
   logIncident,
   dayAgg,
   weekAgg,

@@ -183,6 +183,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
 router.get("", checkAuth, (req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
+  const mgr = req.query.mgr;
   const userEmail = req.userData.email;
 
   const directors = process.env.DIRECTORS;
@@ -190,7 +191,7 @@ router.get("", checkAuth, (req, res, next) => {
 
   async function userQuery() {
     user = await User.find({ email: userEmail });
-    if (directors.includes(userEmail)) {
+    if (directors.includes(userEmail) || mgr) {
       expenseQuery = Expense.find()
         .sort({ createdAt: -1 })
         .populate("vendor")

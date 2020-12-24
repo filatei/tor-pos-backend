@@ -81,7 +81,7 @@ async function sendInventory(inventory) {
   html += `<table style="margin-left:auto; margin-right:auto"><tr style="text-align:left;"><td><h3>Inventory summary</h3></td></tr><tr style="text-align:left;"><td>Status:</td><td> </td></tr><tr style="text-align:left;"><td> Subtotal:</td><td> ${name} ${qty} ${store} </td></tr>
     <tr style="text-align:left;"> <td>Remarks: ${remarks} </td><td> </td></tr> <tr style="text-align:left;"><td> </td><td></td></tr></table>`;
 
-  html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
+  html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama<sup>&#174;</sup> - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
 
   // let odia = 'odia.gabriel@gtsng.com';
   let odia;
@@ -233,7 +233,7 @@ async function sendExpense(expense) {
   }
   html += `Click <a href="${url}/#/home/expense-detail?id=${expense._id}"> Expense Detail </a> to see expense ticket`;
 
-  html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
+  html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama<sup>&#174;</sup> - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
 
   try {
     const accessToken = await oauth2Client.getAccessToken();
@@ -344,7 +344,7 @@ async function sendNote(note, expense) {
     html += `<img src="${note.image}" alt="note image" width="300" >`;
   }
 
-  html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama&#174; - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
+  html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
 
   try {
     const accessToken = await oauth2Client.getAccessToken();
@@ -442,7 +442,7 @@ async function sendQaNote(note, item) {
 
   html += `<a href="${link}"> Click here to access the ticket </a> <br>`;
 
-  html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
+  html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama<sup>&#174;</sup> - All rights reserved.<sup>&#169;</sup> ${new Date().getFullYear()}</p> </body></html>`;
 
   try {
     const accessToken = await oauth2Client.getAccessToken();
@@ -560,7 +560,7 @@ async function sendQaqc(item) {
     }
     html += `<a href="${link}"> Click here to access the ticket </a> <br>`;
 
-    html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama&#174; - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
+    html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
 
     const accessToken = await oauth2Client.getAccessToken();
     const smtpTransport = nodemailer.createTransport({
@@ -644,7 +644,7 @@ async function sendImprest(item, user) {
     html += `<p>Approved Amount:  <b> ₦ ${amountApproved.toLocaleString()} </b> </p> `;
     html += `<p>UNApproved Amount:  <b> ₦ ${amountUnApproved.toLocaleString()} </b> </p> `;
 
-    html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
+    html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${new Date().getFullYear()}</p> </body></html>`;
     console.log(html);
 
     if (hostname.includes("torama")) {

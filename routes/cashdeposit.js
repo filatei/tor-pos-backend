@@ -91,8 +91,10 @@ router.post(
 
     cashdeposit
       .save()
-      .then((result) => {
+      .then(async (result) => {
         console.log(result);
+        const mailStat = await Mail.sendCashdeposit(result, req.userData);
+
         res.status(201).json({
           message: "Cashdeposit added successfully",
           cashdeposit: { ...result, id: result._id },

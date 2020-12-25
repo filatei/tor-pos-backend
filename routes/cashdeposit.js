@@ -139,10 +139,16 @@ router.put("/:id", checkAuth, async (req, res, next) => {
 });
 
 router.put("/status/:id", checkAuth, async (req, res, next) => {
-  const alloweds = process.env.ALLOWEDS;
+  //  all directors are allowed to update status
+  const alloweds = process.env.DIRECTORS;
   if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to create Inventory");
-    return res.status(500).json({ message: "Not allowed to create inventory" });
+    logIncident(
+      req.userData.email,
+      "Not allowed to update cash deposit status"
+    );
+    return res
+      .status(500)
+      .json({ message: "Not allowed to update cash deposit status" });
   }
 
   try {

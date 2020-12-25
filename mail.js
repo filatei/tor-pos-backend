@@ -722,9 +722,11 @@ async function sendCashdeposit(item, user) {
     let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
                 ${date}</p>
                 <p> Hi ${creator.name},</p>`;
-    html += `<p>Amount${amount.toLocaleString()}  </p> <p>Status: <b style="color:red">${
+    html += `<p>Amount: ${amount.toLocaleString()}  </p> <p>Status: <b style="color:red">${
       item.status
-    } </b> </p><p> Site: ${item.site}</p> <p>Paid by: ${item.depositor}</p>`;
+    } </b> </p><p> Site: ${item.site}</p> <p>Deposited by: ${
+      item.depositor
+    }</p>`;
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${new Date().getFullYear()}</p> </body></html>`;
     console.log(html, creatorEmail);

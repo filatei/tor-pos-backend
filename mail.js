@@ -390,8 +390,11 @@ async function sendNote(note, expense) {
 
 async function sendQaNote(note, item) {
   let author;
-  if (note && note.author) {
+  let userEmail;
+  if (note.author) {
     author = note.author;
+    const noteUser = await User.find({ name: author });
+    userEmail = noteUser[0].email;
   }
 
   // some content
@@ -402,12 +405,11 @@ async function sendQaNote(note, item) {
   let status = item.status;
   let location = item.location;
   let userName = author;
-  let user = await User.find({ name: author });
-  let itemCreator = await User.findById(item.creator);
-
-  let userEmail = user.email;
+  let user = await User.findById(item.creator);
+  console.log(item, user);
+  let creatorEmail = user.email;
+  let originalAuthor = user.name;
   let notesEmail;
-  let creatorEmail;
 
   let toEmail;
 
@@ -416,23 +418,11 @@ async function sendQaNote(note, item) {
   date = moment(item.createdAt).format(format1);
   let link;
 
-  if (hostname.includes("torama")) {
-    toEmail = "qaqc@torama.ng";
-    notesEmail = userEmail;
-    creatorEmail = itemCreator.email;
-    link = `https://posclaims.torama.ng/#/home/qaqc-detail/${item._id}`;
-  } else {
-    toEmail = null;
-    notesEmail = user.Email;
-    creatorEmail = null;
-    link = `http://localhost:8100/#/home/qaqc-detail/${item._id}`;
-    return;
-  }
   let logo = "https://api.torama.ng/uploads/productimages/fidologo.png";
 
   let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
-                ${date}</p><h2>Expense Status: ${status}</h2><p> Hi ${userName},</p>`;
-  html += `<p>New note for QA item #${itemId} </p><p>Author: ${author}</p> <p>Site: ${location}</p> <p>Item: ${item.itemName}</p> <p>Category: ${item.category}</p> <p>Observation: ${item.observation}</p> <p>Reference: ${item.refRange}</p>`;
+                ${date}</p><h2>QA Status: ${status}</h2><p> Updater: ${userName} - ${userEmail},</p>`;
+  html += `<p>New note for QA item #${itemId} </p><p> original Author: ${originalAuthor} - ${creatorEmail}</p> <p>Site: ${location}</p> <p>Item: ${item.itemName}</p> <p>Category: ${item.category}</p> <p>Observation: ${item.observation}</p> <p>Reference: ${item.refRange}</p>`;
 
   html += `<p> Note: ${note.text} </p> `;
 
@@ -443,7 +433,20 @@ async function sendQaNote(note, item) {
   html += `<a href="${link}"> Click here to access the ticket </a> <br>`;
 
   html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama<sup>&#174;</sup> - All rights reserved.<sup>&#169;</sup> ${new Date().getFullYear()}</p> </body></html>`;
+  console.log(html);
 
+  if (hostname.includes("torama")) {
+    toEmail = "qaqc@torama.ng";
+    notesEmail = userEmail;
+    creatorEmail = creatorEmail;
+    link = `https://posclaims.torama.ng/#/home/qaqc-detail/${item._id}`;
+  } else {
+    toEmail = null;
+    notesEmail = user.Email;
+    creatorEmail = null;
+    link = `http://localhost:8100/#/home/qaqc-detail/${item._id}`;
+    return;
+  }
   try {
     const accessToken = await oauth2Client.getAccessToken();
     const smtpTransport = nodemailer.createTransport({

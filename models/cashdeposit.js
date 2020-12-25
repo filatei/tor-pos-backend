@@ -6,10 +6,10 @@ const cashdepositSchema = mongoose.Schema(
     creator: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     updater: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     image: { type: String },
-    payeeAcct: { type: String },
+    payeeAcct: { type: String, trim: true },
     depositor: { type: String, trim: true },
-    status: { type: String },
-    site: { type: String },
+    status: { type: String, enum: ["NOT SEEN", "SEEN"] },
+    site: { type: String, trim: true },
     amount: { type: Number },
   },
   {

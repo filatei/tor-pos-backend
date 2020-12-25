@@ -697,6 +697,85 @@ async function sendImprest(item, user) {
   }
 }
 
+async function sendCashdeposit(item, user) {
+  try {
+    // some content
+
+    let subject = `Cash Deposit Status`;
+    let userName = user.name;
+    let toEmail = user.email;
+    const creator = await User.findById(item.creator);
+    let creatorEmail = creator.email;
+    // console.log(creatorEmail, "creatorEmail");
+
+    let format1 = "DD-MM-YYYY hh:mm:ss";
+    let date;
+    let link;
+    let amount = item.amount;
+    date = moment(new Date()).format(format1);
+
+    let logo = "https://api.torama.ng/uploads/productimages/fidologo.png";
+
+    let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
+                ${date}</p>
+                <p> Hi ${creator.name},</p>`;
+    html += `<p>Amount </p> ${amount.toLocaleString()}  <b>${
+      item.status
+    } </b> <p> Site: ${item.site}</p> <p>Paid by: ${item.depositor}</p>`;
+
+    html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${new Date().getFullYear()}</p> </body></html>`;
+    // console.log(html, creatorEmail);
+
+    if (hostname.includes("torama")) {
+      toEmail = "expenses@torama.ng";
+
+      link = `https://posclaims.torama.ng/#/home/qaqc-detail/${item._id}`;
+    } else {
+      toEmail = null;
+      creatorEmail = null;
+      link = `http://localhost:8100/#/home/qaqc-detail/${item._id}`;
+      return;
+    }
+    const accessToken = await oauth2Client.getAccessToken();
+    const smtpTransport = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        type: "OAuth2",
+        user: process.env.tormail,
+        clientId: tokens.clientID,
+        clientSecret: tokens.clientSecret,
+        refreshToken: tokens.refresh_token,
+        accessToken: accessToken,
+        pool: true,
+      },
+    });
+
+    const mailOptions = {
+      from: `ToramaImprest ${process.env.tormail}`,
+      to: creatorEmail,
+      cc: toEmail,
+      subject: subject,
+      generateTextFromHTML: true,
+      html: html,
+    };
+
+    // send mail
+    smtpTransport.sendMail(mailOptions, (error, response) => {
+      let result;
+      if (error) {
+        console.log(error, "error in  mailer");
+        result = false;
+      } else {
+        result = true;
+      }
+      smtpTransport.close();
+      return result;
+    });
+  } catch (err) {
+    console.log(err, "error in imprest mailer");
+  }
+}
+
 module.exports = {
   sendInventory,
   sendExpense,
@@ -704,4 +783,5 @@ module.exports = {
   sendQaNote,
   sendQaqc,
   sendImprest,
+  sendCashdeposit,
 };

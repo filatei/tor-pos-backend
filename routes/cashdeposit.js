@@ -70,7 +70,7 @@ router.post(
 
     const creator = req.userData.userId;
     const cashdepositObj = {
-      status: "DRAFT",
+      status: "NOT SEEN",
       depositor,
       amount,
       site,
@@ -99,44 +99,31 @@ router.post(
 );
 
 router.put("/:id", checkAuth, async (req, res, next) => {
-  const alloweds = process.env.STOREALLOWEDS;
+  const alloweds = process.env.ALLOWEDS;
   if (!alloweds.includes(req.userData.email)) {
     logIncident(req.userData.email, "Not allowed to create Inventory");
     return res.status(500).json({ message: "Not allowed to create inventory" });
   }
 
   let cashdepositObj = req.body;
-  let status = cashdepositObj.status;
-  let mailStat;
-
-  async function isOpen() {
-    if (
-      status === "OPEN" ||
-      status === "APPROVED" ||
-      status === "PAID" ||
-      status === "DECLINED" ||
-      status === "PART-PAY"
-    ) {
-      //  send mail
-      mailStat = await Mail.sendCashdeposit(cashdepositObj);
-    }
-  }
-  isOpen()
-    .then((sm) => {
-      console.log("mailstat sent");
-    })
-    .catch((err) => {
-      console.log(err, "send err");
-    });
-
   const id = req.params.id;
   cashdepositObj._id = id;
+  let user = req.userData;
+  const updater = req.userData.userId;
+
+  const { status, payeeAcct, amount, depositor, site } = req.body;
+  cashObj = { status, payeeAcct, amount, depositor, site, updater };
+  let mailStat;
+
   cashdepositObj.updater = req.userData.userId;
   const cashdeposit = new Cashdeposit(cashdepositObj);
 
-  Cashdeposit.updateOne({ _id: req.params.id }, cashdeposit)
-    .then((result) => {
+  Cashdeposit.updateOne({ _id: id }, cashObj)
+    .then(async (result) => {
       if (result.n > 0) {
+        const updated = Cashdeposit.findById(id);
+        mailStat = await Mail.sendCashdeposit(updated, user);
+
         res
           .status(200)
           .json({ message: "Update successful!", cashdeposit: result });
@@ -149,6 +136,47 @@ router.put("/:id", checkAuth, async (req, res, next) => {
         message: "Couldn't update cashdeposit! " + error,
       });
     });
+});
+
+router.put("/status/:id", checkAuth, async (req, res, next) => {
+  const alloweds = process.env.ALLOWEDS;
+  if (!alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, "Not allowed to create Inventory");
+    return res.status(500).json({ message: "Not allowed to create inventory" });
+  }
+
+  try {
+    const { status } = req.body;
+    if (!status.trim()) {
+      return res.status(500).json({
+        message: "empty status ",
+      });
+    }
+    let mailStat;
+    const user = req.userData;
+
+    const cashdepositObj = await await Cashdeposit.findById(req.params.id);
+
+    cashdepositObj.status = status;
+    mailStat = await Mail.sendCashdeposit(cashdepositObj, user);
+    Cashdeposit.updateOne({ _id: req.params.id }, { status: status })
+      .then((result) => {
+        if (result.n > 0) {
+          res
+            .status(200)
+            .json({ message: "Update successful!", cashdeposit: result });
+        } else {
+          res.status(401).json({ message: "Not authorized!" });
+        }
+      })
+      .catch((error) => {
+        res.status(500).json({
+          message: "Couldn't update cashdeposit! " + error,
+        });
+      });
+  } catch (err) {
+    res.status(500).json({ message: "Error in code!" + err });
+  }
 });
 
 router.delete("/:id", checkAuth, (req, res, next) => {
@@ -196,7 +224,8 @@ router.get("", checkAuth, async (req, res, next) => {
   res.json({ cashdeposit: cash });
 });
 
-router.get("/:id", (req, res, next) => {
+router.get("/:id", async (req, res, next) => {
+  console.log(req.params.id);
   Cashdeposit.findById(req.params.id)
     .populate("creator")
     .then((cashdeposit) => {

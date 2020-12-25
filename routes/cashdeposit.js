@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const User = require("../models/user");
 const Utils = require("../utils");
+const { validationResult } = require("express-validator");
 
 const Cashdeposit = require("../models/cashdeposit");
 const Stockitem = require("../models/stockitem");
@@ -48,6 +49,13 @@ router.post(
       return res
         .status(500)
         .json({ message: "Not allowed to create cash deposit" });
+    }
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res
+        .status(422)
+        .json({ message: "Invalid inputs passed, please check your data" });
     }
 
     let myPath = null;

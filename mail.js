@@ -704,7 +704,13 @@ async function sendCashdeposit(item, user) {
   try {
     // some content
 
-    let subject = `Cash Deposit Status ${item.status}`;
+    let subject;
+    if (item.status === "SEEN") {
+      subject = `Cash Deposit ${item.status}`;
+    } else {
+      subject = `Cash Deposit Made`;
+    }
+
     let userName = user.name;
     let toEmail = user.email;
     const creator = await User.findById(item.creator);
@@ -729,7 +735,7 @@ async function sendCashdeposit(item, user) {
     }</p>`;
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${new Date().getFullYear()}</p> </body></html>`;
-    console.log(html, creatorEmail);
+    console.log(html, subject);
 
     if (hostname.includes("torama")) {
       toEmail = "expenses@torama.ng";

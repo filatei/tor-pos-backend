@@ -42,7 +42,7 @@ router.post(
   checkAuth,
   Utils.upload4.single("image"),
   async (req, res, next) => {
-    const alloweds = process.env.ALLOWEDS;
+    const alloweds = process.env.MANAGERS;
 
     if (!alloweds.includes(req.userData.email)) {
       logIncident(req.userData.email, "Not allowed to create cash deposit");

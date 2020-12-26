@@ -58,53 +58,56 @@ router.post(
         .json({ message: "Invalid inputs passed, please check your data" });
     }
 
-    let myPath = null;
-    const file = req.file;
-    let fileName;
-    if (file) {
-      fileName =
-        "uploads/cashdeposit/" + req.userData.userId + "/" + file.filename;
-      if (hostname.includes("torama.ng")) {
-        url = "https://api.torama.ng";
-      } else {
-        url = req.protocol + "://" + req.get("host");
+    try {
+      let myPath = null;
+      const file = req.file;
+      let fileName;
+      if (file) {
+        fileName =
+          "uploads/cashdeposit/" + req.userData.userId + "/" + file.filename;
+        if (hostname.includes("torama.ng")) {
+          url = "https://api.torama.ng";
+        } else {
+          url = req.protocol + "://" + req.get("host");
+        }
+
+        myPath = url + "/" + fileName;
       }
 
-      myPath = url + "/" + fileName;
-    }
-    console.log(req.file);
+      const { depositor, amount, site, payeeAcct } = req.body;
 
-    const { depositor, amount, site, payeeAcct } = req.body;
+      const creator = req.userData.userId;
+      const cashdepositObj = {
+        status: "NOT SEEN",
+        depositor,
+        amount,
+        site,
+        payeeAcct,
+        creator,
+        image: myPath,
+      };
 
-    const creator = req.userData.userId;
-    const cashdepositObj = {
-      status: "NOT SEEN",
-      depositor,
-      amount,
-      site,
-      payeeAcct,
-      creator,
-      image: myPath,
-    };
+      const cashdeposit = new Cashdeposit(cashdepositObj);
 
-    const cashdeposit = new Cashdeposit(cashdepositObj);
-
-    cashdeposit
-      .save()
-      .then(async (result) => {
-        console.log(result);
-        const mailStat = await Mail.sendCashdeposit(result, req.userData);
-
-        res.status(201).json({
-          message: "Cashdeposit added successfully",
-          cashdeposit: { ...result, id: result._id },
+      cashdeposit
+        .save()
+        .then(async (result) => {
+          const mailStat = await Mail.sendCashdeposit(result, req.userData);
+          res.status(201).json({
+            message: "Cashdeposit added successfully",
+            cashdeposit: { ...result, id: result._id },
+          });
+        })
+        .catch((error) => {
+          res.status(500).json({
+            message: "Creating a cashdeposit failed! " + error,
+          });
         });
-      })
-      .catch((error) => {
-        res.status(500).json({
-          message: "Creating a cashdeposit failed! " + error,
-        });
+    } catch (err) {
+      res.status(500).json({
+        message: "Creating a cashdeposit failed! " + err,
       });
+    }
   }
 );
 

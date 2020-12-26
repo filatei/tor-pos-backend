@@ -756,7 +756,7 @@ async function sendCashdeposit(item, user) {
     });
 
     const mailOptions = {
-      from: `ToramaImprest ${process.env.tormail}`,
+      from: `ToramaCash ${process.env.tormail}`,
       to: creatorEmail,
       cc: toEmail,
       subject: subject,

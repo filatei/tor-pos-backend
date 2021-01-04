@@ -129,13 +129,23 @@ async function sendInventory(inventory) {
   }
 }
 
-async function sendExpense(expense) {
+async function sendExpense(expense, userId = null) {
   let vendor;
   let payHistory = [];
   if (expense && expense.vendor) {
     vendor = expense.vendor.name;
     payHistory = expense.payHistory;
   }
+  let currentUser;
+  let ccEmail;
+  let updater;
+
+  if (userId) {
+    currentUser = await User.findById(userId);
+    ccEmail = currentUser.email;
+    updater = currentUser.name;
+  }
+  console.log("ccEmail", ccEmail);
 
   // some content
   let expenseId = expense.expense_id;
@@ -174,12 +184,16 @@ async function sendExpense(expense) {
 
   let toEmail = "";
   let url = "";
+  let bcc;
 
   if (hostname.includes("torama")) {
-    toEmail = "expenses@torama.ng";
+    bcc = "expenses@torama.ng";
     url = "https://posclaims.torama.ng";
   } else {
-    toEmail = "test@torama.ng";
+    toEmail = null;
+    userEmail = null;
+    ccEmail = null;
+    bcc = null;
     url = "http://localhost:8100";
   }
 
@@ -219,7 +233,7 @@ async function sendExpense(expense) {
 
   let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
                 ${date}</p><h2>EXPENSE ${status}</h2><p> Hi ${userName},</p>`;
-  html += `<p>The Status of your Expense Request # ${expenseId} for ${curr} ${total.toLocaleString()}  is now ${status}</p><p>Vendor: ${vendor}</p> <p>Factory Location: ${location}</p>
+  html += `<p>The Status of your Expense Request # ${expenseId} for ${curr} ${total.toLocaleString()}  is now ${status}</p><p>Updater: ${updater}</p><p>Vendor: ${vendor}</p> <p>Factory Location: ${location}</p>
   <p>Category: ${category}</p> <p>Expense Account: ${expenseAccount}</p>`;
   html += `Product: ${product}`;
   html += `<table style="margin-left:auto; margin-right:auto"><tr style="text-align:left;"><td><h3>Expense summary</h3></td></tr><tr style="text-align:left;"><td>Status:</td><td> ${status}</td></tr><tr style="text-align:left;"><td> Subtotal:</td><td> ${curr} ${total.toLocaleString()} </td></tr>
@@ -235,6 +249,7 @@ async function sendExpense(expense) {
 
   html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama<sup>&#174;</sup> - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
 
+  console.log(html, ccEmail, userName);
   try {
     const accessToken = await oauth2Client.getAccessToken();
     const smtpTransport = nodemailer.createTransport({
@@ -252,9 +267,9 @@ async function sendExpense(expense) {
 
     const mailOptions = {
       from: `ShopTorama ${process.env.tormail}`,
-      to: userEmail,
-      cc: toEmail,
-      bcc: process.env.tormail,
+      to: userEmail, // creator email
+      cc: ccEmail, // current User Email
+      bcc: bcc, // mgt email
       subject: subject,
       generateTextFromHTML: true,
       html: html,
@@ -282,7 +297,7 @@ async function sendNote(note, expense) {
   if (note && note.author) {
     author = note.author;
   }
-  console.log("note author in mail sendnote ", author);
+  // console.log("note author in mail sendnote ", author);
 
   // some content
   let expenseId = expense.expense_id;
@@ -297,22 +312,11 @@ async function sendNote(note, expense) {
   let user = await User.find({ name: note.author });
   let expenseCreator = await User.findById(expense.creator);
   let userName = author;
-  let userEmail = user.email;
+  let userEmail = user[0].email;
   let notesEmail;
   let creatorEmail;
 
   let toEmail;
-
-  if (hostname.includes("torama")) {
-    toEmail = "expenses@torama.ng";
-    notesEmail = user.email;
-    creatorEmail = expenseCreator.email;
-  } else {
-    toEmail = null;
-    notesEmail = user.Email;
-    creatorEmail = null;
-    // return;
-  }
 
   let format1 = "DD-MM-YYYY hh:mm:ss";
   let date;
@@ -346,6 +350,16 @@ async function sendNote(note, expense) {
 
   html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
 
+  if (hostname.includes("torama")) {
+    toEmail = "expenses@torama.ng";
+    notesEmail = userEmail;
+    creatorEmail = expenseCreator.email;
+  } else {
+    toEmail = null;
+    notesEmail = null;
+    creatorEmail = null;
+    return;
+  }
   try {
     const accessToken = await oauth2Client.getAccessToken();
     const smtpTransport = nodemailer.createTransport({
@@ -442,7 +456,7 @@ async function sendQaNote(note, item) {
     link = `https://posclaims.torama.ng/#/home/qaqc-detail/${item._id}`;
   } else {
     toEmail = null;
-    notesEmail = user.Email;
+    notesEmail = null;
     creatorEmail = null;
     link = `http://localhost:8100/#/home/qaqc-detail/${item._id}`;
     return;
@@ -762,7 +776,7 @@ async function sendCashdeposit(item, user) {
     });
 
     const mailOptions = {
-      from: `ToramaCash ${process.env.tormail}`,
+      from: `ToramaDeposit ${process.env.tormail}`,
       to: creatorEmail,
       cc: toEmail,
       subject: subject,
@@ -787,6 +801,71 @@ async function sendCashdeposit(item, user) {
   }
 }
 
+const recUpdateAlert = async (user, rec_id) => {
+  try {
+    // some content
+    let subject = "Receipt update alert!!!";
+
+    let userName = user.name;
+    let userEmail = user.email;
+
+    let format1 = "DD-MM-YYYY hh:mm:ss";
+    let date;
+    date = moment(new Date()).format(format1);
+
+    let html = `<!DOCTYPE html><html><body style="text-align:center;"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
+                ${date}</p>
+                <p> ${userName} at ${userEmail} trying to update ${rec_id}</p>`;
+
+    html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${new Date().getFullYear()}</p> </body></html>`;
+    console.log(html, subject);
+
+    if (hostname.includes("torama")) {
+      toEmail = "expenses@torama.ng";
+    } else {
+      toEmail = null;
+      creatorEmail = null;
+      return;
+    }
+    const accessToken = await oauth2Client.getAccessToken();
+    const smtpTransport = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        type: "OAuth2",
+        user: process.env.tormail,
+        clientId: tokens.clientID,
+        clientSecret: tokens.clientSecret,
+        refreshToken: tokens.refresh_token,
+        accessToken: accessToken,
+        pool: true,
+      },
+    });
+
+    const mailOptions = {
+      from: `ToramaAlert ${process.env.tormail}`,
+      to: toEmail,
+      subject: subject,
+      generateTextFromHTML: true,
+      html: html,
+    };
+
+    // send mail
+    smtpTransport.sendMail(mailOptions, (error, response) => {
+      let result;
+      if (error) {
+        console.log(error, "error in  mailer");
+        result = false;
+      } else {
+        result = true;
+      }
+      smtpTransport.close();
+      return result;
+    });
+  } catch (err) {
+    console.log(err, "error in imprest mailer");
+  }
+};
+
 module.exports = {
   sendInventory,
   sendExpense,
@@ -795,4 +874,5 @@ module.exports = {
   sendQaqc,
   sendImprest,
   sendCashdeposit,
+  recUpdateAlert,
 };

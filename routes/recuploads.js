@@ -24,7 +24,8 @@ var sanitize = require("mongo-sanitize");
 const env = process.env.NODE_ENV || "development";
 
 const Utils = require("../utils");
-
+const Mail = require("../mail");
+const Summary = require("../summary/recsummary");
 function logIncident(email, description) {
   const logObj = new Accesslog({ email: email, description: description });
   logObj
@@ -51,8 +52,6 @@ router.post("", checkAuth, Utils.upload.any(), function (req, res, next) {
   }
   let customerName;
   let recObj = req.body;
-  // console.log('before ',recObj)
-  // convert to number what is number
   recObj.products = JSON.parse(recObj.products);
   recObj.products.map((p) => {
     p.qty = parseInt(p.qty + "");
@@ -73,7 +72,6 @@ router.post("", checkAuth, Utils.upload.any(), function (req, res, next) {
 
   recObj.creator = req.userData.userId;
 
-  // console.log(recObj)
   if (req.files) {
     let fileName;
     req.files.forEach((file) => {
@@ -92,10 +90,7 @@ router.post("", checkAuth, Utils.upload.any(), function (req, res, next) {
       }
     });
   }
-
-  // if (  recObj.driver && typeof recObj.driver != 'object') {
-  //   recObj.driver = JSON.parse(recObj.driver);
-  // }
+  console.log(recObj);
 
   try {
     recObj.driver = JSON.parse(recObj.driver);
@@ -105,14 +100,9 @@ router.post("", checkAuth, Utils.upload.any(), function (req, res, next) {
   }
 
   if (recObj.customer._id) {
-    // console.log( 'customer already be in db')
-    // store customer id and save claim
     recObj.customer = recObj.customer._id;
-
     saveReceipt(recObj);
   } else {
-    // console.log( 'customer may not  be in db')
-    // store customer name and return _id,  before save claim
     saveCustomer(recObj.customer);
   }
 
@@ -172,7 +162,7 @@ router.post("", checkAuth, Utils.upload.any(), function (req, res, next) {
   }
 });
 
-router.delete("/:id", checkAuth, (req, res, next) => {
+router.delete("/:id", checkAuth, async (req, res, next) => {
   if (!req.params.id) return res.status(401).json({ error: "empty id" });
   const alloweds = process.env.DELALLOWEDS;
 
@@ -220,13 +210,33 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   }
 });
 
-router.get("/summary", checkAuth, (req, res, next) => {
+router.get("/summary", checkAuth, async (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
 
   if (!alloweds.includes(req.userData.email)) {
     logIncident(req.userData.email, "Not allowed to see Receipts");
     return res.status(500).json({ message: "Not allowed" });
   }
+
+  try {
+    const { recSummary } = req.query;
+    if (recSummary) {
+      if (req.userData.role !== "ADMIN") {
+        return res.status(500).json({ message: "NOT ALLOWED" });
+      }
+      const aggData = await Summary.recAgg();
+      if (aggData) {
+        return res.status(200).json({ records: aggData });
+      } else {
+        return res
+          .status(500)
+          .json({ message: "Error with recUpload summary" });
+      }
+    }
+  } catch (err) {
+    return res.status(500).json({ message: "Error with recUpload summary" });
+  }
+
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
   const coyQuery = Recupload.find()
@@ -460,7 +470,7 @@ router.get("/:id", checkAuth, (req, res, next) => {
     });
 });
 
-router.put("/:id", checkAuth, (req, res, next) => {
+router.put("/:id", checkAuth, async (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
   if (!alloweds.includes(req.userData.email)) {
     logIncident(req.userData.email, "Not allowed to update Receipts");
@@ -484,9 +494,16 @@ router.put("/:id", checkAuth, (req, res, next) => {
       return obj;
     }, {});
 
-  // console.log(recObj)
-
+  console.log(recObj);
   recObj._id = sanitize(req.params.id);
+
+  // access control
+  let user = await User.findById(req.userData.userId);
+  if (recObj.creator !== user.email || req.userData.role !== "ADMIN") {
+    // send mail
+    const mstat = Mail.recUpdateAlert(user, recObj.rec_id);
+    return res.status(500).json({ message: "not allowed" });
+  }
 
   // userData  was added to checkAuth middleware and passed along
   recObj.updater = req.userData.userId;

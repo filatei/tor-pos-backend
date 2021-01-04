@@ -1,22 +1,21 @@
-const mongoose = require('mongoose');
-uniqueValidator = require('mongoose-unique-validator');
+const mongoose = require("mongoose");
+uniqueValidator = require("mongoose-unique-validator");
 
-const terminalSchema = mongoose.Schema({
-    terminal_id: {type: String, required: true},
-    creator: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
-    bank: {type: String}, 
-    terminal_location: {type: String},
-    company: {type: String},
-    sn: {type: String, required: true, unique: true},
-},
-{
+const terminalSchema = mongoose.Schema(
+  {
+    terminal_id: { type: String, required: true },
+    creator: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    bank: { type: String, trim: true, uppercase: true },
+    terminal_location: { type: String, uppercase: true, trim: true },
+    company: { type: String, uppercase: true, trim: true },
+    sn: { type: String, required: true, unique: true },
+  },
+  {
     timestamps: true,
-    strict: true
-});
+    strict: true,
+  }
+);
 
-terminalSchema.plugin( uniqueValidator );
+terminalSchema.plugin(uniqueValidator);
 
-module.exports = mongoose.model('Terminal', terminalSchema)
-
-
-
+module.exports = mongoose.model("Terminal", terminalSchema);

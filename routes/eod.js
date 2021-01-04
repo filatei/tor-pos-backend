@@ -47,30 +47,6 @@ router.get("", checkAuth, (req, res, next) => {
     });
 });
 
-router.get("/:id", checkAuth, (req, res, next) => {
-  const alloweds = process.env.ALLOWEDS;
-
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to see eod");
-    return res.status(500).json({ message: "Not allowed" });
-  }
-  Eod.findById(req.params.id)
-    .populate("terminal_id")
-    .then((eod) => {
-      if (eod) {
-        // console.log(eod)
-        res.status(200).json({ eod: eod });
-      } else {
-        res.status(404).json({ message: "eod not found!" });
-      }
-    })
-    .catch((error) => {
-      res.status(500).json({
-        message: "Fetching eod failed!",
-      });
-    });
-});
-
 router.post("", checkAuth, (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
 
@@ -131,7 +107,7 @@ router.put("/:id", checkAuth, (req, res, next) => {
     });
 });
 
-router.delete("/:id", checkAuth, (req, res, next) => {
+router.delete("/:id", checkAuth, async (req, res, next) => {
   const alloweds = process.env.DELALLOWEDS;
   if (!alloweds.includes(req.userData.email)) {
     return res.status(500).json({ message: "Not allowed" });
@@ -148,6 +124,102 @@ router.delete("/:id", checkAuth, (req, res, next) => {
     .catch((error) => {
       res.status(500).json({
         message: "Deleting eod failed! " + error,
+      });
+    });
+});
+
+router.get("/summary", checkAuth, async (req, res, next) => {
+  const alloweds = req.userData.role === "ADMIN";
+
+  if (!alloweds) {
+    logIncident(req.userData.email, "Not allowed to see eod summary");
+    return res.status(500).json({ message: "Not allowed to see eod summary" });
+  }
+
+  const { startDate } = req.query;
+  // const eodData = await Eod.find().populate("terminal_id");
+  // console.log("eodDate - ", eodData);
+  // get terminal_id from bank
+  let terminalId;
+  const monthInt = new Date(startDate).getMonth() + 1;
+  const yearInt = new Date(startDate).getFullYear();
+  console.log(monthInt, yearInt, "monthint yearint");
+  const summary = await Eod.aggregate([
+    // show cardTotals per month for the year for each bank
+    {
+      $lookup: {
+        from: "terminals",
+        localField: "terminal_id",
+        foreignField: "_id",
+        as: "terminal",
+      },
+    },
+    {
+      $unwind: "$terminal",
+    },
+
+    {
+      $group: {
+        _id: {
+          year: { $year: "$date" },
+          bank: "$terminal.bank",
+          company: { $toUpper: "$terminal.company" },
+        },
+        totalSalesAmount: {
+          $sum: "$cardTotal",
+        },
+      },
+    },
+    {
+      $project: {
+        "_id.year": 1,
+        "_id.bank": 1,
+        "_id.company": 1,
+
+        totalSalesAmount: 1,
+      },
+    },
+
+    {
+      $sort: {
+        "_id.bank": 1,
+        "_id.company": 1,
+        "_id.year": -1,
+      },
+    },
+  ]);
+  console.log(summary);
+
+  if (summary) {
+    console.log("monthly agg of eod");
+    return res.status(200).json({
+      message: "monthly sales per bank for " + yearInt,
+      records: summary,
+    });
+  }
+  return res.status(500).json({ message: " eod aggregate error: " });
+});
+
+router.get("/:id", checkAuth, (req, res, next) => {
+  const alloweds = process.env.ALLOWEDS;
+
+  if (!alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, "Not allowed to see eod");
+    return res.status(500).json({ message: "Not allowed" });
+  }
+  Eod.findById(req.params.id)
+    .populate("terminal_id")
+    .then((eod) => {
+      if (eod) {
+        // console.log(eod)
+        res.status(200).json({ eod: eod });
+      } else {
+        res.status(404).json({ message: "eod not found!" });
+      }
+    })
+    .catch((error) => {
+      res.status(500).json({
+        message: "Fetching eod failed!",
       });
     });
 });

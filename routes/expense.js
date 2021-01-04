@@ -21,6 +21,7 @@ const moment = require("moment");
 const Mail = require("../mail");
 const Utils = require("../utils");
 const HttpError = require("../utils/http-error");
+const startOfDay = require("date-fns/startOfToday");
 
 function logIncident(email, description) {
   const logObj = new Accesslog({ email: email, description: description });
@@ -110,6 +111,8 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   let expenseObj = req.body;
   let status = expenseObj.status;
   let mailStat;
+  let updater = req.userData.userId;
+  console.log(updater);
 
   async function isOpen() {
     if (
@@ -117,10 +120,12 @@ router.put("/:id", checkAuth, async (req, res, next) => {
       status === "APPROVED" ||
       status === "PAID" ||
       status === "DECLINED" ||
+      status === "VALIDATED" ||
+      status === "REVIEWED" ||
       status === "PART-PAY"
     ) {
       //  send mail
-      mailStat = await Mail.sendExpense(expenseObj);
+      mailStat = await Mail.sendExpense(expenseObj, updater);
     }
   }
   isOpen()
@@ -180,47 +185,154 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   }
 });
 
-router.get("", checkAuth, (req, res, next) => {
-  const pageSize = +req.query.pagesize;
-  const currentPage = +req.query.page;
-  const mgr = req.query.mgr;
-  const userEmail = req.userData.email;
+router.get("", checkAuth, async (req, res, next) => {
+  try {
+    const pageSize = +req.query.pagesize;
+    const currentPage = +req.query.page;
+    const imprest = req.query.imprest;
+    const userEmail = req.userData.email;
+    const user = await User.find({ email: userEmail });
+    const directors = process.env.DIRECTORS;
+    const generalManagers = process.env.GENERALMANAGERS;
+    const managers = process.env.MANAGERS;
+    const sites = [
+      "KPANSIA",
+      "SWALI",
+      "OKUTUKUTU",
+      "YENEGWE",
+      "OBUNNA",
+      "KPANSIA-E",
+    ];
 
-  const directors = process.env.DIRECTORS;
-  let expenseQuery;
+    let expenseQuery;
 
-  async function userQuery() {
-    user = await User.find({ email: userEmail });
-    if (directors.includes(userEmail) || mgr) {
-      expenseQuery = Expense.find()
+    // console.log("todaystart", startOfDay(new Date()), new Date());
+    if (imprest) {
+      console.log("in imprest");
+
+      expenseQuery = await Expense.find({
+        status: "APPROVED",
+        expenseAccount: "Daily Imprest",
+        updatedAt: { $gte: startOfDay(new Date()) },
+      })
         .sort({ createdAt: -1 })
         .populate("vendor")
-        .populate("creator");
+        .populate("creator")
+        .skip(pageSize * (currentPage - 1))
+        .limit(pageSize);
+    } else if (req.userData.role === "ADMIN") {
+      console.log("in directors");
+
+      expenseQuery = await Expense.find()
+        .sort({ createdAt: -1 })
+        .populate("vendor")
+        .populate("creator")
+        .skip(pageSize * (currentPage - 1))
+        .limit(pageSize);
+    } else if (
+      ["GENERAL MANAGER", "SNR ACCOUNTANT"].includes(req.userData.role)
+    ) {
+      console.log("general manager or snr accountant");
+      // see all in designated field sites.
+      expenseQuery = await Expense.find({
+        site: { $in: sites },
+      })
+        .sort({ createdAt: -1 })
+        .populate("vendor")
+        .populate("creator")
+        .skip(pageSize * (currentPage - 1))
+        .limit(pageSize);
+    } else if (req.userData.role === "MANAGER") {
+      console.log("in managers");
+
+      expenseQuery = await Expense.find({
+        // if i own it, good. or if site is my site, good.
+        $or: [{ creator: user[0]._id }, { site: req.userData.site }],
+      })
+        .sort({ createdAt: -1 })
+        .populate("vendor")
+        .populate("creator")
+        .skip(pageSize * (currentPage - 1))
+        .limit(pageSize);
     } else {
-      expenseQuery = Expense.find({ creator: user[0]._id })
+      console.log("in other");
+
+      expenseQuery = await Expense.find({ creator: user[0]._id })
         .sort({ createdAt: -1 })
         .populate("vendor")
-        .populate("creator");
+        .populate("creator")
+        .skip(pageSize * (currentPage - 1))
+        .limit(pageSize);
     }
+    // console.log(expenseQuery);
+
+    if (expenseQuery) {
+      return res.status(200).json({
+        expense: expenseQuery,
+        message: "Expenses fetched Successfully",
+      });
+    } else {
+      return res
+        .status(500)
+        .json({ message: "fetching expenses not successful" });
+    }
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ message: "fetching expenses not successful" + err });
   }
 
-  userQuery().then(() => {
-    if (pageSize && currentPage) {
-      expenseQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
-    }
-    expenseQuery
-      .then((documents) => {
-        res.status(200).json({
-          message: "Expenses fetched successfully!",
-          expense: documents,
-        });
-      })
-      .catch((error) => {
-        res.status(500).json({
-          message: "Fetching inventories failed! " + error,
-        });
-      });
-  });
+  // async function userQuery() {
+  //   const user = await User.find({ email: userEmail });
+  //   const startOfDay = require("date-fns/startOfToday");
+  //   if (imprest) {
+  //     expenseQuery = Expense.find({
+  //       status: "APPROVED",
+  //       expenseAccount: "Daily Imprest",
+  //       updatedAt: { $gte: startOfDay() },
+  //     })
+  //       .sort({ updatedAt: -1 })
+  //       .populate("vendor")
+  //       .populate("creator");
+  //   } else if (mgr) {
+  //     expenseQuery = Expense.find({ site: { $in: sites } })
+  //       .sort({ createdAt: -1 })
+  //       .populate("vendor")
+  //       .populate("creator");
+  //   } else if (directors.includes(userEmail)) {
+  //     expenseQuery = Expense.find()
+  //       .sort({ createdAt: -1 })
+  //       .populate("vendor")
+  //       .populate("creator");
+  //   } else {
+  //     expenseQuery = Expense.find({ creator: user[0]._id })
+  //       .sort({ createdAt: -1 })
+  //       .populate("vendor")
+  //       .populate("creator");
+  //   }
+  // }
+  // if (pageSize && currentPage) {
+  //   expenseQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
+  // }
+
+  // userQuery().then(() => {
+  //   if (pageSize && currentPage) {
+  //     expenseQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
+  //   }
+  //   expenseQuery
+  //     .then((documents) => {
+  //       console.log(documents.length);
+  //       res.status(200).json({
+  //         message: "Expenses fetched successfully!",
+  //         expense: documents,
+  //       });
+  //     })
+  //     .catch((error) => {
+  //       res.status(500).json({
+  //         message: "Fetching expenses failed! " + error,
+  //       });
+  //     });
+  // });
 });
 
 router.get("/mail/mailImprest", checkAuth, async (req, res, next) => {
@@ -340,11 +452,12 @@ router.put(
     const alloweds = process.env.ALLOWEDS;
 
     if (!alloweds.includes(req.userData.email)) {
-      logIncident(req.userData.email, "Not allowed to create Receipts");
+      logIncident(req.userData.email, "Not allowed to create notes");
       return res.status(500).json({ message: "Not allowed" });
     }
 
     let updater = req.userData.userId;
+    console.log(updater, "updater");
     let myPath;
     if (req.files) {
       let fileName;
@@ -384,6 +497,7 @@ router.put(
 
         let notes = expObj.notes;
         notes.push(note);
+        // console.log(notes);
         log = expObj.log;
         log.push({
           updater: note.author,
@@ -396,6 +510,7 @@ router.put(
           { notes: notes, updater: updater, log: log }
         )
           .then((result) => {
+            // console.log(result);
             res.status(201).json({
               message: " note with image updated successfully",
               expense: {

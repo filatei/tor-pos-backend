@@ -869,7 +869,7 @@ const recUpdateAlert = async (user, rec_id) => {
 async function verifyAuth(userId, verify) {
   try {
     const user = await User.findById(userId);
-    // console.log(user);
+    console.log(user, "in mailer");
     let format1 = "DD-MM-YYYY hh:mm:ss";
     let date;
     date = moment(new Date()).format(format1);
@@ -891,7 +891,7 @@ async function verifyAuth(userId, verify) {
                 <p> <a href="${url}"> Confirm your Email </a> </p>`;
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${new Date().getFullYear()}</p> </body></html>`;
-    console.log(html);
+    console.log(html, toEmail);
 
     const accessToken = await oauth2Client.getAccessToken();
     const smtpTransport = nodemailer.createTransport({
@@ -924,6 +924,7 @@ async function verifyAuth(userId, verify) {
         result = false;
       } else {
         result = true;
+        console.log("mail  sent");
       }
       smtpTransport.close();
       return result;

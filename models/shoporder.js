@@ -23,9 +23,7 @@ const shoporderSchema = mongoose.Schema(
       type: String,
       lowercase: true,
       trim: true,
-      index: true,
       unique: true,
-      sparse: true,
     },
     amt_teller: { type: Number },
     date_teller: { type: Date },
@@ -53,13 +51,7 @@ const shoporderSchema = mongoose.Schema(
     terminal_location: { type: String },
     comments: { type: String },
     image: { type: String },
-    products: [
-      {
-        productId: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
-        qty: { type: Number },
-        price: { type: Number },
-      },
-    ],
+    products: [],
     receipt: {},
     totalAmount: { type: Number },
     delivery: {

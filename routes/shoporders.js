@@ -172,22 +172,19 @@ router.post("", checkAuth, upload.single("image"), function (req, res, next) {
       url = req.protocol + "s://" + req.get("host");
       path = url + "/uploads/shoporderimages/" + req.file.filename;
     }
-    shopObj.icon = path;
+    shopObj.image = path;
   }
 
   shopObj.creator = req.userData.userId;
-  let customerUpdate = false;
-
-  // if ( shopObj.driver && typeof shopObj.driver === 'object' ) {
-  //   shopObj.driver = shopObj.driver._id;
-  // }
 
   if (shopObj.customer && typeof shopObj.customer === "object") {
     shopObj.customer = shopObj.customer._id;
   }
+
   if (!shopObj.teller_id) {
     delete shopObj.teller_id;
   }
+
   saveOrder(shopObj);
 
   function saveOrder(shopObj) {

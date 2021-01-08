@@ -48,13 +48,13 @@ const checkAuth = require("../middleware/check-auth");
 const Mail = require("nodemailer/lib/mailer");
 
 router.post("/verify", async (req, res, next) => {
-  console.log(req.params);
+  console.log(req.params, "req params");
   try {
-    if (req.params.verify !== "verify") {
-      console.log(" not verify route");
-      next;
-    }
-    // console.log(req.query);
+    // if (req.params.verify !== "verify") {
+    //   console.log(" not verify route");
+    //   next;
+    // }
+    console.log(req.query, "req query");
     const token = req.query.token;
     const userid = req.query.userid;
     if (!userid) {

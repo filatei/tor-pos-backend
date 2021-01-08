@@ -47,7 +47,7 @@ var upload = multer({
 const checkAuth = require("../middleware/check-auth");
 const Mail = require("nodemailer/lib/mailer");
 
-router.post("/verify", async (req, res, next) => {
+router.get("/verify", async (req, res, next) => {
   console.log(req.params, "req params");
   try {
     // if (req.params.verify !== "verify") {

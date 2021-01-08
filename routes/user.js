@@ -50,6 +50,7 @@ const Mail = require("nodemailer/lib/mailer");
 router.post("/verify", async (req, res, next) => {
   try {
     if (req.params.verify !== "verify") {
+      console.log(" not verify route");
       next;
     }
     // console.log(req.query);
@@ -57,7 +58,7 @@ router.post("/verify", async (req, res, next) => {
     const userid = req.query.userid;
 
     let user = await User.findById(userid);
-    // console.log(user);
+    console.log(user, "in verify");
 
     if (user && user.verify === token) {
       let user2 = await User.findByIdAndUpdate(userid, { verify: "" });
@@ -247,15 +248,15 @@ router.put("/updateRole/:id", checkAuth, async (req, res, next) => {
   }
 });
 
-// router.post("/getuser", checkAuth, (req, res, next) => {
-//   res.json({
-//     email: req.userData.email,
-//     userid: req.userData.userId,
-//     name: req.userData.name,
-//     role: req.userData.role,
-//     site: req.userData.site,
-//   });
-// });
+router.post("/getuser", checkAuth, (req, res, next) => {
+  res.json({
+    email: req.userData.email,
+    userid: req.userData.userId,
+    name: req.userData.name,
+    role: req.userData.role,
+    site: req.userData.site,
+  });
+});
 
 router.get("", checkAuth, async (req, res, next) => {
   if (req.userData.role !== "ADMIN") {

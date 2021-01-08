@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const os = require("os");
 const hostname = os.hostname();
+const MyMail = require("../mail");
 var multer = require("multer");
 const DIR = "./uploads/userimages/";
 const storage = multer.diskStorage({
@@ -44,66 +45,112 @@ var upload = multer({
   },
 });
 const checkAuth = require("../middleware/check-auth");
+const Mail = require("nodemailer/lib/mailer");
 
-router.post("/login", (req, res, next) => {
-  let fetchedUser;
-  User.findOne({ email: req.body.email })
-    .then((user) => {
-      if (!user) {
-        return res.status(401).json({
-          message: "Authentication failed. invalid credentials",
+router.post("/verify", async (req, res, next) => {
+  try {
+    if (req.params.verify !== "verify") {
+      next;
+    }
+    // console.log(req.query);
+    const token = req.query.token;
+    const userid = req.query.userid;
+
+    let user = await User.findById(userid);
+    // console.log(user);
+
+    if (user && user.verify === token) {
+      let user2 = await User.findByIdAndUpdate(userid, { verify: "" });
+      // console.log(user, "again");
+      if (user2) {
+        return res.status(200).json({
+          message: "Confirmation Successful",
+        });
+      } else {
+        return res.status(500).json({
+          message: "Confirmation Update Not successful",
         });
       }
-      fetchedUser = user;
-      console.log("fetcheduser ", fetchedUser);
-      return bcrypt.compare(req.body.password, user.password);
-    })
-    .then((result) => {
-      if (!result) {
-        return res.status(401).json({
-          message: "Authentication failed.",
-        });
-      }
-      const token = jwt.sign(
-        {
-          email: fetchedUser.email,
-          userId: fetchedUser._id,
-          name: fetchedUser.name,
-          role: fetchedUser.role ? fetchedUser.role : null,
-          site: fetchedUser.site ? fetchedUser.site : null,
-        },
-        process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: "1000h" }
-      );
-      res.status(200).json({
-        token: token,
-        expiresIn: 360000,
-        userId: fetchedUser._id,
-        email: fetchedUser.email,
-        name: fetchedUser.name,
-        site: fetchedUser.site,
-        role: fetchedUser.role,
-        image: fetchedUser.image,
-      });
-    })
-    .catch((err) => {
+    } else {
       return res.status(500).json({
-        message: "invalid auth credentials! " + err,
+        message: "Confirmation Failed",
       });
+    }
+  } catch (err) {
+    return res.status(500).json({
+      message: "Error in main block " + err,
     });
+  }
 });
 
-router.post("/signup", (req, res, next) => {
+router.post("/login", async (req, res, next) => {
+  try {
+    const vuser = await User.findOne({ email: req.body.email });
+
+    if (!vuser) {
+      return res.status(401).json({
+        message: "Authentication failed. invalid credentials",
+      });
+    }
+
+    // is email verified?
+    if (vuser && vuser.verify) {
+      return res
+        .status(500)
+        .json({ message: "Your Email not Verified. Check your inbox" });
+    }
+
+    // let fetchedsUser = vuser;
+
+    console.log("fetcheduser ", vuser);
+    const result = bcrypt.compare(req.body.password, vuser.password);
+    if (!result) {
+      return res.status(401).json({
+        message: "Authentication failed.",
+      });
+    }
+    const token = jwt.sign(
+      {
+        email: vuser.email,
+        userId: vuser._id,
+        name: vuser.name,
+        role: vuser.role ? vuser.role : null,
+        site: vuser.site ? vuser.site : null,
+      },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "1000h" }
+    );
+
+    return res.status(200).json({
+      token: token,
+      expiresIn: 360000,
+      userId: vuser._id,
+      email: vuser.email,
+      name: vuser.name,
+      site: vuser.site,
+      role: vuser.role,
+      image: vuser.image,
+    });
+  } catch (err) {
+    return res.status(500).json({ message: "Error in code block " + err });
+  }
+});
+
+router.post("/signup", async (req, res, next) => {
   bcrypt.hash(req.body.password, 10).then((hash) => {
     const user = new User({
       name: req.body.name,
       email: req.body.email,
       password: hash,
+      verify: Math.random(),
     });
+
     user
       .save()
-      .then((result) => {
-        // console.log(result)
+      .then(async (result) => {
+        // console.log(result);
+        delete result.password;
+        await MyMail.verifyAuth(result._id, result.verify);
         res.status(201).json({
           message: "User created!",
           result: result,
@@ -200,15 +247,15 @@ router.put("/updateRole/:id", checkAuth, async (req, res, next) => {
   }
 });
 
-router.post("/getuser", checkAuth, (req, res, next) => {
-  res.json({
-    email: req.userData.email,
-    userid: req.userData.userId,
-    name: req.userData.name,
-    role: req.userData.role,
-    site: req.userData.site,
-  });
-});
+// router.post("/getuser", checkAuth, (req, res, next) => {
+//   res.json({
+//     email: req.userData.email,
+//     userid: req.userData.userId,
+//     name: req.userData.name,
+//     role: req.userData.role,
+//     site: req.userData.site,
+//   });
+// });
 
 router.get("", checkAuth, async (req, res, next) => {
   if (req.userData.role !== "ADMIN") {

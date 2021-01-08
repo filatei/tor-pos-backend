@@ -11,6 +11,7 @@ const userSchema = mongoose.Schema(
     roles: [],
     role: { type: String },
     nin: { type: String, maxLength: 11, minLength: 11, trim: true },
+    verify: { type: String },
   },
   {
     timestamps: true,

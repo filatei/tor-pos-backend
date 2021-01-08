@@ -866,6 +866,73 @@ const recUpdateAlert = async (user, rec_id) => {
   }
 };
 
+async function verifyAuth(userId, verify) {
+  try {
+    const user = await User.findById(userId);
+    // console.log(user);
+    let format1 = "DD-MM-YYYY hh:mm:ss";
+    let date;
+    date = moment(new Date()).format(format1);
+    let url;
+    let toEmail;
+
+    if (hostname.includes("torama")) {
+      toEmail = user.email;
+      url = `https://posclaims.torama.ng/#/verify-email?token=${verify}&userid=${userId}`;
+    } else {
+      url = `http://localhost:8100/#/verify-email/?token=${verify}&userid=${userId}`;
+
+      toEmail = "auth@torama.ng";
+    }
+
+    let html = `<!DOCTYPE html><html><body style="text-align:center;"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
+                ${date}</p>
+                <p> Hi ${user.name}, please click link below to verify your email </p>
+                <p> <a href="${url}"> Confirm your Email </a> </p>`;
+
+    html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${new Date().getFullYear()}</p> </body></html>`;
+    console.log(html);
+
+    const accessToken = await oauth2Client.getAccessToken();
+    const smtpTransport = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        type: "OAuth2",
+        user: process.env.tormail,
+        clientId: tokens.clientID,
+        clientSecret: tokens.clientSecret,
+        refreshToken: tokens.refresh_token,
+        accessToken: accessToken,
+        pool: true,
+      },
+    });
+
+    const mailOptions = {
+      from: `ToramaAuth ${process.env.tormail}`,
+      to: toEmail,
+      bcc: "auth@torama.ng",
+      subject: "Confirm Your Email",
+      generateTextFromHTML: true,
+      html: html,
+    };
+
+    // send mail
+    smtpTransport.sendMail(mailOptions, (error, response) => {
+      let result;
+      if (error) {
+        console.log(error, "error in  mailer");
+        result = false;
+      } else {
+        result = true;
+      }
+      smtpTransport.close();
+      return result;
+    });
+  } catch (err) {
+    console.log(err, "error in imprest mailer");
+  }
+}
+
 module.exports = {
   sendInventory,
   sendExpense,
@@ -875,4 +942,5 @@ module.exports = {
   sendImprest,
   sendCashdeposit,
   recUpdateAlert,
+  verifyAuth,
 };

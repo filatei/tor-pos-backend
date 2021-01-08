@@ -48,6 +48,7 @@ const checkAuth = require("../middleware/check-auth");
 const Mail = require("nodemailer/lib/mailer");
 
 router.post("/verify", async (req, res, next) => {
+  console.log(req.params);
   try {
     if (req.params.verify !== "verify") {
       console.log(" not verify route");
@@ -56,9 +57,13 @@ router.post("/verify", async (req, res, next) => {
     // console.log(req.query);
     const token = req.query.token;
     const userid = req.query.userid;
-
+    if (!userid) {
+      return res.status(500).json({
+        message: "userid  is not defined",
+      });
+    }
     let user = await User.findById(userid);
-    console.log(user, "in verify");
+    console.log(user, "in verify token userid", token, userid);
 
     if (user && user.verify === token) {
       let user2 = await User.findByIdAndUpdate(userid, { verify: "" });

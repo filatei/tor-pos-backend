@@ -880,7 +880,7 @@ async function verifyAuth(userId, verify) {
       toEmail = user.email;
       url = `https://posclaims.torama.ng/#/confirm-email?token=${verify}&userid=${userId}`;
     } else {
-      url = `http://localhost:8100/#/confirm-email/?token=${verify}&userid=${userId}`;
+      url = `http://localhost:8100/#/confirm-email?token=${verify}&userid=${userId}`;
 
       toEmail = "auth@torama.ng";
     }

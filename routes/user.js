@@ -47,30 +47,31 @@ var upload = multer({
 const checkAuth = require("../middleware/check-auth");
 const Mail = require("nodemailer/lib/mailer");
 
-router.get("/verify", async (req, res, next) => {
-  console.log(req.params, "req params");
+router.post("/verify", async (req, res, next) => {
+  console.log(req.body, "req body");
   try {
     // if (req.params.verify !== "verify") {
     //   console.log(" not verify route");
     //   next;
     // }
     console.log(req.query, "req query");
-    const token = req.query.token;
-    const userid = req.query.userid;
+    const token = req.body.token;
+    const userid = req.body.userid;
     if (!userid) {
       return res.status(500).json({
         message: "userid  is not defined",
       });
     }
     let user = await User.findById(userid);
-    console.log(user, "in verify token userid", token, userid);
 
     if (user && user.verify === token) {
       let user2 = await User.findByIdAndUpdate(userid, { verify: "" });
-      // console.log(user, "again");
+      console.log(user, "again");
       if (user2) {
+        delete user2.password;
         return res.status(200).json({
           message: "Confirmation Successful",
+          user: user2,
         });
       } else {
         return res.status(500).json({
@@ -148,7 +149,7 @@ router.post("/signup", async (req, res, next) => {
       name: req.body.name,
       email: req.body.email,
       password: hash,
-      verify: Math.random(),
+      verify: new Date().getTime(),
     });
 
     user

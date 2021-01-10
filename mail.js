@@ -887,8 +887,8 @@ async function verifyAuth(userId, verify) {
 
     let html = `<!DOCTYPE html><html><body style="text-align:center;"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
                 ${date}</p>
-                <p> Hi ${user.name}, please click <a href="${url}"> Link </a> below to verify your email </p>
-                <p> <a href="${url}"> Confirm your Email </a> </p>`;
+                <p> Hi ${user.name}, please click <a target="_blank" href="${url}"> Link </a> below to verify your email </p>
+                <p> <a target="_blank" href="${url}"> Confirm your Email </a> </p>`;
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${new Date().getFullYear()}</p> </body></html>`;
     console.log(html, toEmail);

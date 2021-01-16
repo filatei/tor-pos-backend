@@ -10,6 +10,7 @@ const moment = require("moment");
 const User = require("./models/user");
 const Contact = require("./models/contact");
 const Stockitem = require("./models/stockitem");
+const Message = require("./models/message");
 
 const oauth2Client = new google.auth.OAuth2(
   tokens.clientID,
@@ -83,47 +84,16 @@ async function sendInventory(inventory) {
 
   html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama<sup>&#174;</sup> - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
 
-  // let odia = 'odia.gabriel@gtsng.com';
-  let odia;
-
   try {
-    const mailOptions = {
-      from: `TIMS  ${process.env.tormail}`,
+    model = {
+      fromText: "TIMS",
+      subject,
       to: toEmail,
-      cc: odia,
-      bcc: process.env.tormail,
-      subject: subject,
-      generateTextFromHTML: true,
-      html: html,
+      cc: "",
+      bcc: "",
+      html,
     };
-
-    const accessToken = await oauth2Client.getAccessToken();
-
-    const smtpTransport = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        type: "OAuth2",
-        user: process.env.tormail,
-        clientId: tokens.clientID,
-        clientSecret: tokens.clientSecret,
-        refreshToken: tokens.refresh_token,
-        accessToken: accessToken,
-        pool: true,
-      },
-    });
-
-    // send mail
-    smtpTransport.sendMail(mailOptions, (error, response) => {
-      let result;
-      if (error) {
-        console.log(error);
-        result = false;
-      } else {
-        result = true;
-      }
-      smtpTransport.close();
-      return result;
-    });
+    mailer(model);
   } catch (err) {
     console.log(err);
   }
@@ -191,7 +161,7 @@ async function sendExpense(expense, userId = null) {
     url = "https://posclaims.torama.ng";
   } else {
     toEmail = null;
-    userEmail = null;
+    userEmail = "filatei@gtsng.com";
     ccEmail = null;
     bcc = null;
     url = "http://localhost:8100";
@@ -251,42 +221,25 @@ async function sendExpense(expense, userId = null) {
 
   console.log(html, ccEmail, userName);
   try {
-    const accessToken = await oauth2Client.getAccessToken();
-    const smtpTransport = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        type: "OAuth2",
-        user: process.env.tormail,
-        clientId: tokens.clientID,
-        clientSecret: tokens.clientSecret,
-        refreshToken: tokens.refresh_token,
-        accessToken: accessToken,
-        pool: true,
-      },
-    });
+    // save in Message schema
+    const to = userEmail;
+    const sender = process.env.tormail;
+    const cc = ccEmail;
+    // const subject = subject;
+    const body = html;
+    let model = { sender, to, cc, subject, body };
+    const saveMess = await saveMessage(model);
+    console.log(" Message Saved ", saveMess);
 
-    const mailOptions = {
-      from: `ShopTorama ${process.env.tormail}`,
-      to: userEmail, // creator email
-      cc: ccEmail, // current User Email
-      bcc: bcc, // mgt email
-      subject: subject,
-      generateTextFromHTML: true,
-      html: html,
+    model = {
+      fromText: "ShopTorama",
+      subject,
+      to: userEmail,
+      cc: ccEmail,
+      bcc: bcc,
+      html,
     };
-
-    // send mail
-    smtpTransport.sendMail(mailOptions, (error, response) => {
-      let result;
-      if (error) {
-        console.log(error);
-        result = false;
-      } else {
-        result = true;
-      }
-      smtpTransport.close();
-      return result;
-    });
+    mailer(model);
   } catch (err) {
     console.log(err);
   }
@@ -297,7 +250,6 @@ async function sendNote(note, expense) {
   if (note && note.author) {
     author = note.author;
   }
-  // console.log("note author in mail sendnote ", author);
 
   // some content
   let expenseId = expense.expense_id;
@@ -358,45 +310,28 @@ async function sendNote(note, expense) {
     toEmail = null;
     notesEmail = null;
     creatorEmail = null;
-    return;
+    // return;
   }
   try {
-    const accessToken = await oauth2Client.getAccessToken();
-    const smtpTransport = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        type: "OAuth2",
-        user: process.env.tormail,
-        clientId: tokens.clientID,
-        clientSecret: tokens.clientSecret,
-        refreshToken: tokens.refresh_token,
-        accessToken: accessToken,
-        pool: true,
-      },
-    });
+    // save in Message schema
+    const to = expenseCreator.email;
+    const sender = process.env.tormail;
+    const cc = userEmail;
+    const image = note.image ? note.image : "";
+    const body = html;
+    let model = { sender, to, cc, subject, body, image };
+    const saveMess = await saveMessage(model);
+    console.log(" Message Saved ", saveMess);
 
-    const mailOptions = {
-      from: `ShopTorama ${process.env.tormail}`,
+    model = {
+      fromText: "ShopTorama",
+      subject,
       to: creatorEmail,
       cc: notesEmail,
       bcc: toEmail,
-      subject: subject,
-      generateTextFromHTML: true,
-      html: html,
+      html,
     };
-
-    // send mail
-    smtpTransport.sendMail(mailOptions, (error, response) => {
-      let result;
-      if (error) {
-        console.log(error);
-        result = false;
-      } else {
-        result = true;
-      }
-      smtpTransport.close();
-      return result;
-    });
+    mailer(model);
   } catch (err) {
     console.log(err);
   }
@@ -455,49 +390,33 @@ async function sendQaNote(note, item) {
     creatorEmail = creatorEmail;
     link = `https://posclaims.torama.ng/#/home/qaqc-detail/${item._id}`;
   } else {
-    toEmail = null;
-    notesEmail = null;
-    creatorEmail = null;
+    toEmail = "filatei@gtsng.com";
+    notesEmail = "";
+    creatorEmail = "";
     link = `http://localhost:8100/#/home/qaqc-detail/${item._id}`;
     return;
   }
   try {
-    const accessToken = await oauth2Client.getAccessToken();
-    const smtpTransport = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        type: "OAuth2",
-        user: process.env.tormail,
-        clientId: tokens.clientID,
-        clientSecret: tokens.clientSecret,
-        refreshToken: tokens.refresh_token,
-        accessToken: accessToken,
-        pool: true,
-      },
-    });
+    // save in Message schema
+    const to = creatorEmail;
+    const sender = process.env.tormail;
+    const cc = toEmail;
+    // const subject = subject;
+    const body = html;
+    const image = note.image ? note.image : "";
+    let model = { sender, to, cc, subject, body, link, image };
+    const saveMess = await saveMessage(model);
+    console.log(" Message Saved ", saveMess);
 
-    const mailOptions = {
-      from: `ToramaQA ${process.env.tormail}`,
+    model = {
+      fromText: "ToramaQA",
+      subject,
       to: creatorEmail,
       cc: notesEmail,
       bcc: toEmail,
-      subject: subject,
-      generateTextFromHTML: true,
-      html: html,
+      html,
     };
-
-    // send mail
-    smtpTransport.sendMail(mailOptions, (error, response) => {
-      let result;
-      if (error) {
-        console.log(error, "error in noteqaqc mailer");
-        result = false;
-      } else {
-        result = true;
-      }
-      smtpTransport.close();
-      return result;
-    });
+    mailer(model);
   } catch (err) {
     console.log(err, "error in noteqaqc mailer");
   }
@@ -579,41 +498,15 @@ async function sendQaqc(item) {
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
 
-    const accessToken = await oauth2Client.getAccessToken();
-    const smtpTransport = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        type: "OAuth2",
-        user: process.env.tormail,
-        clientId: tokens.clientID,
-        clientSecret: tokens.clientSecret,
-        refreshToken: tokens.refresh_token,
-        accessToken: accessToken,
-        pool: true,
-      },
-    });
-
-    const mailOptions = {
-      from: `ToramaQA ${process.env.tormail}`,
+    model = {
+      fromText: "ToramaQA",
+      subject,
       to: creatorEmail,
       cc: toEmail,
-      subject: subject,
-      generateTextFromHTML: true,
-      html: html,
+      bcc: "",
+      html,
     };
-
-    // send mail
-    smtpTransport.sendMail(mailOptions, (error, response) => {
-      let result;
-      if (error) {
-        console.log(error, "error in noteqaqc mailer");
-        result = false;
-      } else {
-        result = true;
-      }
-      smtpTransport.close();
-      return result;
-    });
+    mailer(model);
   } catch (err) {
     console.log(err, "error in qaqc mailer");
   }
@@ -622,7 +515,6 @@ async function sendQaqc(item) {
 async function sendImprest(item, user) {
   try {
     // some content
-
     let subject = `Imprests Mailer`;
     let userName = user.name;
     let userEmail = user.email;
@@ -674,41 +566,16 @@ async function sendImprest(item, user) {
       link = `http://localhost:8100/#/home/qaqc-detail/${item._id}`;
       return;
     }
-    const accessToken = await oauth2Client.getAccessToken();
-    const smtpTransport = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        type: "OAuth2",
-        user: process.env.tormail,
-        clientId: tokens.clientID,
-        clientSecret: tokens.clientSecret,
-        refreshToken: tokens.refresh_token,
-        accessToken: accessToken,
-        pool: true,
-      },
-    });
 
-    const mailOptions = {
-      from: `ToramaImprest ${process.env.tormail}`,
+    model = {
+      fromText: "ToramaImprest",
+      subject,
       to: creatorEmail,
       cc: toEmail,
-      subject: subject,
-      generateTextFromHTML: true,
-      html: html,
+      bcc: "",
+      html,
     };
-
-    // send mail
-    smtpTransport.sendMail(mailOptions, (error, response) => {
-      let result;
-      if (error) {
-        console.log(error, "error in  mailer");
-        result = false;
-      } else {
-        result = true;
-      }
-      smtpTransport.close();
-      return result;
-    });
+    mailer(model);
   } catch (err) {
     console.log(err, "error in imprest mailer");
   }
@@ -761,41 +628,26 @@ async function sendCashdeposit(item, user) {
       link = `http://localhost:8100/#/home/qaqc-detail/${item._id}`;
       return;
     }
-    const accessToken = await oauth2Client.getAccessToken();
-    const smtpTransport = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        type: "OAuth2",
-        user: process.env.tormail,
-        clientId: tokens.clientID,
-        clientSecret: tokens.clientSecret,
-        refreshToken: tokens.refresh_token,
-        accessToken: accessToken,
-        pool: true,
-      },
-    });
 
-    const mailOptions = {
-      from: `ToramaDeposit ${process.env.tormail}`,
+    // save in Message schema
+    const to = creatorEmail;
+    const sender = toEmail;
+    const cc = "";
+    // const subject = subject;
+    const body = html;
+    let model = { sender, to, cc, subject, body };
+    const saveMess = await saveMessage(model);
+    console.log(" Message Saved ", saveMess);
+
+    model = {
+      fromText: "ToramaDeposit",
+      subject,
       to: creatorEmail,
       cc: toEmail,
-      subject: subject,
-      generateTextFromHTML: true,
-      html: html,
+      bcc: "",
+      html,
     };
-
-    // send mail
-    smtpTransport.sendMail(mailOptions, (error, response) => {
-      let result;
-      if (error) {
-        console.log(error, "error in  mailer");
-        result = false;
-      } else {
-        result = true;
-      }
-      smtpTransport.close();
-      return result;
-    });
+    mailer(model);
   } catch (err) {
     console.log(err, "error in imprest mailer");
   }
@@ -827,40 +679,16 @@ const recUpdateAlert = async (user, rec_id) => {
       creatorEmail = null;
       return;
     }
-    const accessToken = await oauth2Client.getAccessToken();
-    const smtpTransport = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        type: "OAuth2",
-        user: process.env.tormail,
-        clientId: tokens.clientID,
-        clientSecret: tokens.clientSecret,
-        refreshToken: tokens.refresh_token,
-        accessToken: accessToken,
-        pool: true,
-      },
-    });
 
-    const mailOptions = {
-      from: `ToramaAlert ${process.env.tormail}`,
+    model = {
+      fromText: "ToramaAlert",
+      subject,
       to: toEmail,
-      subject: subject,
-      generateTextFromHTML: true,
-      html: html,
+      cc: "",
+      bcc: "",
+      html,
     };
-
-    // send mail
-    smtpTransport.sendMail(mailOptions, (error, response) => {
-      let result;
-      if (error) {
-        console.log(error, "error in  mailer");
-        result = false;
-      } else {
-        result = true;
-      }
-      smtpTransport.close();
-      return result;
-    });
+    mailer(model);
   } catch (err) {
     console.log(err, "error in imprest mailer");
   }
@@ -878,60 +706,143 @@ async function verifyAuth(userId, verify) {
 
     if (hostname.includes("torama")) {
       toEmail = user.email;
-      url = `https://posclaims.torama.ng/#/confirm-email?token=${verify}&userid=${userId}`;
+      url = `https://posclaims.torama.ng/#/confirm-email/?token=${verify}`;
     } else {
-      url = `http://localhost:8100/#/confirm-email?token=${verify}&userid=${userId}`;
+      url = `http://localhost:8100/#/confirm-email/?token=${verify}`;
 
       toEmail = "auth@torama.ng";
     }
 
     let html = `<!DOCTYPE html><html><body style="text-align:center;"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
                 ${date}</p>
-                <p> Hi ${user.name}, please click <a target="_blank" href="${url}"> Link </a> below to verify your email </p>
-                <p> <a target="_blank" href="${url}"> Confirm your Email </a> </p>`;
+                <p> Hi ${user.name}, please copy and paste  Link  below to verify your email address</p>
+                <p> ${url}  </p>`;
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${new Date().getFullYear()}</p> </body></html>`;
     console.log(html, toEmail);
 
-    const accessToken = await oauth2Client.getAccessToken();
-    const smtpTransport = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        type: "OAuth2",
-        user: process.env.tormail,
-        clientId: tokens.clientID,
-        clientSecret: tokens.clientSecret,
-        refreshToken: tokens.refresh_token,
-        accessToken: accessToken,
-        pool: true,
-      },
-    });
+    // save in Message schema
+    const to = user.email;
+    const sender = process.env.tormail;
+    const cc = "auth@torama.ng";
+    const subject = "Confirm Your Email";
+    const body = html;
+    let model = { sender, to, cc, subject, body };
+    const saveMess = await saveMessage(model);
+    console.log(" Message Saved ", saveMess);
 
-    const mailOptions = {
-      from: `ToramaAuth ${process.env.tormail}`,
+    model = {
+      fromText: "ToramaAuth",
+      subject,
       to: toEmail,
+      cc: "",
       bcc: "auth@torama.ng",
-      subject: "Confirm Your Email",
-      generateTextFromHTML: true,
-      html: html,
+      html,
     };
-
-    // send mail
-    smtpTransport.sendMail(mailOptions, (error, response) => {
-      let result;
-      if (error) {
-        console.log(error, "error in  mailer");
-        result = false;
-      } else {
-        result = true;
-        console.log("mail  sent");
-      }
-      smtpTransport.close();
-      return result;
-    });
+    mailer(model);
   } catch (err) {
     console.log(err, "error in imprest mailer");
   }
+}
+
+async function forgotPassword(userId, resetLink) {
+  try {
+    const user = await User.findById(userId);
+    console.log(user, "in mailer");
+    let format1 = "DD-MM-YYYY hh:mm:ss";
+    let date;
+    date = moment(new Date()).format(format1);
+    let url;
+    let toEmail;
+
+    if (hostname.includes("torama")) {
+      toEmail = user.email;
+      url = `https://posclaims.torama.ng/#/change-password/?token=${resetLink}&email=${user.email}`;
+    } else {
+      url = `http://localhost:8100/#/change-password/?token=${resetLink}&email=${user.email}`;
+
+      toEmail = "auth@torama.ng";
+    }
+
+    let html = `<!DOCTYPE html><html><body style="text-align:center;"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
+                ${date}</p>
+                <p> Hi ${user.name}, please copy and paste  Link  below to reset your password</p>
+                <p> ${url}  </p>`;
+
+    html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${new Date().getFullYear()}</p> </body></html>`;
+    console.log(html, toEmail);
+
+    // save in Message schema
+    const to = user.email;
+    const sender = process.env.tormail;
+    const cc = "auth@torama.ng";
+    const subject = "Reset Password";
+    const body = html;
+    let model = { sender, to, cc, subject, body };
+    const saveMess = await saveMessage(model);
+    console.log(" Message Saved ", saveMess);
+
+    model = {
+      fromText: "ToramaAuth",
+      subject,
+      to: toEmail,
+      cc: "",
+      bcc: "auth@torama.ng",
+      html,
+    };
+    mailer(model);
+  } catch (err) {
+    console.log(err, "error in imprest mailer");
+  }
+}
+
+async function saveMessage(model) {
+  if (model) {
+    const message = new Message(model);
+    const saveMess = await message.save();
+    return saveMess;
+  }
+  return "No message Saved";
+}
+
+async function mailer(model) {
+  // console.log(model, " model in mailer");
+  const accessToken = await oauth2Client.getAccessToken();
+  const smtpTransport = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      type: "OAuth2",
+      user: process.env.tormail,
+      clientId: tokens.clientID,
+      clientSecret: tokens.clientSecret,
+      refreshToken: tokens.refresh_token,
+      accessToken: accessToken,
+      pool: true,
+    },
+  });
+
+  const mailOptions = {
+    from: `${model.fromText} ${process.env.tormail}`,
+    to: model.to,
+    cc: model.cc,
+    bcc: model.bcc,
+    subject: model.subject,
+    generateTextFromHTML: true,
+    html: model.html,
+  };
+
+  // send mail
+  smtpTransport.sendMail(mailOptions, (error, response) => {
+    let result;
+    if (error) {
+      console.log(error);
+      result = false;
+    } else {
+      result = true;
+    }
+    smtpTransport.close();
+    return result;
+  });
 }
 
 module.exports = {
@@ -944,4 +855,5 @@ module.exports = {
   sendCashdeposit,
   recUpdateAlert,
   verifyAuth,
+  forgotPassword,
 };

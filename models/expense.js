@@ -60,6 +60,14 @@ const expenseSchema = mongoose.Schema(
         payer: { type: String },
       },
     ],
+    statusHistory: [
+      {
+        oldStatus: { type: String },
+        newStatus: { type: String },
+        updater: { type: String },
+        date: { type: Date, default: Date.now },
+      },
+    ],
     date: { type: Date },
     type: { type: String },
     txn_amount: { type: Number },

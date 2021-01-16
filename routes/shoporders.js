@@ -1,6 +1,8 @@
 const express = require("express");
 const Order = require("../models/shoporder");
 const Customer = require("../models/customer");
+const PayMethod = require("../models/paymethod");
+const Terminal = require("../models/terminal");
 const User = require("../models/user");
 
 const router = express.Router();
@@ -13,6 +15,7 @@ const tokens = require(`${homedir}/.token.json`);
 const nodemailer = require("nodemailer");
 const { google } = require("googleapis");
 const OAuth2 = google.auth.OAuth2;
+const Utils = require("../utils");
 
 var multer = require("multer");
 const DIR = "./uploads/shoporderimages/";
@@ -24,7 +27,8 @@ const storage = multer.diskStorage({
     const fileName =
       new Date().getTime() +
       "-" +
-      file.originalname.toLowerCase().split(" ").join("-");
+      file.originalname.toLowerCase().split(" ").join("-") +
+      path.extname(file.originalname);
     cb(null, fileName);
   },
 });
@@ -80,9 +84,9 @@ async function sendMail(order) {
   });
 
   // some content
-  let orderId = order.id;
+  let orderId = order.orderId;
   let toEmail = order.customer.email || "emptymail@torama.ng";
-  orderId = orderId.toString().padStart(5, "0");
+  orderId = orderId.toString().padStart(8, "0");
   let subject = `ShopTorama Order Confirmation for Order (# ${orderId})`;
   let curr = order.curr || process.env.naira;
   let total = order.paidAmount;
@@ -142,8 +146,7 @@ async function sendMail(order) {
 }
 
 const checkAuth = require("../middleware/check-auth");
-
-router.post("", checkAuth, upload.single("image"), function (req, res, next) {
+router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
   const alloweds = process.env.SHOPALLOWEDS;
 
   if (!alloweds.includes(req.userData.email)) {
@@ -154,7 +157,6 @@ router.post("", checkAuth, upload.single("image"), function (req, res, next) {
   let path = "";
   let url = "";
   let shopObj = req.body;
-  shopObj.orderId = new Date().getTime();
 
   if (!shopObj.customer || shopObj.customer === undefined) {
     return res
@@ -169,13 +171,14 @@ router.post("", checkAuth, upload.single("image"), function (req, res, next) {
         "/uploads/shoporderimages/" +
         req.file.filename;
     } else {
-      url = req.protocol + "s://" + req.get("host");
+      url = req.protocol + "://" + req.get("host");
       path = url + "/uploads/shoporderimages/" + req.file.filename;
     }
     shopObj.image = path;
   }
 
   shopObj.creator = req.userData.userId;
+  shopObj.status = "PAID";
 
   if (shopObj.customer && typeof shopObj.customer === "object") {
     shopObj.customer = shopObj.customer._id;
@@ -184,12 +187,31 @@ router.post("", checkAuth, upload.single("image"), function (req, res, next) {
   if (!shopObj.teller_id) {
     delete shopObj.teller_id;
   }
+  // let prods = [];
+  shopObj.products = JSON.parse(req.body.products);
+  shopObj.receipt = JSON.parse(req.body.receipt);
+  const geoLocation = JSON.parse(req.body.geoLocation);
+  shopObj.geoLocation = {
+    latitude: geoLocation.latitude,
+    longitude: geoLocation.longitude,
+  };
+  Object.entries(shopObj).forEach(([key, value]) => {
+    if (
+      !value ||
+      value === undefined ||
+      value === null ||
+      value === "null" ||
+      value === "undefined"
+    ) {
+      delete shopObj[key];
+    }
+  });
 
   saveOrder(shopObj);
 
   function saveOrder(shopObj) {
     const shoporder = new Order(shopObj);
-    shoporder.image = path;
+    // console.log(shoporder);
 
     shoporder
       .save()
@@ -338,7 +360,8 @@ router.get("", (req, res, next) => {
   const shoporderQuery = Order.find()
     .sort({ createdAt: -1 })
     .populate("customer")
-    .populate("creator");
+    .populate("creator")
+    .populate("terminal_id");
   if (pageSize && currentPage) {
     shoporderQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
   }

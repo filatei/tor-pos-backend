@@ -3,19 +3,17 @@ const AutoIncrement = require("mongoose-sequence")(mongoose);
 
 const shoporderSchema = mongoose.Schema(
   {
-    orderId: { type: Number, required: true },
     customer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Customer",
       required: true,
     },
-    // driver: { type: mongoose.Schema.Types.ObjectId, ref: "Customer" },
-
     contactPhone: { type: String },
     contactEmail: { type: String },
     pay_type: { type: String },
     transfer_from_bank: { type: String },
     transfer_from_account_name: { type: String },
+    transfer_from_date: { type: Date },
     txn_amount: { type: Number, required: true },
     paidAmount: { type: Number, required: true },
     name_teller: { type: String },
@@ -23,7 +21,6 @@ const shoporderSchema = mongoose.Schema(
       type: String,
       lowercase: true,
       trim: true,
-      unique: true,
     },
     amt_teller: { type: Number },
     date_teller: { type: Date },
@@ -33,7 +30,27 @@ const shoporderSchema = mongoose.Schema(
     rrn: { type: String },
     trans_id: { type: String },
     tx_ref: { type: String },
-    status: { type: String },
+    status: { type: String, enum: ["PAID", "LOADED", "COMPLETED"] },
+    delivery: [
+      {
+        status: { type: String, enum: ["DRAFT", "LOADED", "SEEN-OUT"] },
+        qty: { type: Number },
+        actorId: {
+          // supervisor or security person at final gate
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        date: { type: Date, default: Date.now },
+        geoLocation: {
+          latitude: { type: Number },
+          longitude: { type: Number },
+          timestamp: { type: Number },
+        },
+        site: { type: String },
+        photo: { type: String },
+      },
+    ],
     bank: { type: String },
     card_id: { type: mongoose.Schema.Types.ObjectId, ref: "Card" },
     card_number: { type: String },
@@ -49,19 +66,17 @@ const shoporderSchema = mongoose.Schema(
     remarks: { type: String },
     terminal_id: { type: mongoose.Schema.Types.ObjectId, ref: "Terminal" },
     terminal_location: { type: String },
+    geoLocation: {
+      latitude: { type: Number },
+      longitude: { type: Number },
+    },
     comments: { type: String },
     image: { type: String },
     products: [],
     receipt: {},
     totalAmount: { type: Number },
-    delivery: {
-      status: { type: Boolean },
-      supervisor: { type: String },
-      site: { type: String },
-      deliveryTime: { type: Date, default: Date.now },
-    },
     site: { type: String },
-    paymentMethod: { type: mongoose.Schema.Types.ObjectId, ref: "PayMethod" },
+    paymentMethod: { type: String },
     image: { type: String },
     creator: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     updater: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
@@ -72,7 +87,7 @@ const shoporderSchema = mongoose.Schema(
   }
 );
 
-shoporderSchema.plugin(AutoIncrement, { inc_field: "id" });
+// shoporderSchema.plugin(AutoIncrement, { inc_field: "id" });
 
 shoporderSchema.index({
   stan: "text",
@@ -86,6 +101,8 @@ shoporderSchema.index({
   trans_date: "text",
   company: "text",
 });
+
+shoporderSchema.plugin(AutoIncrement, { inc_field: "orderId" });
 
 const rc = mongoose.model("Shoporder", shoporderSchema);
 rc.createIndexes();

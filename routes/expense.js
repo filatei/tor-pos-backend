@@ -113,6 +113,20 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   let mailStat;
   let updater = req.userData.userId;
   console.log(updater);
+  // update statusHistory
+  let statusHist;
+  const currExp = await Expense.findById(req.params.id);
+  statusHist = {
+    oldStatus: currExp.status,
+    newStatus: status,
+    updater: updater,
+    // date: new Date(),
+  };
+  if (currExp && currExp.statusHistory) {
+    expenseObj.statusHistory = [...currExp.statusHistory, statusHist];
+  } else {
+    expenseObj.statusHistory = [...statusHist];
+  }
 
   async function isOpen() {
     if (
@@ -281,58 +295,6 @@ router.get("", checkAuth, async (req, res, next) => {
       .status(500)
       .json({ message: "fetching expenses not successful" + err });
   }
-
-  // async function userQuery() {
-  //   const user = await User.find({ email: userEmail });
-  //   const startOfDay = require("date-fns/startOfToday");
-  //   if (imprest) {
-  //     expenseQuery = Expense.find({
-  //       status: "APPROVED",
-  //       expenseAccount: "Daily Imprest",
-  //       updatedAt: { $gte: startOfDay() },
-  //     })
-  //       .sort({ updatedAt: -1 })
-  //       .populate("vendor")
-  //       .populate("creator");
-  //   } else if (mgr) {
-  //     expenseQuery = Expense.find({ site: { $in: sites } })
-  //       .sort({ createdAt: -1 })
-  //       .populate("vendor")
-  //       .populate("creator");
-  //   } else if (directors.includes(userEmail)) {
-  //     expenseQuery = Expense.find()
-  //       .sort({ createdAt: -1 })
-  //       .populate("vendor")
-  //       .populate("creator");
-  //   } else {
-  //     expenseQuery = Expense.find({ creator: user[0]._id })
-  //       .sort({ createdAt: -1 })
-  //       .populate("vendor")
-  //       .populate("creator");
-  //   }
-  // }
-  // if (pageSize && currentPage) {
-  //   expenseQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
-  // }
-
-  // userQuery().then(() => {
-  //   if (pageSize && currentPage) {
-  //     expenseQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
-  //   }
-  //   expenseQuery
-  //     .then((documents) => {
-  //       console.log(documents.length);
-  //       res.status(200).json({
-  //         message: "Expenses fetched successfully!",
-  //         expense: documents,
-  //       });
-  //     })
-  //     .catch((error) => {
-  //       res.status(500).json({
-  //         message: "Fetching expenses failed! " + error,
-  //       });
-  //     });
-  // });
 });
 
 router.get("/mail/mailImprest", checkAuth, async (req, res, next) => {

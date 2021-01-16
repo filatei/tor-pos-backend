@@ -29,6 +29,7 @@
     "js-sha256": "^0.9.0",
     "json2csv": "^4.5.4",
     "jsonwebtoken": "^8.5.1",
+    "lodash": "^4.17.20",
     "moment": "^2.27.0",
     "mongo-sanitize": "^1.1.0",
     "mongoose": "^5.8.11",

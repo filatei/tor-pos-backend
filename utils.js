@@ -170,7 +170,6 @@ const storage4 = multer.diskStorage({
       fileName =
         req.userData.userId +
         "-" +
-        new Date().getTime() +
         file.originalname.toLowerCase(file.originalname).split(" ").join("-") +
         path.extname(file.originalname);
       console.log(fileName);

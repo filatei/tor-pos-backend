@@ -7,6 +7,7 @@ const fs = require("fs");
 const os = require("os");
 const hostname = os.hostname();
 const MyMail = require("../mail");
+const _ = require("lodash");
 var multer = require("multer");
 const DIR = "./uploads/userimages/";
 const storage = multer.diskStorage({
@@ -50,39 +51,149 @@ const Mail = require("nodemailer/lib/mailer");
 router.post("/verify", async (req, res, next) => {
   console.log(req.body, "req body");
   try {
-    // if (req.params.verify !== "verify") {
-    //   console.log(" not verify route");
-    //   next;
-    // }
-    console.log(req.query, "req query");
     const token = req.body.token;
-    const userid = req.body.userid;
-    if (!userid) {
+    // const userid = req.body.userid;
+    if (!token) {
       return res.status(500).json({
-        message: "userid  is not defined",
+        message: "token is not defined",
       });
     }
-    let user = await User.findById(userid);
-
-    if (user && user.verify === token) {
-      let user2 = await User.findByIdAndUpdate(userid, { verify: "" });
-      console.log(user, "again");
-      if (user2) {
-        delete user2.password;
-        return res.status(200).json({
-          message: "Confirmation Successful",
-          user: user2,
-        });
-      } else {
-        return res.status(500).json({
-          message: "Confirmation Update Not successful",
+    //  verify token is valid
+    jwt.verify(token, process.env.ACCESS_VERIFY_SECRET, (err, data) => {
+      console.log(data, " tokenverified", err, " err");
+      if (err) {
+        return res.status(401).json({
+          message: "Incorrect token or token expired",
         });
       }
-    } else {
+
+      User.findOne({ verify: token }, (err, user) => {
+        if (err || !user) {
+          return res.status(500).json({
+            message: "Confirmation Update Not successful",
+          });
+        }
+        const obj = { verify: "", isVerified: true };
+        user = _.extend(user, obj); // use lodash to update user
+
+        user.save((err, result) => {
+          console.log(result, " again");
+          if (err) {
+            return res.status(500).json({
+              message: "Confirmation Update Not successful",
+            });
+          }
+
+          return res.status(200).json({
+            message: "Confirmation Successful",
+            user: result,
+          });
+        });
+      });
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Error in main block " + err,
+    });
+  }
+});
+
+router.post("/confirmPassword", async (req, res, next) => {
+  console.log(req.body, "req body");
+  try {
+    const { email } = req.body;
+
+    if (!email) {
       return res.status(500).json({
-        message: "Confirmation Failed",
+        message: "email is required in body",
       });
     }
+
+    User.findOne({ email }, async (err, user) => {
+      if (err || !user) {
+        return res.status(500).json({
+          message: "Email does not exist",
+        });
+      }
+      const token = jwt.sign(
+        {
+          email: email,
+        },
+        process.env.ACCESS_RESET_SECRET,
+        { expiresIn: "2h" }
+      );
+
+      const obj = { resetLink: token };
+      user = _.extend(user, obj); // use lodash to update user
+
+      user.save(async (err, result) => {
+        console.log(result, " again");
+        if (err) {
+          return res.status(500).json({
+            message: "Reset Link Update Not successful",
+          });
+        }
+        await MyMail.forgotPassword(result._id, result.resetLink);
+
+        return res.status(200).json({
+          message: "Confirmation Update Successful " + err,
+          user: result,
+        });
+      });
+    });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Error in main block " + err,
+    });
+  }
+});
+
+router.post("/changePassword", async (req, res, next) => {
+  try {
+    const { token, password } = req.body;
+
+    if (!token) {
+      return res.status(500).json({
+        message: "token is required in body",
+      });
+    }
+
+    //  verify resetLink is valid
+    jwt.verify(token, process.env.ACCESS_RESET_SECRET, (err, data) => {
+      if (err) {
+        return res.status(401).json({
+          message: "Incorrect token or token expired",
+        });
+      }
+
+      User.findOne({ resetLink: token }, async (err, user) => {
+        if (err || !user) {
+          return res.status(500).json({
+            message: "Confirmation Update Not successful",
+          });
+        }
+
+        //  encrypt password
+        const hash = await bcrypt.hash(password, 10);
+
+        const obj = { resetLink: "", password: hash };
+        user = _.extend(user, obj); // use lodash to update user
+
+        user.save(async (err, result) => {
+          console.log(result, " again");
+          if (err) {
+            return res.status(500).json({
+              message: " passwd change Not successful",
+            });
+          }
+
+          return res.status(200).json({
+            message: "passwd change Successful",
+            user: result,
+          });
+        });
+      });
+    });
   } catch (err) {
     return res.status(500).json({
       message: "Error in main block " + err,
@@ -144,12 +255,21 @@ router.post("/login", async (req, res, next) => {
 });
 
 router.post("/signup", async (req, res, next) => {
+  const verifyToken = jwt.sign(
+    {
+      email: req.body.email,
+      name: req.body.name,
+    },
+    process.env.ACCESS_VERIFY_SECRET,
+    { expiresIn: 2000 * 60 } // 2 mins
+  );
+
   bcrypt.hash(req.body.password, 10).then((hash) => {
     const user = new User({
       name: req.body.name,
       email: req.body.email,
       password: hash,
-      verify: new Date().getTime(),
+      verify: verifyToken,
     });
 
     user

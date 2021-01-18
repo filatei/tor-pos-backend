@@ -178,7 +178,11 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
   }
 
   shopObj.creator = req.userData.userId;
-  shopObj.status = "PAID";
+  if (shopObj.action_taken === "PRODUCT RELEASED") {
+    shopObj.status = "PAID";
+  } else {
+    shopObj.status = "NOT PAID";
+  }
 
   if (shopObj.customer && typeof shopObj.customer === "object") {
     shopObj.customer = shopObj.customer._id;

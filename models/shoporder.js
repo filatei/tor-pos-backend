@@ -30,7 +30,7 @@ const shoporderSchema = mongoose.Schema(
     rrn: { type: String },
     trans_id: { type: String },
     tx_ref: { type: String },
-    status: { type: String, enum: ["PAID", "LOADED", "COMPLETED"] },
+    status: { type: String, enum: ["NOT PAID", "PAID", "LOADED", "COMPLETED"] },
     delivery: [
       {
         status: { type: String, enum: ["DRAFT", "LOADED", "SEEN-OUT"] },

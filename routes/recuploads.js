@@ -185,7 +185,9 @@ router.delete("/:id", checkAuth, async (req, res, next) => {
   let filePath;
   Recupload.findById(req.params.id)
     .then((company) => {
-      filePath = "uploads/" + company.image.split("/uploads/")[1];
+      if (company && company.image) {
+        filePath = "uploads/" + company.image.split("/uploads/")[1];
+      }
       // console.log('filepath', filePath);
       deleteReceipt(filePath);
     })

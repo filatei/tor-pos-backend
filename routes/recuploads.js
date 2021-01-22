@@ -90,6 +90,17 @@ router.post("", checkAuth, Utils.upload.any(), function (req, res, next) {
       }
     });
   }
+  Object.entries(recObj).forEach(([key, value]) => {
+    if (
+      !value ||
+      value === undefined ||
+      value === null ||
+      value === "null" ||
+      value === "undefined"
+    ) {
+      delete recObj[key];
+    }
+  });
   console.log(recObj);
 
   try {

@@ -6,7 +6,7 @@ const Terminal = require("../models/terminal");
 const User = require("../models/user");
 
 const router = express.Router();
-const path = require("path");
+const Path = require("path");
 const fs = require("fs");
 const os = require("os");
 const hostname = os.hostname();
@@ -176,6 +176,9 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
     }
     shopObj.image = path;
   }
+  const dirPath = Path.join(__dirname, "../uploads/printqueue/");
+  let printQueue = dirPath + new Date().getTime() + ".json";
+  console.log(dirPath);
 
   shopObj.creator = req.userData.userId;
   if (shopObj.action_taken === "PRODUCT RELEASED") {
@@ -219,8 +222,18 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
 
     shoporder
       .save()
-      .then((result) => {
+      .then(async (result) => {
         console.log("order added", result);
+        await fs.writeFile(
+          printQueue,
+          JSON.stringify(result.receipt),
+          (err) => {
+            if (err) {
+              return console.log(err);
+            }
+            console.log("file saved to ", printQueue);
+          }
+        );
         res.status(201).json({
           message: "Order added successfully",
           shoporder: {

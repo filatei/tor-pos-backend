@@ -202,13 +202,16 @@ router.delete("/:id", checkAuth, async (req, res, next) => {
       .then((result) => {
         if (result.n > 0) {
           // delete product.icon
-          fs.unlink(filepath, (err) => {
-            if (err) {
-              console.error(err);
-              return;
-            }
-            console.log("related file deleted");
-          });
+          if (filepath) {
+            fs.unlink(filepath, (err) => {
+              if (err) {
+                console.error(err);
+                return;
+              }
+              console.log("related file deleted");
+            });
+          }
+
           res.status(200).json({ message: "Deletion successful!" });
         } else {
           res.status(401).json({ message: "Not authorized!" });

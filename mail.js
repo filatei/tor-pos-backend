@@ -219,7 +219,7 @@ async function sendExpense(expense, userId = null) {
 
   html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama<sup>&#174;</sup> - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
 
-  console.log(html, ccEmail, userName);
+  // console.log(html, ccEmail, userName);
   try {
     // save in Message schema
     const to = userEmail;

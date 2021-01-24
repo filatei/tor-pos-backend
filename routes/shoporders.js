@@ -178,7 +178,7 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
   }
   const dirPath = Path.join(__dirname, "../uploads/printqueue/");
   let printQueue = dirPath + new Date().getTime() + ".json";
-  console.log(dirPath);
+  console.log(shopObj);
 
   shopObj.creator = req.userData.userId;
   if (shopObj.action_taken === "PRODUCT RELEASED") {

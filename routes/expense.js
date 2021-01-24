@@ -112,7 +112,7 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   let status = expenseObj.status;
   let mailStat;
   let updater = req.userData.userId;
-  console.log(updater);
+  // console.log(updater);
   // update statusHistory
   let statusHist;
   const currExp = await Expense.findById(req.params.id);
@@ -122,6 +122,7 @@ router.put("/:id", checkAuth, async (req, res, next) => {
     updater: updater,
     // date: new Date(),
   };
+
   if (currExp && currExp.statusHistory) {
     expenseObj.statusHistory = [...currExp.statusHistory, statusHist];
   } else {
@@ -139,7 +140,14 @@ router.put("/:id", checkAuth, async (req, res, next) => {
       status === "PART-PAY"
     ) {
       //  send mail
-      mailStat = await Mail.sendExpense(expenseObj, updater);
+      Mail.sendExpense(expenseObj, updater)
+        .then((m) => {
+          console.log(m, " m");
+          mailStat = m;
+        })
+        .catch((err) => {
+          console.log(err);
+        });
     }
   }
   isOpen()

@@ -14,6 +14,7 @@ const nodemailer = require("nodemailer");
 const { google } = require("googleapis");
 const OAuth2 = google.auth.OAuth2;
 const _ = require("lodash");
+const User = require("../models/user");
 
 const mime = require("mime");
 const Accesslog = require("../models/accesslog");

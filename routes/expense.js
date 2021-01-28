@@ -399,6 +399,7 @@ router.get("/expense/:id", (req, res, next) => {
 
 router.get("/:id", (req, res, next) => {
   Expense.findById(req.params.id)
+    .populate("vendor")
     .populate("creator")
     .then((expense) => {
       if (expense) {

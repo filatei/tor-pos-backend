@@ -164,6 +164,7 @@ async function sendExpense(expense, userId = null) {
     userEmail = "filatei@gtsng.com";
     ccEmail = null;
     bcc = null;
+    subject = "Just a test";
     url = "http://localhost:8100";
   }
 
@@ -393,6 +394,7 @@ async function sendQaNote(note, item) {
     toEmail = "filatei@gtsng.com";
     notesEmail = "";
     creatorEmail = "";
+    subject = " Just a Test QA";
     link = `http://localhost:8100/#/home/qaqc-detail/${item._id}`;
     return;
   }
@@ -703,14 +705,18 @@ async function verifyAuth(userId, verify) {
     date = moment(new Date()).format(format1);
     let url;
     let toEmail;
+    let subject;
 
     if (hostname.includes("torama")) {
       toEmail = user.email;
+      subject = "Confirm Your Email";
+
       url = `https://posclaims.torama.ng/#/confirm-email/?token=${verify}`;
     } else {
       url = `http://localhost:8100/#/confirm-email/?token=${verify}`;
 
       toEmail = "auth@torama.ng";
+      subject = "Just a test ";
     }
 
     let html = `<!DOCTYPE html><html><body style="text-align:center;"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
@@ -725,7 +731,6 @@ async function verifyAuth(userId, verify) {
     const to = user.email;
     const sender = process.env.tormail;
     const cc = "auth@torama.ng";
-    const subject = "Confirm Your Email";
     const body = html;
     let model = { sender, to, cc, subject, body };
     const saveMess = await saveMessage(model);
@@ -757,11 +762,13 @@ async function forgotPassword(userId, resetLink) {
 
     if (hostname.includes("torama")) {
       toEmail = user.email;
+      subject = "Reset Password";
       url = `https://posclaims.torama.ng/#/change-password/?token=${resetLink}&email=${user.email}`;
     } else {
       url = `http://localhost:8100/#/change-password/?token=${resetLink}&email=${user.email}`;
 
       toEmail = "auth@torama.ng";
+      subject = "Just a test";
     }
 
     let html = `<!DOCTYPE html><html><body style="text-align:center;"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
@@ -776,7 +783,6 @@ async function forgotPassword(userId, resetLink) {
     const to = user.email;
     const sender = process.env.tormail;
     const cc = "auth@torama.ng";
-    const subject = "Reset Password";
     const body = html;
     let model = { sender, to, cc, subject, body };
     const saveMess = await saveMessage(model);

@@ -240,7 +240,6 @@ router.get("", checkAuth, async (req, res, next) => {
         .sort({ createdAt: -1 })
         .populate("vendor")
         .populate("creator")
-        .skip(pageSize * (currentPage - 1))
         .limit(pageSize);
     } else if (req.userData.role === "ADMIN") {
       console.log("in directors");
@@ -249,7 +248,6 @@ router.get("", checkAuth, async (req, res, next) => {
         .sort({ createdAt: -1 })
         .populate("vendor")
         .populate("creator")
-        .skip(pageSize * (currentPage - 1))
         .limit(pageSize);
     } else if (
       ["GENERAL MANAGER", "SNR ACCOUNTANT"].includes(req.userData.role)
@@ -262,7 +260,6 @@ router.get("", checkAuth, async (req, res, next) => {
         .sort({ createdAt: -1 })
         .populate("vendor")
         .populate("creator")
-        .skip(pageSize * (currentPage - 1))
         .limit(pageSize);
     } else if (req.userData.role === "MANAGER") {
       console.log("in managers");
@@ -274,7 +271,7 @@ router.get("", checkAuth, async (req, res, next) => {
         .sort({ createdAt: -1 })
         .populate("vendor")
         .populate("creator")
-        .skip(pageSize * (currentPage - 1))
+
         .limit(pageSize);
     } else {
       console.log("in other");
@@ -283,7 +280,7 @@ router.get("", checkAuth, async (req, res, next) => {
         .sort({ createdAt: -1 })
         .populate("vendor")
         .populate("creator")
-        .skip(pageSize * (currentPage - 1))
+
         .limit(pageSize);
     }
     // console.log(expenseQuery);

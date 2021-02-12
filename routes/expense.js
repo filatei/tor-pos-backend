@@ -461,7 +461,7 @@ router.put(
         let expObj = await Expense.findById(recId);
 
         // send mail with Note image
-        await Mail.sendNote(note, expObj);
+        let msent = await Mail.sendNote(note, expObj);
 
         let notes = expObj.notes;
         notes.push(note);

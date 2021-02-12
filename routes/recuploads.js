@@ -519,7 +519,9 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   if (recObj.creator !== user.email || req.userData.role !== "ADMIN") {
     // send mail
     const mstat = Mail.recUpdateAlert(user, recObj.rec_id);
-    return res.status(500).json({ message: "not allowed" });
+    return res
+      .status(500)
+      .json({ message: "not allowed. You are not receipt creator" });
   }
 
   // userData  was added to checkAuth middleware and passed along

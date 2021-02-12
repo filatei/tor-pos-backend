@@ -115,7 +115,6 @@ async function sendExpense(expense, userId = null) {
     ccEmail = currentUser.email;
     updater = currentUser.name;
   }
-  console.log("ccEmail", ccEmail);
 
   // some content
   let expenseId = expense.expense_id;
@@ -220,7 +219,6 @@ async function sendExpense(expense, userId = null) {
 
   html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama<sup>&#174;</sup> - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
 
-  // console.log(html, ccEmail, userName);
   try {
     // save in Message schema
     const to = userEmail;
@@ -230,7 +228,6 @@ async function sendExpense(expense, userId = null) {
     const body = html;
     let model = { sender, to, cc, subject, body };
     const saveMess = await saveMessage(model);
-    console.log(" Message Saved ", saveMess);
 
     model = {
       fromText: "ShopTorama",
@@ -262,10 +259,16 @@ async function sendNote(note, expense) {
   let category = expense.category;
   let expenseAccount = expense.expenseAccount;
   let location = expense.site;
-  let user = await User.find({ name: note.author });
+  // console.log(note, "note");
+  let user = await User.find({ name: note.author.trim() });
+  // console.log(user, "note author in mail.js");
   let expenseCreator = await User.findById(expense.creator);
   let userName = author;
-  let userEmail = user[0].email;
+  let userEmail;
+  if (user && user.length) {
+    userEmail = user[0].email;
+  }
+
   let notesEmail;
   let creatorEmail;
 
@@ -322,7 +325,6 @@ async function sendNote(note, expense) {
     const body = html;
     let model = { sender, to, cc, subject, body, image };
     const saveMess = await saveMessage(model);
-    console.log(" Message Saved ", saveMess);
 
     model = {
       fromText: "ShopTorama",
@@ -356,7 +358,6 @@ async function sendQaNote(note, item) {
   let location = item.location;
   let userName = author;
   let user = await User.findById(item.creator);
-  console.log(item, user);
   let creatorEmail = user.email;
   let originalAuthor = user.name;
   let notesEmail;
@@ -383,7 +384,6 @@ async function sendQaNote(note, item) {
   html += `<a href="${link}"> Click here to access the ticket </a> <br>`;
 
   html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama<sup>&#174;</sup> - All rights reserved.<sup>&#169;</sup> ${new Date().getFullYear()}</p> </body></html>`;
-  console.log(html);
 
   if (hostname.includes("torama")) {
     toEmail = "qaqc@torama.ng";
@@ -556,7 +556,6 @@ async function sendImprest(item, user) {
     html += `<p>UNApproved Amount:  <b> ₦ ${amountUnApproved.toLocaleString()} </b> </p> `;
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${new Date().getFullYear()}</p> </body></html>`;
-    console.log(html);
 
     if (hostname.includes("torama")) {
       toEmail = "expenses@torama.ng";
@@ -618,7 +617,6 @@ async function sendCashdeposit(item, user) {
     }</p>`;
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${new Date().getFullYear()}</p> </body></html>`;
-    console.log(html, subject);
 
     if (hostname.includes("torama")) {
       toEmail = "expenses@torama.ng";
@@ -659,7 +657,7 @@ const recUpdateAlert = async (user, rec_id) => {
   try {
     // some content
     let subject = "Receipt update alert!!!";
-
+    console.log(rec_id);
     let userName = user.name;
     let userEmail = user.email;
 
@@ -672,7 +670,6 @@ const recUpdateAlert = async (user, rec_id) => {
                 <p> ${userName} at ${userEmail} trying to update ${rec_id}</p>`;
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${new Date().getFullYear()}</p> </body></html>`;
-    console.log(html, subject);
 
     if (hostname.includes("torama")) {
       toEmail = "expenses@torama.ng";
@@ -725,7 +722,6 @@ async function verifyAuth(userId, verify) {
                 <p> ${url}  </p>`;
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${new Date().getFullYear()}</p> </body></html>`;
-    console.log(html, toEmail);
 
     // save in Message schema
     const to = user.email;
@@ -777,7 +773,6 @@ async function forgotPassword(userId, resetLink) {
                 <p> ${url}  </p>`;
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${new Date().getFullYear()}</p> </body></html>`;
-    console.log(html, toEmail);
 
     // save in Message schema
     const to = user.email;
@@ -812,7 +807,6 @@ async function saveMessage(model) {
 }
 
 async function mailer(model) {
-  // console.log(model, " model in mailer");
   const accessToken = await oauth2Client.getAccessToken();
   const smtpTransport = nodemailer.createTransport({
     service: "gmail",

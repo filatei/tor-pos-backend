@@ -230,8 +230,6 @@ router.get("", checkAuth, async (req, res, next) => {
 
     // console.log("todaystart", startOfDay(new Date()), new Date());
     if (imprest) {
-      console.log("in imprest");
-
       expenseQuery = await Expense.find({
         status: "APPROVED",
         expenseAccount: "Daily Imprest",

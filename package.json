@@ -32,7 +32,7 @@
     "lodash": "^4.17.20",
     "moment": "^2.27.0",
     "mongo-sanitize": "^1.1.0",
-    "mongoose": "^5.8.11",
+    "mongoose": "^5.11.16",
     "mongoose-beautiful-unique-validation": "^7.1.1",
     "mongoose-sequence": "^5.2.2",
     "mongoose-unique-validator": "^2.0.3",
@@ -47,10 +47,10 @@
     "read-excel-file": "^4.0.6",
     "rsvp": "^4.8.5",
     "socket.io": "^2.3.0",
+    "socket.io-client": "^2.3.0",
     "sockjs": "^0.3.21",
     "util": "^0.12.2",
     "uuid": "^8.3.1",
     "ws": "^7.2.1"
-  },
-  "devDependencies": {}
+  }
 }

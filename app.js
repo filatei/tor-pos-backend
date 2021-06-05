@@ -1,5 +1,10 @@
 require("dotenv").config();
 const path = require("path");
+const os = require("os");
+const hostname = os.hostname();
+const homedir = os.homedir();
+const dbinfo = require(`${homedir}/.db.json`);
+
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
@@ -40,6 +45,7 @@ const qaqcRoutes = require("./routes/qaqc");
 const cashdepositRoutes = require("./routes/cashdeposit");
 
 //let connectStr =  'mongodb://localhost:27017/torposdb';
+//  "mongodb+srv://user1:e7oBfpgdBQQCO9Qw@cluster0.sw9uv.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
 
 const DB = "torposedb";
 // if prod use this
@@ -95,11 +101,19 @@ app.use(bodyParser.json({ limit: "1mb" }));
 // // Enable preflight requests for all routes
 // app.options('*', cors());
 app.use(cors());
+let connectStr;
 
-let connectStr = process.env.CONNECT_STR;
+if (hostname.includes("torama.ng")) {
+  connectStr = process.env.CONNECT_STR;
+} else {
+  connectStr = dbinfo.DBURL;
+}
 
 mongoose.set("useUnifiedTopology", true);
 mongoose.set("useCreateIndex", true);
+mongoose.set("useFindAndModify", false);
+
+/*
 mongoose
   .connect(connectStr, {
     useNewUrlParser: true,
@@ -111,7 +125,19 @@ mongoose
   })
   .catch((err) => {
     console.log(err);
-  });
+  }); */
+
+mongoose.connect(
+  connectStr,
+  { useNewUrlParser: true, useUnifiedTopology: true },
+  function (err, res) {
+    try {
+      console.log("Connected to Database");
+    } catch (err) {
+      throw err;
+    }
+  }
+);
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");

@@ -76,8 +76,8 @@ recuploadSchema.index({
 });
 
 const rc = mongoose.model("Recupload", recuploadSchema);
-rc.createIndexes();
+// rc.createIndexes();
 
-recuploadSchema.plugin(uniqueValidator);
+// recuploadSchema.plugin(uniqueValidator);
 
 module.exports = mongoose.model("Recupload", recuploadSchema);

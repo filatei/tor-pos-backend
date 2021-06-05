@@ -28,7 +28,7 @@ const storage = multer.diskStorage({
       new Date().getTime() +
       "-" +
       file.originalname.toLowerCase().split(" ").join("-") +
-      path.extname(file.originalname);
+      Path.extname(file.originalname);
     cb(null, fileName);
   },
 });
@@ -157,6 +157,7 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
   let path = "";
   let url = "";
   let shopObj = req.body;
+  console.log(req.body, "shop", req.file);
 
   if (!shopObj.customer || shopObj.customer === undefined) {
     return res
@@ -178,7 +179,6 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
   }
   const dirPath = Path.join(__dirname, "../uploads/printqueue/");
   let printQueue = dirPath + new Date().getTime() + ".json";
-  console.log(shopObj);
 
   shopObj.creator = req.userData.userId;
   if (shopObj.action_taken === "PRODUCT RELEASED") {
@@ -218,22 +218,21 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
 
   function saveOrder(shopObj) {
     const shoporder = new Order(shopObj);
-    // console.log(shoporder);
 
     shoporder
       .save()
       .then(async (result) => {
         console.log("order added", result);
-        await fs.writeFile(
-          printQueue,
-          JSON.stringify(result.receipt),
-          (err) => {
-            if (err) {
-              return console.log(err);
-            }
-            console.log("file saved to ", printQueue);
-          }
-        );
+        // await fs.writeFile(
+        //   printQueue,
+        //   JSON.stringify(result.receipt),
+        //   (err) => {
+        //     if (err) {
+        //       return console.log(err);
+        //     }
+        //     console.log("file saved to ", printQueue);
+        //   }
+        // );
         res.status(201).json({
           message: "Order added successfully",
           shoporder: {
@@ -270,6 +269,7 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
   let url = "";
   let shopObj = req.body;
   const price = req.body.price;
+  const status = req.body.status;
   const taxRate = req.body.taxRate;
   const description = req.body.description;
   const name = req.body.name;
@@ -278,6 +278,9 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
   const id = req.params.id;
   shopObj._id = req.params.id;
   shopObj.updater = req.userData.userId;
+
+  console.log(shopObj.updaters);
+
   const shoporder = new Order(shopObj);
   if (req.file && req.file.filename && req.file.filename.length > 0) {
     if (hostname.includes("torama.ng")) {
@@ -300,13 +303,20 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
       })
       .catch((error) => {
         res.status(500).json({
-          message: "Couldn't udpate shoporder! " + error,
+          message: "Couldn't update shoporder! " + error,
         });
       });
   } else {
     Order.updateOne(
       { _id: req.params.id },
-      { name: name, price: price, description: description, taxRate: taxRate }
+      {
+        name: name,
+        price: price,
+        description: description,
+        taxRate: taxRate,
+        status: status,
+        updaters: shopObj.updaters,
+      }
     )
       .then((result) => {
         if (result.n > 0) {

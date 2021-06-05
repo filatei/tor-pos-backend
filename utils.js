@@ -44,7 +44,8 @@ var upload = multer({
     if (
       file.mimetype == "image/png" ||
       file.mimetype == "image/jpeg" ||
-      file.mimetype == "image/jpg"
+      file.mimetype == "image/jpg" ||
+      file.mimetype === "application/pdf"
     ) {
       cb(null, true);
     } else {
@@ -102,12 +103,13 @@ var upload2 = multer({
     if (
       file.mimetype == "image/png" ||
       file.mimetype == "image/jpeg" ||
-      file.mimetype == "image/jpg"
+      file.mimetype == "image/jpg" ||
+      file.mimetype === "application/pdf"
     ) {
       cb(null, true);
     } else {
       cb(null, false);
-      return cb(new Error("Only .png or .jpg format allowed!"));
+      return cb(new Error("Only .png or .jpg or pdf format allowed!"));
     }
   },
 });
@@ -197,12 +199,13 @@ var upload3 = multer({
     if (
       file.mimetype == "image/png" ||
       file.mimetype == "image/jpeg" ||
-      file.mimetype == "image/jpg"
+      file.mimetype == "image/jpg" ||
+      file.mimetype === "application/pdf"
     ) {
       cb(null, true);
     } else {
       cb(null, false);
-      return cb(new Error("Only .png or .jpg format allowed!"));
+      return cb(new Error("Only .png or .jpg or pdf format allowed!"));
     }
   },
 });
@@ -217,12 +220,13 @@ var upload4 = multer({
     if (
       file.mimetype == "image/png" ||
       file.mimetype == "image/jpeg" ||
-      file.mimetype == "image/jpg"
+      file.mimetype == "image/jpg" ||
+      file.mimetype === "application/pdf"
     ) {
       cb(null, true);
     } else {
       cb(null, false);
-      return cb(new Error("Only .png or .jpg format allowed!"));
+      return cb(new Error("Only .png or .jpg  or .pdf format allowed!"));
     }
   },
 });

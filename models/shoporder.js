@@ -80,6 +80,14 @@ const shoporderSchema = mongoose.Schema(
     image: { type: String },
     creator: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     updater: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    updaters: [
+      {
+        updaterId: { type: String },
+        time: { type: Date },
+      },
+    ],
+
+    clientTime: { type: Date },
   },
   {
     timestamps: true,

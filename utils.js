@@ -231,6 +231,66 @@ var upload4 = multer({
   },
 });
 
+const storage5 = multer.diskStorage({
+  destination: (req, file, cb) => {
+    userid = req.userData.userId;
+    const myDir = "uploads/dailyreports/" + userid + "/";
+    try {
+      if (!fs.existsSync(myDir)) {
+        fs.mkdirSync(myDir, { recursive: true });
+      }
+    } catch (err) {
+      throw err;
+    }
+    cb(null, myDir);
+  },
+  filename: (req, file, cb) => {
+    console.log(path.extname(file.originalname));
+    let fileName;
+    if (path.extname(file.originalname)) {
+      fileName =
+        req.userData.userId +
+        "-" +
+        file.originalname.toLowerCase(file.originalname).split(" ").join("-") +
+        path.extname(file.originalname);
+      console.log(fileName);
+    } else {
+      fileName =
+        req.userData.userId +
+        "-" +
+        new Date().getTime() +
+        file.originalname.toLowerCase().split(" ").join("-");
+      console.log(fileName);
+    }
+
+    cb(null, fileName);
+  },
+});
+
+var upload5 = multer({
+  storage: storage5,
+  limits: {
+    fileSize: 1024 * 1024 * 5,
+  },
+  fileFilter: (req, file, cb) => {
+    console.log(file.mimetype, "mimetype");
+    if (
+      file.mimetype.includes("excel") ||
+      file.mimetype == "image/png" ||
+      file.mimetype == "image/jpeg" ||
+      file.mimetype == "image/jpg" ||
+      file.mimetype === "application/pdf"
+    ) {
+      cb(null, true);
+    } else {
+      cb(null, false);
+      return cb(
+        new Error("Only .png or .jpg  or .pdf or .xls format allowed!")
+      );
+    }
+  },
+});
+
 const logIncident = (email, description) => {
   const logObj = new Accesslog({ email: email, description: description });
   logObj
@@ -456,6 +516,7 @@ module.exports = {
   upload2,
   upload3,
   upload4,
+  upload5,
   logIncident,
   dayAgg,
   weekAgg,

@@ -3,7 +3,7 @@ const path = require("path");
 const os = require("os");
 const hostname = os.hostname();
 const homedir = os.homedir();
-const dbinfo = require(`${homedir}/.db.json`);
+// const dbinfo = require(`${homedir}/.db.json`);
 
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -29,7 +29,7 @@ const recsummary = require("./routes/recsummary");
 const category = require("./routes/category");
 const card = require("./routes/card");
 const terminal = require("./routes/terminal");
-const siteRoutes = require("./routes/fidosites");
+const fidositeRoutes = require("./routes/fidosites");
 const eodRoutes = require("./routes/eod");
 const shopordersRoutes = require("./routes/shoporders");
 const mailRoutes = require("./routes/mail");
@@ -43,7 +43,8 @@ const shopsettingsRoutes = require("./routes/shopsettings");
 const awardsRoutes = require("./routes/award");
 const qaqcRoutes = require("./routes/qaqc");
 const cashdepositRoutes = require("./routes/cashdeposit");
-
+const dailyreportRoutes = require("./routes/dailyreport");
+const siteRoutes = require("./routes/site");
 //let connectStr =  'mongodb://localhost:27017/torposdb';
 //  "mongodb+srv://user1:e7oBfpgdBQQCO9Qw@cluster0.sw9uv.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
 
@@ -102,43 +103,12 @@ app.use(bodyParser.json({ limit: "1mb" }));
 // app.options('*', cors());
 app.use(cors());
 let connectStr;
-
-if (hostname.includes("torama.ng")) {
-  connectStr = process.env.CONNECT_STR;
-} else {
-  connectStr = dbinfo.DBURL;
-}
-
-mongoose.set("useUnifiedTopology", true);
-mongoose.set("useCreateIndex", true);
-mongoose.set("useFindAndModify", false);
-
-/*
-mongoose
-  .connect(connectStr, {
-    useNewUrlParser: true,
-    useFindAndModify: false,
-    useUnifiedTopology: true,
-  })
-  .then(() => {
-    console.log("Connected to DB");
-  })
-  .catch((err) => {
-    console.log(err);
-  }); */
-
-mongoose.connect(
-  connectStr,
-  { useNewUrlParser: true, useUnifiedTopology: true },
-  function (err, res) {
-    try {
-      console.log("Connected to Database");
-    } catch (err) {
-      throw err;
-    }
-  }
-);
-
+connectStr = process.env.CONNECT_STR;
+// if (hostname.includes("torama.ng")) {
+//   connectStr = process.env.CONNECT_STR;
+// } else {
+//   connectStr = dbinfo.DBURL;
+// }
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
@@ -153,6 +123,35 @@ app.use((req, res, next) => {
   //  res.setHeader({'Feature-Policy': layout-animations 'none'; unoptimized-images 'none'; oversized-images 'none'; sync-script 'none'; sync-xhr 'none'; unsized-media 'none';
   next();
 });
+
+mongoose.set("useUnifiedTopology", true);
+mongoose.set("useCreateIndex", true);
+mongoose.set("useFindAndModify", false);
+
+mongoose
+  .connect(connectStr, {
+    useNewUrlParser: true,
+    useFindAndModify: false,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    console.log("Connected to DB");
+  })
+  .catch((err) => {
+    console.log(err);
+  });
+
+// mongoose.connect(
+//   connectStr,
+//   { useNewUrlParser: true, useUnifiedTopology: true },
+//   function (err, res) {
+//     try {
+//       console.log("Connected to Database");
+//     } catch (err) {
+//       throw err;
+//     }
+//   }
+// );
 
 app.use("/api/paymethods", paymethodsRoutes);
 app.use("/api/products", productsRoutes);
@@ -169,7 +168,6 @@ app.use("/api/recsummary", recsummary);
 app.use("/api/productcategory", category);
 app.use("/api/cards", card);
 app.use("/api/terminals", terminal);
-app.use("/api/sites", siteRoutes);
 app.use("/api/eod", eodRoutes);
 app.use("/api/shoporders", shopordersRoutes);
 app.use("/api/mailer", mailRoutes);
@@ -183,5 +181,7 @@ app.use("/api/shopsettings", shopsettingsRoutes);
 app.use("/api/awards", awardsRoutes);
 app.use("/api/qaqc", qaqcRoutes);
 app.use("/api/cashdeposit", cashdepositRoutes);
+app.use("/api/dailyreport", dailyreportRoutes);
+app.use("/api/sites", siteRoutes);
 
 module.exports = app;

@@ -69,14 +69,16 @@ router.post(
 
         myPath = url + "/" + fileName;
       }
-
+      let taxR = 0;
       const { name, address, taxRate, buildDate, phone, email } = req.body;
-
+      if (taxRate) {
+        taxR = taxRate;
+      }
       const creator = req.userData.userId;
       const siteObj = {
         name,
         address,
-        taxRate,
+        taxRate: taxR,
         phone,
         buildDate,
         email,

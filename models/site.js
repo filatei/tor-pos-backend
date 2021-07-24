@@ -22,7 +22,7 @@ const siteSchema = mongoose.Schema(
     email: String,
     icon: String,
     image: String,
-    taxRate: Number,
+    taxRate: { type: Number, default: 0 },
     creator: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     updater: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   },

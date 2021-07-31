@@ -45,6 +45,7 @@ const qaqcRoutes = require("./routes/qaqc");
 const cashdepositRoutes = require("./routes/cashdeposit");
 const dailyreportRoutes = require("./routes/dailyreport");
 const siteRoutes = require("./routes/site");
+const liabRoutes = require("./routes/liability");
 //let connectStr =  'mongodb://localhost:27017/torposdb';
 //  "mongodb+srv://user1:e7oBfpgdBQQCO9Qw@cluster0.sw9uv.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
 
@@ -183,5 +184,6 @@ app.use("/api/qaqc", qaqcRoutes);
 app.use("/api/cashdeposit", cashdepositRoutes);
 app.use("/api/dailyreport", dailyreportRoutes);
 app.use("/api/sites", siteRoutes);
+app.use("/api/liabilities", liabRoutes);
 
 module.exports = app;

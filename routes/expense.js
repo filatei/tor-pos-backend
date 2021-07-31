@@ -223,8 +223,10 @@ router.get("", checkAuth, async (req, res, next) => {
       "OKUTUKUTU",
       "YENEGWE",
       "OBUNNA",
-      "KPANSIA-E",
+      "KPANSIA E",
     ];
+
+    const blockSites = ["OKUTUKUTU-BLOCKS", "AGADAGBA-BLOCKS"];
 
     let expenseQuery;
 

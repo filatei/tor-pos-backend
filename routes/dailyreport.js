@@ -83,7 +83,6 @@ router.post(
         fuel,
         roreadings,
         incidents,
-        observations,
         qualityreadings,
       } = req.body;
       const prod = JSON.parse(production);
@@ -100,7 +99,6 @@ router.post(
         incidents,
         fuel,
         roreadings: roreads,
-        observations,
         qualityreadings: qualreads,
         creator,
         image: myPath,
@@ -153,7 +151,6 @@ router.put("/:id", checkAuth, async (req, res, next) => {
     roreadings,
     incidents,
     qualityreadings,
-    observations,
     type,
     site,
   } = req.body;
@@ -165,7 +162,6 @@ router.put("/:id", checkAuth, async (req, res, next) => {
     incidents,
     qualityreadings,
     diesel,
-    observations,
     type,
     site,
     updater,
@@ -267,7 +263,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
 });
 
 router.get("", checkAuth, async (req, res, next) => {
-  const pageSize = +req.query.pagesize;
+  let pageSize = +req.query.pagesize;
   if (!pageSize) pageSize = 200;
   const currentPage = +req.query.page;
   const directors = process.env.DIRECTORS;
@@ -281,7 +277,7 @@ router.get("", checkAuth, async (req, res, next) => {
       message: "Fetching Daily Report failed, please try again later." + err,
     });
   }
-  res.json({ dailyreport });
+  res.status(200).json({ dailyreport });
 });
 
 router.get("/:id", async (req, res, next) => {

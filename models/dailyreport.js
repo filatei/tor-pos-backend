@@ -13,6 +13,7 @@ const dailyreportSchema = mongoose.Schema(
         sales: { type: Number },
         damaged: { type: Number },
         balance: { type: Number },
+        cement: { type: Number, default: 0 },
         date: { type: Date, default: Date.now },
         remarks: { type: String },
       },
@@ -22,7 +23,6 @@ const dailyreportSchema = mongoose.Schema(
     machine: { type: String, trim: true },
     date: { type: String, trim: true },
     people: { type: String, trim: true },
-    observations: { type: String, trim: true },
     quality: { type: String, trim: true },
     fuel: { type: String, trim: true },
     roreadings: [
@@ -37,7 +37,7 @@ const dailyreportSchema = mongoose.Schema(
     qualityreadings: [
       {
         name: { type: String },
-        reading: { type: Number },
+        reading: { type: Number, default: 0 },
         remarks: { type: String },
         date: { type: Date, default: Date.now },
       },

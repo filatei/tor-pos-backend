@@ -521,7 +521,8 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   let user = await User.findById(req.userData.userId).lean();
 
   if (
-    oldReceipt.creator.toString().trim() !== req.userData.userId.trim() ||
+    oldReceipt.creator.toString().trim() !==
+      req.userData.userId.toString().trim() ||
     user.role.toString().trim() !== "ADMIN"
   ) {
     // send mail

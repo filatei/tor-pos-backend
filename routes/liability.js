@@ -141,7 +141,6 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   }
 
   const id = req.params.id;
-  console.log("id: ", id);
 
   let user = req.userData;
   const updater = req.userData.userId;
@@ -158,19 +157,17 @@ router.put("/:id", checkAuth, async (req, res, next) => {
     status,
   } = req.body;
 
-  const liabilityObj = {
-    liabType,
-    bank,
-    site,
-    company,
-    status,
-    remarks,
-    amount,
-    startDate,
-    endDate,
-    updater,
-  };
-
+  const liabilityObj = {};
+  if (liabType) liabilityObj.liabType = liabType;
+  if (bank) liabilityObj.bank = bank;
+  if (site) liabilityObj.site = site;
+  if (company) liabilityObj.company = company;
+  if (status) liabilityObj.status = status;
+  if (remarks) liabilityObj.remarks = remarks;
+  if (amount) liabilityObj.amount = amount;
+  if (startDate) liabilityObj.startDate = startDate;
+  if (endDate) liabilityObj.endDate = endDate;
+  if (updater) liabilityObj.updater = updater;
   liabilityObj._id = id;
   let mailStat;
 
@@ -180,12 +177,10 @@ router.put("/:id", checkAuth, async (req, res, next) => {
         const updated = Liability.findById(id);
         // mailStat = await Mail.sendLiability(updated, user);
 
-        res
-          .status(200)
-          .json({
-            message: " Liability Update successful!",
-            liability: result,
-          });
+        res.status(200).json({
+          message: " Liability Update successful!",
+          liability: result,
+        });
       } else {
         res.status(401).json({ message: "Not authorized!" });
       }

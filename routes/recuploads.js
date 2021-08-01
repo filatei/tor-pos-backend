@@ -374,6 +374,9 @@ router.get("", checkAuth, (req, res, next) => {
     logIncident(req.userData.email, "Not allowed to see Receipts");
     return res.status(500).json({ message: "Not allowed" });
   }
+
+  console.log(alloweds);
+
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
   const site = req.query.site;
@@ -400,7 +403,7 @@ router.get("", checkAuth, (req, res, next) => {
   }
   coyQuery
     .then((documents) => {
-      //  console.log(documents.count)
+      console.log(documents[0]);
       fetchedRecords = documents;
       return Recupload.countDocuments();
     })
@@ -499,7 +502,7 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   if (!req.body.customer)
     return res
       .status(500)
-      .json({ message: "Every Receipt must have a customber " });
+      .json({ message: "Every Receipt must have a customer " });
 
   let formFields = Object.keys(req.body); // an array
 
@@ -511,12 +514,16 @@ router.put("/:id", checkAuth, async (req, res, next) => {
       return obj;
     }, {});
 
-  console.log(recObj);
   recObj._id = sanitize(req.params.id);
+  oldReceipt = await Recupload.findById(req.params.id).lean();
 
   // access control
-  let user = await User.findById(req.userData.userId);
-  if (recObj.creator !== user.email || req.userData.role !== "ADMIN") {
+  let user = await User.findById(req.userData.userId).lean();
+
+  if (
+    oldReceipt.creator.toString().trim() !== req.userData.userId.trim() ||
+    user.role.toString().trim() !== "ADMIN"
+  ) {
     // send mail
     const mstat = Mail.recUpdateAlert(user, recObj.rec_id);
     return res
@@ -527,7 +534,7 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   // userData  was added to checkAuth middleware and passed along
   recObj.updater = req.userData.userId;
   // console.log(claimObj.customer, typeof claimObj.customer)
-  if (typeof recObj.customer != "object")
+  if (typeof recObj.customer !== "object")
     recObj.customer = JSON.parse(recObj.customer);
 
   if (recObj.customer._id) {
@@ -594,7 +601,7 @@ router.put("/:id", checkAuth, async (req, res, next) => {
       .catch((error) => {
         console.log(error);
         res.status(500).json({
-          message: "Couldn't udpate receipt! " + error,
+          message: "Couldn't update receipt! " + error,
         });
       });
   }

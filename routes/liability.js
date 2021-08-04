@@ -84,10 +84,11 @@ router.post(
         bank,
         company,
         remarks,
-        vendor,
       } = req.body;
 
       const creator = req.userData.userId;
+      const balance = amount;
+
       const liabilityObj = {
         liabType,
         bank,
@@ -95,8 +96,8 @@ router.post(
         status: "OPEN",
         company,
         remarks,
-        vendor,
         amount,
+        balance,
         startDate,
         endDate,
         creator,
@@ -132,6 +133,7 @@ router.post(
 );
 
 router.put("/:id", checkAuth, async (req, res, next) => {
+  console.log("entering put");
   const alloweds = process.env.ALLOWEDS;
   if (!alloweds.includes(req.userData.email)) {
     logIncident(req.userData.email, "Not allowed to create Daily Report");
@@ -139,32 +141,67 @@ router.put("/:id", checkAuth, async (req, res, next) => {
       .status(500)
       .json({ message: "Not allowed to create Daily Report" });
   }
-
   const id = req.params.id;
-
+  let updated;
   let user = req.userData;
   const updater = req.userData.userId;
 
   const {
     liabType,
     amount,
+    payment,
     site,
     startDate,
     endDate,
     bank,
     company,
+    balance,
     remarks,
     status,
   } = req.body;
+  console.log(payment, "payment");
 
   const liabilityObj = {};
+  let payHistory = [];
+  if (payment) {
+    let liability = await Liability.findById(id).lean();
+
+    if (!liability.balance) liability.balance = liability.amount;
+    const balance = +liability.balance - payment.paidAmount;
+    if (liability.payHistory === undefined || !liability.payHistory.length) {
+      payHistory.push(payment);
+    } else {
+      payHistory = [...liability.payHistory, payment];
+      // payHistorsy.push(payment);
+    }
+    console.log(liability, "liability", payHistory, "payHistory");
+
+    const liab = await Liability.updateOne(
+      { _id: id },
+      { payment, balance, payHistory, updater }
+    );
+    console.log("liab", liab);
+    updated = await Liability.findById(id);
+
+    if (liab) {
+      return res.status(200).json({
+        message: " Liability Update successful!",
+        liability: updated,
+      });
+    } else {
+      return res.status(401).json({ message: "Not saved successfully!" });
+    }
+  }
+
   if (liabType) liabilityObj.liabType = liabType;
+
   if (bank) liabilityObj.bank = bank;
   if (site) liabilityObj.site = site;
   if (company) liabilityObj.company = company;
   if (status) liabilityObj.status = status;
   if (remarks) liabilityObj.remarks = remarks;
   if (amount) liabilityObj.amount = amount;
+  if (balance) liabilityObj.balance = balance;
   if (startDate) liabilityObj.startDate = startDate;
   if (endDate) liabilityObj.endDate = endDate;
   if (updater) liabilityObj.updater = updater;
@@ -174,12 +211,12 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   Liability.updateOne({ _id: id }, liabilityObj)
     .then(async (result) => {
       if (result.n > 0) {
-        const updated = Liability.findById(id);
+        updated = await Liability.findById(id);
         // mailStat = await Mail.sendLiability(updated, user);
-
+        console.log(result, liabilityObj, "result liabobj");
         res.status(200).json({
           message: " Liability Update successful!",
-          liability: result,
+          liability: updated,
         });
       } else {
         res.status(401).json({ message: "Not authorized!" });
@@ -235,13 +272,11 @@ router.get("", checkAuth, async (req, res, next) => {
       .populate("site")
       .sort({ createdAt: -1 })
       .limit(pageSize);
-    console.log("liam", liam);
     const liab = liam.map((l) => ({
       ...l,
       site: l.site.name,
       creator: l.creator.name,
     }));
-    console.log("liam", liab);
 
     res.status(200).json({ liability: liab });
   } catch (err) {
@@ -309,7 +344,7 @@ router.put(
       });
     }
     const note = req.body;
-
+    // console.log(note, "note");
     let recId = req.params.id;
     await saveLiability();
 
@@ -319,7 +354,7 @@ router.put(
           note.image = myPath;
         }
 
-        let libObj = await Liability.findById(recId);
+        let libObj = await Liability.findById(recId).lean();
 
         // send mail with Note image
         // let msent = await Mail.sendNote(note, expObj);
@@ -339,7 +374,7 @@ router.put(
           { notes: notes, updater: updater, log: log }
         )
           .then((result) => {
-            // console.log(result);
+            console.log(result);
             res.status(201).json({
               message: " note with image updated successfully",
               expense: {

@@ -367,7 +367,7 @@ router.get("/summary", checkAuth, async (req, res, next) => {
     });
 });
 
-router.get("", checkAuth, (req, res, next) => {
+router.get("/summary2", checkAuth, async (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
 
   if (!alloweds.includes(req.userData.email)) {
@@ -375,7 +375,48 @@ router.get("", checkAuth, (req, res, next) => {
     return res.status(500).json({ message: "Not allowed" });
   }
 
-  console.log(alloweds);
+  try {
+    const yesterdayStart = moment()
+      .subtract(10, "days")
+      .startOf("day")
+      .toDate();
+    const yesterdayEnd = moment().subtract(0, "days").endOf("day").toDate();
+    // start of today
+    var start = moment().startOf("day").toDate();
+
+    // end today
+    var end = moment(start).endOf("day").toDate();
+
+    const { recSummary } = req.query;
+    if (recSummary) {
+      if (req.userData.role !== "ADMIN") {
+        return res.status(500).json({ message: "NOT ALLOWED" });
+      }
+
+      const aggData = Summary.Pipeline(yesterdayStart, yesterdayEnd);
+
+      console.log("agg data", JSON.stringify(aggData));
+
+      if (aggData) {
+        return res.status(200).json({ records: aggData });
+      } else {
+        return res
+          .status(500)
+          .json({ message: "Error with recUpload summary" });
+      }
+    }
+  } catch (err) {
+    return res.status(500).json({ message: "Error with recUpload summary" });
+  }
+});
+
+router.get("", checkAuth, (req, res, next) => {
+  const alloweds = process.env.ALLOWEDS;
+
+  if (!alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, "Not allowed to see Receipts");
+    return res.status(500).json({ message: "Not allowed" });
+  }
 
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
@@ -403,7 +444,6 @@ router.get("", checkAuth, (req, res, next) => {
   }
   coyQuery
     .then((documents) => {
-      console.log(documents[0]);
       fetchedRecords = documents;
       return Recupload.countDocuments();
     })

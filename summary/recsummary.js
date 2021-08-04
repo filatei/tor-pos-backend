@@ -51,4 +51,54 @@ const recAgg = async () => {
   return summary;
 };
 
-module.exports = { recAgg };
+async function Pipeline(start, end) {
+  const pipeline = [
+    {
+      $match: {
+        action_taken: "PRODUCT RELEASED",
+        createdAt: { $gte: start, $lte: end },
+      },
+    },
+    {
+      $unwind: {
+        path: "$products",
+      },
+    },
+    {
+      $group: {
+        _id: {
+          year: {
+            $year: "$createdAt",
+          },
+          month: {
+            $month: "$createdAt",
+          },
+          day: {
+            $dayOfMonth: "$createdAt",
+          },
+          product: "$products.name",
+          site: "$terminal_location",
+        },
+        totalSalesAmount: {
+          $sum: "$txn_amount",
+        },
+        totalQty: {
+          $sum: "$products.qty",
+        },
+      },
+    },
+    {
+      $sort: {
+        "_id.year": 1,
+        "_id.site": 1,
+        "_id.product": 1,
+      },
+    },
+  ];
+
+  // return pipeline;
+  const summary = await Recupload.aggregate(pipeline);
+  return summary;
+}
+
+module.exports = { recAgg, Pipeline };

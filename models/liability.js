@@ -9,10 +9,10 @@ const liabilitySchema = mongoose.Schema(
     updater: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     liabType: { type: String },
     amount: { type: Number },
+    balance: { type: Number },
     remarks: { type: String },
     company: { type: String },
     bank: { type: String },
-    vendor: { type: String },
     remarks: { type: String },
     image: { type: String },
 
@@ -29,6 +29,24 @@ const liabilitySchema = mongoose.Schema(
       },
     ],
     log: [{}],
+    payment: {
+      bankAcct: { type: String },
+      paymentDate: { type: Date },
+      memo: { type: String },
+      paidAmount: { type: Number },
+      date: { type: Date, default: Date.now },
+      payer: { type: String },
+    },
+    payHistory: [
+      {
+        bankAcct: { type: String },
+        paymentDate: { type: Date },
+        memo: { type: String },
+        paidAmount: { type: Number },
+        date: { type: Date, default: Date.now },
+        payer: { type: String },
+      },
+    ],
     statusHistory: [
       {
         oldStatus: { type: String },

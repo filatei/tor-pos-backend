@@ -89,15 +89,19 @@ async function Pipeline(start, end) {
     },
     {
       $sort: {
-        "_id.year": 1,
-        "_id.site": 1,
+        "_id.year": -1,
+        "_id.month": -1,
+        "_id.day": -1,
         "_id.product": 1,
+        totalQty: -1,
+        "_id.site": 1,
       },
     },
   ];
 
   // return pipeline;
   const summary = await Recupload.aggregate(pipeline);
+  // console.log(summary, "summary ");
   return summary;
 }
 

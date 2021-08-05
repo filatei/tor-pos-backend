@@ -228,6 +228,7 @@ router.delete("/:id", checkAuth, async (req, res, next) => {
 });
 
 router.get("/summary", checkAuth, async (req, res, next) => {
+  console.log("in summary");
   const alloweds = process.env.ALLOWEDS;
 
   if (!alloweds.includes(req.userData.email)) {
@@ -377,7 +378,7 @@ router.get("/summary2", checkAuth, async (req, res, next) => {
 
   try {
     const yesterdayStart = moment()
-      .subtract(10, "days")
+      .subtract(14, "days")
       .startOf("day")
       .toDate();
     const yesterdayEnd = moment().subtract(0, "days").endOf("day").toDate();
@@ -388,14 +389,31 @@ router.get("/summary2", checkAuth, async (req, res, next) => {
     var end = moment(start).endOf("day").toDate();
 
     const { recSummary } = req.query;
+    console.log(
+      " in recsummary2",
+      yesterdayStart,
+      yesterdayEnd,
+      start,
+      end,
+      recSummary
+    );
+
     if (recSummary) {
       if (req.userData.role !== "ADMIN") {
         return res.status(500).json({ message: "NOT ALLOWED" });
       }
 
-      const aggData = Summary.Pipeline(yesterdayStart, yesterdayEnd);
+      let aggData = await Summary.Pipeline(yesterdayStart, yesterdayEnd);
 
-      console.log("agg data", JSON.stringify(aggData));
+      // bring out the ._id
+      aggData = aggData.map((a) => {
+        return {
+          ...a._id,
+          totalSalesAmount: a.totalSalesAmount.toLocaleString(),
+          totalQty: a.totalQty.toLocaleString(),
+        };
+      });
+      console.log(aggData, "agg data mapped");
 
       if (aggData) {
         return res.status(200).json({ records: aggData });
@@ -406,7 +424,9 @@ router.get("/summary2", checkAuth, async (req, res, next) => {
       }
     }
   } catch (err) {
-    return res.status(500).json({ message: "Error with recUpload summary" });
+    return res
+      .status(500)
+      .json({ message: "Error with recUpload summary try block" });
   }
 });
 

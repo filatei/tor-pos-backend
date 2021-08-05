@@ -155,6 +155,9 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   const {
     liabType,
     amount,
+    interest,
+    finalAmount,
+    tenor,
     payment,
     site,
     startDate,
@@ -165,7 +168,7 @@ router.put("/:id", checkAuth, async (req, res, next) => {
     remarks,
     status,
   } = req.body;
-  console.log(payment, "payment");
+  // console.log(payment, "payment");
 
   const liabilityObj = {};
   let payHistory = [];
@@ -207,6 +210,9 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   if (status) liabilityObj.status = status;
   if (remarks) liabilityObj.remarks = remarks;
   if (amount) liabilityObj.amount = amount;
+  if (interest) liabilityObj.interest = interest;
+  if (finalAmount) liabilityObj.finalAmount = finalAmount;
+  if (tenor) liabilityObj.tenor = tenor;
   if (balance) liabilityObj.balance = balance;
   if (startDate) liabilityObj.startDate = startDate;
   if (endDate) liabilityObj.endDate = endDate;

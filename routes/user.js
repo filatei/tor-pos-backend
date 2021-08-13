@@ -425,4 +425,29 @@ router.get("/:id", checkAuth, async (req, res, next) => {
   }
 });
 
+router.delete("/:id", checkAuth, async (req, res, next) => {
+  if (!req.params.id) return res.status(401).json({ error: "empty id" });
+  const alloweds = process.env.DELALLOWEDS;
+
+  if (!alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, "Not allowed to delete Receipts");
+    return res.status(500).json({ message: "Not allowed" });
+  }
+
+  User.deleteOne({ _id: req.params.id })
+    .then((result) => {
+      if (result.n > 0) {
+        res.status(200).json({ message: "Deletion successful!" });
+      } else {
+        res.status(401).json({ message: "Not authorized!" });
+      }
+    })
+    .catch((error) => {
+      console.error(error);
+      res.status(500).json({
+        message: "Deleting receipt failed!",
+      });
+    });
+});
+
 module.exports = router;

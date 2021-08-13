@@ -9,6 +9,8 @@ const hostname = os.hostname();
 const MyMail = require("../mail");
 const _ = require("lodash");
 var multer = require("multer");
+const checkAuth = require("../middleware/check-auth");
+const Mail = require("nodemailer/lib/mailer");
 const DIR = "./uploads/userimages/";
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -45,11 +47,9 @@ var upload = multer({
     }
   },
 });
-const checkAuth = require("../middleware/check-auth");
-const Mail = require("nodemailer/lib/mailer");
 
 router.post("/verify", async (req, res, next) => {
-  console.log(req.body, "req body");
+  // console.log(req.body, "req body");
   try {
     const token = req.body.token;
     // const userid = req.body.userid;
@@ -99,7 +99,7 @@ router.post("/verify", async (req, res, next) => {
 });
 
 router.post("/confirmPassword", async (req, res, next) => {
-  console.log(req.body, "req body");
+  // console.log(req.body, "req body");
   try {
     const { email } = req.body;
 

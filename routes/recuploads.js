@@ -102,7 +102,6 @@ router.post("", checkAuth, Utils.upload.any(), function (req, res, next) {
       delete recObj[key];
     }
   });
-  console.log(recObj);
 
   try {
     recObj.driver = JSON.parse(recObj.driver);
@@ -154,9 +153,7 @@ router.post("", checkAuth, Utils.upload.any(), function (req, res, next) {
     receipt
       .save()
       .then((result) => {
-        //  console.log(result, 'result')
         // mailobject = {...result, customerName: customerName};
-        // console.log(mailobject, 'mailobject')
         res.status(201).json({
           message: "Receipt  Uploaded successfully",
           Recupload: {
@@ -228,7 +225,6 @@ router.delete("/:id", checkAuth, async (req, res, next) => {
 });
 
 router.get("/summary", checkAuth, async (req, res, next) => {
-  console.log("in summary");
   const alloweds = process.env.ALLOWEDS;
 
   if (!alloweds.includes(req.userData.email)) {
@@ -389,14 +385,14 @@ router.get("/summary2", checkAuth, async (req, res, next) => {
     var end = moment(start).endOf("day").toDate();
 
     const { recSummary } = req.query;
-    console.log(
-      " in recsummary2",
-      yesterdayStart,
-      yesterdayEnd,
-      start,
-      end,
-      recSummary
-    );
+    // console.log(
+    //   " in recsummary2",
+    //   yesterdayStart,
+    //   yesterdayEnd,
+    //   start,
+    //   end,
+    //   recSummary
+    // );
 
     if (recSummary) {
       if (req.userData.role !== "ADMIN") {
@@ -413,7 +409,6 @@ router.get("/summary2", checkAuth, async (req, res, next) => {
           totalQty: a.totalQty.toLocaleString(),
         };
       });
-      console.log(aggData, "agg data mapped");
 
       if (aggData) {
         return res.status(200).json({ records: aggData });
@@ -594,12 +589,10 @@ router.put("/:id", checkAuth, async (req, res, next) => {
 
   // userData  was added to checkAuth middleware and passed along
   recObj.updater = req.userData.userId;
-  // console.log(claimObj.customer, typeof claimObj.customer)
   if (typeof recObj.customer !== "object")
     recObj.customer = JSON.parse(recObj.customer);
 
   if (recObj.customer._id) {
-    // console.log( 'customer  already be in db')
     // store customer id and save claim
     recObj.customer = recObj.customer._id;
     saveReceipt(recObj);
@@ -618,17 +611,14 @@ router.put("/:id", checkAuth, async (req, res, next) => {
     Customer.findOne({ name: new RegExp("^" + cust.name + "$", "i") })
       .then((result) => {
         if (result) {
-          //  console.log(result, ' cust find result')
           claimObj.customer = result._id;
           saveReceipt(recObj);
         } else {
           let custObj = new Customer(cust);
-          // console.log(custObj, ' new customer obj')
           custObj
             .save()
             .then((sres) => {
               recObj.customer = sres._id;
-              //  console.log(claimObj, ' recObj in customerloop')
               saveReceipt(recObj);
             })
             .catch((err) => {

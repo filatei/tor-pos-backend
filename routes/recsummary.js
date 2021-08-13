@@ -290,7 +290,6 @@ router.get("/getByText", (req, res, next) => {
       records = rec.filter((r) =>
         r.customer.name.toLowerCase().includes(stan.toLowerCase())
       );
-      // console.log(records)
       Recupload.find({ $text: { $search: stan } })
         .then((record) => {
           if (record) {

@@ -42,8 +42,8 @@ router.post("", checkAuth, function (req, res, next) {
   const alloweds = process.env.STOREALLOWEDS;
 
   if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to create Inventory");
-    return res.status(500).json({ message: "Not allowed to create inventory" });
+    logIncident(req.userData.email, "Not allowed to create Expense");
+    return res.status(500).json({ message: "Not allowed to create Expense" });
   }
 
   let expenseObj = req.body;
@@ -71,8 +71,8 @@ router.post("", checkAuth, function (req, res, next) {
 router.put("/expenseAcct/:id", checkAuth, async (req, res, next) => {
   const alloweds = process.env.STOREALLOWEDS;
   if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to create Inventory");
-    return res.status(500).json({ message: "Not allowed to create inventory" });
+    logIncident(req.userData.email, "Not allowed to create Expense");
+    return res.status(500).json({ message: "Not allowed to create Expense" });
   }
 
   const { expenseAccount } = req.body;
@@ -104,8 +104,8 @@ router.put("/expenseAcct/:id", checkAuth, async (req, res, next) => {
 router.put("/:id", checkAuth, async (req, res, next) => {
   const alloweds = process.env.STOREALLOWEDS;
   if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to create Inventory");
-    return res.status(500).json({ message: "Not allowed to create inventory" });
+    logIncident(req.userData.email, "Not allowed to create Expense");
+    return res.status(500).json({ message: "Not allowed to create expense" });
   }
 
   let expenseObj = req.body;

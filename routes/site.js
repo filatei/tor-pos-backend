@@ -189,13 +189,13 @@ router.get("", checkAuth, async (req, res, next) => {
   const currentPage = +req.query.page;
   const directors = process.env.DIRECTORS;
   try {
-    site = await Site.find().sort({ createdAt: -1 }).limit(pageSize);
+    const site = await Site.find().sort({ createdAt: -1 }).limit(pageSize);
+    return res.status(200).json({ site });
   } catch (err) {
     return res.status(500).json({
-      message: "Fetching Cash failed, please try again later." + err,
+      message: "Fetching Sites failed, please try again later." + err,
     });
   }
-  res.json({ site });
 });
 
 router.get("/:id", async (req, res, next) => {

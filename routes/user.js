@@ -427,7 +427,7 @@ router.get("/:id", checkAuth, async (req, res, next) => {
 
 router.delete("/:id", checkAuth, async (req, res, next) => {
   if (!req.params.id) return res.status(401).json({ error: "empty id" });
-  const alloweds = process.env.DELALLOWEDS;
+  const alloweds = process.env.DIRECTORS;
 
   if (!alloweds.includes(req.userData.email)) {
     logIncident(req.userData.email, "Not allowed to delete Receipts");

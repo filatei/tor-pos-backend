@@ -1,4 +1,6 @@
 const Recupload = require("../models/recupload");
+const Produce = require("../models/produce");
+
 const recAgg = async () => {
   const summary = await Recupload.aggregate([
     // {
@@ -105,4 +107,94 @@ async function Pipeline(start, end) {
   return summary;
 }
 
-module.exports = { recAgg, Pipeline };
+async function producePipeline(start, end) {
+  const pipeline = [
+    {
+      $match: {
+        createdAt: { $gte: start, $lte: end },
+      },
+    },
+    // {
+    //   $unwind: {
+    //     path: "$product",
+    //     path: "$site",
+    //   },
+    // },
+    {
+      $lookup: {
+        from: "products",
+        localField: "product",
+        foreignField: "_id",
+        as: "products",
+      },
+    },
+    {
+      $lookup: {
+        from: "sites",
+        localField: "site",
+        foreignField: "_id",
+        as: "sites",
+      },
+    },
+    {
+      $unwind: "$products",
+    },
+    {
+      $unwind: "$sites",
+    },
+
+    {
+      $group: {
+        _id: {
+          year: {
+            $year: "$dateProduced",
+          },
+          month: {
+            $month: "$dateProduced",
+          },
+          day: {
+            $dayOfMonth: "$dateProduced",
+          },
+          product: "$products.name",
+          site: "$sites.name",
+        },
+        totalQty: {
+          $sum: "$qty",
+        },
+        totalCement: {
+          $sum: "$cementbags",
+        },
+        totalSand: {
+          $sum: "$sand",
+        },
+      },
+    },
+
+    {
+      $sort: {
+        "_id.year": -1,
+        "_id.month": -1,
+        "_id.day": -1,
+        "_id.site": 1,
+        "_id.product": 1,
+        totalQty: -1,
+      },
+    },
+
+    {
+      $project: {
+        _id: 1,
+        site: 1,
+        product: 1,
+        totalQty: 1,
+        totalCement: 1,
+      },
+    },
+  ];
+
+  const summary = await Produce.aggregate(pipeline);
+  // console.log(summary, "summary ");
+  return summary;
+}
+
+module.exports = { recAgg, Pipeline, producePipeline };

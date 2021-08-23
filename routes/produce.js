@@ -1,8 +1,10 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const User = require("../models/user");
-
+const _ = require("lodash");
 const Produce = require("../models/produce");
+const Summary = require("../summary/recsummary");
+
 const Stockitem = require("../models/stockitem");
 const Contact = require("../models/contact");
 const Accesslog = require("../models/accesslog");
@@ -221,6 +223,78 @@ router.get("", async (req, res, next) => {
   }
 });
 
+router.get("/summary", checkAuth, async (req, res, next) => {
+  const alloweds = process.env.PRODUCERS;
+
+  if (!alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, "Not allowed to see produces");
+    return res.status(500).json({ message: "Not allowed" });
+  }
+
+  try {
+    const yesterdayStart = moment()
+      .subtract(14, "days")
+      .startOf("day")
+      .toDate();
+    const yesterdayEnd = moment().subtract(0, "days").endOf("day").toDate();
+    // start of today
+    var start = moment().startOf("day").toDate();
+
+    // end today
+    var end = moment(start).endOf("day").toDate();
+
+    const { recSummary } = req.query;
+    if (recSummary) {
+      let aggData = await Summary.producePipeline(yesterdayStart, yesterdayEnd);
+
+      // bring out the ._id
+      aggData = aggData.map((a) => {
+        return {
+          ...a._id,
+          dateProduced: a._id.day + "/" + a._id.month + "/" + a._id.year,
+          totalCement: a.totalCement.toLocaleString(),
+          totalQty: a.totalQty.toLocaleString(),
+          site: a._id.site === "OKUTUKUTU-BLOCKS" ? "OK_BLOCKS" : "AG_BLOCKS",
+        };
+      });
+
+      const gb = _.groupBy(aggData, "dateProduced");
+      console.log(gb);
+      const keys = Object.keys(gb);
+      // const chart = gb[keys[0]].filter((f) => f.product === '9" Block');
+      // let plot2;
+      // const plot1 = {
+      //   date: chart[0].dateProduced,
+      //   qty: parseInt(chart[0].totalQty),
+      //   label1: chart[0].site,
+      //   product: chart[0].product,
+      // };
+      // if (chart.length > 1) {
+      //   plot2 = {
+      //     date: chart[1].dateProduced,
+      //     qty: parseInt(chart[1].totalQty),
+      //     label2: chart[1].site,
+      //     product: chart[1].product,
+      //   };
+      // } else {
+      //   plot2 = { date: null, qty: 0, label2: "", product: "" };
+      // }
+
+      // console.log([plot1, plot2]);
+
+      if (gb) {
+        return res.status(200).json({ records: gb });
+      } else {
+        return res.status(500).json({ message: "Error with produce summary" });
+      }
+    }
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ message: "Error with produce summary try block" + err });
+  }
+});
+
 router.get("/getByText", checkAuth, async (req, res, next) => {
   // const alloweds = process.env.ALLOWEDS;
   // if (!alloweds.includes(req.userData.email)) {
@@ -373,10 +447,5 @@ router.put(
       });
   }
 );
-
-router.post("/mail", checkAuth, function (req, res, next) {
-  let produceObj = req.body;
-  produceObj.creator = req.userData.userId;
-});
 
 module.exports = router;

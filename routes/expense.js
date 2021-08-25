@@ -242,7 +242,7 @@ router.get("", checkAuth, async (req, res, next) => {
         .populate("creator")
         .limit(pageSize);
     } else if (req.userData.role === "ADMIN") {
-      console.log("in directors");
+      // console.log("in directors");
 
       expenseQuery = await Expense.find()
         .sort({ createdAt: -1 })
@@ -427,16 +427,12 @@ router.put(
     let updater = req.userData.userId;
     console.log(updater, "updater");
     let myPath;
+    console.log(req.files, "files");
     if (req.files) {
       let fileName;
       req.files.forEach((file) => {
-        if (file.originalname == "blob") {
-          fileName =
-            "uploads/expenses/" + req.userData.userId + "/" + file.filename;
-        } else {
-          fileName =
-            "uploads/expenses/" + req.userData.userId + "/" + file.filename;
-        }
+        fileName =
+          "uploads/expenses/" + req.userData.userId + "/" + file.filename;
 
         if (hostname.includes("torama.ng")) {
           url = "https://api.torama.ng";
@@ -448,8 +444,8 @@ router.put(
       });
     }
     const note = req.body;
-
     let recId = req.params.id;
+    console.log(note, recId, "1");
     await saveExpense();
 
     async function saveExpense() {
@@ -459,14 +455,15 @@ router.put(
         }
 
         let expObj = await Expense.findById(recId);
-
         // send mail with Note image
-        let msent = await Mail.sendNote(note, expObj);
+        // let msent = await Mail.sendNote(note, expObj);
 
         let notes = expObj.notes;
+
         notes.push(note);
         // console.log(notes);
         log = expObj.log;
+
         log.push({
           updater: note.author,
           status: expObj.status,

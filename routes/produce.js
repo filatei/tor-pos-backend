@@ -209,7 +209,7 @@ router.get("", async (req, res, next) => {
 
     produceQuery = produceQuery.map((ppp) => {
       if (ppp.site.name === "OKUTUKUTU-BLOCKS") {
-        return { ...ppp, siteName: "OK-BlockS" };
+        return { ...ppp, siteName: "OK-Blocks" };
       }
       if (ppp.site.name === "AGADAGBA-BLOCKS") {
         return { ...ppp, siteName: "Agada-Blocks" };

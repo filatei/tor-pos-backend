@@ -196,7 +196,8 @@ router.get("", async (req, res, next) => {
 
     const blockSites = ["OKUTUKUTU-BLOCKS", "AGADAGBA-BLOCKS"];
 
-    const produceQuery = await Produce.find()
+    let produceQuery = await Produce.find()
+      .lean()
       .populate("operator")
       .populate("manager")
       .populate("site")
@@ -205,6 +206,15 @@ router.get("", async (req, res, next) => {
       .populate("updater")
       .sort({ createdAt: -1 })
       .limit(pageSize);
+
+    produceQuery = produceQuery.map((ppp) => {
+      if (ppp.site.name === "OKUTUKUTU-BLOCKS") {
+        return { ...ppp, siteName: "OK-BlockS" };
+      }
+      if (ppp.site.name === "AGADAGBA-BLOCKS") {
+        return { ...ppp, siteName: "Agada-Blocks" };
+      }
+    });
 
     if (produceQuery) {
       return res.status(200).json({
@@ -259,28 +269,8 @@ router.get("/summary", checkAuth, async (req, res, next) => {
       });
 
       const gb = _.groupBy(aggData, "dateProduced");
-      console.log(gb);
+      // console.log(gb);
       const keys = Object.keys(gb);
-      // const chart = gb[keys[0]].filter((f) => f.product === '9" Block');
-      // let plot2;
-      // const plot1 = {
-      //   date: chart[0].dateProduced,
-      //   qty: parseInt(chart[0].totalQty),
-      //   label1: chart[0].site,
-      //   product: chart[0].product,
-      // };
-      // if (chart.length > 1) {
-      //   plot2 = {
-      //     date: chart[1].dateProduced,
-      //     qty: parseInt(chart[1].totalQty),
-      //     label2: chart[1].site,
-      //     product: chart[1].product,
-      //   };
-      // } else {
-      //   plot2 = { date: null, qty: 0, label2: "", product: "" };
-      // }
-
-      // console.log([plot1, plot2]);
 
       if (gb) {
         return res.status(200).json({ records: gb });
@@ -353,26 +343,34 @@ router.get("/produce/:id", (req, res, next) => {
   //   });
 });
 
-router.get("/:id", (req, res, next) => {
-  Produce.findById(req.params.id)
-    .populate("creator")
-    .populate("updater")
-    .populate("manager")
-    .populate("operator")
-    .populate("product")
-    .populate("site")
-    .then((produce) => {
-      if (produce) {
-        res.status(200).json({ produce });
-      } else {
-        res.status(404).json({ message: "produce not found!" });
-      }
-    })
-    .catch((error) => {
-      res.status(500).json({
-        message: "Fetching produce failed! " + error,
-      });
+router.get("/:id", async (req, res, next) => {
+  try {
+    let produce = await Produce.findById(req.params.id)
+      .lean()
+      .populate("creator")
+      .populate("updater")
+      .populate("manager")
+      .populate("operator")
+      .populate("product")
+      .populate("site");
+
+    // console.log(produce, "produce");
+    if (produce?.site?.name === "OKUTUKUTU-BLOCKS") {
+      produce = { ...produce, siteName: "OK-Blocks" };
+    }
+    if (produce?.site?.name === "AGADAGBA-BLOCKS") {
+      produce = { ...produce, siteName: "Agada-Blocks" };
+    }
+    if (produce) {
+      res.status(200).json({ produce: produce });
+    } else {
+      res.status(404).json({ message: "produce not found!" });
+    }
+  } catch (error) {
+    res.status(500).json({
+      message: "Fetching produce failed! " + error,
     });
+  }
 });
 
 router.put(

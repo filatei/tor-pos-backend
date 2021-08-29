@@ -1,6 +1,6 @@
 const express = require("express");
-// const mongoose = require("mongoose");
-const User = require("../../models/user");
+const mongoose = require("mongoose");
+const User = require("../models/user");
 const _ = require("lodash");
 const Produce = require("../models/produce");
 const Summary = require("../summary/recsummary");
@@ -12,10 +12,10 @@ const fs = require("fs");
 const os = require("os");
 const hostname = os.hostname();
 const homedir = os.homedir();
-// const tokens = require(`${homedir}/.token.json`);
-// const nodemailer = require("nodemailer");
-// const { google } = require("googleapis");
-// const OAuth2 = google.auth.OAuth2;
+const tokens = require(`${homedir}/.token.json`);
+const nodemailer = require("nodemailer");
+const { google } = require("googleapis");
+const OAuth2 = google.auth.OAuth2;
 const moment = require("moment");
 const Mail = require("../mail");
 const Utils = require("../utils");
@@ -32,7 +32,7 @@ function logIncident(email, description) {
     });
 }
 
-const checkAuth = require("../../middleware/check-auth");
+const checkAuth = require("../middleware/check-auth");
 
 router.post("", checkAuth, function (req, res, next) {
   const alloweds = process.env.PRODUCERS;

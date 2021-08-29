@@ -1,12 +1,10 @@
 const express = require("express");
-const mongoose = require("mongoose");
-const User = require("../models/user");
+// const mongoose = require("mongoose");
+const User = require("../../models/user");
 const _ = require("lodash");
 const Produce = require("../models/produce");
 const Summary = require("../summary/recsummary");
 
-const Stockitem = require("../models/stockitem");
-const Contact = require("../models/contact");
 const Accesslog = require("../models/accesslog");
 const router = express.Router();
 const path = require("path");
@@ -14,15 +12,13 @@ const fs = require("fs");
 const os = require("os");
 const hostname = os.hostname();
 const homedir = os.homedir();
-const tokens = require(`${homedir}/.token.json`);
-const nodemailer = require("nodemailer");
-const { google } = require("googleapis");
-const OAuth2 = google.auth.OAuth2;
+// const tokens = require(`${homedir}/.token.json`);
+// const nodemailer = require("nodemailer");
+// const { google } = require("googleapis");
+// const OAuth2 = google.auth.OAuth2;
 const moment = require("moment");
 const Mail = require("../mail");
 const Utils = require("../utils");
-const HttpError = require("../utils/http-error");
-const startOfDay = require("date-fns/startOfToday");
 
 function logIncident(email, description) {
   const logObj = new Accesslog({ email: email, description: description });
@@ -36,8 +32,7 @@ function logIncident(email, description) {
     });
 }
 
-const checkAuth = require("../middleware/check-auth");
-const produce = require("../models/produce");
+const checkAuth = require("../../middleware/check-auth");
 
 router.post("", checkAuth, function (req, res, next) {
   const alloweds = process.env.PRODUCERS;
@@ -79,51 +74,8 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   let produceObj = req.body;
   let status = produceObj.status;
   let updater = req.userData.userId;
-  // if (status && status !== undefined && status !== "DRAFT") {
-  //   try {
-  //     let statusHist;
-  //     const currentProduce = await Produce.findById(req.params.id);
-  //     statusHistory = {
-  //       oldStatus: currentProduce.status,
-  //       newStatus: status,
-  //       updater: updater,
-  //       // date: new Date(),
-  //     };
-  //     const statusUpdate = await Produce.updateOne(
-  //       { _id: id },
-  //       { status: status, statusHistory }
-  //     );
-  //     await isValidated();
-  //     return res
-  //       .status(200)
-  //       .json({ message: "Update successful!", produce: statusUpdate });
-  //   } catch (err) {
-  //     return res.status(401).json({ message: "Update Not Successful!" });
-  //   }
-  // }
+
   let mailStat;
-
-  // console.log(updater);
-  // update statusHistory
-
-  // if (currExp && currExp.statusHistory) {
-  //   produceObj.statusHistory = [...currExp.statusHistory, statusHist];
-  // } else {
-  //   produceObj.statusHistory = [...statusHist];
-  // }
-
-  // async function isValidated() {
-  //   if (status === "VALIDATED" || status === "REVIEWED") {
-  //     //  send mail
-  //     Mail.sendProduce(produceObj, updater)
-  //       .then((m) => {
-  //         mailStat = m;
-  //       })
-  //       .catch((err) => {
-  //         console.log(err);
-  //       });
-  //   }
-  // }
 
   produceObj._id = id;
   produceObj.updater = updater;

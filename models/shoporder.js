@@ -6,7 +6,6 @@ const shoporderSchema = mongoose.Schema(
     customer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Customer",
-      required: true,
     },
     contactPhone: { type: String },
     contactEmail: { type: String },

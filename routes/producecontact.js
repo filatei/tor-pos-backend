@@ -1,14 +1,16 @@
 const express = require("express");
+const mongoose = require("mongoose");
 
-const Expenseitem = require("../models/expenseitem");
+const Produceproducecontact = require("../models/producecontact");
 const Inventory = require("../models/inventory");
+const Accesslog = require("../models/accesslog");
 const router = express.Router();
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
 const hostname = os.hostname();
 var multer = require("multer");
-const DIR = "./uploads/expenseitemimages/";
+const DIR = "./uploads/producecontactimages/";
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, DIR);
@@ -44,10 +46,6 @@ var upload = multer({
   },
 });
 
-const checkAuth = require("../middleware/check-auth");
-
-const Accesslog = require("../models/accesslog");
-
 function logIncident(email, description) {
   const logObj = new Accesslog({ email: email, description: description });
   logObj
@@ -60,6 +58,8 @@ function logIncident(email, description) {
     });
 }
 
+const checkAuth = require("../middleware/check-auth");
+
 router.post("", checkAuth, upload.single("image"), function (req, res, next) {
   let path = "";
   let url = "";
@@ -71,32 +71,32 @@ router.post("", checkAuth, upload.single("image"), function (req, res, next) {
     }
     // url = 'https://api.torama.ng'
     // console.log(url)
-    path = url + "/uploads/expenseitemimages/" + req.file.filename;
+    path = url + "/uploads/producecontactimages/" + req.file.filename;
     // console.log(path)
   }
 
   // console.log('path: ', path)
   // console.log('req.body', req.body)
 
-  let expenseObj = req.body;
-  expenseObj.name = expenseObj.name.toUpperCase();
+  let producecontactObj = req.body;
+  producecontactObj.name = producecontactObj.name.toUpperCase();
 
-  expenseObj.creator = req.userData.userId;
+  producecontactObj.creator = req.userData.userId;
 
-  const expenseitem = new Expenseitem(expenseObj);
-  expenseitem.icon = path || null;
+  const producecontact = new Produceproducecontact(producecontactObj);
+  producecontact.icon = path || null;
 
-  expenseitem
+  producecontact
     .save()
     .then((result) => {
       res.status(201).json({
-        message: "Expenseitem added successfully",
-        expenseitem: { ...result, id: result._id },
+        message: "Produceproducecontact added successfully",
+        producecontact: { ...result, id: result._id },
       });
     })
     .catch((error) => {
       res.status(500).json({
-        message: "Creating a expenseitem failed! " + error,
+        message: "Creating a producecontact failed! " + error,
       });
     });
 });
@@ -104,19 +104,18 @@ router.post("", checkAuth, upload.single("image"), function (req, res, next) {
 router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
   let path = "";
   let url = "";
-  let expenseObj = req.body;
-  expenseObj.name = expenseObj.name.toUpperCase();
+  let producecontactObj = req.body;
+  producecontactObj.name = producecontactObj.name.toUpperCase();
+
   // const description = req.body.description;
   // const name = req.body.name;
   // const qty = req.body.qty;
   // const unit = req.body.unit;
   // const updatedAt = req.body.updatedAt;
   const id = req.params.id;
-
-  expenseObj._id = req.params.id;
-
-  expenseObj.updater = req.userData.userId;
-  const expenseitem = new Expenseitem(expenseObj);
+  producecontactObj._id = id;
+  producecontactObj.updater = req.userData.userId;
+  const producecontact = new Produceproducecontact(producecontactObj);
   if (req.file && req.file.filename && req.file.filename.length > 0) {
     if (hostname.includes("torama")) {
       url = "https://api.torama.ng";
@@ -124,9 +123,9 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
       url = req.protocol + "://" + req.get("host");
     }
 
-    path = url + "/uploads/expenseitemimages/" + req.file.filename;
-    expenseitem.icon = path;
-    Expenseitem.updateOne({ _id: req.params.id }, expenseitem)
+    path = url + "/uploads/producecontactimages/" + req.file.filename;
+    producecontact.icon = path;
+    Produceproducecontact.updateOne({ _id: req.params.id }, producecontact)
       .then((result) => {
         if (result.n > 0) {
           res.status(200).json({ message: "Update successful!" });
@@ -136,11 +135,11 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
       })
       .catch((error) => {
         res.status(500).json({
-          message: "Couldn't update expenseitem! " + error,
+          message: "Couldn't update producecontact! " + error,
         });
       });
   } else {
-    Expenseitem.updateOne({ _id: req.params.id }, expenseitem)
+    Produceproducecontact.updateOne({ _id: req.params.id }, producecontact)
       .then((result) => {
         if (result.n > 0) {
           res.status(200).json({ message: "Update successful!" });
@@ -150,7 +149,7 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
       })
       .catch((error) => {
         res.status(500).json({
-          message: "Couldn't update expenseitem! " + error,
+          message: "Couldn't update producecontact! " + error,
         });
       });
   }
@@ -163,48 +162,59 @@ router.delete("/:id", checkAuth, (req, res, next) => {
     logIncident(req.userData.email, "Not allowed to delete ");
     return res.status(500).json({ message: "Not allowed" });
   }
-
+  // in producecontact in inventory, dont delete
+  const sender = req.body.sender;
+  const receiver = req.body.receiver;
   const id = req.params.id;
-  // is id in inventory as name?
+  // console.log (id)
+
+  // is id  in sender or receiver fields in inventory?
   checkInventory(id);
 
   async function checkInventory(id) {
-    let response;
-    response = await Inventory.exists({ name: id });
-    console.log("item in inventory, not deleted");
-    if (response) {
+    let response1;
+    let response2;
+
+    response1 = await Inventory.exists({ receiver: id });
+    response12 = await Inventory.exists({ sender: id });
+    // console.log (response1,  'res1' , response2)
+    if (response1 || response2) {
+      console.log(true, "not deleting... ");
       return res
         .status(500)
-        .json({ message: "item already in inventory, not deleted" });
+        .json({
+          message: "Produceproducecontact already in inventory, not deleted",
+        });
     } else {
-      console.log("deleting item...");
-      deleteItem();
+      console.log(false, " deleting... ");
+
+      deleteProduceproducecontact();
     }
   }
 
-  function deleteItem() {
+  function deleteProduceproducecontact() {
     let filePath;
-    Expenseitem.findById(req.params.id)
-      .then((expenseitem) => {
-        if (expenseitem && expenseitem.icon) {
-          filePath = "uploads/" + expenseitem.icon.split("/uploads/")[1];
+    Produceproducecontact.findById(req.params.id)
+      .then((producecontact) => {
+        if (producecontact && producecontact.icon) {
+          filePath = "uploads/" + producecontact.icon.split("/uploads/")[1];
           console.log(filePath);
         }
       })
       .catch((err) => {
         return res
           .status(401)
-          .json({ message: "expenseitem not found in db!" + err });
+          .json({ message: "producecontact not found in db!" + err });
       });
     // console.log('params ', req.params)
-    Expenseitem.deleteOne({ _id: req.params.id })
+    Produceproducecontact.deleteOne({ _id: req.params.id })
       .then((result) => {
         if (result.n > 0) {
-          // delete expenseitem.icon
+          // delete producecontact.icon
           if (filePath) {
             fs.unlink(filePath, (err) => {
               if (err) {
-                console.error(err);
+                console.error(err, "file unlink err");
               } else {
                 console.log("related file deleted");
               }
@@ -216,9 +226,9 @@ router.delete("/:id", checkAuth, (req, res, next) => {
         }
       })
       .catch((error) => {
-        console.error(error);
+        console.error(error, "catch err");
         res.status(500).json({
-          message: "Deleting expenseitem failed! " + error,
+          message: "Deleting producecontact failed! " + error,
         });
       });
   }
@@ -227,15 +237,15 @@ router.delete("/:id", checkAuth, (req, res, next) => {
 router.get("", (req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
-  const expenseitemQuery = Expenseitem.find();
+  const producecontactQuery = Produceproducecontact.find();
   if (pageSize && currentPage) {
-    expenseitemQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
+    producecontactQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
   }
-  expenseitemQuery
+  producecontactQuery
     .then((documents) => {
       res.status(200).json({
         message: "Inventories fetched successfully!",
-        expenseitem: documents,
+        producecontact: documents,
       });
     })
     .catch((error) => {
@@ -244,18 +254,19 @@ router.get("", (req, res, next) => {
       });
     });
 });
+
 router.get("/:id", (req, res, next) => {
-  Expenseitem.findById(req.params.id)
-    .then((expenseitem) => {
-      if (expenseitem) {
-        res.status(200).json(expenseitem);
+  Produceproducecontact.findById(req.params.id)
+    .then((producecontact) => {
+      if (producecontact) {
+        res.status(200).json(producecontact);
       } else {
-        res.status(404).json({ message: "expenseitem not found!" });
+        res.status(404).json({ message: "producecontact not found!" });
       }
     })
     .catch((error) => {
       res.status(500).json({
-        message: "Fetching expenseitem failed! " + error,
+        message: "Fetching producecontact failed! " + error,
       });
     });
 });

@@ -110,7 +110,6 @@ router.put("/:id", checkAuth, async (req, res, next) => {
 
   let expenseObj = req.body;
   let status = expenseObj.status;
-  let mailStat;
   let updater = req.userData.userId;
   // console.log(updater);
   // update statusHistory
@@ -140,14 +139,7 @@ router.put("/:id", checkAuth, async (req, res, next) => {
       status === "PART-PAY"
     ) {
       //  send mail
-      Mail.sendExpense(expenseObj, updater)
-        .then((m) => {
-          console.log(m, " m");
-          mailStat = m;
-        })
-        .catch((err) => {
-          console.log(err);
-        });
+      const mailStat = await Mail.sendExpense(expenseObj, updater);
     }
   }
   isOpen()

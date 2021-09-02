@@ -1,6 +1,6 @@
 const express = require("express");
 
-const Expenseitem = require("../models/expenseitem");
+const Produceitem = require("../models/produceitem");
 const Inventory = require("../models/inventory");
 const router = express.Router();
 const path = require("path");
@@ -8,7 +8,7 @@ const fs = require("fs");
 const os = require("os");
 const hostname = os.hostname();
 var multer = require("multer");
-const DIR = "./uploads/expenseitemimages/";
+const DIR = "./uploads/produceitemimages/";
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, DIR);
@@ -71,32 +71,34 @@ router.post("", checkAuth, upload.single("image"), function (req, res, next) {
     }
     // url = 'https://api.torama.ng'
     // console.log(url)
-    path = url + "/uploads/expenseitemimages/" + req.file.filename;
+    path = url + "/uploads/produceitemimages/" + req.file.filename;
     // console.log(path)
   }
 
   // console.log('path: ', path)
   // console.log('req.body', req.body)
 
-  let expenseObj = req.body;
-  expenseObj.name = expenseObj.name.toUpperCase();
+  let stockObj = req.body;
+  stockObj.name = stockObj.name.toUpperCase();
 
-  expenseObj.creator = req.userData.userId;
+  stockObj.creator = req.userData.userId;
 
-  const expenseitem = new Expenseitem(expenseObj);
-  expenseitem.icon = path || null;
+  const produceitem = new Produceitem(stockObj);
+  produceitem.icon = path || null;
 
-  expenseitem
+  console.log("produceitem", produceitem);
+
+  produceitem
     .save()
     .then((result) => {
       res.status(201).json({
-        message: "Expenseitem added successfully",
-        expenseitem: { ...result, id: result._id },
+        message: "Produceitem added successfully",
+        produceitem: { ...result, id: result._id },
       });
     })
     .catch((error) => {
       res.status(500).json({
-        message: "Creating a expenseitem failed! " + error,
+        message: "Creating a produceitem failed! " + error,
       });
     });
 });
@@ -104,8 +106,8 @@ router.post("", checkAuth, upload.single("image"), function (req, res, next) {
 router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
   let path = "";
   let url = "";
-  let expenseObj = req.body;
-  expenseObj.name = expenseObj.name.toUpperCase();
+  let stockObj = req.body;
+  stockObj.name = stockObj.name.toUpperCase();
   // const description = req.body.description;
   // const name = req.body.name;
   // const qty = req.body.qty;
@@ -113,10 +115,10 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
   // const updatedAt = req.body.updatedAt;
   const id = req.params.id;
 
-  expenseObj._id = req.params.id;
+  stockObj._id = req.params.id;
 
-  expenseObj.updater = req.userData.userId;
-  const expenseitem = new Expenseitem(expenseObj);
+  stockObj.updater = req.userData.userId;
+  const produceitem = new Produceitem(stockObj);
   if (req.file && req.file.filename && req.file.filename.length > 0) {
     if (hostname.includes("torama")) {
       url = "https://api.torama.ng";
@@ -124,9 +126,9 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
       url = req.protocol + "://" + req.get("host");
     }
 
-    path = url + "/uploads/expenseitemimages/" + req.file.filename;
-    expenseitem.icon = path;
-    Expenseitem.updateOne({ _id: req.params.id }, expenseitem)
+    path = url + "/uploads/produceitemimages/" + req.file.filename;
+    produceitem.icon = path;
+    Produceitem.updateOne({ _id: req.params.id }, produceitem)
       .then((result) => {
         if (result.n > 0) {
           res.status(200).json({ message: "Update successful!" });
@@ -136,11 +138,11 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
       })
       .catch((error) => {
         res.status(500).json({
-          message: "Couldn't update expenseitem! " + error,
+          message: "Couldn't update produceitem! " + error,
         });
       });
   } else {
-    Expenseitem.updateOne({ _id: req.params.id }, expenseitem)
+    Produceitem.updateOne({ _id: req.params.id }, produceitem)
       .then((result) => {
         if (result.n > 0) {
           res.status(200).json({ message: "Update successful!" });
@@ -150,7 +152,7 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
       })
       .catch((error) => {
         res.status(500).json({
-          message: "Couldn't update expenseitem! " + error,
+          message: "Couldn't update produceitem! " + error,
         });
       });
   }
@@ -184,23 +186,23 @@ router.delete("/:id", checkAuth, (req, res, next) => {
 
   function deleteItem() {
     let filePath;
-    Expenseitem.findById(req.params.id)
-      .then((expenseitem) => {
-        if (expenseitem && expenseitem.icon) {
-          filePath = "uploads/" + expenseitem.icon.split("/uploads/")[1];
+    Produceitem.findById(req.params.id)
+      .then((produceitem) => {
+        if (produceitem && produceitem.icon) {
+          filePath = "uploads/" + produceitem.icon.split("/uploads/")[1];
           console.log(filePath);
         }
       })
       .catch((err) => {
         return res
           .status(401)
-          .json({ message: "expenseitem not found in db!" + err });
+          .json({ message: "produceitem not found in db!" + err });
       });
     // console.log('params ', req.params)
-    Expenseitem.deleteOne({ _id: req.params.id })
+    Produceitem.deleteOne({ _id: req.params.id })
       .then((result) => {
         if (result.n > 0) {
-          // delete expenseitem.icon
+          // delete produceitem.icon
           if (filePath) {
             fs.unlink(filePath, (err) => {
               if (err) {
@@ -218,7 +220,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
       .catch((error) => {
         console.error(error);
         res.status(500).json({
-          message: "Deleting expenseitem failed! " + error,
+          message: "Deleting produceitem failed! " + error,
         });
       });
   }
@@ -227,35 +229,39 @@ router.delete("/:id", checkAuth, (req, res, next) => {
 router.get("", (req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
-  const expenseitemQuery = Expenseitem.find();
+  const produceitemQuery = Produceitem.find();
   if (pageSize && currentPage) {
-    expenseitemQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
+    produceitemQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
   }
-  expenseitemQuery
+  produceitemQuery
     .then((documents) => {
+      console.log(documents?.length, " documents");
       res.status(200).json({
-        message: "Inventories fetched successfully!",
-        expenseitem: documents,
+        message: "produce item fetched successfully!",
+        produceitem: documents,
       });
     })
     .catch((error) => {
       res.status(500).json({
-        message: "Fetching inventories failed! " + error,
+        message: "Fetching produceitem failed! " + error,
       });
     });
 });
+
 router.get("/:id", (req, res, next) => {
-  Expenseitem.findById(req.params.id)
-    .then((expenseitem) => {
-      if (expenseitem) {
-        res.status(200).json(expenseitem);
+  Produceitem.findById(req.params.id)
+    .then((produceitem) => {
+      if (produceitem) {
+        res
+          .status(200)
+          .json({ produceitem: produceitem, message: "produceitem found" });
       } else {
-        res.status(404).json({ message: "expenseitem not found!" });
+        res.status(404).json({ message: "produceitem not found!" });
       }
     })
     .catch((error) => {
       res.status(500).json({
-        message: "Fetching expenseitem failed! " + error,
+        message: "Fetching produceitem failed! " + error,
       });
     });
 });

@@ -228,7 +228,13 @@ async function sendExpense(expense, userId = null) {
     // save in Message schema
     const to = userEmail;
     const sender = process.env.tormail;
-    const cc = ccEmail;
+    let cc;
+    if (userEmail !== ccEmail) {
+      cc = ccEmail;
+    } else {
+      cc = null;
+    }
+
     // const subject = subject;
     const body = html;
     let model = { sender, to, cc, subject, body };

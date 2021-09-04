@@ -69,6 +69,16 @@ const shoporderSchema = mongoose.Schema(
       latitude: { type: Number },
       longitude: { type: Number },
     },
+
+    notes: [
+      {
+        text: { type: String },
+        author: { type: String },
+        date: { type: Date },
+        image: { type: String },
+      },
+    ],
+    log: [{}],
     comments: { type: String },
     image: { type: String },
     products: [],
@@ -88,6 +98,7 @@ const shoporderSchema = mongoose.Schema(
 
     clientTime: { type: Date },
   },
+
   {
     timestamps: true,
     autoindex: true,

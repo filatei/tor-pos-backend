@@ -24,11 +24,15 @@ const storage = multer.diskStorage({
     cb(null, DIR);
   },
   filename: (req, file, cb) => {
+    let ext = Path.extname(file.originalname);
+    if (!ext) {
+      ext = ".png";
+    }
     const fileName =
       new Date().getTime() +
       "-" +
       file.originalname.toLowerCase().split(" ").join("-") +
-      Path.extname(file.originalname);
+      ext;
     cb(null, fileName);
   },
 });
@@ -332,6 +336,84 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
       });
   }
 });
+router.put(
+  "/notes/:id",
+  checkAuth,
+  upload.single("image"),
+  async function (req, res, next) {
+    const alloweds = process.env.ALLOWEDS;
+
+    if (!alloweds.includes(req.userData.email)) {
+      logIncident(req.userData.email, "Not allowed to create notes");
+      return res.status(500).json({ message: "Not allowed" });
+    }
+
+    let updater = req.userData.userId;
+    const note = req.body;
+    if (req.file && req.file.filename && req.file.filename.length > 0) {
+      if (hostname.includes("torama.ng")) {
+        path =
+          "https://api.torama.ng" +
+          "/uploads/shoporderimages/" +
+          req.file.filename;
+      } else {
+        url = req.protocol + "://" + req.get("host");
+        path = url + "/uploads/shoporderimages/" + req.file.filename;
+      }
+      note.image = path;
+    }
+    let recId = req.params.id;
+    // console.log(note, recId, "1");
+    try {
+      let orderObj = await Order.findById(recId);
+      // send mail with Note image
+      // let msent = await Mail.sendNote(note, expObj);
+
+      let notes = orderObj.notes || [];
+      // console.log(orderObj.notes, "notes before");
+      // notes = [...orderObj.notes, note];
+      if (notes && notes?.length) {
+        notes.push(note);
+      } else {
+        notes = [note];
+      }
+      // console.log(notes);
+      // console.log(orderObj.notes, "notes after");
+
+      log = orderObj.log || [];
+
+      log.push({
+        updater: note.author,
+        status: orderObj.status,
+        date: new Date(),
+        note,
+      });
+      Order.findByIdAndUpdate(
+        { _id: recId },
+        { notes: notes, updater: updater, log: log }
+      )
+        .then((result) => {
+          console.log(result, "result");
+          res.status(201).json({
+            message: " note with image updated successfully",
+            order: {
+              ...result,
+              id: result._id,
+            },
+          });
+        })
+        .catch((error) => {
+          res.status(500).json({
+            message: "Creating an Image upload failed! " + error,
+          });
+        });
+    } catch (err) {
+      res.status(500).json({
+        message: "Error with update in try block " + err,
+      });
+    }
+  }
+);
 
 router.delete("/:id", checkAuth, (req, res, next) => {
   const alloweds = process.env.DELALLOWEDS;

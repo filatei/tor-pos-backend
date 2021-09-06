@@ -425,6 +425,46 @@ router.get("/summary2", checkAuth, async (req, res, next) => {
   }
 });
 
+router.get("/bydate", checkAuth, async (req, res, next) => {
+  const alloweds = process.env.ALLOWEDS;
+
+  if (!alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, "Not allowed to see Receipts");
+    return res.status(500).json({ message: "Not allowed" });
+  }
+  //  given a date, return all receipts for day
+
+  try {
+    const { date } = req.query;
+    // console.log(req.query, " req.query");
+    console.log(date, "ddate");
+    let ddate = date.split("T")[0];
+    var start = moment(ddate).startOf("day").toDate();
+
+    // end day
+    var end = moment(start).endOf("day").toDate();
+    console.log(start, end, "start end");
+    let dayData = await Recupload.find({
+      createdAt: { $gte: start, $lt: end },
+    })
+      .lean()
+      .sort({ created: -1 })
+      .populate("customer")
+      .populate("creator")
+      .populate("updater");
+    console.log(dayData.length, "daydata count");
+    if (dayData) {
+      return res.status(200).json({ records: dayData });
+    } else {
+      return res.status(500).json({ message: "empty daily data" });
+    }
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ message: "Error with  daily try block " + err });
+  }
+});
+
 router.get("", checkAuth, (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
 

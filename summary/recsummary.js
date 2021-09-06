@@ -48,7 +48,7 @@ const recAgg = async () => {
       },
     },
   ]);
-  console.log(summary);
+  // console.log(summary);
 
   return summary;
 };

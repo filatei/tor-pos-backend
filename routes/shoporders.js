@@ -1,5 +1,6 @@
 const express = require("express");
 const Order = require("../models/shoporder");
+const moment = require("moment");
 const Customer = require("../models/customer");
 const PayMethod = require("../models/paymethod");
 const Terminal = require("../models/terminal");
@@ -467,6 +468,7 @@ router.get("", (req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
   const shoporderQuery = Order.find()
+    .lean()
     .sort({ createdAt: -1 })
     .populate("customer")
     .populate("creator")
@@ -486,6 +488,45 @@ router.get("", (req, res, next) => {
         message: "Fetching shoporders failed! " + error,
       });
     });
+});
+
+router.get("/bydate", checkAuth, async (req, res, next) => {
+  const alloweds = process.env.ALLOWEDS;
+
+  if (!alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, "Not allowed to see Receipts");
+    return res.status(500).json({ message: "Not allowed" });
+  }
+  //  given a date, return all receipts for day
+
+  try {
+    const { date } = req.query;
+    // console.log(req.query, " req.query");
+    console.log(date, "ddate");
+    let ddate = date.split("T")[0];
+    var start = moment(ddate).startOf("day");
+
+    // end day
+    var end = moment(ddate).endOf("day");
+    let dayData = await Order.find({
+      createdAt: { $gte: start, $lt: end },
+    })
+      .lean()
+      .sort({ createdAt: -1 })
+      .populate("customer")
+      .populate("creator")
+      .populate("terminal_id");
+    console.log(dayData, "daydata count");
+    if (dayData) {
+      return res.status(200).json({ records: dayData });
+    } else {
+      return res.status(500).json({ message: "empty day data" });
+    }
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ message: "Error with  daily try block " + err });
+  }
 });
 
 router.get("/:id", (req, res, next) => {

@@ -436,14 +436,12 @@ router.get("/bydate", checkAuth, async (req, res, next) => {
 
   try {
     const { date } = req.query;
-    // console.log(req.query, " req.query");
-    console.log(date, "ddate");
     let ddate = date.split("T")[0];
-    var start = moment(ddate).startOf("day").toDate();
+    // start of day
+    var start = moment(ddate).startOf("day");
 
     // end day
-    var end = moment(start).endOf("day").toDate();
-    console.log(start, end, "start end");
+    var end = moment(ddate).endOf("day");
     let dayData = await Recupload.find({
       createdAt: { $gte: start, $lt: end },
     })

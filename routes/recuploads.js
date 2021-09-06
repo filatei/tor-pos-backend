@@ -484,23 +484,28 @@ router.get("/getByText", checkAuth, (req, res, next) => {
     return res.status(500).json({ message: "Not allowed" });
   }
   let stan = req.query.stan;
+  console.log("stan ", stan);
   // get array
   let records;
   Recupload.find()
     .populate("customer")
     .populate("creator")
     .populate("updater")
+    .lean()
     .then((rec) => {
       records = rec.filter((r) =>
         r.customer.name.toLowerCase().includes(stan.toLowerCase())
       );
+      // console.log(records, "records");
 
       Recupload.find({ $text: { $search: stan } })
+        .lean()
         .sort({ updatedAt: -1 })
         .populate("customer")
         .populate("creator")
         .populate("updater")
         .then((record) => {
+          // console.log(record, "record");
           if (record) {
             res.status(200).json([...record, ...records]);
           } else {

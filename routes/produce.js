@@ -150,8 +150,6 @@ router.get("", async (req, res, next) => {
 
     let produceQuery = await Produce.find()
       .lean()
-      .populate("operator")
-      .populate("manager")
       .populate("site")
       .populate("product")
       .populate("creator")
@@ -221,11 +219,81 @@ router.get("/summary", checkAuth, async (req, res, next) => {
       });
 
       const gb = _.groupBy(aggData, "dateProduced");
-      // console.log(gb);
+      // console.log(gb );
       const keys = Object.keys(gb);
+      const events = [];
+      keys.forEach((k) => {
+        const ks = k.split("/");
+        let kDate = ks[2] + "-" + ks[1] + "-" + ks[0];
+        kDate = moment(kDate).format("YYYY-MM-DD");
+        console.log(k, kDate);
+        events.push({
+          title: gb[k].length.toString(),
+          date: kDate,
+          start: kDate,
+        });
+      });
+      console.log(events);
 
       if (gb) {
-        return res.status(200).json({ records: gb });
+        return res.status(200).json({ records: gb, events: events });
+      } else {
+        return res.status(500).json({ message: "Error with produce summary" });
+      }
+    }
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ message: "Error with produce summary try block" + err });
+  }
+});
+
+router.get("/events", checkAuth, async (req, res, next) => {
+  const alloweds = process.env.PRODUCERS;
+
+  if (!alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, "Not allowed to see produces");
+    return res.status(500).json({ message: "Not allowed" });
+  }
+
+  try {
+    const yesterdayStart = moment()
+      .subtract(14, "days")
+      .startOf("day")
+      .toDate();
+    const yesterdayEnd = moment().subtract(0, "days").endOf("day").toDate();
+    // start of today
+    var start = moment().startOf("day").toDate();
+
+    // end today
+    var end = moment(start).endOf("day").toDate();
+
+    const { recSummary } = req.query;
+    if (recSummary) {
+      let aggData = await Summary.producePipeline(yesterdayStart, yesterdayEnd);
+
+      // bring out the ._id
+      aggData = aggData.map((a) => {
+        return {
+          ...a._id,
+          dateProduced: a._id.day + "/" + a._id.month + "/" + a._id.year,
+          totalCement: a.totalCement.toLocaleString(),
+          totalQty: a.totalQty.toLocaleString(),
+          site: a._id.site === "OKUTUKUTU-BLOCKS" ? "OK_BLOCKS" : "AG_BLOCKS",
+        };
+      });
+
+      const gb = _.groupBy(aggData, "dateProduced");
+      // console.log(gb );
+      const keys = Object.keys(gb);
+      const events = [];
+      keys.forEach((k) => {
+        events.push({ title: gb[k].length.toString(), date: k });
+      });
+      console.log(events);
+
+      if (gb) {
+        return res.status(200).json({ events: events });
       } else {
         return res.status(500).json({ message: "Error with produce summary" });
       }
@@ -272,6 +340,46 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
   //   });
 });
 
+router.get("/bydate", checkAuth, async (req, res, next) => {
+  const alloweds = process.env.ALLOWEDS;
+
+  if (!alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, "Not allowed to see Receipts");
+    return res.status(500).json({ message: "Not allowed" });
+  }
+  //  given a date, return all receipts for day
+
+  try {
+    const { date } = req.query;
+    // console.log(date, "ddate");
+    let ddate = date.split("T")[0];
+    var start = moment(ddate).startOf("day");
+
+    // end day
+    var end = moment(ddate).endOf("day");
+    let dayData = await Produce.find({
+      dateProduced: { $gte: start, $lt: end },
+    })
+      .lean()
+      .sort({ dateProduced: -1 })
+      .populate("product")
+      .populate("creator")
+      .populate("updater")
+      .populate("site");
+
+    console.info(dayData);
+    if (dayData) {
+      return res.status(200).json({ records: dayData });
+    } else {
+      return res.status(500).json({ message: "empty day data" });
+    }
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ message: "Error with  daily try block " + err });
+  }
+});
+
 router.get("/produce/:id", (req, res, next) => {
   // const expId = req.params.id;
   // Produce.find({ produce_id: expId })
@@ -302,7 +410,6 @@ router.get("/:id", async (req, res, next) => {
       .populate("creator")
       .populate("updater")
       .populate("manager")
-      .populate("operator")
       .populate("product")
       .populate("site");
 

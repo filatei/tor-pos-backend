@@ -80,7 +80,7 @@ router.put("/produceexpenseAcct/:id", checkAuth, async (req, res, next) => {
   }
 
   const { produceexpenseAccount } = req.body;
-  console.log(produceexpenseAccount, "produceexpenseAcct");
+  // console.log(produceexpenseAccount, "produceexpenseAcct");
 
   const id = req.params.id;
   const updater = req.userData.userId;

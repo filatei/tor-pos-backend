@@ -154,7 +154,7 @@ router.get("", async (req, res, next) => {
       .populate("product")
       .populate("creator")
       .populate("updater")
-      .sort({ createdAt: -1 })
+      .sort({ dateProduced: -1 })
       .limit(pageSize);
 
     produceQuery = produceQuery.map((ppp) => {
@@ -233,7 +233,7 @@ router.get("/summary", checkAuth, async (req, res, next) => {
           start: kDate,
         });
       });
-      console.log(events);
+      // console.log(events);
 
       if (gb) {
         return res.status(200).json({ records: gb, events: events });
@@ -290,7 +290,7 @@ router.get("/events", checkAuth, async (req, res, next) => {
       keys.forEach((k) => {
         events.push({ title: gb[k].length.toString(), date: k });
       });
-      console.log(events);
+      // console.log(events);
 
       if (gb) {
         return res.status(200).json({ events: events });

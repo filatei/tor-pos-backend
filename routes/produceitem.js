@@ -86,8 +86,6 @@ router.post("", checkAuth, upload.single("image"), function (req, res, next) {
   const produceitem = new Produceitem(stockObj);
   produceitem.icon = path || null;
 
-  console.log("produceitem", produceitem);
-
   produceitem
     .save()
     .then((result) => {
@@ -108,11 +106,7 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
   let url = "";
   let stockObj = req.body;
   stockObj.name = stockObj.name.toUpperCase();
-  // const description = req.body.description;
-  // const name = req.body.name;
-  // const qty = req.body.qty;
-  // const unit = req.body.unit;
-  // const updatedAt = req.body.updatedAt;
+
   const id = req.params.id;
 
   stockObj._id = req.params.id;

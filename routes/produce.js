@@ -225,10 +225,9 @@ router.get("/summary", checkAuth, async (req, res, next) => {
       keys.forEach((k) => {
         const ks = k.split("/");
         let kDate = ks[2] + "-" + ks[1] + "-" + ks[0];
-        kDate = moment(kDate).format("YYYY-MM-DD");
-        console.log(k, kDate);
+        kDate = moment(new Date(kDate)).format("YYYY-MM-DD");
         events.push({
-          title: gb[k].length.toString(),
+          title: gb[k].length.toString() + " items",
           date: kDate,
           start: kDate,
         });

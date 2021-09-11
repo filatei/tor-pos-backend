@@ -231,7 +231,6 @@ router.get("", checkAuth, async (req, res, next) => {
 
     let produceexpenseQuery;
 
-    // console.log("todaystart", startOfDay(new Date()), new Date());
     if (imprest) {
       produceexpenseQuery = await Produceexpense.find({
         status: "APPROVED",
@@ -275,8 +274,6 @@ router.get("", checkAuth, async (req, res, next) => {
 
         .limit(pageSize);
     } else {
-      console.log("in other");
-
       produceexpenseQuery = await Produceexpense.find({ creator: user[0]._id })
         .sort({ createdAt: -1 })
         .populate("vendor")
@@ -284,7 +281,6 @@ router.get("", checkAuth, async (req, res, next) => {
 
         .limit(pageSize);
     }
-    // console.log(produceexpenseQuery);
 
     if (produceexpenseQuery) {
       return res.status(200).json({
@@ -331,7 +327,6 @@ router.get("/mail/mailImprest", checkAuth, async (req, res, next) => {
   // console.log(result);
   await Mail.sendImprest(result, { name: userName, email: userEmail });
   if (result) return res.status(200).json({ produceexpense: result });
-  console.log(result);
 });
 
 router.get("/getByText", checkAuth, async (req, res, next) => {
@@ -343,7 +338,6 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
   }
 
   const { searchTerm } = req.query;
-  console.log(req.query, " req-query");
   // get array
   let records;
   const result = await Produceexpense.aggregate([
@@ -353,7 +347,6 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
     .limit(200);
 
   if (result) return res.status(200).json({ produceexpense: result });
-  console.log(result);
 
   Produceexpense.find({ $text: { $search: searchTerm } })
     .sort({ updatedAt: -1 })
@@ -363,7 +356,6 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
     .limit(200)
     .then((record) => {
       if (record) {
-        console.log(record);
         res.status(200).json({ produceexpense: record });
       } else {
         res.status(404).json({ message: "record not found!" });
@@ -427,9 +419,7 @@ router.put(
 
     let updater = req.userData.userId;
     let recId = req.params.id;
-    // console.log(updater, "updater");
     let myPath;
-    // console.log(req.files, "files");
     const note = req.body;
 
     if (req.files) {
@@ -449,10 +439,8 @@ router.put(
 
         myPath = url + "/" + fileName;
         note.image = myPath;
-        console.log(myPath);
       });
     }
-    // console.log(note, recId, "1");
     await saveProduceexpense();
 
     async function saveProduceexpense() {
@@ -482,7 +470,6 @@ router.put(
           { notes: notes, updater: updater, log: log }
         )
           .then((result) => {
-            console.log(result, "result");
             res.status(201).json({
               message: " note with image updated successfully",
               produceexpense: {

@@ -341,23 +341,6 @@ router.get("/events", checkAuth, async (req, res, next) => {
       };
     });
 
-    console.log(summary);
-
-    // order = order.map((o) => {
-    //   return { ...o, trans_date: o.trans_date.toISOString().split("T")[0] };
-    // });
-
-    // const gb = _.groupBy(order, "trans_date");
-
-    // const keys = Object.keys(gb);
-    // const events = [];
-    // keys.forEach((k) => {
-    //   events.push({
-    //     title: gb[k].length.toString(),
-    //     date: k,
-    //   });
-    // });
-    // console.log(events);
     if (summary) {
       return res.status(200).json({ events: summary });
     } else {

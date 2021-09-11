@@ -366,7 +366,6 @@ router.get("/bydate", checkAuth, async (req, res, next) => {
       .populate("updater")
       .populate("site");
 
-    console.info(dayData);
     if (dayData) {
       return res.status(200).json({ records: dayData });
     } else {

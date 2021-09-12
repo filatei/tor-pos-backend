@@ -203,6 +203,7 @@ router.post("/changePassword", async (req, res, next) => {
 
 router.post("/login", async (req, res, next) => {
   try {
+    // console.log(req.body, "users/login");
     const vuser = await User.findOne({ email: req.body.email });
 
     if (!vuser) {
@@ -218,10 +219,9 @@ router.post("/login", async (req, res, next) => {
         .json({ message: "Your Email not Verified. Check your inbox" });
     }
 
-    // let fetchedsUser = vuser;
-
-    console.log("fetcheduser ", vuser);
-    const result = bcrypt.compare(req.body.password, vuser.password);
+    // console.log("fetcheduser ", vuser);
+    const result = await bcrypt.compare(req.body.password, vuser.password);
+    // console.log(result, " compare passwd from users/login");
     if (!result) {
       return res.status(401).json({
         message: "Authentication failed.",

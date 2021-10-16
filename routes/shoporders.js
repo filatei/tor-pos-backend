@@ -76,7 +76,7 @@ function logIncident(email, description) {
 
 async function sendMail(order) {
   customer = await Customer.findById(order.customer).exec();
-  customer = customer.name;
+  customer = customer?.name;
   const smtpTransport = nodemailer.createTransport({
     service: "gmail",
     auth: {
@@ -615,6 +615,9 @@ router.get("/bydate", checkAuth, async (req, res, next) => {
 
 router.get("/:id", (req, res, next) => {
   Order.findById(req.params.id)
+    .populate("creator")
+    .populate("customer")
+    .populate("terminal_id")
     .then((shoporder) => {
       if (shoporder) {
         res.status(200).json(shoporder);

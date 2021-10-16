@@ -5,7 +5,7 @@ const shoporderSchema = mongoose.Schema(
   {
     customer: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Customer",
+      ref: "ProduceCustomer",
     },
     contactPhone: { type: String },
     contactEmail: { type: String },

@@ -42,6 +42,7 @@ const producecontactRoutes = require("./routes/producecontact");
 const qtyRoutes = require("./routes/quantity");
 const expenseRoutes = require("./routes/expense");
 const produceexpenseRoutes = require("./routes/produceexpense");
+const producecustomerRoutes = require("./routes/producecustomers");
 const shopsettingsRoutes = require("./routes/shopsettings");
 const awardsRoutes = require("./routes/award");
 const qaqcRoutes = require("./routes/qaqc");
@@ -194,6 +195,7 @@ app.use("/api/sites", siteRoutes);
 app.use("/api/liabilities", liabRoutes);
 app.use("/api/produce", produceRoutes);
 app.use("/api/produceexpense", produceexpenseRoutes);
+app.use("/api/producecustomers", producecustomerRoutes);
 app.use("/api/filemanager", filemanagerRoutes);
 
 module.exports = app;

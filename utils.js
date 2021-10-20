@@ -231,7 +231,7 @@ const storage4 = multer.diskStorage({
       fileName =
         req.userData.userId +
         "-" +
-        file.originalname +
+        file.originalname.toLowerCase().split(" ").join("-") +
         new Date().getTime() +
         path.extname(file.originalname);
       console.log(fileName);
@@ -241,8 +241,8 @@ const storage4 = multer.diskStorage({
         "-" +
         new Date().getTime() +
         file.originalname.toLowerCase().split(" ").join("-") +
+        new Date().getTime() +
         ".png";
-      console.log(fileName);
     }
 
     cb(null, fileName);

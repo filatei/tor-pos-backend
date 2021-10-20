@@ -226,13 +226,13 @@ const storage4 = multer.diskStorage({
     cb(null, myDir);
   },
   filename: (req, file, cb) => {
-    console.log(path.extname(file.originalname));
     let fileName;
     if (path.extname(file.originalname)) {
       fileName =
         req.userData.userId +
         "-" +
-        file.originalname.toLowerCase(file.originalname).split(" ").join("-") +
+        file.originalname +
+        new Date().getTime() +
         path.extname(file.originalname);
       console.log(fileName);
     } else {

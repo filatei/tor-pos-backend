@@ -71,7 +71,7 @@ router.post(
           url = req.protocol + "://" + req.get("host");
         }
 
-        myPath = url + "/" + fileName;
+        myPath = url + "/" + file.path;
       }
 
       const { depositor, amount, site, payeeAcct } = req.body;

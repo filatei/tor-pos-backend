@@ -8,6 +8,7 @@ const os = require("os");
 const hostname = os.hostname();
 const homedir = os.homedir();
 const Accesslog = require("./models/accesslog");
+const { uniqueId } = require("lodash");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -290,6 +291,14 @@ var upload4 = multer({
   },
 });
 
+const MIME_TYPE_MAP = {
+  "image/png": "png",
+  "image/jpeg": "jpeg",
+  "image/jpg": "jpg",
+  "application/pdf": "pdf",
+  "application/vnd.ms-excel": "xls",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+};
 const storage5 = multer.diskStorage({
   destination: (req, file, cb) => {
     userid = req.userData.userId;
@@ -303,27 +312,38 @@ const storage5 = multer.diskStorage({
     }
     cb(null, myDir);
   },
-  filename: (req, file, cb) => {
-    console.log(path.extname(file.originalname));
-    let fileName;
-    if (path.extname(file.originalname)) {
-      fileName =
-        req.userData.userId +
-        "-" +
-        file.originalname.toLowerCase(file.originalname).split(" ").join("-") +
-        path.extname(file.originalname);
-      console.log(fileName);
-    } else {
-      fileName =
-        req.userData.userId +
+  filename: function (req, file, cb) {
+    cb(
+      null,
+      file.originalname +
         "-" +
         new Date().getTime() +
-        file.originalname.toLowerCase().split(" ").join("-");
-      console.log(fileName);
-    }
-
-    cb(null, fileName);
+        "." +
+        MIME_TYPE_MAP[file.mimetype]
+    ); //Appending extension
   },
+  // filename: (req, file, cb) => {
+  //   console.log(path.extname(file.originalname));
+  //   let fileName;
+  //   if (path.extname(file.originalname)) {
+  //     fileName =
+  //       req.userData.userId +
+  //       "-" +
+  //       file.originalname.toLowerCase(file.originalname).split(" ").join("-") +
+  //       path.extname(file.originalname);
+  //     console.log(fileName);
+  //   }
+  // else {
+  //   fileName =
+  //     req.userData.userId +
+  //     "-" +
+  //     new Date().getTime() +
+  //     file.originalname.toLowerCase().split(" ").join("-");
+  //   console.log(fileName);
+  // }
+
+  // cb(null, fileName);
+  // },
 });
 
 var upload5 = multer({
@@ -332,19 +352,13 @@ var upload5 = multer({
     fileSize: 1024 * 1024 * 5,
   },
   fileFilter: (req, file, cb) => {
-    console.log(file.mimetype, "mimetype");
-    if (
-      file.mimetype.includes("excel") ||
-      file.mimetype == "image/png" ||
-      file.mimetype == "image/jpeg" ||
-      file.mimetype == "image/jpg" ||
-      file.mimetype === "application/pdf"
-    ) {
+    console.log(file.mimetype, MIME_TYPE_MAP[file.mimetype], "mimetype");
+    if (MIME_TYPE_MAP[file.mimetype]) {
       cb(null, true);
     } else {
       cb(null, false);
       return cb(
-        new Error("Only .png or .jpg  or .pdf or .xls format allowed!")
+        new Error("Only .png or .jpg  or .pdf or .xls or .xlsx format allowed!")
       );
     }
   },
@@ -372,15 +386,7 @@ const storage6 = multer.diskStorage({
         "-" +
         file.originalname.toLowerCase(file.originalname).split(" ").join("-") +
         path.extname(file.originalname);
-      console.log(fileName);
-    } else {
-      fileName =
-        req.userData.userId +
-        "-" +
-        new Date().getTime() +
-        file.originalname.toLowerCase().split(" ").join("-") +
-        ".jpg";
-      console.log(fileName);
+      console.log(fileName, " filename");
     }
 
     cb(null, fileName);

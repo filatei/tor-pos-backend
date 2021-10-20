@@ -59,6 +59,8 @@ router.post(
     try {
       let myPath = "";
       const file = req.file;
+      console.log("file", file);
+
       let fileName;
       if (file) {
         fileName =
@@ -68,38 +70,41 @@ router.post(
         } else {
           url = req.protocol + "://" + req.get("host");
         }
+        // if (file.mimetype == "image/png") {
+        //   fileName = fileName + ".png";
+        // }
+        // if (file.mimetype == "image/jpg") {
+        //   fileName = fileName + ".jpg";
+        // }
+        // if (file.mimetype == "image/jpeg") {
+        //   fileName = fileName + ".jpeg";
+        // }
+        // if (file.mimetype.includes("excel")) {
+        //   fileName = fileName + ".xls";
+        // }
+        // if (file.mimetype.includes("spreadsheetml.sheet")) {
+        //   fileName = fileName + ".xlsx";
+        // }
+        // if (file.mimetype.includes("pdf")) {
+        //   fileName = fileName + ".pdf";
+        // }
 
-        myPath = url + "/" + fileName;
+        myPath = url + "/" + file.path;
+        console.log("myPath", myPath);
       } else {
         console.log("no file");
       }
 
-      const {
-        reportType,
-        production,
-        site,
-        machine,
-        people,
-        fuel,
-        roreadings,
-        incidents,
-        qualityreadings,
-      } = req.body;
-      const prod = JSON.parse(production);
-      const roreads = JSON.parse(roreadings);
-      const qualreads = JSON.parse(qualityreadings);
+      const { reportType, site, incidents, body, financials } = req.body;
+
       const creator = req.userData.userId;
       const dailyReportObj = {
         status: "NOT SEEN",
-        reportType,
-        production: prod,
-        machine,
         site,
-        people,
+        reportType,
+        body,
+        financials,
         incidents,
-        fuel,
-        roreadings: roreads,
-        qualityreadings: qualreads,
         creator,
         image: myPath,
       };
@@ -110,7 +115,7 @@ router.post(
         .save()
         .then(async (result) => {
           console.log(result, " result ");
-          //   const mailStat = await Mail.sendDailyreport(result, req.userData);
+          mailStat = await Mail.sendDailyReport(result, req.userData);
           res.status(201).json({
             message: "Dailyreport added successfully",
             dailyreport: { ...result, id: result._id },
@@ -144,27 +149,16 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   let user = req.userData;
   const updater = req.userData.userId;
 
-  const {
-    status,
-    people,
-    diesel,
-    roreadings,
-    incidents,
-    qualityreadings,
-    type,
-    site,
-  } = req.body;
-
+  const { status, incidents, reportType, site, body, financials } = req.body;
+  console.log(req.body, "req.body");
   dailyreportObj = {
     status,
-    people,
-    roreadings,
     incidents,
-    qualityreadings,
-    diesel,
-    type,
+    reportType,
     site,
     updater,
+    body,
+    financials,
   };
   dailyreportObj._id = id;
   let mailStat;
@@ -172,8 +166,8 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   DailyReport.updateOne({ _id: id }, dailyreportObj)
     .then(async (result) => {
       if (result.n > 0) {
-        const updated = DailyReport.findById(id);
-        // mailStat = await Mail.sendDailyreport(updated, user);
+        const updated = await DailyReport.findById(id);
+        mailStat = await Mail.sendDailyReport(updated, user);
 
         res
           .status(200)
@@ -211,8 +205,6 @@ router.put("/status/:id", checkAuth, async (req, res, next) => {
         message: "empty status ",
       });
     }
-    let mailStat;
-    const user = req.userData;
 
     // mailStat = await Mail.sendDailyreport(dailyreportObj, user);
     DailyReport.updateOne({ _id: req.params.id }, { status: status, updater })
@@ -242,24 +234,20 @@ router.delete("/:id", checkAuth, (req, res, next) => {
     return res.status(500).json({ message: "Not allowed" });
   }
 
-  deleteDailyreport();
-
-  function deleteDailyreport() {
-    DailyReport.deleteOne({ _id: req.params.id })
-      .then((result) => {
-        if (result.n > 0) {
-          res.status(200).json({ message: "Deletion successful!" });
-        } else {
-          res.status(401).json({ message: "Not authorized!" });
-        }
-      })
-      .catch((error) => {
-        console.error(error, "catch err");
-        res.status(500).json({
-          message: "Deleting dailyreport failed! " + error,
-        });
+  DailyReport.deleteOne({ _id: req.params.id })
+    .then((result) => {
+      if (result.n > 0) {
+        res.status(200).json({ message: "Deletion successful!" });
+      } else {
+        res.status(401).json({ message: "Not authorized!" });
+      }
+    })
+    .catch((error) => {
+      console.error(error, "catch err");
+      res.status(500).json({
+        message: "Deleting dailyreport failed!" + error,
       });
-  }
+    });
 });
 
 router.get("", checkAuth, async (req, res, next) => {
@@ -270,9 +258,11 @@ router.get("", checkAuth, async (req, res, next) => {
   try {
     dailyreport = await DailyReport.find()
       .populate("creator")
+      .populate("site")
       .sort({ createdAt: -1 })
       .limit(pageSize);
   } catch (err) {
+    console.log(err, " report get error");
     return res.status(500).json({
       message: "Fetching Daily Report failed, please try again later." + err,
     });
@@ -281,21 +271,28 @@ router.get("", checkAuth, async (req, res, next) => {
 });
 
 router.get("/:id", async (req, res, next) => {
-  console.log(req.params.id);
-  DailyReport.findById(req.params.id)
-    .populate("creator")
-    .then((dailyreport) => {
-      if (dailyreport) {
-        res.status(200).json({ dailyreport });
-      } else {
-        res.status(404).json({ message: "dailyreport not found!" });
-      }
-    })
-    .catch((error) => {
-      res.status(500).json({
-        message: "Fetching dailyreport failed! " + error,
+  console.log(req.params.id, "report id");
+  try {
+    DailyReport.findById(req.params.id)
+      .populate("creator")
+      .populate("site")
+      .then((dailyreport) => {
+        if (dailyreport) {
+          res.status(200).json({ dailyreport });
+        } else {
+          res.status(404).json({ message: "dailyreport not found!" });
+        }
+      })
+      .catch((error) => {
+        res.status(500).json({
+          message: "Fetching dailyreport failed! " + error,
+        });
       });
+  } catch (err) {
+    res.status(500).json({
+      message: "TryError: Fetching dailyreport failed!  " + err,
     });
+  }
 });
 
 module.exports = router;

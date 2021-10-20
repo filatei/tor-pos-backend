@@ -912,6 +912,62 @@ async function verifyAuth(userId, verify) {
   }
 }
 
+async function sendDailyReport(report, user) {
+  try {
+    // const user = await User.findById(userId);
+    console.log(user, report, " in mailer");
+    let format1 = "DD-MM-YYYY hh:mm:ss";
+    let date;
+    date = moment(new Date()).format(format1);
+    const fromText = `${report?.reportType} Report from ${report?.site?.name}`;
+    let url;
+    let toEmail;
+
+    let subject = `${report?.reportType} Report for ${report?.site?.name} for ${report?.date}`;
+
+    if (hostname.includes("torama")) {
+      toEmail = user.email;
+      subject;
+    } else {
+      toEmail = "auth@torama.ng";
+      subject = "Just a test Report  ";
+    }
+
+    let html = `<!DOCTYPE html><html><body style="text-align:center;"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
+                ${date}</p>
+                <p> Creator ${user?.name}, here is report body</p>
+                <p> <hr>${report?.body}  </p>
+                <p>Here is report Financials <hr>${report?.financials}</p>
+                <p>Here is report Incidents<hr> ${report?.incidents}</p>
+
+                <p>  <a href="${report?.image}" target="_blank">Attachment </a></p>
+                `;
+
+    html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${new Date().getFullYear()}</p> </body></html>`;
+
+    // save in Message schema
+    const to = user.email;
+    const sender = process.env.tormail;
+    const cc = "auth@torama.ng";
+    const body = html;
+    let model = { sender, to, cc, subject, body };
+    const saveMess = await saveMessage(model);
+    console.log(" Message Saved ", saveMess);
+
+    model = {
+      fromText: fromText,
+      subject,
+      to: toEmail,
+      cc: "",
+      bcc: "auth@torama.ng",
+      html,
+    };
+    mailer(model);
+  } catch (err) {
+    console.log(err, "error in report mailer");
+  }
+}
+
 async function forgotPassword(userId, resetLink) {
   try {
     const user = await User.findById(userId);
@@ -1023,4 +1079,5 @@ module.exports = {
   recUpdateAlert,
   verifyAuth,
   forgotPassword,
+  sendDailyReport,
 };

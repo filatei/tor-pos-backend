@@ -5,6 +5,8 @@ const dailyreportSchema = mongoose.Schema(
   {
     creator: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     updater: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    site: { type: mongoose.Schema.Types.ObjectId, ref: "Site", required: true },
+
     production: [
       {
         name: { type: String },
@@ -21,7 +23,7 @@ const dailyreportSchema = mongoose.Schema(
     image: { type: String },
     reportType: { type: String, enum: ["Morning", "Afternoon", "Evening"] },
     machine: { type: String, trim: true },
-    date: { type: String, trim: true },
+    date: { type: Date },
     people: { type: String, trim: true },
     quality: { type: String, trim: true },
     fuel: { type: String, trim: true },
@@ -43,8 +45,18 @@ const dailyreportSchema = mongoose.Schema(
       },
     ],
     incidents: { type: String, trim: true },
+    body: { type: String, trim: true },
+    financials: { type: String, trim: true },
     status: { type: String, enum: ["NOT SEEN", "SEEN"] },
-    site: { type: String, trim: true, required: true },
+    notes: [
+      {
+        text: { type: String },
+        author: { type: String },
+        date: { type: Date },
+        image: { type: String },
+      },
+    ],
+    log: [{}],
   },
   {
     timestamps: true,

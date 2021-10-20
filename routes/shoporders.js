@@ -162,7 +162,6 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
   let path = "";
   let url = "";
   let shopObj = req.body;
-  console.log(req.body, "shop", req.file);
 
   if (!shopObj.customer || shopObj.customer === undefined) {
     return res
@@ -227,17 +226,6 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
     shoporder
       .save()
       .then(async (result) => {
-        console.log("order added", result);
-        // await fs.writeFile(
-        //   printQueue,
-        //   JSON.stringify(result.receipt),
-        //   (err) => {
-        //     if (err) {
-        //       return console.log(err);
-        //     }
-        //     console.log("file saved to ", printQueue);
-        //   }
-        // );
         res.status(201).json({
           message: "Order added successfully",
           shoporder: {
@@ -368,8 +356,6 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
   shopObj._id = req.params.id;
   shopObj.updater = req.userData.userId;
 
-  console.log(shopObj.updaters);
-
   const shoporder = new Order(shopObj);
   if (req.file && req.file.filename && req.file.filename.length > 0) {
     if (hostname.includes("torama.ng")) {
@@ -448,22 +434,17 @@ router.put(
       note.image = path;
     }
     let recId = req.params.id;
-    // console.log(note, recId, "1");
     try {
       let orderObj = await Order.findById(recId);
       // send mail with Note image
       // let msent = await Mail.sendNote(note, expObj);
 
       let notes = orderObj.notes || [];
-      // console.log(orderObj.notes, "notes before");
-      // notes = [...orderObj.notes, note];
       if (notes && notes?.length) {
         notes.push(note);
       } else {
         notes = [note];
       }
-      // console.log(notes);
-      // console.log(orderObj.notes, "notes after");
 
       log = orderObj.log || [];
 
@@ -478,7 +459,6 @@ router.put(
         { notes: notes, updater: updater, log: log }
       )
         .then((result) => {
-          console.log(result, "result");
           res.status(201).json({
             message: " note with image updated successfully",
             order: {
@@ -585,8 +565,6 @@ router.get("/bydate", checkAuth, async (req, res, next) => {
 
   try {
     const { date } = req.query;
-    // console.log(req.query, " req.query");
-    console.log(date, "ddate");
     let ddate = date.split("T")[0];
     var start = moment(ddate).startOf("day");
 
@@ -600,7 +578,6 @@ router.get("/bydate", checkAuth, async (req, res, next) => {
       .populate("customer")
       .populate("creator")
       .populate("terminal_id");
-    console.log(dayData, "daydata count");
     if (dayData) {
       return res.status(200).json({ records: dayData });
     } else {

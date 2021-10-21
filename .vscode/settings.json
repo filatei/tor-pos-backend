@@ -1,6 +1,4 @@
 {
-    "git.ignoreLimitWarning": true,
-    "cSpell.words": [
-        "filemanager"
-    ]
+  "git.ignoreLimitWarning": true,
+  "cSpell.words": ["filemanager", "originalname"]
 }

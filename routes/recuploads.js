@@ -43,6 +43,7 @@ const checkAuth = require("../middleware/check-auth");
 const { deleteReceipt } = require("../controllers/receipt");
 const mail = require("../models/mail");
 const { Console } = require("console");
+const { Compressor } = require("mongodb");
 
 router.post("", checkAuth, Utils.upload.any(), function (req, res, next) {
   const alloweds = process.env.ALLOWEDS;
@@ -362,6 +363,43 @@ router.get("/summary", checkAuth, async (req, res, next) => {
         message: "Fetching records failed!" + error,
       });
     });
+});
+
+router.get("/salessummary", checkAuth, async (req, res, next) => {
+  const alloweds = process.env.ALLOWEDS;
+
+  if (!alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, "Not allowed to see Receipts");
+    return res.status(500).json({ message: "Not allowed" });
+  }
+
+  try {
+    if (req.userData.role !== "ADMIN") {
+      return res.status(500).json({ message: "NOT ALLOWED" });
+    }
+    const { salesSummary, month, year, company } = req.query;
+    if (salesSummary) {
+      console.log(salesSummary, month, year, company);
+
+      const aggData = await Summary.totalSalesForMonthYrFDW(
+        month,
+        year,
+        company || "FIDO WATER"
+      );
+
+      console.log(aggData, "aggData");
+      if (aggData) {
+        return res.status(200).json({ records: aggData });
+      } else {
+        return res
+          .status(500)
+          .json({ message: "Error with recUpload salessummary by month" });
+      }
+    }
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ message: "Error with recUpload summary" });
+  }
 });
 
 router.get("/summary2", checkAuth, async (req, res, next) => {

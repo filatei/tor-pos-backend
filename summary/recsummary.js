@@ -53,6 +53,35 @@ const recAgg = async () => {
   return summary;
 };
 
+async function totalSalesForMonthYrFDW(mnth, yr, comp) {
+  // monthn(1-31) and year(1-12) to be numbers and comp string
+  console.log(mnth, yr, "mnth yr");
+  const aggPipeline = await Recupload.aggregate([
+    {
+      $match: {
+        action_taken: "PRODUCT RELEASED",
+        company: { $ne: "FIDO FLUIDS" },
+        pay_type: { $ne: "Incentive" },
+        acquirer: { $in: ["GTBANK", "ACCESS", "STANBIC", "FCMB"] },
+      },
+    },
+    {
+      $group: {
+        //  _id: { month: { $month: "$createdAt"}, year: { $year: "$createdAt" } , bank: "$acquirer", company: "$company", paytype: "$pay_type"},
+        _id: {
+          month: { $month: "$createdAt" },
+          year: { $year: "$createdAt" },
+        },
+        totalAmount: { $sum: "$txn_amount" },
+        count: { $sum: 1 },
+      },
+    },
+    { $match: { "_id.month": 9, "_id.year": 2021 } },
+  ]);
+  console.log(aggPipeline, "aggpipe");
+  return aggPipeline;
+}
+
 async function Pipeline(start, end) {
   const pipeline = [
     {
@@ -197,4 +226,4 @@ async function producePipeline(start, end) {
   return summary;
 }
 
-module.exports = { recAgg, Pipeline, producePipeline };
+module.exports = { recAgg, Pipeline, producePipeline, totalSalesForMonthYrFDW };

@@ -402,6 +402,37 @@ router.get("/salessummary", checkAuth, async (req, res, next) => {
   }
 });
 
+router.get("/cashsalessummary", checkAuth, async (req, res, next) => {
+  const alloweds = process.env.ALLOWEDS;
+
+  if (!alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, "Not allowed to see Receipts");
+    return res.status(500).json({ message: "Not allowed" });
+  }
+
+  try {
+    if (req.userData.role !== "ADMIN") {
+      return res.status(500).json({ message: "NOT ALLOWED" });
+    }
+    const { salesSummary, month, year } = req.query;
+    if (salesSummary) {
+      const aggData = await Summary.totalCashSalesForMonthYr(month, year);
+
+      console.log(aggData, "aggData");
+      if (aggData) {
+        return res.status(200).json({ records: aggData });
+      } else {
+        return res
+          .status(500)
+          .json({ message: "Error with recUpload salessummary by month" });
+      }
+    }
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ message: "Error with recUpload summary" });
+  }
+});
+
 router.get("/summary2", checkAuth, async (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
 

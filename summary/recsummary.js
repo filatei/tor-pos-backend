@@ -55,14 +55,27 @@ const recAgg = async () => {
 
 async function totalSalesForMonthYrFDW(mnth, yr, comp) {
   // monthn(1-31) and year(1-12) to be numbers and comp string
-  console.log(mnth, yr, "mnth yr");
+  const mnthh = +mnth + 1;
+  let compp = comp.toString().toLowerCase();
+  let ncomp;
+  let bankArr = [];
+  if (compp.includes("water")) {
+    ncomp = "FIDO FLUIDS";
+    bankArr = ["GTBANK", "ACCESS", "STANBIC", "FCMB"];
+  }
+  if (compp.includes("fluids")) {
+    ncomp = "FIDO WATER";
+    bankArr = ["GTBANK", "UBA", "FCMB"];
+  }
+  console.log(bankArr, ncomp, compp, "arr, ncomp, compp");
+
   const aggPipeline = await Recupload.aggregate([
     {
       $match: {
         action_taken: "PRODUCT RELEASED",
-        company: { $ne: "FIDO FLUIDS" },
+        company: { $ne: ncomp },
         pay_type: { $ne: "Incentive" },
-        acquirer: { $in: ["GTBANK", "ACCESS", "STANBIC", "FCMB"] },
+        acquirer: { $in: bankArr },
       },
     },
     {
@@ -76,9 +89,37 @@ async function totalSalesForMonthYrFDW(mnth, yr, comp) {
         count: { $sum: 1 },
       },
     },
-    { $match: { "_id.month": 9, "_id.year": 2021 } },
+    { $match: { "_id.month": +mnthh, "_id.year": +yr } },
   ]);
-  console.log(aggPipeline, "aggpipe");
+  return aggPipeline;
+}
+
+async function totalCashSalesForMonthYr(mnth, yr) {
+  // monthn(1-31) and year(1-12) to be numbers and comp string
+  let mnthh = +mnth + 1;
+
+  const aggPipeline = await Recupload.aggregate([
+    {
+      $match: {
+        action_taken: "PRODUCT RELEASED",
+        // result: { $or: [ { $eq: [ "$pay_type", "Cash" ] }, { $eq: [ "$pay_type", "CASH" ] } ] },
+        $or: [{ pay_type: "CASH" }, { pay_type: "Cash" }],
+        // pay_type: { $eq: "CASH" },
+      },
+    },
+    {
+      $group: {
+        //  _id: { month: { $month: "$createdAt"}, year: { $year: "$createdAt" } , bank: "$acquirer", company: "$company", paytype: "$pay_type"},
+        _id: {
+          month: { $month: "$createdAt" },
+          year: { $year: "$createdAt" },
+        },
+        totalAmount: { $sum: "$txn_amount" },
+        count: { $sum: 1 },
+      },
+    },
+    { $match: { "_id.month": +mnthh, "_id.year": +yr } },
+  ]);
   return aggPipeline;
 }
 
@@ -226,4 +267,10 @@ async function producePipeline(start, end) {
   return summary;
 }
 
-module.exports = { recAgg, Pipeline, producePipeline, totalSalesForMonthYrFDW };
+module.exports = {
+  recAgg,
+  Pipeline,
+  producePipeline,
+  totalSalesForMonthYrFDW,
+  totalCashSalesForMonthYr,
+};

@@ -97,30 +97,37 @@ router.post("", checkAuth, upload.single("image"), function (req, res, next) {
   }
 });
 
-router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
-  let myPath = "";
-  let url = "";
-  let prodObj = req.body;
-  const price = req.body.price;
-  const taxRate = req.body.taxRate;
-  const description = req.body.description;
-  const name = req.body.name;
-  const category = req.body.category;
-  // const updatedAt = req.body.updatedAt;
-  const updater = req.userData.userId;
-  const id = req.params.id;
-  prodObj._id = req.params.id;
-  prodObj.updater = req.userData.userId;
-  const photo = new Photo(prodObj);
-  if (req.file && req.file.filename && req.file.filename.length > 0) {
-    if (hostname.includes("torama")) {
-      url = "https://api.torama.ng";
-    } else {
-      url = req.protocol + "://" + req.get("host");
+router.put(
+  "/:id",
+  checkAuth,
+  upload.single("image"),
+  async (req, res, next) => {
+    let myPath = "";
+    let url = "";
+    let photoObj = req.body;
+
+    const updater = req.userData.userId;
+    const id = req.params.id;
+    photoObj._id = id;
+    photoObj.updater = updater;
+    const photo = new Photo(photoObj);
+    const tag = req.body.tag;
+    console.log(tag, "tag");
+    if (tag) {
+      const existingPhoto = await Photo.findById(id);
+      photo.tags = [{ text: tag }, ...existingPhoto.tags];
     }
 
-    myPath = url + req.file.path;
-    photo.icon = myPath;
+    if (req.file && req.file.filename && req.file.filename.length > 0) {
+      if (hostname.includes("torama")) {
+        url = "https://api.torama.ng";
+      } else {
+        url = req.protocol + "://" + req.get("host");
+      }
+
+      myPath = url + "/" + req.file.path;
+      photo.filePath = myPath;
+    }
     Photo.updateOne({ _id: req.params.id }, photo)
       .then((result) => {
         if (result.n > 0) {
@@ -134,31 +141,8 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
           message: "Couldn't update photo! " + error,
         });
       });
-  } else {
-    Photo.updateOne(
-      { _id: req.params.id },
-      {
-        name: name,
-        price: price,
-        description: description,
-        taxRate: taxRate,
-        category,
-      }
-    )
-      .then((result) => {
-        if (result.n > 0) {
-          res.status(200).json({ message: "Update successful!" });
-        } else {
-          res.status(401).json({ message: "Not authorized!" });
-        }
-      })
-      .catch((error) => {
-        res.status(500).json({
-          message: "Couldn't update photo! " + error,
-        });
-      });
   }
-});
+);
 
 router.delete("/:id", checkAuth, (req, res, next) => {
   const alloweds = process.env.DELALLOWEDS;

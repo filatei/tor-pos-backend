@@ -34,7 +34,7 @@ function logIncident(email, description) {
 }
 
 const checkAuth = require("../middleware/check-auth");
-const dailyreport = require("../models/dailyreport");
+// const dailyreport = require("../models/dailyreport");
 
 router.post(
   "",
@@ -239,7 +239,7 @@ router.get("", checkAuth, async (req, res, next) => {
   const currentPage = +req.query.page;
   const directors = process.env.DIRECTORS;
   try {
-    dailyreport = await DailyReport.find()
+    const dailyreport = await DailyReport.find()
       .populate("creator")
       .populate("site")
       .sort({ createdAt: -1 })

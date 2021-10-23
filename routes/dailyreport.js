@@ -75,7 +75,8 @@ router.post(
         console.log("no file");
       }
 
-      const { reportType, site, incidents, body, financials } = req.body;
+      const { reportType, site, incidents, body, financials, people } =
+        req.body;
 
       const creator = req.userData.userId;
       const dailyReportObj = {
@@ -85,6 +86,7 @@ router.post(
         body,
         financials,
         incidents,
+        people,
         creator,
         image: myPath,
       };

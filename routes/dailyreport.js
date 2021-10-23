@@ -34,6 +34,7 @@ function logIncident(email, description) {
 }
 
 const checkAuth = require("../middleware/check-auth");
+const dailyreport = require("../models/dailyreport");
 
 router.post(
   "",
@@ -248,6 +249,9 @@ router.get("", checkAuth, async (req, res, next) => {
     return res.status(500).json({
       message: "Fetching Daily Report failed, please try again later." + err,
     });
+  }
+  if (dailyreport?.length) {
+    console.log(dailyreport[0]);
   }
   res.status(200).json({ dailyreport });
 });

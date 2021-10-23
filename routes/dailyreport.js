@@ -244,16 +244,16 @@ router.get("", checkAuth, async (req, res, next) => {
       .populate("site")
       .sort({ createdAt: -1 })
       .limit(pageSize);
+    if (dailyreport?.length) {
+      console.log(dailyreport[0]);
+    }
+    res.status(200).json({ dailyreport });
   } catch (err) {
     console.log(err, " report get error");
     return res.status(500).json({
       message: "Fetching Daily Report failed, please try again later." + err,
     });
   }
-  if (dailyreport?.length) {
-    console.log(dailyreport[0]);
-  }
-  res.status(200).json({ dailyreport });
 });
 
 router.get("/:id", async (req, res, next) => {

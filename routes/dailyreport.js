@@ -63,31 +63,11 @@ router.post(
 
       let fileName;
       if (file) {
-        fileName =
-          "uploads/dailyreports/" + req.userData.userId + "/" + file.filename;
         if (hostname.includes("torama.ng")) {
           url = "https://api.torama.ng";
         } else {
           url = req.protocol + "://" + req.get("host");
         }
-        // if (file.mimetype == "image/png") {
-        //   fileName = fileName + ".png";
-        // }
-        // if (file.mimetype == "image/jpg") {
-        //   fileName = fileName + ".jpg";
-        // }
-        // if (file.mimetype == "image/jpeg") {
-        //   fileName = fileName + ".jpeg";
-        // }
-        // if (file.mimetype.includes("excel")) {
-        //   fileName = fileName + ".xls";
-        // }
-        // if (file.mimetype.includes("spreadsheetml.sheet")) {
-        //   fileName = fileName + ".xlsx";
-        // }
-        // if (file.mimetype.includes("pdf")) {
-        //   fileName = fileName + ".pdf";
-        // }
 
         myPath = url + "/" + file.path;
         console.log("myPath", myPath);

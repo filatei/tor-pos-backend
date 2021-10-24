@@ -322,28 +322,6 @@ const storage5 = multer.diskStorage({
         MIME_TYPE_MAP[file.mimetype]
     ); //Appending extension
   },
-  // filename: (req, file, cb) => {
-  //   console.log(path.extname(file.originalname));
-  //   let fileName;
-  //   if (path.extname(file.originalname)) {
-  //     fileName =
-  //       req.userData.userId +
-  //       "-" +
-  //       file.originalname.toLowerCase(file.originalname).split(" ").join("-") +
-  //       path.extname(file.originalname);
-  //     console.log(fileName);
-  //   }
-  // else {
-  //   fileName =
-  //     req.userData.userId +
-  //     "-" +
-  //     new Date().getTime() +
-  //     file.originalname.toLowerCase().split(" ").join("-");
-  //   console.log(fileName);
-  // }
-
-  // cb(null, fileName);
-  // },
 });
 
 var upload5 = multer({
@@ -379,6 +357,7 @@ const storage6 = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     console.log(path.extname(file.originalname), "ext name");
+    const extName = MIME_TYPE_MAP[file.mimetype];
     let fileName;
     fileName =
       req.userData.userId +
@@ -386,7 +365,8 @@ const storage6 = multer.diskStorage({
       new Date().getTime() +
       "-" +
       file.originalname.toLowerCase().split(" ").join("-") +
-      path.extname(file.originalname);
+      "." +
+      extName;
     console.log(fileName, " filename");
 
     cb(null, fileName);

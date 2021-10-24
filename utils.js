@@ -378,16 +378,16 @@ const storage6 = multer.diskStorage({
     cb(null, myDir);
   },
   filename: (req, file, cb) => {
-    console.log(path.extname(file.originalname));
+    console.log(path.extname(file.originalname), "ext name");
     let fileName;
-    if (path.extname(file.originalname)) {
-      fileName =
-        req.userData.userId +
-        "-" +
-        file.originalname.toLowerCase(file.originalname).split(" ").join("-") +
-        path.extname(file.originalname);
-      console.log(fileName, " filename");
-    }
+    fileName =
+      req.userData.userId +
+      "-" +
+      new Date().getTime() +
+      "-" +
+      file.originalname.toLowerCase().split(" ").join("-") +
+      path.extname(file.originalname);
+    console.log(fileName, " filename");
 
     cb(null, fileName);
   },

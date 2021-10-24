@@ -423,21 +423,14 @@ router.put(
     const note = req.body;
 
     if (req.files) {
-      let fileName;
       req.files.forEach((file) => {
-        fileName =
-          "uploads/produceexpenses/" +
-          req.userData.userId +
-          "/" +
-          file.filename;
-
         if (hostname.includes("torama.ng")) {
           url = "https://api.torama.ng";
         } else {
           url = req.protocol + "://" + req.get("host");
         }
 
-        myPath = url + "/" + fileName;
+        myPath = url + "/" + file.path;
         note.image = myPath;
       });
     }

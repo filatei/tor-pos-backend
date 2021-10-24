@@ -60,17 +60,14 @@ router.post(
     try {
       let myPath = "";
       const file = req.file;
-      let fileName;
       if (file) {
-        fileName =
-          "uploads/liability/" + req.userData.userId + "/" + file.filename;
         if (hostname.includes("torama.ng")) {
           url = "https://api.torama.ng";
         } else {
           url = req.protocol + "://" + req.get("host");
         }
 
-        myPath = url + "/" + fileName;
+        myPath = url + "/" + file.path;
       } else {
         console.log("no file");
       }
@@ -338,21 +335,13 @@ router.put(
     if (req.files) {
       let fileName;
       req.files.forEach((file) => {
-        if (file.originalname == "blob") {
-          fileName =
-            "uploads/liability/" + req.userData.userId + "/" + file.filename;
-        } else {
-          fileName =
-            "uploads/liability/" + req.userData.userId + "/" + file.filename;
-        }
-
         if (hostname.includes("torama.ng")) {
           url = "https://api.torama.ng";
         } else {
           url = req.protocol + "://" + req.get("host");
         }
 
-        myPath = url + "/" + fileName;
+        myPath = url + "/" + file.path;
       });
     }
     const note = req.body;

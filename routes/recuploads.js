@@ -75,21 +75,14 @@ router.post("", checkAuth, Utils.upload.any(), function (req, res, next) {
   recObj.creator = req.userData.userId;
 
   if (req.files) {
-    let fileName;
     req.files.forEach((file) => {
-      fileName =
-        "uploads/recuploads/" + req.userData.userId + "/" + file.filename;
-
       if (hostname.includes("torama.ng")) {
         url = "https://api.torama.ng";
       } else {
         url = req.protocol + "://" + req.get("host");
       }
-      path = url + "/" + fileName;
-
-      if (file.fieldname === "image") {
-        recObj.image = path;
-      }
+      const fPath = url + "/" + file.path;
+      recObj.image = fPath;
     });
   }
   Object.entries(recObj).forEach(([key, value]) => {
@@ -785,32 +778,20 @@ router.put(
     let updater = req.userData.userId;
 
     if (req.files) {
-      let fileName;
       req.files.forEach((file) => {
-        if (file.originalname == "blob") {
-          fileName =
-            "uploads/recuploads/" + req.userData.userId + "/" + file.filename;
-        } else {
-          fileName =
-            "uploads/recuploads/" + req.userData.userId + "/" + file.filename;
-        }
-
         if (hostname.includes("torama.ng")) {
           url = "https://api.torama.ng";
         } else {
           url = req.protocol + "://" + req.get("host");
         }
-        path = url + "/" + fileName;
-        // if (file.fieldname === 'image') {
-        //     recObj.image = path;
-        // }
+        const fPath = url + "/" + file.path;
       });
     }
 
     let recId = req.params.id;
     Recupload.findByIdAndUpdate(
       { _id: recId },
-      { image: path, updater: updater }
+      { image: fPath, updater: updater }
     )
       .then((result) => {
         res.status(201).json({

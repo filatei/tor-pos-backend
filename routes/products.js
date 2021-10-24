@@ -7,6 +7,15 @@ const os = require("os");
 const hostname = os.hostname();
 var multer = require("multer");
 const DIR = "./uploads/productimages/";
+
+const MIME_TYPE_MAP = {
+  "image/png": "png",
+  "image/jpeg": "jpeg",
+  "image/jpg": "jpg",
+  "application/pdf": "pdf",
+  "application/vnd.ms-excel": "xls",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+};
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, DIR);
@@ -16,8 +25,8 @@ const storage = multer.diskStorage({
       new Date().getTime() +
       "-" +
       file.originalname.toLowerCase().split(" ").join("-") +
-      path.extname(file.originalname);
-    // console.log(fileName)
+      "." +
+      MIME_TYPE_MAP[file.mimetype];
     cb(null, fileName);
   },
 });

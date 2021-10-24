@@ -68,16 +68,13 @@ router.post(
       let myPath;
 
       if (file) {
-        let fileName;
-        fileName = "uploads/qaqc/" + req.userData.userId + "/" + file.filename;
-
         if (hostname.includes("torama.ng")) {
           url = "https://api.torama.ng";
         } else {
           url = req.protocol + "://" + req.get("host");
         }
 
-        myPath = url + "/" + fileName;
+        myPath = url + "/" + file.path;
         qaqcObj.image = myPath;
         qaqcObj.images = [myPath];
       }
@@ -131,16 +128,13 @@ router.put(
 
       console.log(file);
       if (file) {
-        let fileName;
-        fileName = "uploads/qaqc/" + req.userData.userId + "/" + file.filename;
-
         if (hostname.includes("torama.ng")) {
           url = "https://api.torama.ng";
         } else {
           url = req.protocol + "://" + req.get("host");
         }
 
-        myPath = url + "/" + fileName;
+        myPath = url + "/" + file.path;
         qaqcObj.image = myPath;
       }
       // if just status update
@@ -311,23 +305,14 @@ router.put(
       let updater = req.userData.userId;
       let myPath;
       if (req.files) {
-        let fileName;
         req.files.forEach((file) => {
-          if (file.originalname == "blob") {
-            fileName =
-              "uploads/qaqc/" + req.userData.userId + "/" + file.filename;
-          } else {
-            fileName =
-              "uploads/qaqc/" + req.userData.userId + "/" + file.filename;
-          }
-
           if (hostname.includes("torama.ng")) {
             url = "https://api.torama.ng";
           } else {
             url = req.protocol + "://" + req.get("host");
           }
 
-          myPath = url + "/" + fileName;
+          myPath = url + "/" + file.path;
         });
       }
       const note = req.body;

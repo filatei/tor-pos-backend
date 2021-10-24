@@ -447,13 +447,13 @@ router.put(
     if (req.files) {
       let fileName;
       req.files.forEach((file) => {
-        if (file.originalname == "blob") {
-          fileName =
-            "uploads/produce/" + req.userData.userId + "/" + file.filename;
-        } else {
-          fileName =
-            "uploads/produce/" + req.userData.userId + "/" + file.filename;
-        }
+        // if (file.originalname == "blob") {
+        //   fileName =
+        //     "uploads/produce/" + req.userData.userId + "/" + file.filename;
+        // } else {
+        //   fileName =
+        //     "uploads/produce/" + req.userData.userId + "/" + file.filename;
+        // }
 
         if (hostname.includes("torama.ng")) {
           url = "https://api.torama.ng";
@@ -461,7 +461,7 @@ router.put(
           url = req.protocol + "://" + req.get("host");
         }
 
-        myPath = url + "/" + fileName;
+        myPath = url + "/" + file.path;
       });
     }
     const note = req.body;

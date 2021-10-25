@@ -497,8 +497,9 @@ router.get("/bydate", checkAuth, async (req, res, next) => {
   //  given a date, return all receipts for day
 
   try {
-    const { date } = req.query;
-    let ddate = date.split("T")[0];
+    const { ddate } = req.query;
+    // console.log(date, " date");
+    // let ddate = date.split("T")[0];
     // start of day
     var start = moment(ddate).startOf("day");
 

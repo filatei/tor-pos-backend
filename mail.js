@@ -254,6 +254,16 @@ async function sendExpense(expense, userId = null) {
     console.log(err);
   }
 }
+function titleCase(str) {
+  if (str == "Akpodigha Filatei") return "MD";
+  return str
+    .toLowerCase()
+    .split(" ")
+    .map(function (word) {
+      return word.replace(word[0], word[0].toUpperCase());
+    })
+    .join(" ");
+}
 
 async function sendProduceexpense(expense, userId = null) {
   let vendor;
@@ -269,7 +279,7 @@ async function sendProduceexpense(expense, userId = null) {
   if (userId) {
     currentUser = await User.findById(userId);
     ccEmail = currentUser.email;
-    updater = currentUser.name;
+    updater = titleCase(currentUser.name);
   }
 
   // some content
@@ -372,7 +382,7 @@ async function sendProduceexpense(expense, userId = null) {
   if (memo) {
     html += `<p> Memo: ${memo} </p>`;
   }
-  html += `Click <a href="${url}/#/home/expense-detail?id=${expense._id}"> Expense Detail </a> to see expense ticket`;
+  html += `Click <a href="${url}/#/tabs/expense-detail?id=${expense._id}"> Expense Detail </a> to see expense ticket`;
 
   html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama<sup>&#174;</sup> - All rights reserved. &#169; ${new Date().getFullYear()}</p> </body></html>`;
 
@@ -681,7 +691,7 @@ async function sendImprest(item, user) {
   try {
     // some content
     let subject = `Imprests Mailer`;
-    let userName = user.name;
+    let userName = titleCase(user.name);
     let userEmail = user.email;
     let creatorEmail;
 
@@ -756,7 +766,7 @@ async function sendCashdeposit(item, user) {
       subject = `Cash Deposit Made`;
     }
 
-    let userName = user.name;
+    let userName = titleCase(user.name);
     let toEmail = user.email;
     const creator = await User.findById(item.creator);
     let creatorEmail = creator.email;
@@ -772,7 +782,7 @@ async function sendCashdeposit(item, user) {
 
     let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
                 ${date}</p>
-                <p> Hi ${creator.name},</p>`;
+                <p> Hi ${titleCase(creator.name)},</p>`;
     html += `<p>Amount: ${amount.toLocaleString()}  </p> <p>Status: <b style="color:red">${
       item.status
     } </b> </p><p> Site: ${item.site}</p> <p>Deposited by: ${
@@ -800,7 +810,6 @@ async function sendCashdeposit(item, user) {
     const body = html;
     let model = { sender, to, cc, subject, body };
     const saveMess = await saveMessage(model);
-    console.log(" Message Saved ", saveMess);
 
     model = {
       fromText: "ToramaDeposit",
@@ -912,7 +921,6 @@ async function verifyAuth(userId, verify) {
 async function sendDailyReport(report, user) {
   try {
     // const user = await User.findById(userId);
-    console.log(user, report, " in mailer");
     const site = await Site.findById(report.site);
     let format1 = "DD-MM-YYYY hh:mm:ss";
     let date;
@@ -933,13 +941,20 @@ async function sendDailyReport(report, user) {
 
     let html = `<!DOCTYPE html><html><body style="text-align:center;"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
                 ${date}</p>
-                <p> Creator ${user?.name},  body of Report</p>
-                <p> <hr>${report?.body}  </p>
-                <p> Financials <hr>${report?.financials}</p>
-                <p> Incidents<hr> ${report?.incidents}</p>
-                <p>People Issues<hr> ${report?.people}</p>
+                <p> Creator ${titleCase(user?.name)}</p><p>  body of Report</p>
+                <hr><p>${report?.body}  </p>
+                <p> Expenses</p> <hr><p>${report?.expenses}</p>
+                <p> cash at hand</p> <hr><p>${report?.cashathand}</p>
+                <p> Rolls Stock</p> <hr><p>${report?.rollstock}</p>
+                <p> Crate 50cl Stock</p> <hr><p>${report?.crate50clstock}</p>
+                <p> Crate 75cl Stock</p> <hr><p>${report?.crate75clstock}</p>
+                <p> Financials</p> <hr><p>${report?.financials}</p>
+                <p> Incidents <p><hr> <p>${report?.incidents}</p>
+                <p>People Issues</p><hr><p> ${report?.people}</p>
 
-                <p>  <a href="${report?.image}" target="_blank">Attachment </a></p>
+                <p>  <a href="${
+                  report?.image
+                }" target="_blank">Attachment </a></p>
                 `;
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${new Date().getFullYear()}</p> </body></html>`;

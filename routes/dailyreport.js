@@ -62,7 +62,6 @@ router.post(
       const file = req.file;
       console.log("file", file);
 
-      let fileName;
       if (file) {
         if (hostname.includes("torama.ng")) {
           url = "https://api.torama.ng";
@@ -79,16 +78,20 @@ router.post(
       const { reportType, site, incidents, body, financials, people } =
         req.body;
 
+      let formFields = Object.keys(req.body); // an array
+
+      // remove fields from req.body with empty content
+      let recObj = formFields
+        .filter((key) => req.body[key] !== "")
+        .reduce((obj, key) => {
+          obj[key] = req.body[key];
+          return obj;
+        }, {});
+
       const creator = req.userData.userId;
       const dailyReportObj = {
         status: "NOT SEEN",
-        site,
-        reportType,
-        body,
-        financials,
-        incidents,
-        people,
-        creator,
+        ...recObj,
         image: myPath,
       };
       console.log(dailyReportObj);

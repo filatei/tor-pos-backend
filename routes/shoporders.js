@@ -23,6 +23,13 @@ var multer = require("multer");
 const DIR = "./uploads/shoporderimages/";
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
+    try {
+      if (!fs.existsSync(DIR)) {
+        fs.mkdirSync(DIR, { recursive: true });
+      }
+    } catch (err) {
+      throw err;
+    }
     cb(null, DIR);
   },
   filename: (req, file, cb) => {
@@ -159,7 +166,6 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
     return res.status(500).json({ message: "Not allowed to create Sales" });
   }
 
-  let path = "";
   let url = "";
   let shopObj = req.body;
 
@@ -171,15 +177,13 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
 
   if (req.file) {
     if (hostname.includes("torama.ng")) {
-      path =
+      url =
         "https://api.torama.ng" +
-        "/uploads/shoporderimages/" +
-        req.file.filename;
+        "/uploads/shoporderimages" 
     } else {
       url = req.protocol + "://" + req.get("host");
-      path = url + "/uploads/shoporderimages/" + req.file.filename;
     }
-    shopObj.image = path;
+    shopObj.image = url + '/' + req.file.path;
   }
   const dirPath = Path.join(__dirname, "../uploads/printqueue/");
   let printQueue = dirPath + new Date().getTime() + ".json";

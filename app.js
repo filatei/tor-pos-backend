@@ -53,8 +53,9 @@ const liabRoutes = require("./routes/liability");
 const produceRoutes = require("./routes/produce");
 const filemanagerRoutes = require("./routes/filemanager");
 const photoRoutes = require("./routes/photos");
-//let connectStr =  'mongodb://localhost:27017/torposdb';
-//  "mongodb+srv://user1:e7oBfpgdBQQCO9Qw@cluster0.sw9uv.mongodb.net/myFirstDatabase?retryWrites=true&w=majority";
+const cryptoRoutes = require("./routes/crypto");
+const genRoutes = require("./routes/gen");
+
 
 const DB = "torposedb";
 // if prod use this
@@ -199,5 +200,8 @@ app.use("/api/produceexpense", produceexpenseRoutes);
 app.use("/api/producecustomers", producecustomerRoutes);
 app.use("/api/filemanager", filemanagerRoutes);
 app.use("/api/photos", photoRoutes);
+app.use("/api/crypto", cryptoRoutes);
+app.use("/api/gen", genRoutes);
+// app.use("/api/gen", genRoutes);
 
 module.exports = app;

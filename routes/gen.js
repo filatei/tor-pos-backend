@@ -259,9 +259,13 @@ Gen.findById(req.params.id)
             gen.maintenance_history = [thisMaintHist]
         }
         updated = await Gen.updateOne({ _id: req.params.id }, { $set: {current_maintenance: gen.current_maintenance, maintenance_history: gen.maintenance_history, current_hour: gen.current_hour, hour_history: gen.hour_history }});
+    } else {
+
+        updated = await Gen.updateOne({ _id: req.params.id }, { $set: {purchase_price: gen.purchase_price, purchase_date: gen.purchase_date, sn: gen.sn, kva: gen.kva, model: gen.model, brand: gen.brand }});
+
     }
 
-    if ( updated.nModified && updated.ok ) {
+    if ( updated?.nModified && updated?.ok ) {
         console.log('updated', updated)
         return res.status(200).json({ message: "Update successful! " + JSON.stringify(updated) });
     } else {

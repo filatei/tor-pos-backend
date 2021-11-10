@@ -211,30 +211,26 @@ Gen.findById(req.params.id)
     let recObj = req.body;
   
     recObj._id = sanitize(req.params.id);
-    oldReceipt = await Gen.findById(req.params.id).lean();
-  
+
     // access control
     let user = await User.findById(req.userData.userId).lean();
   
     recObj.updater = req.userData.userId;
     const gen = new Gen(recObj);
-    console.log(gen, 'before', isObjectEmpty (gen.note))
 
     const oldGen = await Gen.findById(req.params.id).lean();
     let updated;
     if ( gen.note.text ) {
-        console.log(' in note')
 
         const thisNote = {...gen.note, author: req.userData.name}
         gen.note = {...thisNote};
         if ( oldGen.notes.length ) {
-            gen.notes = [thisNote, ...oldGen.notes, ]
+            gen.notes = [thisNote, ...oldGen.notes ]
         } else {
             gen.notes = [thisNote]
         }
         updated = await Gen.updateOne({ _id: req.params.id }, { $set: {note: gen.note, notes: gen.notes }});
     } else if ( gen.current_hour.hour) {
-        console.log(' in currenthour')
         const thisHourHist = {...gen.current_hour, author: req.userData.name}
         gen.current_hour = {...thisHourHist}
     
@@ -243,10 +239,8 @@ Gen.findById(req.params.id)
         } else {
             gen.hour_history = [thisHourHist]
         }
-        console.log(gen)
         updated = await Gen.updateOne({ _id: req.params.id }, { $set: {current_hour: gen.current_hour, hour_history: gen.hour_history }});
     } else if ( gen.current_maintenance.maintenance_hour ) {
-        console.log(' in maint')
 
         const thisMaintHist = {...gen.current_maintenance, author: req.userData.name}
         gen.current_maintenance = {...thisMaintHist}
@@ -272,11 +266,6 @@ Gen.findById(req.params.id)
         res.status(500).json({ message: "Couldn't update Gen!" })
     }
 
-
-    function isObjectEmpty(obj) {
-        console.log(Object.keys(obj))
-        return Object.keys(obj).length === 0;
-    }
   });
 
   module.exports = router;

@@ -220,47 +220,64 @@ Gen.findById(req.params.id)
 
     const oldGen = await Gen.findById(req.params.id).lean();
     let updated;
+    const author = req.userData.name==='Akpodigha Filatei'?'MD':req.userData.name;
     if ( gen.note.text ) {
 
-        const thisNote = {...gen.note, author: req.userData.name}
+        const thisNote = {...gen.note, author: author}
         gen.note = {...thisNote};
-        if ( oldGen.notes.length ) {
+        if ( oldGen.notes?.length ) {
             gen.notes = [thisNote, ...oldGen.notes ]
         } else {
             gen.notes = [thisNote]
         }
         updated = await Gen.updateOne({ _id: req.params.id }, { $set: {note: gen.note, notes: gen.notes }});
     } else if ( gen.current_hour.hour) {
-        const thisHourHist = {...gen.current_hour, author: req.userData.name}
+        const thisHourHist = {...gen.current_hour, author: author}
         gen.current_hour = {...thisHourHist}
     
-        if ( oldGen.hour_history.length ) {
+        if ( oldGen.hour_history?.length ) {
             gen.hour_history = [thisHourHist, ...oldGen.hour_history, ]
         } else {
             gen.hour_history = [thisHourHist]
         }
         updated = await Gen.updateOne({ _id: req.params.id }, { $set: {current_hour: gen.current_hour, hour_history: gen.hour_history }});
-    } else if ( gen.current_maintenance.maintenance_hour ) {
+    } 
 
-        const thisMaintHist = {...gen.current_maintenance, author: req.userData.name}
+    else if ( gen.current_diesel.diesel_litres) {
+        const thisDieselHist = {...gen.current_diesel, author: author}
+        gen.current_diesel = {...thisDieselHist}
+
+        // record current hour also
+        gen.current_hour = { hour: gen.current_diesel.diesel_hours, date: gen.current_diesel.date, author: author };
+        gen.hour_history = [gen.current_hour, ...oldGen.hour_history]
+       
+    
+        if ( oldGen.diesel_history?.length ) {
+            gen.diesel_history = [thisDieselHist, ...oldGen.diesel_history, ]
+        } else {
+            gen.diesel_history = [thisDieselHist]
+        }
+        updated = await Gen.updateOne({ _id: req.params.id }, { $set: {current_diesel: gen.current_diesel, diesel_history: gen.diesel_history, current_hour: gen.current_hour, hour_history: gen.hour_history }});
+    } 
+    
+    else if ( gen.current_maintenance.maintenance_hour ) {
+
+        const thisMaintHist = {...gen.current_maintenance, author: author}
         gen.current_maintenance = {...thisMaintHist}
-        gen.current_hour = { hour: gen.current_maintenance.maintenance_hour, date: gen.current_maintenance.date, author: req.userData.name };
+        gen.current_hour = { hour: gen.current_maintenance.maintenance_hour, date: gen.current_maintenance.date, author: author };
         gen.hour_history = [gen.current_hour, ...oldGen.hour_history]
 
-        if ( oldGen.maintenance_history.length ) {
+        if ( oldGen.maintenance_history?.length ) {
             gen.maintenance_history = [thisMaintHist, ...oldGen.maintenance_history, ]
         } else {
             gen.maintenance_history = [thisMaintHist]
         }
         updated = await Gen.updateOne({ _id: req.params.id }, { $set: {current_maintenance: gen.current_maintenance, maintenance_history: gen.maintenance_history, current_hour: gen.current_hour, hour_history: gen.hour_history }});
     } else {
-
         updated = await Gen.updateOne({ _id: req.params.id }, { $set: {purchase_price: gen.purchase_price, purchase_date: gen.purchase_date, sn: gen.sn, kva: gen.kva, model: gen.model, brand: gen.brand }});
-
     }
 
     if ( updated?.nModified && updated?.ok ) {
-        console.log('updated', updated)
         return res.status(200).json({ message: "Update successful! " + JSON.stringify(updated) });
     } else {
         res.status(500).json({ message: "Couldn't update Gen!" })

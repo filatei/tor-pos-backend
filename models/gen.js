@@ -16,6 +16,22 @@ const genSchema = mongoose.Schema(
     brand: { type: String, required: true, trim: true, uppercase: true },
     model: { type: String, required: true, trim: true, uppercase: true },
     kva: { type: Number, required: true, trim: true, uppercase: true },
+    current_diesel: {
+      date: {type: Date},
+      diesel_litres: {type: Number},
+      diesel_hours: {type: Number},
+
+      author: { type: String },
+      
+    },
+
+    diesel_history: [{
+      date: {type: Date},
+      diesel_litres: {type: Number},
+      diesel_hours: {type: Number},
+      author: { type: String },
+      
+    }],
       
     current_hour: {
       date: {type: Date},
@@ -23,6 +39,7 @@ const genSchema = mongoose.Schema(
       author: { type: String },
       
     },
+
     hour_history: [{
       date: {type: Date},
       hour: {type: Number},

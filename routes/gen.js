@@ -137,43 +137,29 @@ router.get("", checkAuth, async (req, res, next) => {
       logIncident(req.userData.email, "Not allowed to see Gens");
       return res.status(500).json({ message: "Not allowed" });
     }
-  
-    const pageSize = +req.query.pagesize;
-    const currentPage = +req.query.page;
-    const site = req.query.site;
-    const idate = req.query.idate;
-    const today = moment().startOf("day");
-    let coyQuery;
-  
-    // condition for today results
-    let cond1 = {
-      createdAt: {
-        $gte: today.toDate(),
-        $lte: moment(today).endOf("day").toDate(),
-      },
-    };
-    coyQuery = Gen.find()
-      .sort({ createdAt: -1 })
-      .populate("site")
-      .populate("creator")
 
-      .populate("updater");
-    if (pageSize && currentPage) {
-      coyQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
-    }
-    coyQuery
-      .then((documents) => {
-        res.status(200).json({
-            message: "records fetched successfully!",
-            records: documents,
-          });
-      })
-     
-      .catch((error) => {
-        res.status(500).json({
-          message: "Fetching records failed! " + error,
+    try {
+      const gQuery = await Gen.find().lean()
+      .populate({path: "site", select: 'name'})
+      .populate("creator", ['name', 'email'])
+      .populate("updater", ['name', 'email']);
+      if (gQuery?.length) {
+        const gen = await _.orderBy(gQuery, "site.name", 'asc');
+        return res.status(200).json({
+          message: "records fetched successfully!",
+          records: gen,
         });
+      } else {
+        return res.status(500).json({
+          message: "Fetching records failed! " ,
+        });
+      }
+
+    } catch (err) {
+      res.status(500).json({
+        message: "Fetching records failed! " + err ,
       });
+    }
   });
 
 router.get("/:id", checkAuth, (req, res, next) => {
@@ -184,9 +170,9 @@ if (!alloweds.includes(req.userData.email)) {
     return res.status(500).json({ message: "Not allowed" });
 }
 Gen.findById(req.params.id)
-    .populate("site")
-    .populate("creator")
-    .populate("updater")
+    .populate("site", 'name')
+    .populate("creator", 'name')
+    .populate("updater", 'name')
     .then((record) => {
     if (record) {
         return res.status(200).json({record: record});
@@ -274,7 +260,7 @@ Gen.findById(req.params.id)
         }
         updated = await Gen.updateOne({ _id: req.params.id }, { $set: {current_maintenance: gen.current_maintenance, maintenance_history: gen.maintenance_history, current_hour: gen.current_hour, hour_history: gen.hour_history }});
     } else {
-        updated = await Gen.updateOne({ _id: req.params.id }, { $set: {purchase_price: gen.purchase_price, purchase_date: gen.purchase_date, sn: gen.sn, kva: gen.kva, model: gen.model, brand: gen.brand }});
+        updated = await Gen.updateOne({ _id: req.params.id }, { $set: {purchase_price: gen.purchase_price, purchase_date: gen.purchase_date, sn: gen.sn, kva: gen.kva, model: gen.model, brand: gen.brand, description: gen.description }});
     }
 
     if ( updated?.nModified && updated?.ok ) {

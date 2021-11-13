@@ -1003,9 +1003,9 @@ async function sendGenActivity(report, user) {
     if (report.current_maintenance && report.current_maintenance.maintenance_hour) {
       body = ` <div>Hour: ${report.current_maintenance.maintenance_hour} </div>
       <div>OIL: ${report.current_maintenance.oil }</div>
-      <div>Oil Filter Changed?: ${report.current_maintenance.oilfilers }</div>
-      <div>Fuel Filter Changed?: ${report.current_maintenance.fuelfilers }</div>
-      <div>Radiator Cleaned?: ${report.current_maintenance.radiator }</div> <hr>
+      <div>Oil Filter Changed?: ${report.current_maintenance.oilfilters || 'NOT CHANGED'}</div>
+      <div>Fuel Filter Changed?: ${report.current_maintenance.fuelfilters || 'NOT CHANGED'}</div>
+      <div>Radiator Cleaned?: ${report.current_maintenance.radiator || 'NOT CLEANED' }</div> <hr>
       <div> <p> Remarks: ${report.current_maintenance.remarks} </p></div>
       `;
       image = report.current_maintenance?.image || 'None'

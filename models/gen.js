@@ -20,7 +20,7 @@ const genSchema = mongoose.Schema(
       date: {type: Date},
       diesel_litres: {type: Number},
       diesel_hours: {type: Number},
-
+      remarks: { type: String },
       author: { type: String },
       image: { type: String },
     },
@@ -29,6 +29,7 @@ const genSchema = mongoose.Schema(
       date: {type: Date},
       diesel_litres: {type: Number},
       diesel_hours: {type: Number},
+      remarks: { type: String },
       author: { type: String },
       image: { type: String },
       

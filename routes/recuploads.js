@@ -513,7 +513,6 @@ router.get("/bydate", checkAuth, async (req, res, next) => {
       .populate("customer")
       .populate("creator")
       .populate("updater");
-    console.log(dayData.length, "daydata count");
     if (dayData) {
       return res.status(200).json({ records: dayData });
     } else {

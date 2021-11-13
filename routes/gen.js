@@ -202,12 +202,24 @@ Gen.findById(req.params.id)
     let user = await User.findById(req.userData.userId).lean();
   
     recObj.updater = req.userData.userId;
-    const gen = new Gen(recObj);
+    let gen = new Gen();
+    gen = {...req.body}
+    // if (req.body.current_diesel) {
+    //   gen.current_diesel = {...req.body.current_diesel}
+    // }
+    // if (req.body.current_maintenance) {
+    //   gen.current_maintenance = {...req.body.current_maintenance}
+    // }
 
-    const oldGen = await Gen.findById(req.params.id).lean();
+    // if (req.body.note) {
+    //   gen.current_maintenance = {...req.body.note}
+    // }
+
+
+    const oldGen = await Gen.findById(req.params.id).lean().populate('site', 'name')
     let updated;
     const author = req.userData.name==='Akpodigha Filatei'?'MD':req.userData.name;
-    if ( gen.note.text ) {
+    if ( gen.note && gen.note.text ) {
 
         const thisNote = {...gen.note, author: author}
         gen.note = {...thisNote};
@@ -217,7 +229,7 @@ Gen.findById(req.params.id)
             gen.notes = [thisNote]
         }
         updated = await Gen.updateOne({ _id: req.params.id }, { $set: {note: gen.note, notes: gen.notes }});
-    } else if ( gen.current_hour.hour) {
+    } else if ( gen.current_hour && gen.current_hour.hour) {
         const thisHourHist = {...gen.current_hour, author: author}
         gen.current_hour = {...thisHourHist}
     
@@ -229,7 +241,7 @@ Gen.findById(req.params.id)
         updated = await Gen.updateOne({ _id: req.params.id }, { $set: {current_hour: gen.current_hour, hour_history: gen.hour_history }});
     } 
 
-    else if ( gen.current_diesel.diesel_litres) {
+    else if ( gen.current_diesel && gen.current_diesel.diesel_litres) {
         const thisDieselHist = {...gen.current_diesel, author: author}
         gen.current_diesel = {...thisDieselHist}
 
@@ -237,16 +249,22 @@ Gen.findById(req.params.id)
         gen.current_hour = { hour: gen.current_diesel.diesel_hours, date: gen.current_diesel.date, author: author };
         gen.hour_history = [gen.current_hour, ...oldGen.hour_history]
        
-    
+      
         if ( oldGen.diesel_history?.length ) {
             gen.diesel_history = [thisDieselHist, ...oldGen.diesel_history, ]
         } else {
             gen.diesel_history = [thisDieselHist]
         }
+        const mGen = {current_diesel:gen.current_diesel,  name: oldGen.name, site: oldGen.site};
+        console.log('in here in diesel ', mGen)
+
+        // console.log(mGen, 'in diesel')
+        const mailed = await Mail.sendGenActivity(mGen, req.userData);
+
         updated = await Gen.updateOne({ _id: req.params.id }, { $set: {current_diesel: gen.current_diesel, diesel_history: gen.diesel_history, current_hour: gen.current_hour, hour_history: gen.hour_history }});
     } 
     
-    else if ( gen.current_maintenance.maintenance_hour ) {
+    else if ( gen.current_maintenance && gen.current_maintenance.maintenance_hour ) {
 
         const thisMaintHist = {...gen.current_maintenance, author: author}
         gen.current_maintenance = {...thisMaintHist}
@@ -264,7 +282,8 @@ Gen.findById(req.params.id)
     }
 
     if ( updated?.nModified && updated?.ok ) {
-        return res.status(200).json({ message: "Update successful! " + JSON.stringify(updated) });
+      
+      return res.status(200).json({ message: "Update successful! " + JSON.stringify(updated) });
     } else {
         res.status(500).json({ message: "Couldn't update Gen!" })
     }
@@ -308,9 +327,10 @@ Gen.findById(req.params.id)
       if ( myPath ) {
         current_maintenance.image = myPath;
       }
-      const oldGen = await Gen.findById(recId).lean();
+      const oldGen = await Gen.findById(recId).lean().populate('site','name')
       
-      const gen = new Gen(current_maintenance);
+      const gen = new Gen();
+      gen.current_maintenance = current_maintenance;
       
       gen.current_hour = { hour: current_maintenance.maintenance_hour, date: current_maintenance.date, author: author };
       gen.hour_history = [gen.current_hour, ...oldGen.hour_history]
@@ -321,10 +341,11 @@ Gen.findById(req.params.id)
           gen.maintenance_history = [current_maintenance]
       }
 
-      console.log ('gen', gen)
       updated = await Gen.updateOne({ _id: req.params.id }, { $set: {current_maintenance: gen.current_maintenance, maintenance_history: gen.maintenance_history, current_hour: gen.current_hour, hour_history: gen.hour_history }});
 
       if ( updated?.nModified && updated?.ok ) {
+        const mGen = {...gen._doc, site:oldGen.site, name:oldGen.name};
+        const mailed = Mail.sendGenActivity(mGen, req.userData);
         return res.status(200).json({ message: "Update successful! " + JSON.stringify(updated) });
       } else {
           res.status(500).json({ message: "Couldn't update Gen!" })
@@ -372,20 +393,21 @@ Gen.findById(req.params.id)
         note.image = myPath;
       }
 
-      console.log(note)
-      const oldGen = await Gen.findById(recId).lean();
+      const oldGen = await Gen.findById(recId).lean().populate('site', 'name');
       
-      const gen = new Gen(note);
-
+      const gen = new Gen();
+      gen.note = note;
       if ( oldGen.notes?.length ) {
           gen.notes = [note, ...oldGen.notes ];
       } else {
           gen.notes = [note];
       }
-
+      const mGen = {...gen._doc, site:oldGen.site, name:oldGen.name};
       updated = await Gen.updateOne({ _id: req.params.id }, { $set: {note: gen.note, notes: gen.notes }});
 
       if ( updated?.nModified && updated?.ok ) {
+       
+        const mailed = Mail.sendGenActivity(mGen, req.userData);
         return res.status(200).json({ message: "Update successful! " + JSON.stringify(updated) });
       } else {
           res.status(500).json({ message: "Couldn't update Gen!" })

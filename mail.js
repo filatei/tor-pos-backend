@@ -966,7 +966,6 @@ async function sendDailyReport(report, user) {
     const body = html;
     let model = { sender, to, cc, subject, body };
     const saveMess = await saveMessage(model);
-    console.log(" Message Saved ", saveMess);
 
     model = {
       fromText: fromText,
@@ -974,6 +973,90 @@ async function sendDailyReport(report, user) {
       to: toEmail,
       cc: "",
       bcc: "auth@torama.ng",
+      html,
+    };
+    mailer(model);
+  } catch (err) {
+    console.log(err, "error in report mailer");
+  }
+}
+
+async function sendGenActivity(report, user) {
+  try {
+    let format1 = "DD-MM-YYYY hh:mm:ss";
+    let date;
+    const genName = report.name ||"no name";
+    date = moment(new Date()).format(format1);
+    const fromText = `${report?.name} Activity from ${report.site?.name}`;
+    let toEmail, body;
+    let image = "";
+    // console.log(report)
+    // Diesel
+    if (report.current_diesel && report.current_diesel.diesel_litres) {
+      body = ` Hour: ${report.current_diesel.diesel_hours} 
+      <br>Litres: ${report.current_diesel.diesel_litres}
+      <hr>
+      <br>Remarks: ${report.current_diesel.remarks}
+      `;
+    }
+
+    if (report.current_maintenance && report.current_maintenance.maintenance_hour) {
+      body = ` <div>Hour: ${report.current_maintenance.maintenance_hour} </div>
+      <div>OIL: ${report.current_maintenance.oil || 'Not Changed'}</div>
+      <div>Oil Filter Changed?: ${report.current_maintenance.oilfilers || 'Not Changed'}</div>
+      <div>Fuel Filter Changed?: ${report.current_maintenance.fuelfilers ||'Not Changed'}</div>
+      <div>Radiator Cleaned?: ${report.current_maintenance.radiator || 'Not Cleaned'}</div> <hr>
+      <div> <p> Remarks: ${report.current_maintenance.remarks} </p></div>
+      `;
+      image = report.current_maintenance?.image || 'None'
+
+    }
+
+    if (report.note && report.note.text) {
+      body = report.note.text;
+      image = report.note?.image || 'None'
+
+    }
+
+    console.log (report, ' report in mail')
+
+    let subject = `${report?.name} Activity for ${report.site?.name} on ${date}`;
+
+    if (hostname.includes("torama")) {
+      toEmail = user.email;
+      subject;
+    } else {
+      toEmail = "generator@torama.ng";
+      subject = "Just a test Report  ";
+    }
+
+    let html = `<!DOCTYPE html><html><body style="text-align:center;"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
+                ${date}</p>
+                <p> Creator ${titleCase(user?.name)}</p><p>  body of Report</p>
+                <p> Generator Name</p> <p>${genName}</p><hr>
+                <p> Site</p> <p>${report?.site?.name}</p><hr>
+                <p> Report</p> <p>${body}</p>
+                
+                <p>  <a href="${image}" target="_blank">Attachment </a></p>
+                `;
+
+    html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${new Date().getFullYear()}</p> </body></html>`;
+
+    console.log(html)
+    // save in Message schema
+    const to = user.email;
+    const sender = process.env.tormail;
+    const bcc = "generator@torama.ng";
+    // let model = { sender, to, cc, subject, body };
+    // const saveMess = await saveMessage(model);
+    // console.log(" Message Saved ", saveMess);
+
+    model = {
+      fromText: fromText,
+      subject,
+      to: toEmail,
+      cc: "",
+      bcc,
       html,
     };
     mailer(model);
@@ -1094,4 +1177,5 @@ module.exports = {
   verifyAuth,
   forgotPassword,
   sendDailyReport,
+  sendGenActivity
 };

@@ -22,7 +22,7 @@ const genSchema = mongoose.Schema(
       diesel_hours: {type: Number},
 
       author: { type: String },
-      
+      image: { type: String },
     },
 
     diesel_history: [{
@@ -30,6 +30,7 @@ const genSchema = mongoose.Schema(
       diesel_litres: {type: Number},
       diesel_hours: {type: Number},
       author: { type: String },
+      image: { type: String },
       
     }],
       
@@ -54,7 +55,8 @@ const genSchema = mongoose.Schema(
       oil: {type: Boolean},
       maintenance_hour: {type: Number},
       remarks: {type: String},
-      author: { type: String }
+      author: { type: String },
+      image: { type: String }
      },
     maintenance_history: [
       {
@@ -65,7 +67,8 @@ const genSchema = mongoose.Schema(
       oil: {type: Boolean},
       maintenance_hour: {type: Number},
       remarks: {type: String},
-      author: { type: String }
+      author: { type: String },
+      image: { type: String }
      }],
     notes: [{
       text: {type: String},

@@ -260,7 +260,7 @@ Gen.findById(req.params.id)
         }
         updated = await Gen.updateOne({ _id: req.params.id }, { $set: {current_maintenance: gen.current_maintenance, maintenance_history: gen.maintenance_history, current_hour: gen.current_hour, hour_history: gen.hour_history }});
     } else {
-        updated = await Gen.updateOne({ _id: req.params.id }, { $set: {purchase_price: gen.purchase_price, purchase_date: gen.purchase_date, sn: gen.sn, kva: gen.kva, model: gen.model, brand: gen.brand, description: gen.description }});
+        updated = await Gen.updateOne({ _id: req.params.id }, { $set: {purchase_price: gen.purchase_price, purchase_date: gen.purchase_date, sn: gen.sn, kva: gen.kva, model: gen.model, brand: gen.brand, description: gen.description, site: gen.site }});
     }
 
     if ( updated?.nModified && updated?.ok ) {
@@ -271,5 +271,127 @@ Gen.findById(req.params.id)
 
   });
 
-  module.exports = router;
+  router.put(
+    "/maintenance/:id",
+    checkAuth,
+    Utils.upload8.any(),
+    async function (req, res, next) {
+      const alloweds = process.env.ALLOWEDS;
+      if (!alloweds.includes(req.userData.email)) {
+        logIncident(req.userData.email, "Not allowed to create notes");
+        return res.status(500).json({ message: "Not allowed" });
+      }
+  
+      const current_maintenance = JSON.parse(req.body.current_maintenance); 
+
+      if ( !current_maintenance?.maintenance_hour ) {
+        return res.status(500).json({
+          message: "Error: Maintenance Hour Required",
+        });
+      }
+      let recId = req.params.id;
+      let author = req.userData.userId;
+      current_maintenance.author = author;
+
+      let myPath;
+      if (req.files) {
+        req.files.forEach((file) => {
+          if (hostname.includes("torama.ng")) {
+            url = "https://api.torama.ng";
+          } else {
+            url = req.protocol + "://" + req.get("host");
+          }
+          myPath = url + "/" + file.path;
+        });
+      }
+
+      if ( myPath ) {
+        current_maintenance.image = myPath;
+      }
+      const oldGen = await Gen.findById(recId).lean();
+      
+      const gen = new Gen(current_maintenance);
+      
+      gen.current_hour = { hour: current_maintenance.maintenance_hour, date: current_maintenance.date, author: author };
+      gen.hour_history = [gen.current_hour, ...oldGen.hour_history]
+
+      if ( oldGen.maintenance_history?.length ) {
+          gen.maintenance_history = [current_maintenance, ...oldGen.maintenance_history, ]
+      } else {
+          gen.maintenance_history = [current_maintenance]
+      }
+
+      console.log ('gen', gen)
+      updated = await Gen.updateOne({ _id: req.params.id }, { $set: {current_maintenance: gen.current_maintenance, maintenance_history: gen.maintenance_history, current_hour: gen.current_hour, hour_history: gen.hour_history }});
+
+      if ( updated?.nModified && updated?.ok ) {
+        return res.status(200).json({ message: "Update successful! " + JSON.stringify(updated) });
+      } else {
+          res.status(500).json({ message: "Couldn't update Gen!" })
+      }
+    }
+  );
+  
+  router.put(
+    "/notes/:id",
+    checkAuth,
+    Utils.upload8.any(),
+    async function (req, res, next) {
+      const alloweds = process.env.ALLOWEDS;
+      if (!alloweds.includes(req.userData.email)) {
+        logIncident(req.userData.email, "Not allowed to create notes");
+        return res.status(500).json({ message: "Not allowed" });
+      }
+  
+      
+      const note = JSON.parse(req.body.note); 
+
+      if ( !note.text ) {
+        return res.status(500).json({
+          message: "Error:  notes text Required",
+        });
+      }
+      let recId = req.params.id;
+      const author = req.userData.name==='Akpodigha Filatei'?'MD':req.userData.name;
+
+      note.author = author;
+
+      let myPath;
+      if (req.files) {
+        req.files.forEach((file) => {
+          if (hostname.includes("torama.ng")) {
+            url = "https://api.torama.ng";
+          } else {
+            url = req.protocol + "://" + req.get("host");
+          }
+          myPath = url + "/" + file.path;
+        });
+      }
+
+      if ( myPath ) {
+        note.image = myPath;
+      }
+
+      console.log(note)
+      const oldGen = await Gen.findById(recId).lean();
+      
+      const gen = new Gen(note);
+
+      if ( oldGen.notes?.length ) {
+          gen.notes = [note, ...oldGen.notes ];
+      } else {
+          gen.notes = [note];
+      }
+
+      updated = await Gen.updateOne({ _id: req.params.id }, { $set: {note: gen.note, notes: gen.notes }});
+
+      if ( updated?.nModified && updated?.ok ) {
+        return res.status(200).json({ message: "Update successful! " + JSON.stringify(updated) });
+      } else {
+          res.status(500).json({ message: "Couldn't update Gen!" })
+      }
+    }
+  );
+
+module.exports = router;
 

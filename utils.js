@@ -420,6 +420,57 @@ var upload7 = multer({
   },
 });
 
+const storage8 = multer.diskStorage({
+  destination: (req, file, cb) => {
+    userid = req.userData.userId;
+    const myDir = "uploads/gens/" + userid + "/";
+    try {
+      if (!fs.existsSync(myDir)) {
+        fs.mkdirSync(myDir, { recursive: true });
+      }
+    } catch (err) {
+      throw err;
+    }
+    cb(null, myDir);
+  },
+  filename: (req, file, cb) => {
+    const extName = MIME_TYPE_MAP[file.mimetype];
+    let fileName;
+    fileName =
+      req.userData.userId +
+      "-" +
+      new Date().getTime() + '-' +
+      file.originalname.toLowerCase().split(" ").join("-") +
+      "." +
+      extName;
+
+    cb(null, fileName);
+  },
+});
+
+var upload8 = multer({
+  storage: storage8,
+  limits: {
+    fileSize: 1024 * 1024 * 5,
+  },
+  fileFilter: (req, file, cb) => {
+    if (
+      file.mimetype.includes("excel") ||
+      file.mimetype == "image/png" ||
+      file.mimetype == "image/jpeg" ||
+      file.mimetype == "image/jpg" ||
+      file.mimetype === "application/pdf"
+    ) {
+      cb(null, true);
+    } else {
+      cb(null, false);
+      return cb(
+        new Error("Only .png or .jpg  or .pdf or .xls format allowed!")
+      );
+    }
+  },
+});
+
 const logIncident = (email, description) => {
   const logObj = new Accesslog({ email: email, description: description });
   logObj
@@ -649,6 +700,7 @@ module.exports = {
   upload5,
   upload6,
   upload7,
+  upload8,
   logIncident,
   dayAgg,
   weekAgg,

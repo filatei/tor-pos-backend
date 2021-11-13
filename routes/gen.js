@@ -198,23 +198,11 @@ Gen.findById(req.params.id)
   
     recObj._id = sanitize(req.params.id);
 
-    // access control
-    let user = await User.findById(req.userData.userId).lean();
   
     recObj.updater = req.userData.userId;
     let gen = new Gen();
     gen = {...req.body}
-    // if (req.body.current_diesel) {
-    //   gen.current_diesel = {...req.body.current_diesel}
-    // }
-    // if (req.body.current_maintenance) {
-    //   gen.current_maintenance = {...req.body.current_maintenance}
-    // }
-
-    // if (req.body.note) {
-    //   gen.current_maintenance = {...req.body.note}
-    // }
-
+   
 
     const oldGen = await Gen.findById(req.params.id).lean().populate('site', 'name')
     let updated;
@@ -309,7 +297,7 @@ Gen.findById(req.params.id)
         });
       }
       let recId = req.params.id;
-      let author = req.userData.userId;
+      let author = req.userData.name==='Akpodigha Filatei'?'MD':req.userData.name;
       current_maintenance.author = author;
 
       let myPath;

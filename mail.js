@@ -1002,10 +1002,10 @@ async function sendGenActivity(report, user) {
 
     if (report.current_maintenance && report.current_maintenance.maintenance_hour) {
       body = ` <div>Hour: ${report.current_maintenance.maintenance_hour} </div>
-      <div>OIL: ${report.current_maintenance.oil || 'Not Changed'}</div>
-      <div>Oil Filter Changed?: ${report.current_maintenance.oilfilers || 'Not Changed'}</div>
-      <div>Fuel Filter Changed?: ${report.current_maintenance.fuelfilers ||'Not Changed'}</div>
-      <div>Radiator Cleaned?: ${report.current_maintenance.radiator || 'Not Cleaned'}</div> <hr>
+      <div>OIL: ${report.current_maintenance.oil }</div>
+      <div>Oil Filter Changed?: ${report.current_maintenance.oilfilers }</div>
+      <div>Fuel Filter Changed?: ${report.current_maintenance.fuelfilers }</div>
+      <div>Radiator Cleaned?: ${report.current_maintenance.radiator }</div> <hr>
       <div> <p> Remarks: ${report.current_maintenance.remarks} </p></div>
       `;
       image = report.current_maintenance?.image || 'None'
@@ -1032,7 +1032,7 @@ async function sendGenActivity(report, user) {
 
     let html = `<!DOCTYPE html><html><body style="text-align:center;"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
                 ${date}</p>
-                <p> Creator ${titleCase(user?.name)}</p><p>  body of Report</p>
+                <p> Creator ${titleCase(user?.name)}</p>
                 <p> Generator Name</p> <p>${genName}</p><hr>
                 <p> Site</p> <p>${report?.site?.name}</p><hr>
                 <p> Report</p> <p>${body}</p>

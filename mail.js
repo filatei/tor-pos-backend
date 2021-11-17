@@ -1017,7 +1017,7 @@ async function sendGenActivity(report, user) {
 
     }
 
-    console.log (report, ' report in mail')
+    // console.log (report, ' report in mail')
 
     let subject = `${report?.name} Activity for ${report.site?.name} on ${date}`;
 
@@ -1034,14 +1034,17 @@ async function sendGenActivity(report, user) {
                 <p> Creator ${titleCase(user?.name)}</p>
                 <p> Generator Name</p> <p>${genName}</p><hr>
                 <p> Site</p> <p>${report?.site?.name}</p><hr>
-                <p> Report</p> <p>${body}</p>
-                
-                <p>  <a href="${image}" target="_blank">Attachment </a></p>
-                `;
+                <p> Report</p> <p>${body}</p>`;
+
+                if (image !== 'None') {
+                  html += `<p>  <a href="${image}" target="_blank">Attachment </a></p>`;
+                } else {
+                  html += `<p>   No Attachment </p>`;
+                }
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${new Date().getFullYear()}</p> </body></html>`;
 
-    console.log(html)
+    // console.log(html)
     // save in Message schema
     const to = user.email;
     const sender = process.env.tormail;

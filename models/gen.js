@@ -9,7 +9,6 @@ const genSchema = mongoose.Schema(
       required: true,
     },
    
-   
     name: { type: String, required: true, trim: true, uppercase: true },
     description: { type: String, trim: true,},
     sn: { type: String, trim: true,},
@@ -34,6 +33,15 @@ const genSchema = mongoose.Schema(
       image: { type: String },
       
     }],
+    // diesel_history: [{
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: "Gendiesel",
+    // }],
+
+    // maintenance_history: [{
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: "Genmaint",
+    // }],
       
     current_hour: {
       date: {type: Date},
@@ -48,6 +56,7 @@ const genSchema = mongoose.Schema(
       author: { type: String },
       
     }],
+
     current_maintenance:{
       date: {type: Date},
       fuelfilters: {type: Boolean},
@@ -59,6 +68,7 @@ const genSchema = mongoose.Schema(
       author: { type: String },
       image: { type: String }
      },
+
     maintenance_history: [
       {
       date: {type: Date},
@@ -71,12 +81,18 @@ const genSchema = mongoose.Schema(
       author: { type: String },
       image: { type: String }
      }],
+
     notes: [{
       text: {type: String},
       date: {type: Date},
       author: { type: String },
       image: {type: String}
     }],
+    // notes: [{
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   ref: "Gennotes",
+    // }],
+
     note: {
       text: {type: String},
       date: {type: Date},

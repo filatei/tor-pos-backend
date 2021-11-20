@@ -60,7 +60,6 @@ router.post(
     try {
       let myPath = "";
       const file = req.file;
-      console.log("file", file);
 
       if (file) {
         if (hostname.includes("torama.ng")) {
@@ -70,13 +69,12 @@ router.post(
         }
 
         myPath = url + "/" + file.path;
-        console.log("myPath", myPath);
       } else {
         console.log("no file");
       }
 
-      const { reportType, site, incidents, body, financials, people } =
-        req.body;
+      // const { reportType, site, incidents, body, financials, people } =
+      //   req.body;
 
       let formFields = Object.keys(req.body); // an array
 
@@ -93,6 +91,7 @@ router.post(
         status: "NOT SEEN",
         ...recObj,
         image: myPath,
+        creator
       };
       console.log(dailyReportObj);
       const dailyreport = new DailyReport(dailyReportObj);

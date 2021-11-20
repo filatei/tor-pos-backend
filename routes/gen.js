@@ -216,7 +216,6 @@ Gen.findById(recId)
     let updated, inserted;
     const author = req.userData.name==='Akpodigha Filatei'?'MD':req.userData.name;
     
-
     if ( gen.current_diesel && gen.current_diesel.diesel_litres) {
         const thisDieselHist = {...gen.current_diesel, author: author, gen:oldGen._id}
         gen.current_diesel = {...thisDieselHist}

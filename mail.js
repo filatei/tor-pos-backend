@@ -924,11 +924,11 @@ async function sendDailyReport(report, user) {
     let format1 = "DD-MM-YYYY hh:mm:ss";
     let date;
     date = moment(new Date()).format(format1);
-    const fromText = `${report?.reportType} Report from ${site?.name}`;
+    const fromText = `${site?.name} ${report?.reportType} Report `;
     let url;
     let toEmail;
 
-    let subject = `${report?.reportType} Report for ${site?.name} at ${date}`;
+    let subject = `${site?.name} ${report?.reportType} Report for ${date}`;
 
     if (hostname.includes("torama")) {
       toEmail = user.email;
@@ -1048,7 +1048,7 @@ async function sendGenActivity(report, user) {
     // save in Message schema
     const to = user.email;
     const sender = process.env.tormail;
-    const bcc = "generator@torama.ng";
+    const bcc = "odia.gabriel@gtsng.com";
     // let model = { sender, to, cc, subject, body };
     // const saveMess = await saveMessage(model);
     // console.log(" Message Saved ", saveMess);
@@ -1057,7 +1057,7 @@ async function sendGenActivity(report, user) {
       fromText: fromText,
       subject,
       to: toEmail,
-      cc: "",
+      cc: "generator@torama.ng",
       bcc,
       html,
     };

@@ -59,7 +59,7 @@ const dailyreportSchema = mongoose.Schema(
     log: [{}],
     cashathand: { type: Number },
     expenses: { type: Number },
-    rollsrock: { type: Number },
+    rollstock: { type: Number },
     roreading: { type: Number },
     crate75clstock: { type: Number },
     crate50clstock: { type: Number },

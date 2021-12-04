@@ -7,6 +7,7 @@ const hostname = os.hostname();
 
 const homedir = os.homedir();
 const cryptoTokens = require(`${homedir}/.crypto.json`);
+const binance = require(`${homedir}/.binance.json`);
 const retry = require('retry');
 const operation = retry.operation({
   retries: 5,
@@ -155,6 +156,8 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
 router.get("/list", async (req, res, next) => {
  const apiKey = cryptoTokens.APIKEY;
  const URL = cryptoTokens.URL;
+ const latest = 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest';
+ const info = 'https://pro-api.coinmarketcap.com/v2/cryptocurrency/info';
   let limit = req.query.limit
   if (!limit) {
     limit = 500 + ''
@@ -162,7 +165,7 @@ router.get("/list", async (req, res, next) => {
   try {
     const requestOptions = {
       method: 'GET',
-      uri: 'https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest',
+      uri: latest,
       qs: {
         'start': '1',
         'limit': limit,
@@ -174,21 +177,94 @@ router.get("/list", async (req, res, next) => {
       json: true,
       gzip: true
     };
+
+    const requestOptions2 = {
+      method: 'GET',
+      uri: info,
+      qs: {
+        'start': '1',
+        'limit': limit,
+        'convert': 'USD'
+      },
+      headers: {
+        'X-CMC_PRO_API_KEY': apiKey
+      },
+      json: true,
+      gzip: true
+    };
+    // const infoResponse = await rp(requestOptions2);
+    // console.log( infoResponse[1], 'API call info:' );
+
+    const resp = await rp(requestOptions);
+
+    if (resp) {
+      console.log('API call response:', resp);
+      return res.status(200).json({response: resp})
+    }
+
+    if (!resp) {
+      console.log('API call error:', 'Error');
+      return res.status(500).json({message: 'Error'})
+    }
     
-    rp(requestOptions).then(response => {
-      console.log('API call response:', response);
-      res.status(200).json({response})
-    }).catch((err) => {
-      console.log('API call error:', err.message);
-      res.status(500).json({message: err.message })
-    });
+    // rp(requestOptions).then(response => {
+    //   console.log('API call response:', response);
+    //   res.status(200).json({response})
+    // }).catch((err) => {
+    //   console.log('API call error:', err.message);
+    //   res.status(500).json({message: err.message })
+    // });
     
   } catch (err) {
     return res.status(500).json({
-      message: "Error in crypto block ",
+      message: "Error in crypto block " + err,
     });
   }
 });
+
+router.get("/binance", async (req, res, next) => {
+  const apiKey = binance.APIKEY;
+  const apiSecret = binance.APISECRET;
+  const URL = "https://api.binance.com";
+  const histEndPoint = "/api/v3/historicalTrades";
+  const aggTradeListEndPoint = "/api/v3/aggTrades";
+
+  // GET /sapi/v1/accountSnapshot (HMAC SHA256) daily account snapshot
+
+   let limit = req.query.limit
+   if (!limit) {
+     limit = 200 + ''
+   }
+   try {
+     const requestOptions = {
+       method: 'GET',
+       uri: URL,
+       qs: {
+         'start': '1',
+         'limit': limit,
+         'convert': 'USD'
+       },
+       headers: {
+         'X-CMC_PRO_API_KEY': apiKey
+       },
+       json: true,
+       gzip: true
+     };
+     
+     rp(requestOptions).then(response => {
+       console.log('API call response:', response);
+       res.status(200).json({response})
+     }).catch((err) => {
+       console.log('API call error:', err.message);
+       res.status(500).json({message: err.message })
+     });
+     
+   } catch (err) {
+     return res.status(500).json({
+       message: "Error in binance block ",
+     });
+   }
+ });
 
 
 

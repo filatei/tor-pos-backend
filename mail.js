@@ -292,7 +292,7 @@ async function sendProduceexpense(expense, userId = null) {
   let total = expense.txn_amount;
   let status = expense.status;
   let category = expense.category;
-  let expenseAccount = expense.payment.bankAcct;
+  let expenseAccount = expense?.payment?.bankAcct;
   let balance = 0;
   let paidAmount = 0;
 

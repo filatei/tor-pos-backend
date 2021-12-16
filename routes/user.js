@@ -87,6 +87,10 @@ router.post("/verify", async (req, res, next) => {
         });
       }
 
+    } else {
+      return res.status(500).json({
+        message: "Wrong Entry!",
+      });
     }
   } catch (err) {
     return res.status(500).json({

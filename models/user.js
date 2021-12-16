@@ -3,9 +3,10 @@ const uniqueValidator = require("mongoose-unique-validator");
 
 const userSchema = mongoose.Schema(
   {
-    name: { type: String, trim: true },
+    name: { type: String, trim: true, index: true },
     email: {
       type: String,
+      match: /^\S+@\S+\.\S+$/,
       required: true,
       unique: true,
       trim: true,
@@ -14,6 +15,8 @@ const userSchema = mongoose.Schema(
     password: { type: String, required: true },
     image: { type: String },
     site: { type: String },
+    otp: { type: String },
+    phone: { type: String },
     roles: [],
     role: { type: String },
     nin: { type: String, maxLength: 11, minLength: 11, trim: true },

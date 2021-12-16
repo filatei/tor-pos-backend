@@ -52,45 +52,42 @@ router.post("/verify", async (req, res, next) => {
   // console.log(req.body, "req body");
   try {
     const token = req.body.token;
-    // const userid = req.body.userid;
     if (!token) {
       return res.status(500).json({
         message: "token is not defined",
       });
     }
-    //  verify token is valid
-    jwt.verify(token, process.env.ACCESS_VERIFY_SECRET, (err, data) => {
-      console.log(data, " tokenverified", err, " err");
-      if (err) {
-        return res.status(401).json({
-          message: "Incorrect token or token expired",
+
+    let vUser = await User.findOne({ verify: token });
+
+    if (!vUser) {
+      return res.status(400).json({
+        message: "No such user",
+      });
+    }
+
+    // verify otp
+    const otp = req.body.otp;
+    const vOtp = await bcrypt.compare(otp, vUser.otp);
+    // continue only if vOtp is valid
+
+    if (vOtp) {
+      console.log('OTP verified')
+      const obj = { verify: "", isVerified: true, otp:"" };
+      vUser = _.extend(vUser, obj); // use lodash to update user
+
+      const saved = await vUser.save();
+      if (saved) {
+        return res.status(200).json({
+          message: "Confirmation  successful",
+        });
+      } else {
+        return res.status(500).json({
+          message: "Confirmation Update Not successful",
         });
       }
 
-      User.findOne({ verify: token }, (err, user) => {
-        if (err || !user) {
-          return res.status(500).json({
-            message: "Confirmation Update Not successful",
-          });
-        }
-        const obj = { verify: "", isVerified: true };
-        user = _.extend(user, obj); // use lodash to update user
-
-        user.save((err, result) => {
-          console.log(result, " again");
-          if (err) {
-            return res.status(500).json({
-              message: "Confirmation Update Not successful",
-            });
-          }
-
-          return res.status(200).json({
-            message: "Confirmation Successful",
-            user: result,
-          });
-        });
-      });
-    });
+    }
   } catch (err) {
     return res.status(500).json({
       message: "Error in main block " + err,
@@ -261,15 +258,31 @@ router.post("/signup", async (req, res, next) => {
       name: req.body.name,
     },
     process.env.ACCESS_VERIFY_SECRET,
-    { expiresIn: 2000 * 60 } // 2 mins
+    { expiresIn: 2000 * 600 } // 20 mins
   );
+
+  const phone = req.body.phone;
+  const a = Math.floor(Math.random() * (9 - 1 + 1)) + 1;
+  const b = Math.floor(Math.random() * (9 - 1 + 1)) + 1;
+  const c = Math.floor(Math.random() * (9 - 1 + 1)) + 1;
+  const d = Math.floor(Math.random() * (9 - 1 + 1)) + 1;
+  // const otp = (a + '') + (b + '') + (c + '') + (d + '');
+  const otp = `${a}${b}${c}${d}`;
+  // convert otp to hash
+
+  const salt = await bcrypt.genSalt(10)
+  const otpHash = await bcrypt.hash(otp,salt)
+    console.log (otp, 'otp')
 
   bcrypt.hash(req.body.password, 10).then((hash) => {
     const user = new User({
       name: req.body.name,
       email: req.body.email,
+      image: 'assets/images/no-person.png',
       password: hash,
       verify: verifyToken,
+      phone,
+      otp:otpHash
     });
 
     user
@@ -277,7 +290,9 @@ router.post("/signup", async (req, res, next) => {
       .then(async (result) => {
         // console.log(result);
         delete result.password;
-        await MyMail.verifyAuth(result._id, result.verify);
+        await MyMail.verifyAuth(result._id, result.verify, otp);
+        delete result.password;
+        delete result.otp;
         res.status(201).json({
           message: "User created!",
           result: result,

@@ -864,7 +864,7 @@ const recUpdateAlert = async (user, rec_id) => {
   }
 };
 
-async function verifyAuth(userId, verify) {
+async function verifyAuth(userId, verify,otp) {
   try {
     const user = await User.findById(userId);
     console.log(user, "in mailer");
@@ -889,8 +889,14 @@ async function verifyAuth(userId, verify) {
 
     let html = `<!DOCTYPE html><html><body style="text-align:center;"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
                 ${date}</p>
-                <p> Hi ${user.name}, please copy and paste  Link  below to verify your email address</p>
-                <p> ${url}  </p>`;
+                <p> Hi ${user.name}, Your One-Time Password is  </p> <h1>${otp} </h1>
+                UserName: ${user.email} <br>
+                Phone: ${user.phone};
+                <p>
+                  This is a auto-generated email. Please do not reply to this email.\n\n
+                  Regards\n
+                </p>
+                `;
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${new Date().getFullYear()}</p> </body></html>`;
 

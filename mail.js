@@ -782,24 +782,28 @@ async function sendCashdeposit(item, user) {
     let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
                 ${date}</p>
                 <p> Hi ${titleCase(creator.name)},</p>`;
-    html += `<p>Amount: ${amount.toLocaleString()}  </p> <p>Status: <b style="color:red">${
-      item.status
-    } </b> </p><p> Site: ${item.site}</p> <p>Deposited by: ${
-      item.depositor
-    }</p>`;
+    html += `<p>Amount: ${amount.toLocaleString()}  </p> <p>Status: <b style="color:red">${item.status} </b> </p>
+            <p> Site: ${item.site}</p> 
+            <p> Account: ${item.payeeAcct}</p> 
+            <p>Deposited by: ${item.depositor}</p> <p> Account: ${item.payeeAcct}</p>
+            `;
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${new Date().getFullYear()}</p> </body></html>`;
 
+    console.log(html);
+    
     if (hostname.includes("torama")) {
       toEmail = "expenses@torama.ng";
 
       link = `https://posclaims.torama.ng/#/home/qaqc-detail/${item._id}`;
     } else {
-      toEmail = null;
+      toEmail = 'cash@torama.ng';
       creatorEmail = null;
       link = `http://localhost:8100/#/home/qaqc-detail/${item._id}`;
       return;
     }
+
+    console.log(html);
 
     // save in Message schema
     const to = creatorEmail;
@@ -1073,22 +1077,22 @@ async function sendGenActivity(report, user) {
   }
 }
 
-async function forgotPassword(userId, resetLink) {
+async function forgotPassword(userId, otp) {
   try {
     const user = await User.findById(userId);
     console.log(user, "in mailer");
     let format1 = "DD-MM-YYYY hh:mm:ss";
     let date;
     date = moment(new Date()).format(format1);
-    let url;
+    let url, resetLink;
     let toEmail;
 
     if (hostname.includes("torama")) {
       toEmail = user.email;
       subject = "Reset Password";
-      url = `https://posclaims.torama.ng/#/change-password/?token=${resetLink}&email=${user.email}`;
+      // url = `https://posclaims.torama.ng/#/change-password/?token=${resetLink}&email=${user.email}`;
     } else {
-      url = `http://localhost:8100/#/change-password/?token=${resetLink}&email=${user.email}`;
+      // url = `http://localhost:8100/#/change-password/?token=${resetLink}&email=${user.email}`;
 
       toEmail = "auth@torama.ng";
       subject = "Just a test";
@@ -1096,8 +1100,8 @@ async function forgotPassword(userId, resetLink) {
 
     let html = `<!DOCTYPE html><html><body style="text-align:center;"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
                 ${date}</p>
-                <p> Hi ${user.name}, please copy and paste  Link  below to reset your password</p>
-                <p> ${url}  </p>`;
+                <p> Hi ${user.name}, please use OTP  below to reset your password</p>
+                <h1> ${otp}  </h1>`;
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${new Date().getFullYear()}</p> </body></html>`;
 
@@ -1108,7 +1112,7 @@ async function forgotPassword(userId, resetLink) {
     const body = html;
     let model = { sender, to, cc, subject, body };
     const saveMess = await saveMessage(model);
-    console.log(" Message Saved ", saveMess);
+    // console.log(" Message Saved ", saveMess);
 
     model = {
       fromText: "ToramaAuth",

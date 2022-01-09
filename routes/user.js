@@ -67,9 +67,12 @@ router.post("/verify", async (req, res, next) => {
     }
 
     // verify otp
-    const otp = req.body.otp;
+    const otp = req.body.otp + '' ;
+
+    console.log(otp, vUser.otp);
     const vOtp = await bcrypt.compare(otp, vUser.otp);
     // continue only if vOtp is valid
+    console.log(vOtp);
 
     if (vOtp) {
       console.log('OTP verified')
@@ -78,8 +81,10 @@ router.post("/verify", async (req, res, next) => {
 
       const saved = await vUser.save();
       if (saved) {
+        console.log(saved)
         return res.status(200).json({
           message: "Confirmation  successful",
+          result: saved
         });
       } else {
         return res.status(500).json({
@@ -124,7 +129,18 @@ router.post("/confirmPassword", async (req, res, next) => {
         { expiresIn: "2h" }
       );
 
-      const obj = { resetLink: token };
+      const a = Math.floor(Math.random() * (9 - 1 + 1)) + 1;
+      const b = Math.floor(Math.random() * (9 - 1 + 1)) + 1;
+      const c = Math.floor(Math.random() * (9 - 1 + 1)) + 1;
+      const d = Math.floor(Math.random() * (9 - 1 + 1)) + 1;
+      // const otp = (a + '') + (b + '') + (c + '') + (d + '');
+      const otp = `${a}${b}${c}${d}`;
+      // convert otp to hash
+
+      const salt = await bcrypt.genSalt(10)
+      const otpHash = await bcrypt.hash(otp,salt)
+
+      const obj = { resetLink: token, verify: token,  otp: otpHash };
       user = _.extend(user, obj); // use lodash to update user
 
       user.save(async (err, result) => {
@@ -134,7 +150,8 @@ router.post("/confirmPassword", async (req, res, next) => {
             message: "Reset Link Update Not successful",
           });
         }
-        await MyMail.forgotPassword(result._id, result.resetLink);
+
+        await MyMail.forgotPassword(result._id,  otp);
 
         return res.status(200).json({
           message: "Confirmation Update Successful " + err,
@@ -276,7 +293,7 @@ router.post("/signup", async (req, res, next) => {
 
   const salt = await bcrypt.genSalt(10)
   const otpHash = await bcrypt.hash(otp,salt)
-    console.log (otp, 'otp')
+    console.log (otp, 'otp', 'hash ', otpHash)
 
   bcrypt.hash(req.body.password, 10).then((hash) => {
     const user = new User({

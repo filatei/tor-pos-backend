@@ -321,8 +321,10 @@ router.get("/mail/mailImprest", checkAuth, async (req, res, next) => {
   // mail result
   // console.log(result);
   await Mail.sendImprest(result, { name: userName, email: userEmail });
-  if (result) return res.status(200).json({ expense: result });
-  console.log(result);
+  if (result) { return res.status(200).json({ expense: result }) }
+  else {
+    return res.status(500).json({message: 'Error Retrieving result'})
+  }
 });
 
 router.get("/getByText", checkAuth, async (req, res, next) => {

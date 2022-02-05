@@ -55,6 +55,7 @@ const filemanagerRoutes = require("./routes/filemanager");
 const photoRoutes = require("./routes/photos");
 const cryptoRoutes = require("./routes/crypto");
 const genRoutes = require("./routes/gen");
+const distRoutes = require("./routes/distributor");
 
 
 const DB = "torposedb";
@@ -203,6 +204,6 @@ app.use("/api/filemanager", filemanagerRoutes);
 app.use("/api/photos", photoRoutes);
 app.use("/api/crypto", cryptoRoutes);
 app.use("/api/gen", genRoutes);
-// app.use("/api/gen", genRoutes);
+app.use("/api/distributor", distRoutes);
 
 module.exports = app;

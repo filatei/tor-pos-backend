@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 uniqueValidator = require('mongoose-unique-validator');
-
+const AutoIncrement = require("mongoose-sequence")(mongoose);
 
 const customerSchema = mongoose.Schema({
     name: {type: String, lowercase: false, trim: true, required: true},
@@ -35,10 +35,15 @@ const customerSchema = mongoose.Schema({
 {
     timestamps: true,
     strict: true
-});
+    });
 
-customerSchema.set('autoIndex', process.env.Node_Env != 'production');
+
+customerSchema.plugin(AutoIncrement, { inc_field: "customer_id" });
+
+customerSchema.index({ "$**": "text" });
 customerSchema.plugin( uniqueValidator );
-// customerSchema.plugin(require('mongoose-beautiful-unique-validation'));
 
-module.exports = mongoose.model('Customer', customerSchema)
+const rc = mongoose.model("Customer", customerSchema);
+rc.createIndexes();
+module.exports = rc
+// module.exports = mongoose.model('Customer', customerSchema)

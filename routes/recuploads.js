@@ -525,7 +525,7 @@ router.get("/bydate", checkAuth, async (req, res, next) => {
   }
 });
 
-router.get("", checkAuth, (req, res, next) => {
+router.get("", checkAuth,  (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
 
   if (!alloweds.includes(req.userData.email)) {
@@ -574,6 +574,33 @@ router.get("", checkAuth, (req, res, next) => {
         message: "Fetching companies failed! " + error,
       });
     });
+});
+
+router.get("/getByCustomer", checkAuth, async (req, res, next) => {
+  const alloweds = process.env.ALLOWEDS;
+
+  if (!alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, "Not allowed to see Receipts");
+    return res.status(500).json({ message: "Not allowed" });
+  }
+  let customerId = req.query.customerId;
+  if (!customerId || customerId === 'undefined' || customerId === undefined) {
+    return res.status(404).json({ message: "customerId not defined!" });
+  }
+  // get array
+  let records;
+  const rec = await Recupload.find({ customer: customerId, action_taken: 'PRODUCT RELEASED' }).sort({ createdAt: -1 })
+    .populate("customer")
+    .populate("creator")
+    .populate("updater")
+    .lean().limit(100)
+  
+  if (rec) {
+    return res.status(200).json({records: rec});
+  } else {
+    res.status(404).json({ message: "record not found!" });
+  }
+  
 });
 
 router.get("/getByText", checkAuth, (req, res, next) => {

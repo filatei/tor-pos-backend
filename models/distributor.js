@@ -5,6 +5,7 @@ const AutoIncrement = require('mongoose-sequence')(mongoose);
 const distributorSchema = mongoose.Schema({
     name: {type: String, required: true, unique: true, lowercase: false, trim: true, collation:{ locale: "en", strength: 3 }},
     creator: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
+    updater: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
     linkedCustomer: {type: mongoose.Schema.Types.ObjectId, ref: 'Customer'},
     phone: {type: String},
     email: {type: String},

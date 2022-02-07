@@ -99,7 +99,6 @@ router.post("", checkAuth, upload.any(), async (req, res, next) => {
           url = req.protocol + "://" + req.get("host");
         }
           const fPath = url + "/" + file.path;
-          console.log(fPath)
         dObj.image = fPath;
       });
     }
@@ -139,53 +138,64 @@ router.post("", checkAuth, upload.any(), async (req, res, next) => {
     }
   });
 
-router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
+router.put("/:id", checkAuth, upload.any(), async (req, res, next) => {
   let path = "";
   let url = "";
   let distributorObj = req.body;
-  distributorObj.name = distributorObj.name.toUpperCase();
 
   const id = req.params.id;
   distributorObj._id = id;
   distributorObj.updater = req.userData.userId;
+  if (distributorObj.image === 'null') {
+    delete distributorObj.image; // dont update image if not sent
+ }
   const distributor = new Distributor(distributorObj);
-  if (req.file && req.file.filename && req.file.filename.length > 0) {
-    if (hostname.includes("torama")) {
-      url = "https://api.torama.ng";
-    } else {
-      url = req.protocol + "://" + req.get("host");
-    }
+  
+  console.log(distributor, 'distr object');
 
-    path = url + "/uploads/distributorimages/" + req.file.filename;
-    distributor.image = path;
-    Distributor.updateOne({ _id: req.params.id }, distributor)
-      .then((result) => {
-        if (result.n > 0) {
-          res.status(200).json({ message: "Update successful!" });
-        } else {
-          res.status(401).json({ message: "Not authorized!" });
-        }
-      })
-      .catch((error) => {
-        res.status(500).json({
-          message: "Couldn't update distributor! " + error,
-        });
-      });
-  } else {
-    Distributor.updateOne({ _id: req.params.id }, distributor)
-      .then((result) => {
-        if (result.n > 0) {
-          res.status(200).json({ message: "Update successful!" });
-        } else {
-          res.status(401).json({ message: "Not authorized!" });
-        }
-      })
-      .catch((error) => {
-        res.status(500).json({
-          message: "Couldn't update distributor! " + error,
-        });
-      });
+  if (req.files) {
+    req.files.forEach((file) => {
+      if (hostname.includes("torama.ng")) {
+        url = "https://api.torama.ng";
+      } else {
+        url = req.protocol + "://" + req.get("host");
+      }
+        const fPath = url + "/" + file.path;
+      distributor.image = fPath;
+      console.log(fPath)
+    });
   }
+
+
+  Distributor.updateOne({ _id: req.params.id }, distributor)
+  .then((result) => {
+    if (result.n > 0) {
+      res.status(200).json({ message: "Update successful!" });
+    } else {
+      res.status(401).json({ message: "Not authorized!" });
+    }
+  })
+  .catch((error) => {
+    res.status(500).json({
+      message: "Couldn't update distributor! " + error,
+    });
+  });
+  
+  // else {
+  //   Distributor.updateOne({ _id: req.params.id }, distributor)
+  //     .then((result) => {
+  //       if (result.n > 0) {
+  //         res.status(200).json({ message: "Update successful!" });
+  //       } else {
+  //         res.status(401).json({ message: "Not authorized!" });
+  //       }
+  //     })
+  //     .catch((error) => {
+  //       res.status(500).json({
+  //         message: "Couldn't update distributor! " + error,
+  //       });
+  //     });
+  // }
 });
 
 router.delete("/:id", checkAuth, (req, res, next) => {

@@ -181,21 +181,6 @@ router.put("/:id", checkAuth, upload.any(), async (req, res, next) => {
     });
   });
   
-  // else {
-  //   Distributor.updateOne({ _id: req.params.id }, distributor)
-  //     .then((result) => {
-  //       if (result.n > 0) {
-  //         res.status(200).json({ message: "Update successful!" });
-  //       } else {
-  //         res.status(401).json({ message: "Not authorized!" });
-  //       }
-  //     })
-  //     .catch((error) => {
-  //       res.status(500).json({
-  //         message: "Couldn't update distributor! " + error,
-  //       });
-  //     });
-  // }
 });
 
 router.delete("/:id", checkAuth, (req, res, next) => {

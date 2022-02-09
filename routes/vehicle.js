@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const Vehicle = require("../models/vehicle");
 const Accesslog = require("../models/accesslog");
 const router = express.Router();
-const path = require("path");
+const Path = require("path");
 const fs = require("fs");
 const os = require("os");
 const hostname = os.hostname();
@@ -78,7 +78,7 @@ function logIncident(email, description) {
 
 const checkAuth = require("../middleware/check-auth");
 
-router.post("", checkAuth, upload.any(), async (req, res, next) => {
+router.post("", checkAuth, upload.any(), async function (req, res, next) {
   try {
     const alloweds = process.env.ALLOWEDS;
   
@@ -86,7 +86,7 @@ router.post("", checkAuth, upload.any(), async (req, res, next) => {
       return res.status(500).json({ message: "Not allowed" });
     }
   
-  let dObj = req.body;
+    let dObj = req.body;
    
     dObj.creator = req.userData.userId;
     
@@ -142,7 +142,7 @@ router.post("", checkAuth, upload.any(), async (req, res, next) => {
   }
 
     
-  });
+});
 
 router.put("/:id", checkAuth, upload.any(), async (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
@@ -235,25 +235,35 @@ router.put(
         note.image = myPath;
       }
 
-      console.log(note)
+     
+
+
 
       const oldVehicle = await Vehicle.findById(recId).lean();
+      if (!oldVehicle) {
+        return   res.status(500).json({ message: "No record to update! "  })
+      }
       if (!oldVehicle?.notes?.length) {
         oldVehicle.notes = [];
       }
       const notes = [...oldVehicle.notes, note];
+      const vehicle = new Vehicle({ notes: notes });
+      vehicle._id = recId;
+      vehicle.updater = req.userData.userId;
+      // vehicle.notes = [...notes];
 
-      console.log(notes)
-  
+      console.log(vehicle)
+      const updated = await Vehicle.updateOne({ _id: req.params.id }, vehicle)
 
-      const inserted = Vehicle.updateOne({ _id: recId }, { notes })
+      // vehicle.save();
       
-      if (inserted) {
+      if (updated) {
         return res.status(200).json({ message: "Update successful! "  });
       } else {
         return res.status(500).json({ message: "Couldn't update Vehicle! " + JSON.stringify(inserted) })
       }
     } catch (error) {
+      console.log(error)
       res.status(500).json({ message: "try error: Couldn't update Vehicle!" + error })
     }
   }

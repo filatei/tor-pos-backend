@@ -80,7 +80,7 @@ const checkAuth = require("../middleware/check-auth");
 
 router.post("", checkAuth, upload.any(), async (req, res, next) => {
   try {
-    const alloweds = process.env.GENERALMANAGERS;
+    const alloweds = process.env.ALLOWEDS;
   
     if (!alloweds.includes(req.userData.email)) {
       return res.status(500).json({ message: "Not allowed" });
@@ -113,6 +113,8 @@ router.post("", checkAuth, upload.any(), async (req, res, next) => {
         delete dObj[key];
       }
     });
+
+    console.log(dObj);
     let veh = new Vehicle(dObj);
     const saved = await veh.save();
     
@@ -130,25 +132,7 @@ router.post("", checkAuth, upload.any(), async (req, res, next) => {
   
     // saveDist(dObj);
   
-    function saveDist(dObj) {
-      let veh = new Vehicle(dObj);
-      veh.save()
-        .then((result) => {
-          console.log(result);
-          res.status(201).json({
-            message: "vehicle Uploaded successfully",
-            Vehicle: {
-              ...result,
-              id: result._id,
-            },
-          });
-        })
-        .catch((error) => {
-          res.status(500).json({
-            message: "Creating a Vehicle failed! " + error,
-          });
-        });
-    }
+    
   } catch (error) {
     console.log(error)
     res.status(500).json({
@@ -161,6 +145,11 @@ router.post("", checkAuth, upload.any(), async (req, res, next) => {
   });
 
 router.put("/:id", checkAuth, upload.any(), async (req, res, next) => {
+  const alloweds = process.env.ALLOWEDS;
+  
+  if (!alloweds.includes(req.userData.email)) {
+    return res.status(500).json({ message: "Not allowed" });
+  }
   let path = "";
   let url = "";
   let vehicleObj = req.body;
@@ -187,7 +176,6 @@ router.put("/:id", checkAuth, upload.any(), async (req, res, next) => {
       console.log(fPath)
     });
   }
-
 
   Vehicle.updateOne({ _id: req.params.id }, vehicle)
   .then((result) => {

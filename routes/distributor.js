@@ -80,7 +80,7 @@ function logIncident(email, description) {
 const checkAuth = require("../middleware/check-auth");
 
 router.post("", checkAuth, upload.any(), async (req, res, next) => {
-    const alloweds = process.env.GENERALMANAGERS;
+    const alloweds = process.env.ALLOWEDS;
   
     if (!alloweds.includes(req.userData.email)) {
       logIncident(req.userData.email, "Not allowed to create Geb");

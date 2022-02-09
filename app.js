@@ -56,6 +56,7 @@ const photoRoutes = require("./routes/photos");
 const cryptoRoutes = require("./routes/crypto");
 const genRoutes = require("./routes/gen");
 const distRoutes = require("./routes/distributor");
+const vehRoutes = require("./routes/vehicle");
 
 
 const DB = "torposedb";
@@ -84,34 +85,6 @@ app.use(
 
 app.use(bodyParser.json({ limit: "1mb" }));
 
-// const allowedOrigins = [
-//     '*',
-//     'capacitor://localhost',
-//     'capacitor://api.torama.ng',
-//     'ionic://api.torama.ng',
-//     'ionic://localhost',
-//     'http://localhost',
-//     'https://posclaims.torama.ng',
-//     'https://api.torama.ng',
-
-//     'http://localhost:8080',
-//     'http://localhost:8100',
-//     'http://localhost:8200'
-//   ];
-
-// // Reflect the origin if it's in the allowed list or not defined (cURL, Postman, etc.)
-// const corsOptions = {
-//     origin: (origin, callback) => {
-//         if (allowedOrigins.includes(origin) || !origin) {
-//         callback(null, true);
-//         } else {
-//         callback(new Error('Origin not allowed by CORS'));
-//         }
-//     }
-// }
-
-// // Enable preflight requests for all routes
-// app.options('*', cors());
 app.use(cors());
 let connectStr;
 connectStr = process.env.CONNECT_STR;
@@ -131,7 +104,6 @@ app.use((req, res, next) => {
     "GET, POST, PATCH, DELETE, POST, PUT, OPTIONS"
   );
 
-  //  res.setHeader({'Feature-Policy': layout-animations 'none'; unoptimized-images 'none'; oversized-images 'none'; sync-script 'none'; sync-xhr 'none'; unsized-media 'none';
   next();
 });
 
@@ -152,17 +124,6 @@ mongoose
     console.log(err);
   });
 
-// mongoose.connect(
-//   connectStr,
-//   { useNewUrlParser: true, useUnifiedTopology: true },
-//   function (err, res) {
-//     try {
-//       console.log("Connected to Database");
-//     } catch (err) {
-//       throw err;
-//     }
-//   }
-// );
 
 app.use("/api/paymethods", paymethodsRoutes);
 app.use("/api/products", productsRoutes);
@@ -205,5 +166,6 @@ app.use("/api/photos", photoRoutes);
 app.use("/api/crypto", cryptoRoutes);
 app.use("/api/gen", genRoutes);
 app.use("/api/distributor", distRoutes);
+app.use("/api/vehicle", vehRoutes);
 
 module.exports = app;

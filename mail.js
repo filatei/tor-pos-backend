@@ -144,7 +144,7 @@ async function sendExpense(expense, userId = null) {
   }
 
   if (expense.payment && expense.payment.memo) {
-    memo = expense.payment.memo;
+    memo = expense?.payment?.memo;
   }
 
   let location = expense.site;
@@ -200,8 +200,8 @@ async function sendExpense(expense, userId = null) {
       }
       payHist += `<tr style="text-align:left;"><td>${i + 1}.</td>  <td>${
         ph.bankAcct
-      }  </td> <td>${ph.paidAmount.toLocaleString()}</td><td>${payer}</td><td>${moment(
-        new Date(ph.paymentDate)
+      }  </td> <td>${ph?.paidAmount?.toLocaleString()}</td><td>${payer}</td><td>${moment(
+        new Date(ph?.paymentDate)
       ).format("DD-MM-YYYY HH:mm:ss")}</td> </tr>`;
     }
   });

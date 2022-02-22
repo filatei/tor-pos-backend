@@ -106,12 +106,7 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
   let url = "";
   let contactObj = req.body;
   contactObj.name = contactObj.name.toUpperCase();
-
-  // const description = req.body.description;
-  // const name = req.body.name;
-  // const qty = req.body.qty;
-  // const unit = req.body.unit;
-  // const updatedAt = req.body.updatedAt;
+  console.log(contactObj, 'cobj')
   const id = req.params.id;
   contactObj._id = id;
   contactObj.updater = req.userData.userId;

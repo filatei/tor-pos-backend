@@ -12,7 +12,10 @@ const contactSchema = mongoose.Schema({
         acct_number: String,
         icon: String
     },
+
     email: {type: String},
+    bankAcct: {type: String},
+    remarks: {type: String},
     icon: {type: String},
     biometric: {type: String},
     phones: [],

@@ -57,6 +57,8 @@ const cryptoRoutes = require("./routes/crypto");
 const genRoutes = require("./routes/gen");
 const distRoutes = require("./routes/distributor");
 const vehRoutes = require("./routes/vehicle");
+const payRoutes = require("./routes/payroll");
+const pplRoutes = require("./routes/people");
 
 
 const DB = "torposedb";
@@ -167,5 +169,7 @@ app.use("/api/crypto", cryptoRoutes);
 app.use("/api/gen", genRoutes);
 app.use("/api/distributor", distRoutes);
 app.use("/api/vehicle", vehRoutes);
+app.use("/api/people", pplRoutes);
+app.use("/api/payroll", payRoutes);
 
 module.exports = app;

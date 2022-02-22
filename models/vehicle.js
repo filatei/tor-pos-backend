@@ -8,6 +8,7 @@ const vehicleSchema = mongoose.Schema({
     type: {type: String, enum: ["Tricycle", "Keke", "Dyna", "Van", "Truck"],},
     
     model: {type: String},
+    make: {type: String},
     site: {type: String},
     engineNo: {type: String},
     purchaseDate: { type: Date },

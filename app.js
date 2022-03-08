@@ -70,6 +70,8 @@ app.use(require("express-status-monitor")());
 app.use("/data", express.static(path.join(__dirname, "data")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/public", express.static(path.join(__dirname, "public")));
+app.use("/varimages", express.static('/var/images'));
+
 app.use(
   "/uploads/productimages",
   express.static(path.join(__dirname, "uploads", "productimages"))

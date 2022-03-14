@@ -145,9 +145,20 @@ router.post("", checkAuth, upload.any(), async function (req, res, next) {
     let dObj = req.body;
   
     dObj.creator = req.userData.userId;
-    dObj.nextOfKin.name = req.body.nextOfKinName;
-    dObj.nextOfKin.phone = req.body.nextOfKinPhone;
-    dObj.nextOfKin.relationship = req.body.nextOfKinRelationship;
+    if (dObj.nextOfKin) {
+      dObj.nextOfKin.name = req.body?.nextOfKinName;
+      dObj.nextOfKin.phone = req.body?.nextOfKinPhone;
+      dObj.nextOfKin.relationship = req.body?.nextOfKinRelationship;
+    }
+    
+    if (dObj.site) {
+      if (dObj.site === 'KPANSIA-E') dObj.site = 'KPANSIA E';
+
+      const site = await Site.findOne({ name: dObj.site });
+      if (site) {
+        dObj.site = site._id;
+      }
+    }
     
     
     if (req.files) {
@@ -174,7 +185,6 @@ router.post("", checkAuth, upload.any(), async function (req, res, next) {
       }
     });
 
-    console.log(dObj, 'dObj');
     let ppl = new People(dObj);
     const saved = await ppl.save();
     
@@ -201,6 +211,7 @@ router.post("", checkAuth, upload.any(), async function (req, res, next) {
 
 router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) {
   let insertedIDs = [];
+  const oldPeoples = await People.countDocuments();
   try {
     const alloweds = process.env.ALLOWEDS;
   
@@ -210,7 +221,8 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
     
     let saveCounter = 0;
     const { csvUpload } = req.query;
-    
+    let inserted, fPath;
+      let ppl = [];
 
     if (csvUpload === '1') {
 
@@ -219,10 +231,6 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           message: "Only ADMIN users can upload CSV",
         });
       }
-      const oldPeoples = await People.find();
-
-      let inserted, fPath;
-      let ppl = [];
 
       if (req.files) {
         fPath =  req.files[0].path;
@@ -236,33 +244,48 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
         })
         .on('data',  async row => {
       
-          row.name = row['FIRST NAME'].trim();
-          row.fname = row['FIRST NAME'].trim();
-          row.mname = row['MIDDLE NAME'].trim();
-          row.lname = row['LAST NAME'].trim();
-          row.nameOnOdoo = row['NAME ON ODOO'].trim();
-
-          if (row.mname) {
-            row.name = row.name + ' ' + row.mname
+          if (row['FIRST NAME']) {
+            row.fname = row['FIRST NAME']?.trim();
+            row.name = row['FIRST NAME']?.trim();
+          } else {
+            return res.status(500).json({message: "FIRST NAME REQUIRED"})
           }
+          
+          if (row['MIDDLE NAME']) {
+            row.mname = row['MIDDLE NAME']?.trim();
+            row.name += ' ' + row.mname;
+          }
+         
+          if (row['LAST NAME']) {
+            row.lname = row['LAST NAME']?.trim();
+            row.name += ' ' + row.lname;
+          } else {
+            return res.status(500).json({message: "LAST NAME REQUIRED"})
+          }
+          
 
-          if (row.lname) {
-            row.name = row.name + ' ' + row.lname
-          } 
-
+          if (row['NAME ON ODOO']) {
+            row.nameOnOdoo = row['NAME ON ODOO']?.trim();
+          }
+         
           if (row['BANK ACCOUNT']) {
             row.bankAccount = row['BANK ACCOUNT'].trim();
           }
+
           if (row['PHONE']) {
             if (row['PHONE'].substr(0,1) !== '0') {
               row.phone = '0' +row['PHONE'].trim();
             } else {
               row.phone = row['PHONE'].trim();
             }
-            
           }
+
           if (row['TYPE']) {
             row.type = row['TYPE'].trim();
+          }
+
+          if (row['STATUS']) {
+            row.status = row['STATUS'].trim();
           }
 
           if (row['EMAIL']) {
@@ -270,7 +293,6 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           }
           
           if (row['NEXT OF KIN NAME']) {
-           
             row.nextOfKin.name = row['NEXT OF KIN NAME'].trim();
           }
 
@@ -315,41 +337,56 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           }
 
           if (row['LOCATION']) {
-            console.log(row['LOCATION'].trim())
-            const site = await Site.find({ name: row['LOCATION'].trim() }).lean();
-            // console.log(site);
-
-            if (site?.length) {
-              row.site = site[0]._id
-              // console.log(site[0]._id)
+            const site = await Site.findOne({ name: row['LOCATION'].trim() }).lean();
+            if (site) {
+              row.site = site._id
             }
-           
           }
 
           row.creator = req.userData.userId;
-
-          if ( row.lname && row.fname ) {
-            ppl.push(row);
+          //  check if peorson already exists in DB
+         
+          // console.log(row.name)
+          if (row.name ) {
+            const person = await People.findOne({ name: row.name });
+            if (!person) {
+              // console.log(person, ' person')
+              const people = new People(row);
+              inserted = await people.save();
+              insertedIDs.push(inserted);
+              ppl.push(row);
+              // console.log(ppl.length)
+            }
           }
         })
-        .on('end',  async rowCount => {
-          console.log(`Parsed ${rowCount} rows ${ppl.length}`);
-          for (var k = 0; k < ppl.length; ++k) {
-            inserted = await People.create(ppl[k]);
-            insertedIDs.push(inserted._id);
-          }
+        .on('close', function () {
+          console.log('read stream closed');
+          console.log(insertedIDs.length, ppl.length, ' inserted ppl')
           
-          const newPeoples = await People.find();
-
-          console.log(newPeoples.length, oldPeoples.length)
-
-          if (newPeoples.length > oldPeoples.length) {
-            return res.status(200).json({
-              message: "csv Uploaded  " + insertedIDs.length + " records"
-            });
-          } else {
-            return res.status(500).json({message: "csv not uploaded"})
-          }
+        })
+        .on('end',  async rowCount => {
+          
+          setTimeout(function () {
+            // the destroy method can be used to
+            // close the stream manually
+            console.log(`Parsed ${rowCount} rows ${ppl.length}`);
+            if (ppl.length) {
+              fs.unlink(fPath, (err => {
+                if (err) console.log(err);
+                else {
+                  console.log(`\nDeleted file: ${fPath}`);
+                }
+              }));
+              return res.status(200).json({
+                message: "csv Uploaded  " + insertedIDs.length + " records out of " + rowCount
+              });
+            } else {
+              return res.status(500).json({message: "csv not uploaded"})
+            }
+      
+          }, 3000);
+          
+          
         })
     } 
     
@@ -357,6 +394,8 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
     console.log(error);
     res.status(500).json({ message: "Try error! " + error })
   } finally {
+    // const newPeoples = await People.countDocuments();
+
     
   }
   
@@ -591,25 +630,27 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
       //    console.log(populatedResult, ' pop result')
       //   return res.status(200).json({ peoples: result });
       // }
+    } else {
+      res.status(404).json({ message: "Not Found"  });
     }
 
-    People.find({ $text: { $search: searchTerm } })
-      .sort({ updatedAt: -1 })
-      .populate("creator").populate('site')
-      .limit(200)
-      .then((record) => {
-        if (record) {
-          // console.log(record.length);
-          return res.status(200).json({ peoples: record });
-        } else {
-          return res.status(404).json({ message: "People record not found!" });
-        }
-      })
-      .catch((error) => {
-        return res.status(500).json({
-          message: "Fetching record failed!" + error,
-        });
-      });
+    // People.find({ $text: { $search: searchTerm } })
+    //   .sort({ updatedAt: -1 })
+    //   .populate("creator").populate('site')
+    //   .limit(200)
+    //   .then((record) => {
+    //     if (record) {
+    //       // console.log(record.length);
+    //       return res.status(200).json({ peoples: record });
+    //     } else {
+    //       return res.status(404).json({ message: "People record not found!" });
+    //     }
+    //   })
+    //   .catch((error) => {
+    //     return res.status(500).json({
+    //       message: "Fetching record failed!" + error,
+    //     });
+    //   });
     
   } catch (error) {
     console.log(error)

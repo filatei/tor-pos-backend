@@ -52,6 +52,7 @@ const peopleSchema = mongoose.Schema({
     jobName: {type: String, lowercase: false},
     type: {type: String, enum: ["STAFF", "CONTRACTOR", "OTHER", "REFEREE"]},
     address: {type: String},
+    status: {type: String, enum:["ACTIVE", "DORMANT"]},
     
 },
 {

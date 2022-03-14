@@ -10,6 +10,7 @@ const fs = require("fs");
 const os = require("os");
 const hostname = os.hostname();
 const csv = require('fast-csv');
+const moment = require('moment');
 
 var multer = require("multer");
 
@@ -142,6 +143,41 @@ router.post("", checkAuth, async  (req, res, next) => {
     let payObj = req.body;
   
     payObj.creator = req.userData.userId;
+    payObj.year = +payObj.year;
+    payObj.grossPay= +payObj.grossPay || 0;
+    payObj.netPay = +payObj.netPay;
+    payObj.deductions = +payObj.deductions;
+    payObj.payeeTax = +payObj.payeeTax;
+    payObj.bagsBagged = +payObj.bagsBagged;
+    payObj.bagsLoaded = +payObj.bagsLoaded;
+
+    console.log(payObj.type);
+
+    if (payObj.bagsBagged && payObj.type === 'MONTH-END') {
+      payObj.grossPay +=  payObj.bagsBagged * 2.5;
+    }
+
+    if (payObj.bagsBagged && payObj.type === 'MID-MONTH') {
+      payObj.grossPay += payObj.bagsBagged * 0.5;
+    }
+
+    if (payObj.bagsLoaded && payObj.type === 'MONTH-END') {
+      payObj.grossPay += payObj.bagsLoaded * 2;
+    }
+
+    if (payObj.bagsLoaded && payObj.type === 'MID-MONTH') {
+      payObj.grossPay += payObj.bagsLoaded * 0.5;
+    }
+
+    payObj.netPay = payObj.grossPay - payObj.deductions - payObj.payeeTax; 
+    console.log(payObj.netPay, 'netPay')
+
+    if (payObj.netPay <= 0) {
+      return res.status(500).json({
+        message: "netPay is zero or negative: " + payObj.netPay + ' ' + payObj.type
+      });
+    }
+    
     
     // if (req.files) {
     //   req.files.forEach((file) => {
@@ -203,6 +239,41 @@ router.post("", checkAuth, async  (req, res, next) => {
     
 });
 
+router.post("/deleteAll", checkAuth, async (req, res, next) => {
+ 
+  const { role, userID } = req.userData;
+
+  if ( role !== 'ADMIN' ) {
+    logIncident(req.userData.email, "Not allowed to delete ");
+    return res.status(500).json({ message: "Only Admin Allowed to Delete" });
+  }
+
+  const { ids } = req.body;
+  // console.log('deleteAll ', ids)
+
+  try {
+    const deleted = await Payroll.deleteMany({ _id: { $in: ids } });
+    if (!deleted) {
+      return  res.status(500).json({
+        message: " Deleting payroll failed! No Payroll with such IDs " ,
+      });
+    }
+    
+    if ( deleted.n > 0 ) {
+      console.log(deleted, 'deleted');
+      return  res.status(200).json({
+        message: `Deleted Successfully: ${deleted.deletedCount} records`
+      });
+    }
+    
+  } catch (error) {
+    console.error(error, "catch err");
+    return  res.status(500).json({
+        message: "TryCatch: Deleting payroll failed! " + error,
+      });
+  }
+});
+
 router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) {
   let insertedIDs = [];
   try {
@@ -226,6 +297,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
 
       let inserted, fPath;
       let prl = [];
+      let exceptions = [];
 
       if (req.files) {
         fPath = req.files[0].path;
@@ -237,45 +309,147 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
         .pipe(csv.parse({ headers: true }))
         .on('error', error => {
           console.error(error);
-          return res.status(500).json({ message: "Try error! " + error })
+          return res.status(500).json({ message: "fs createReadstream error! " + error })
         })
         .on('data', async row => {
-          console.log(Object.entries(row), 'row objects')
-      
-          row.name = row['First Name'].trim();
-          row.mname = row['Middle Name'].trim();
-          row.lname = row['Last Name'].trim();
-          row.empType = row['EMPLOYEE TYPE'].trim();
 
-          if (row.mname) {
+          if (row['TYPE']) {
+            row.type = row['TYPE'].trim();
+          }
+
+          if (!row.type) {
+            return res.status(500).json({
+              message: `Pay Type (MONTH-END or MID-MONTH)  Required `
+            });
+          }
+
+          const today = new Date();
+          const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+          console.log(row['PAY START DATE'], row['PAY END DATE'], 'start end')
+          if (row['PAY START DATE']) {
+            const dt = row['PAY START DATE'].split('/');
+            row.payStartDate = new Date(dt[2], dt[1]-1, dt[0])
+          }
+
+          if (row['PAY END DATE']) {
+            const dt = row['PAY END DATE'].split('/');
+            row.payEndDate = new Date(dt[2], dt[1]-1, dt[0])
+
+            console.log(row['PAY END DATE'], row.payEndDate, 'end date')
+
+            const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            row.month = months[row.payEndDate.getMonth()];
+            row.year = row.payEndDate.getFullYear()
+            console.log(row.month, 'month')
+          }
+
+          if (!row.month ) {
+            return res.status(500).json({
+              message: `Pay Month  Required include field 'PAY START DATE' and 'PAY END DATE' `
+            });
+          }
+
+          if (!row.year ) {
+            return res.status(500).json({
+              message: `Pay YEAR  Required include field 'PAY START DATE' and 'PAY END DATE' `
+            });
+          }
+          
+          if (row['FIRST NAME']) {
+            row.name = row['FIRST NAME'].trim();
+            row.fname = row['FIRST NAME'].trim();
+          }
+
+          if (row['MIDDLE NAME']) {
+            row.mname = row['MIDDLE NAME'].trim();
             row.name = row.name + ' ' + row.mname
           }
-
-          if (row.lname) {
+          if (row['LAST NAME']) {
+            row.lname = row['LAST NAME'].trim();
             row.name = row.name + ' ' + row.lname
           }
-          if ( row['BASE SALARY'] ) {
-            row.baseSalary = row['BASE SALARY'].trim();
+
+          if (!row.fname || !row.lname) {
+            return res.status(500).json({
+              message: 'First Name and Last Name required'
+            });
           }
 
-          row.payee = await People.findOne({ name: row.name })._id;
+          row.grossPay = 0;
+          row.netPay = 0;
+          row.deductions = 0;
 
-          if (!row.payee) {
-            //  creating person.
-            let person = { fname: row.fname, name: row.name, lname: row.lname, mname: row.mname || null, baseSalary: row.baseSalary|| null };
-            const people = new People(person)
-            const newPerson = await People.save(person);
-            if (!newPerson) {
+          const payee = await People.findOne({ name: row.name });
+          const payee2 = await People.findOne({ name: row.lname + ' ' + row.fname }); //flip firstname and lastname
+          if (!payee) {
+            if (!payee2) {
               return res.status(500).json({
-                message: `Person ${row.name}  creation failed`
+                message: `Person ${row.name} or ${row.lname}  ${ row.fname } Not in DB. Create FIRST`
               });
-            } 
-            row.payee = newPerson._id;
+            }
+            if (payee2) {
+              row.payee = payee2._id;
+            }
+            
+
+            // //  creating person.
+            // let person = { fname: row.fname, name: row.name, lname: row.lname, mname: row.mname || null, baseSalary: row.baseSalary|| null };
+            // const people = new People(person)
+            // const newPerson = await people.save(person);
+            // if (!newPerson) {
+            //   return res.status(500).json({
+            //     message: `Person ${row.name}  creation failed`
+            //   });
+            // } 
+            // row.payee = newPerson._id;
+          } else {
+            row.payee = payee._id;
+          }
+          
+
+          if (row['EMPLOYEE TYPE']) {
+            row.empType = row['EMPLOYEE TYPE'].trim();
+          }
+
+          if (row['DEDUCTION']) {
+            row.deductions = +row['DEDUCTION'];
+          }
+          if (row['PAYEE TAX']) {
+            row.payeeTax = +row['PAYEE TAX'];
+            row.deductions +=  row.payeeTax;
+          }
+
+          if (row['SALARY ADV']) {
+            row.salaryAdvance = +row['SALARY ADV'];
+            row.deductions +=  row.salaryAdvance;
+          }
+
+          if (row['DAYS WORKED']) {
+            row.daysAbsent = 0;
+            if (row['DAYS ABS']) {
+              row.daysAbsent = +row['DAYS ABS'];
+            }
+           
+            row.daysWorked = +row['DAYS WORKED'];
+            const totalDays = row.daysAbsent + row.daysWorked;
+            console.log(totalDays, 'totalDays')
+
+            const thisPerson = await People.findById(row.payee);
+            row.baseSalary = +thisPerson.baseSalary;
+
+            if (!row.baseSalary) {
+              return res.status(500).json({
+                message: `Person ${thisPerson.name} has no baseSalary set`
+              });
+            }
+            row.grossPay = row.baseSalary;
+            
+            row.deductions += (row.daysAbsent/totalDays)* row.baseSalary
           }
 
           // row.dob = new Date(row['DOB']);
-          if (row['Bank Account']) {
-            row.bankAccount = row['Bank Account'];
+          if (row['BANK ACCOUNT']) {
+            row.bankAccount = row['BANK ACCOUNT']?.trim();
             console.log(`updating bank account of ${row.name}`)
             const bankUpdate = await People.updateOne({ name: row.name }, { bankAccount: row.bankAccount });
             if (bankUpdate) {
@@ -283,85 +457,87 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             }
           }
 
-          row.payeeTax = row['Payee Tax'];
-          row.salaryAdvance = row['SALARY ADVANCE'];
-          row.deductions = row.salaryAdvance + row.payeeTax;
-          row.grossPay = 0;
-
-          if (row['BAGS BAGGED']) {
+          if (row['COMPANY']) {
+            row.company = row['COMPANY'];
+          }
+         
+          if (row['BAGS BAGGED'] ) {
             // bagger
-            row.bagsBagged = row['BAGS BAGGED']
-            row.grossPay += row['BAGS BAGGED'] * 2.5;
-           
+            row.bagsBagged = +row['BAGS BAGGED'];
+            if (row.type == 'MONTH-END')
+              row.grossPay += row.bagsBagged * 2.5;
+            if (row.type == 'MID-MONTH')
+              row.grossPay += row.bagsBagged * 0.5;
           }
+
           if (row['BAGS LOADED']) {
-            row.bagsLoaded = row['BAGS LOADED'];
-            row.grossPay += row['BAGS LOADED'] * 2;
+            row.bagsLoaded = +row['BAGS LOADED'];
 
+            if (row.type === 'MONTH-END') { row.grossPay += row.bagsLoaded * 2; }
+            else if (row.type === 'MID-MONTH') {
+              row.grossPay += row.bagsLoaded * 0.5;
+            }
           }
-
-          if ( row.empType === 'REGULAR' ){
-            const thisPerson = await People.findById(row.payee);
-            row.grossPay += thisPerson.baseSalary;
-          }
-
-          if ( row.grossPay > 0 ) {
-            row.netPay = row.grossPay - row.deductions
+          if (row.grossPay > 0) {
+              console.log(row.grossPay, ' grossPay', row.deductions, ' deduct')
+             row.netPay = row.grossPay - row.deductions
           } else {
             row.netPay = 0;
           }
-          
-          row.type = row['Type'];
-          
-          row.payStartDate = row['Payee Start Date'];
-          row.payEndDate = row['Payee End Date'];
-          const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-
-          const d = new Date(row.payEndDate);
-          row.month = months[d.getMonth()];
-
-          if (row['Company']) {
-            row.company = row['Company'];
-          }
 
           row.creator = req.userData.userId;
-          prl.push(row);
+          row.payeeMonthYrType = row.payee + row.month + row.year + row.type;
+
+          if (row.netPay) {
+            prl.push(row);
+          } else {
+            exceptions.push(row)
+          }
+         
 
         })
-        .on('end',  async rowCount => {
-          console.log(`Parsed ${rowCount} rows ${prl.length}`);
-          for (var k = 0; k < prl.length; ++k) {
-            inserted = await Payroll.create(prl[k]);
-            insertedIDs.push(inserted._id);
-          }
-          
-          const newPayrollsCount = await Payroll.countDocuments();
-          const diff = newPayrollsCount - oldPayrollsCount;
-          console.log(newPayrollsCount, oldPayrollsCount, 'before after rowcounts')
-
-          if (diff > 0) {
-            const delFile = await fs.unlink(fPath);
-            if (delFile) {
-              console.log('file deleted', delFile)
+        .on('end', async rowCount => {
+          setTimeout( async () => {
+            console.log(`Parsed ${rowCount} rows ${prl.length}`);
+            for (var k = 0; k < prl.length; ++k) {
+              try {
+                const payroll = new Payroll(prl[k]);
+                inserted = await payroll.save();
+                console.log(inserted, 'inserted')
+                // inserted = await Payroll.create(prl[k]);
+                insertedIDs.push(inserted._id);
+              } catch (error) {
+                return res.status(500).json({message: 'try error in save ' + error})
+              }
             }
+            
+            const newPayrollsCount = await Payroll.countDocuments();
+            const diff = newPayrollsCount - oldPayrollsCount;
+            console.log(newPayrollsCount, oldPayrollsCount, 'before after rowcounts')
 
-            return res.status(200).json({
-              message: "csv Uploaded  " + diff + " records"
-            });
-          } else {
-            return res.status(500).json({message: "csv not uploaded"})
-          }
+            if (diff > 0) {
+              fs.unlink(fPath, (err => {
+                if (err) console.log(err);
+                else {
+                  console.log(`\nDeleted file: ${fPath}`);
+                }
+              }));
+              console.log(exceptions, 'exceptions')
+
+              return res.status(200).json({
+                message: "csv Uploaded  " + diff + " records except " + exceptions.length + " records"
+              });
+            } else {
+              return res.status(500).json({message: "csv not uploaded"})
+            }
+          }, 3000);
+          
         })
     } 
-    
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Try error! " + error })
-  } finally {
-    
+    return res.status(500).json({ message: "Try error! " + error })
   }
-  
-    
 });
 
 router.put("/:id", checkAuth, upload.any(), async (req, res, next) => {
@@ -385,7 +561,6 @@ router.put("/:id", checkAuth, upload.any(), async (req, res, next) => {
   payrollObj.deductions = +req.body.deductions
   const payroll = new Payroll(payrollObj);
   
-  console.log(payroll, 'payroll object');
 
   if (req.files) {
     req.files.forEach((file) => {
@@ -419,18 +594,15 @@ router.put("/:id", checkAuth, upload.any(), async (req, res, next) => {
 
 router.put(
   "/notes/:id", checkAuth, upload.any(), async function (req, res, next)  {
-    console.log('here')
     try {
       const alloweds = process.env.ALLOWEDS;
       if (!alloweds.includes(req.userData.email)) {
         return res.status(500).json({ message: "Not allowed" });
       }
-      console.log(req.body)
       
       const text = req.body.text;
       const date = req.body.date;
 
-      console.log(text, date, 'text date')
 
       if ( !text ) {
         return res.status(500).json({
@@ -453,7 +625,6 @@ router.put(
           myPath = url + '/' + file.path;
           myPath = myPath.replace(/\/var\/images/, 'varimages');
 
-          console.log(myPath, ' mypath')
 
         });
       }
@@ -477,7 +648,6 @@ router.put(
       payroll.updater = req.userData.userId;
       // payroll.notes = [...notes];
 
-      console.log(payroll)
       const updated = await Payroll.updateOne({ _id: req.params.id }, payroll)
 
       // payroll.save();
@@ -495,46 +665,21 @@ router.put(
 );
 
 router.delete("/:id", checkAuth, (req, res, next) => {
-  const alloweds = process.env.DELALLOWEDS;
-
-  if (!alloweds.includes(req.userData.email)) {
+  const { role, userID } = req.userData;
+  if ( role !== 'ADMIN' ) {
     logIncident(req.userData.email, "Not allowed to delete ");
-    return res.status(500).json({ message: "Not allowed" });
+    return res.status(500).json({ message: "Only Admin Allowed to Delete" });
   }
-  const id = req.params.id;
-  let filePath;
 
+  const id = req.params.id;
 
   try {
-    Payroll.findById(id)
-      .then((payroll) => {
-        if (payroll && payroll.image) {
-          filePath = "uploads/" + payroll.image.split("/uploads/")[1];
-          console.log(filePath);
-        }
-      })
-      .catch((err) => {
-        return res
-          .status(401)
-          .json({ message: "payroll not found in db!" + err });
-      });
-    // console.log('params ', req.params)
     Payroll.deleteOne({ _id: req.params.id })
       .then((result) => {
         if (result.n > 0) {
-          // delete payroll.image
-          if (filePath) {
-            fs.unlink(filePath, (err) => {
-              if (err) {
-                console.error(err, "file unlink err");
-              } else {
-                console.log("related file deleted");
-              }
-            });
-          }
           res.status(200).json({ message: "Deletion successful!" });
         } else {
-          res.status(401).json({ message: "Not authorized!" });
+          res.status(401).json({ message: "Not Deleted!" });
         }
       })
       .catch((error) => {
@@ -551,19 +696,28 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   }
 });
 
-router.get("", (req, res, next) => {
+router.get("", async (req, res, next) => {
   const pageSize = +req.query.pagesize;
+  const { month, year, type } = req.query;
   const currentPage = +req.query.page;
-  const payrollQuery = Payroll.find().sort({ createdAt: 1 }).populate('payee')
+  let payrollQuery;
+  if (year && month && type) {
+    
+    payrollQuery =  Payroll.find({ month: month, year: +year, type: type })
+      .sort({ createdAt: 1 })
+      .populate('payee')
+      .populate('creator', ['name', 'email', 'role']);
+    
+  } else {
+    payrollQuery =  Payroll.find().sort({ createdAt: 1 }).populate('payee')
     .populate('creator', ['name', 'email', 'role'])
- 
+  }
 
   if (pageSize && currentPage) {
     payrollQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
   }
   payrollQuery
     .then((documents) => {
-      console.log(documents, 'docs');
       return res.status(200).json({
         message: "payrolls fetched successfully!",
         payrolls: documents,
@@ -575,6 +729,45 @@ router.get("", (req, res, next) => {
       });
     });
 });
+
+router.get("/getByName", checkAuth, async (req, res, next) => {
+  
+  try {
+    const alloweds = process.env.ALLOWEDS;
+
+    if ( !alloweds.includes(req.userData.email) ) {
+      return res.status(500).json({ message: "Not allowed" });
+    }
+
+    const { searchTerm } = req.query;
+    let sTerm  =  searchTerm?.toUpperCase()?.trim()
+    console.log(sTerm, "sterm");
+    const matchedPeople = await People.find({'name': {'$regex': sTerm}})
+
+    let records = [];
+    matchedPeople.forEach( async m => {
+      let mPay = await Payroll.findOne({ payee: m._id }).populate('payee').populate('creator')
+      if (mPay) {
+        records.push(mPay)
+
+      }
+    })
+    
+    setTimeout(() => {
+
+      if (records) return res.status(200).json({ payrolls: records })
+      else {
+        res.status(404).json({ message: "No records! "  });
+      }
+    }, 1000);
+    
+  } catch (error) {
+    console.log(error)
+    res.status(404).json({ message: "try Block Error! " + error });
+  }
+  
+});
+
 
 router.get("/getByText", checkAuth, async (req, res, next) => {
   
@@ -594,6 +787,7 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
     ])
       .sort({ createdAt: -1 })
       .limit(200);
+      // console.log(result)
     
     if (result) return res.status(200).json({ payrolls: result });
 

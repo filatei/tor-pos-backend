@@ -6,7 +6,7 @@ const payrollSchema = mongoose.Schema({
     creator: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     updater: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     payee: { type: mongoose.Schema.Types.ObjectId, ref: 'People', required: true },
-    // payeeMonthYrType: { type: String, required: true, unique: true },
+    payeeMonthYrType: { type: String, required: true, unique: true },
     site: { type: mongoose.Schema.Types.ObjectId, ref: 'Site' },
     empType: {type: String},
     payeeTax: {type: Number},
@@ -19,6 +19,10 @@ const payrollSchema = mongoose.Schema({
     bagsBagged: {type: Number},
     bagsLoaded: { type: Number },
     deductions: {type: Number},
+    daysAbsent: {type: Number},
+    daysWorked: { type: Number },
+    totalWorkDaysInMonth: {type: Number},
+    
     salaryAdvance: {type: Number},
     payDate: { type: Date },
     payStartDate: { type: Date },
@@ -43,7 +47,7 @@ payrollSchema.plugin(AutoIncrement, { inc_field: 'payroll_id' }, { unique: true 
 
 payrollSchema.plugin(uniqueValidator);
 // compount unique
-payrollSchema.index({ payee: 1, month: 1, year: 1, type: 1 }, { unique: true });
+// payrollSchema.index({ payee: 1, month: 1, year: 1, type: 1 }, { unique: true });
 
 
 payrollSchema.index({ "$**": "text" });

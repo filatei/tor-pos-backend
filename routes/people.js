@@ -402,6 +402,97 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
     
 });
 
+router.post("/csvValidate", checkAuth, csvUpload.any(), async function (req, res, next) {
+
+  if (!['ADMIN', 'GENERAL MANAGER', 'SNR ACCOUNTANT'].includes(req.userData.role )) {
+    return res.status(500).json({
+      message: "Only ADMIN and GM and SNR ACCOUNTANT  can Validate CSV",
+    });
+  }
+  
+  let insertedIDs = [];
+  let exceptions = [];
+  const oldPeoples = await People.countDocuments();
+  console.log(oldPeoples, 'oldPeoples')
+  try {
+   
+    let saveCounter = 0;
+    let inserted, fPath;
+      let ppl = [];
+      if (req.files) {
+        fPath =  req.files[0].path;
+      }
+
+      fs.createReadStream(fPath)
+        .pipe(csv.parse({ headers: true }))
+        .on('error', error => {
+          console.error(error);
+          return res.status(500).json({ message: "Try error! " + error })
+        })
+        .on('data',  async row => {
+      
+          if (!row['FIRST NAME'] || !row['LAST NAME'] ) {
+            row.firstOrLastNameRequired = "YES"
+          } 
+          
+          // console.log(row.name)
+          let name;
+          if (row['FIRST NAME'] && row['LAST NAME']) {
+            if (row['MIDDLE NAME']) {
+               name = row['FIRST NAME'] + ' '+  row['MIDDLE NAME']  + ' ' + row['LAST NAME']
+            } else {
+               name = row['FIRST NAME'] +  ' ' + row['LAST NAME']
+            }
+            row['NAME'] = name;
+            const person = await People.findOne({ name:  name});
+            if (person) {
+              row.personInDB = 'YES'
+            }
+          }
+          if (row.personInDB || row.firstOrLastNameRequired ) {
+            exceptions.push(row)
+          }
+        })
+        .on('close', function () {
+          console.log(insertedIDs.length, ppl.length, ' inserted ppl')
+          
+        })
+        .on('end',  async rowCount => {
+          
+          setTimeout( () => {
+            // the destroy method can be used to
+            // close the stream manually
+            console.log(`Parsed ${rowCount} rows ${ppl.length}`);
+              fs.unlink(fPath, (err => {
+                if (err) console.log(err);
+                else {
+                  console.log(`\nDeleted file: ${fPath}`);
+                }
+              }));
+            
+              return res.status(200).json({
+                message: `csv file has ${exceptions.length} issues` ,
+                exceptions: exceptions
+              });
+             
+      
+          }, 3000);
+          
+          
+        })
+    
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Try error! " + error })
+  } finally {
+    // const newPeoples = await People.countDocuments();
+
+    
+  }
+  
+    
+});
+
 router.put("/:id", checkAuth, upload.any(), async (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
   
@@ -631,26 +722,26 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
       //   return res.status(200).json({ peoples: result });
       // }
     } else {
-      res.status(404).json({ message: "Not Found"  });
+      return res.status(404).json({ message: "Not Found"  });
     }
 
-    // People.find({ $text: { $search: searchTerm } })
-    //   .sort({ updatedAt: -1 })
-    //   .populate("creator").populate('site')
-    //   .limit(200)
-    //   .then((record) => {
-    //     if (record) {
-    //       // console.log(record.length);
-    //       return res.status(200).json({ peoples: record });
-    //     } else {
-    //       return res.status(404).json({ message: "People record not found!" });
-    //     }
-    //   })
-    //   .catch((error) => {
-    //     return res.status(500).json({
-    //       message: "Fetching record failed!" + error,
-    //     });
-    //   });
+    People.find({ $text: { $search: searchTerm } })
+      .sort({ updatedAt: -1 })
+      .populate("creator").populate('site')
+      .limit(200)
+      .then((record) => {
+        if (record) {
+          // console.log(record.length);
+          return res.status(200).json({ peoples: record });
+        } else {
+          return res.status(404).json({ message: "People record not found!" });
+        }
+      })
+      .catch((error) => {
+        return res.status(500).json({
+          message: "Fetching record failed!" + error,
+        });
+      });
     
   } catch (error) {
     console.log(error)

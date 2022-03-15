@@ -120,6 +120,8 @@ mongoose
     useNewUrlParser: true,
     useFindAndModify: false,
     useUnifiedTopology: true,
+    autoIndex: true,
+    useCreateIndex: true
   })
   .then(() => {
     console.log("Connected to DB");

@@ -130,46 +130,78 @@ function logIncident(email, description) {
     });
 }
 
+function getBusinessDatesCount(startDate, endDate) {
+  const s = new Date(startDate);
+  const e = new Date(endDate);
+  
+  let count = 0;
+  const curDate = new Date(s.getTime());
+  while (curDate <= e) {
+      const dayOfWeek = curDate.getDay();
+      if(dayOfWeek !== 0 ) count++;
+      curDate.setDate(curDate.getDate() + 1);
+  }
+  // alert(count);
+  return count;
+}
+
 const checkAuth = require("../middleware/check-auth");
 
 router.post("", checkAuth, async  (req, res, next) => {
   try {
-    const alloweds = process.env.ALLOWEDS;
-  
-    if (!alloweds.includes(req.userData.email)) {
-      return res.status(500).json({ message: "Not allowed" });
+    const { role, userId } = req.userData;
+
+    if (!['ADMIN', 'GENERAL MANAGER', 'SNR ACCOUNTANT'].includes(role)) {
+      return res.status(500).json({
+        message: "Fetching payrolls failed! Not Allowed "
+      });
     }
     
     let payObj = req.body;
+    if (!payObj.payStartDate || !payObj.payEndDate) {
+      return res.status(500).json({
+        message: " Pay Start Date and End Date required"
+      });
+    }
   
     payObj.creator = req.userData.userId;
     payObj.year = +payObj.year;
     payObj.grossPay= +payObj.grossPay || 0;
-    payObj.netPay = +payObj.netPay;
-    payObj.deductions = +payObj.deductions;
+    payObj.deductions = +payObj.deductions || 0;
     payObj.payeeTax = +payObj.payeeTax;
     payObj.bagsBagged = +payObj.bagsBagged;
     payObj.bagsLoaded = +payObj.bagsLoaded;
+    payObj.salaryAdvance = +payObj.salaryAdvance;
+    payObj.daysAbsent = +payObj.daysAbsent;
 
-    console.log(payObj.type);
+    if (payObj.daysAbsent) {
+      const totalDays = getBusinessDatesCount(payObj.payStartDate, payObj.payEndDate);
+      payObj.totalWorkDaysInMonth = totalDays;
+      payObj.deductions += (payObj.daysAbsent / totalDays) * payObj.baseSalary;
 
-    if (payObj.bagsBagged && payObj.type === 'MONTH-END') {
+    }
+
+    if ( payObj.bagsBagged && payObj.type === 'MONTH-END' ) {
       payObj.grossPay +=  payObj.bagsBagged * 2.5;
     }
 
-    if (payObj.bagsBagged && payObj.type === 'MID-MONTH') {
+    if ( payObj.bagsBagged && payObj.type === 'MID-MONTH' ) {
       payObj.grossPay += payObj.bagsBagged * 0.5;
     }
 
-    if (payObj.bagsLoaded && payObj.type === 'MONTH-END') {
+    if ( payObj.bagsLoaded && payObj.type === 'MONTH-END' ) {
       payObj.grossPay += payObj.bagsLoaded * 2;
     }
 
-    if (payObj.bagsLoaded && payObj.type === 'MID-MONTH') {
+    if ( payObj.bagsLoaded && payObj.type === 'MID-MONTH' ) {
       payObj.grossPay += payObj.bagsLoaded * 0.5;
     }
 
-    payObj.netPay = payObj.grossPay - payObj.deductions - payObj.payeeTax; 
+    if (payObj.baseSalary) {
+      payObj.grossPay += +payObj.baseSalary;
+    }
+
+    payObj.netPay = payObj.grossPay - payObj.deductions - payObj.payeeTax - payObj.salaryAdvance; 
     console.log(payObj.netPay, 'netPay')
 
     if (payObj.netPay <= 0) {
@@ -177,19 +209,6 @@ router.post("", checkAuth, async  (req, res, next) => {
         message: "netPay is zero or negative: " + payObj.netPay + ' ' + payObj.type
       });
     }
-    
-    
-    // if (req.files) {
-    //   req.files.forEach((file) => {
-    //     if (hostname.includes("torama.ng")) {
-    //       url = "https://api.torama.ng";
-    //     } else {
-    //       url = req.protocol + "://" + req.get("host");
-    //     }
-    //     const fPath = url + "/" + file.path;
-    //     dObj.image = fPath;
-    //   });
-    // }
   
     Object.entries(payObj).forEach(([key, value]) => {
       if (
@@ -207,12 +226,12 @@ router.post("", checkAuth, async  (req, res, next) => {
 
     }
 
-    if (payObj.empType === 'CONTRACT') {
+    if (payObj.empType === 'CONTRACTOR') {
 
     }
+    payObj.payeeMonthYrType = payObj.payee + payObj.month + payObj.year + payObj.type
     
-    // payObj.netPay = payObj.grossPay - payObj.deductions
-
+    payObj.remarks = "via CSV Upload - " + payObj.payeeMonthYrType ;
 
     // console.log(dObj);
     let prl = new Payroll(payObj);
@@ -277,14 +296,17 @@ router.post("/deleteAll", checkAuth, async (req, res, next) => {
 router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) {
   let insertedIDs = [];
   try {
-    const alloweds = process.env.ALLOWEDS;
-  
-    if ( !alloweds.includes(req.userData.email) ) {
-      return res.status(500).json({ message: "Not allowed" });
+    const { role, userId } = req.userData;
+
+    if (!['ADMIN', 'GENERAL MANAGER', 'SNR ACCOUNTANT'].includes(role)) {
+      return res.status(500).json({
+        message: "Fetching payrolls failed! Not Allowed "
+      });
     }
     
     let saveCounter = 0;
     const { csvUpload } = req.query;
+    let exceptions = [];
 
     if (csvUpload === '1') {
       if (req.userData.role !== 'ADMIN') {
@@ -297,19 +319,17 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
 
       let inserted, fPath;
       let prl = [];
-      let exceptions = [];
+     
 
       if (req.files) {
         fPath = req.files[0].path;
-        
       }
       
-
       fs.createReadStream(fPath)
         .pipe(csv.parse({ headers: true }))
         .on('error', error => {
           console.error(error);
-          return res.status(500).json({ message: "fs createReadstream error! " + error })
+          return res.status(500).json({ message: "fs createReadStream error! " + error })
         })
         .on('data', async row => {
 
@@ -380,32 +400,14 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           row.deductions = 0;
 
           const payee = await People.findOne({ name: row.name });
-          const payee2 = await People.findOne({ name: row.lname + ' ' + row.fname }); //flip firstname and lastname
           if (!payee) {
-            if (!payee2) {
-              return res.status(500).json({
-                message: `Person ${row.name} or ${row.lname}  ${ row.fname } Not in DB. Create FIRST`
-              });
-            }
-            if (payee2) {
-              row.payee = payee2._id;
-            }
+            return res.status(500).json({
+              message: `Person ${row.name}  Not in DB. Create FIRST`
+            })
             
-
-            // //  creating person.
-            // let person = { fname: row.fname, name: row.name, lname: row.lname, mname: row.mname || null, baseSalary: row.baseSalary|| null };
-            // const people = new People(person)
-            // const newPerson = await people.save(person);
-            // if (!newPerson) {
-            //   return res.status(500).json({
-            //     message: `Person ${row.name}  creation failed`
-            //   });
-            // } 
-            // row.payee = newPerson._id;
           } else {
             row.payee = payee._id;
           }
-          
 
           if (row['EMPLOYEE TYPE']) {
             row.empType = row['EMPLOYEE TYPE'].trim();
@@ -432,6 +434,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
            
             row.daysWorked = +row['DAYS WORKED'];
             const totalDays = row.daysAbsent + row.daysWorked;
+            row.totalWorkDaysInMonth = totalDays;
             console.log(totalDays, 'totalDays')
 
             const thisPerson = await People.findById(row.payee);
@@ -487,14 +490,15 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
 
           row.creator = req.userData.userId;
           row.payeeMonthYrType = row.payee + row.month + row.year + row.type;
-
-          if (row.netPay) {
+          row.remarks = "via CSV Upload - " + row.payeeMonthYrType ;
+          // if (row.netPay) {
             prl.push(row);
-          } else {
-            exceptions.push(row)
+          // } else {
+            
+          // }
+          if (row.netPay === 0) {
+            exceptions.push(row);
           }
-         
-
         })
         .on('end', async rowCount => {
           setTimeout( async () => {
@@ -503,7 +507,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
               try {
                 const payroll = new Payroll(prl[k]);
                 inserted = await payroll.save();
-                console.log(inserted, 'inserted')
+                // console.log(inserted, 'inserted')
                 // inserted = await Payroll.create(prl[k]);
                 insertedIDs.push(inserted._id);
               } catch (error) {
@@ -525,7 +529,8 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
               console.log(exceptions, 'exceptions')
 
               return res.status(200).json({
-                message: "csv Uploaded  " + diff + " records except " + exceptions.length + " records"
+                message: "csv Uploaded  " + diff + " records except " + exceptions.length + " records",
+                exceptions: exceptions
               });
             } else {
               return res.status(500).json({message: "csv not uploaded"})
@@ -540,11 +545,119 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
   }
 });
 
-router.put("/:id", checkAuth, upload.any(), async (req, res, next) => {
-  const alloweds = process.env.ALLOWEDS;
+router.post("/csvValidate", checkAuth, csvUpload.any(), async function (req, res, next) {
+
+  const { role, userId } = req.userData;
+  if (!['ADMIN', 'GENERAL MANAGER', 'SNR ACCOUNTANT'].includes(role)) {
+    return res.status(500).json({
+      message: "Fetching payrolls failed! Not Allowed "
+    });
+  }
+
+  try {
+    let saveCounter = 0;
+    const { csvUpload } = req.query;
+    const oldPayrollsCount = await Payroll.countDocuments();
+    console.log('csvValidate in Payroll')
+
+    let inserted, fPath;
+    let prl = [];
+    let exceptions = [];
+
+    if (req.files) {
+      fPath = req.files[0].path;
+    }
   
-  if (!alloweds.includes(req.userData.email)) {
-    return res.status(500).json({ message: "Not allowed" });
+    fs.createReadStream(fPath)
+    .pipe(csv.parse({ headers: true }))
+    .on('error', error => {
+      console.error(error);
+      return res.status(500).json({ message: "fs createReadStream error! " + error })
+    })
+    .on('data', async row => {
+
+      if (!row['TYPE']) {
+        row.typeRequired = 'YES'
+      } else if (
+        !['MONTH-END', 'MID-MONTH', 'OTHER'].includes(row['TYPE'])
+      ) {
+        row.typeRequired = 'YES'
+      }
+
+      const today = new Date();
+      const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+      console.log(row['PAY START DATE'], row['PAY END DATE'], 'start end')
+      if (!row['PAY START DATE']) {
+        row.payStartRequired = 'YES'
+      }
+
+      if (!row['PAY END DATE']) {
+        row.payEndRequired = 'YES'
+      }
+     
+      if (row['FIRST NAME']) {
+        row.name = row['FIRST NAME'].trim();
+        // row.fname = row['FIRST NAME'].trim();
+      }
+
+      if (row['MIDDLE NAME']) {
+        row.name = row.name + ' ' + row['MIDDLE NAME'].trim();
+      }
+      if (row['LAST NAME']) {
+        row.name = row.name + ' ' + row['LAST NAME'].trim();
+      }
+
+      if (!row['FIRST NAME'] || !row['LAST NAME']) {
+        row.firstOrLastNameRequired = 'YES'
+      }
+
+      const payee = await People.findOne({ name: row.name });
+      if (!payee) {
+        row.payeeNotInDB = 'YES'
+      } 
+      
+      if (row.payEndRequired || row.payeeNotInDB 
+        || row.firstOrLastNameRequired
+        || row.baseSalaryRequired
+        || row.payStartRequired
+        || row.payEndRequired) {
+          exceptions.push(row);
+
+        }
+    })
+    .on('end', async rowCount => {
+      setTimeout( async () => {
+        console.log(`Parsed ${rowCount} rows ${prl.length}`);
+
+          fs.unlink(fPath, (err => {
+            if (err) console.log(err);
+            else {
+              console.log(`\nDeleted file: ${fPath}`);
+            }
+          }));
+          console.log(exceptions, 'exceptions')
+
+          return res.status(200).json({
+            message: `File has ${exceptions.length} issues`,
+            exceptions:  exceptions
+          });
+          
+      }, 3000);
+      
+    })
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Try error! " + error })
+  }
+});
+
+router.put("/:id", checkAuth, upload.any(), async (req, res, next) => {
+  const { role, userId } = req.userData;
+
+  if (!['ADMIN', 'GENERAL MANAGER', 'SNR ACCOUNTANT'].includes(role)) {
+    return res.status(500).json({
+      message: "Fetching payrolls failed! Not Allowed "
+    });
   }
   let path = "";
   let url = "";
@@ -552,7 +665,7 @@ router.put("/:id", checkAuth, upload.any(), async (req, res, next) => {
 
   const id = req.params.id;
   payrollObj._id = id;
-  payrollObj.updater = req.userData.userId;
+  payrollObj.updater = userId;
   if (payrollObj.image === 'null') {
     delete payrollObj.image; // dont update image if not sent
   }
@@ -560,7 +673,6 @@ router.put("/:id", checkAuth, upload.any(), async (req, res, next) => {
   payrollObj.grossPay = +req.body.grossPay
   payrollObj.deductions = +req.body.deductions
   const payroll = new Payroll(payrollObj);
-  
 
   if (req.files) {
     req.files.forEach((file) => {
@@ -696,7 +808,15 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   }
 });
 
-router.get("", async (req, res, next) => {
+router.get("",  checkAuth, async (req, res, next) => {
+
+  const { role } = req.userData;
+
+  if (!['ADMIN', 'GENERAL MANAGER', 'SNR ACCOUNTANT'].includes(role)) {
+    return res.status(500).json({
+      message: "Fetching payrolls failed! Not Allowed "
+    });
+  }
   const pageSize = +req.query.pagesize;
   const { month, year, type } = req.query;
   const currentPage = +req.query.page;
@@ -724,7 +844,7 @@ router.get("", async (req, res, next) => {
       });
     })
     .catch((error) => {
-      res.status(500).json({
+      return res.status(500).json({
         message: "Fetching payrolls failed! " + error,
       });
     });
@@ -733,17 +853,20 @@ router.get("", async (req, res, next) => {
 router.get("/getByName", checkAuth, async (req, res, next) => {
   
   try {
-    const alloweds = process.env.ALLOWEDS;
+    const { role } = req.userData;
 
-    if ( !alloweds.includes(req.userData.email) ) {
-      return res.status(500).json({ message: "Not allowed" });
+    if (!['ADMIN', 'GENERAL MANAGER', 'SNR ACCOUNTANT'].includes(role)) {
+      return res.status(500).json({
+        message: "Fetching payrolls failed! Not Allowed "
+      });
     }
 
     const { searchTerm } = req.query;
     let sTerm  =  searchTerm?.toUpperCase()?.trim()
     console.log(sTerm, "sterm");
-    const matchedPeople = await People.find({'name': {'$regex': sTerm}})
-
+    const matchedPeople = await People.find({ 'name': { '$regex': sTerm } })
+  
+    console.log(matchedPeople, 'matched')
     let records = [];
     matchedPeople.forEach( async m => {
       let mPay = await Payroll.findOne({ payee: m._id }).populate('payee').populate('creator')
@@ -755,9 +878,11 @@ router.get("/getByName", checkAuth, async (req, res, next) => {
     
     setTimeout(() => {
 
-      if (records) return res.status(200).json({ payrolls: records })
+      if (records) {
+        return res.status(200).json({ payrolls: records })
+      }
       else {
-        res.status(404).json({ message: "No records! "  });
+        return res.status(404).json({ message: "No records! "  });
       }
     }, 1000);
     
@@ -772,12 +897,13 @@ router.get("/getByName", checkAuth, async (req, res, next) => {
 router.get("/getByText", checkAuth, async (req, res, next) => {
   
   try {
-    const alloweds = process.env.ALLOWEDS;
+    const { role } = req.userData;
 
-    if ( !alloweds.includes(req.userData.email) ) {
-      return res.status(500).json({ message: "Not allowed" });
+    if (!['ADMIN', 'GENERAL MANAGER', 'SNR ACCOUNTANT'].includes(role)) {
+      return res.status(500).json({
+        message: "Fetching payrolls failed! Not Allowed "
+      });
     }
-
     const { searchTerm } = req.query;
     console.log(req.query, " req-query");
 
@@ -818,7 +944,15 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
   
 });
 
-router.get("/:id", (req, res, next) => {
+router.get("/:id", checkAuth, (req, res, next) => {
+  const { role } = req.userData;
+
+  if (!['ADMIN', 'GENERAL MANAGER', 'SNR ACCOUNTANT'].includes(role)) {
+    return res.status(500).json({
+      message: "Fetching payrolls failed! Not Allowed "
+    });
+  }
+
   Payroll.findById(req.params.id).populate('payee') .populate('creator', ['name', 'email', 'role'])
     .then((payroll) => {
         if (payroll) {

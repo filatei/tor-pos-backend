@@ -320,7 +320,6 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
       let inserted, fPath;
       let prl = [];
      
-
       if (req.files) {
         fPath = req.files[0].path;
       }
@@ -332,7 +331,6 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           return res.status(500).json({ message: "fs createReadStream error! " + error })
         })
         .on('data', async row => {
-
           if (row['TYPE']) {
             row.type = row['TYPE'].trim();
           }
@@ -400,6 +398,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           row.deductions = 0;
 
           const payee = await People.findOne({ name: row.name });
+          console.log(row.name,payee.name, ' row.name payee ')
           if (!payee) {
             return res.status(500).json({
               message: `Person ${row.name}  Not in DB. Create FIRST`
@@ -499,34 +498,43 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           if (row.netPay === 0) {
             exceptions.push(row);
           }
+
+          if (row.payee ) {
+           
+              const payroll = new Payroll(row);
+              inserted = await payroll.save();
+              insertedIDs.push(inserted);
+              // console.log(ppl.length)
+          }
         })
         .on('end', async rowCount => {
           setTimeout( async () => {
             console.log(`Parsed ${rowCount} rows ${prl.length}`);
-            for (var k = 0; k < prl.length; ++k) {
-              try {
-                const payroll = new Payroll(prl[k]);
-                inserted = await payroll.save();
-                // console.log(inserted, 'inserted')
-                // inserted = await Payroll.create(prl[k]);
-                insertedIDs.push(inserted._id);
-              } catch (error) {
-                return res.status(500).json({message: 'try error in save ' + error})
-              }
-            }
+            // for (var k = 0; k < prl.length; ++k) {
+            //   try {
+            //     const payroll = new Payroll(prl[k]);
+            //     inserted = await payroll.save();
+            //     // console.log(inserted, 'inserted')
+            //     // inserted = await Payroll.create(prl[k]);
+            //     insertedIDs.push(inserted._id);
+            //   } catch (error) {
+            //     return res.status(500).json({message: 'try error in save ' + error})
+            //   }
+            // }
             
             const newPayrollsCount = await Payroll.countDocuments();
             const diff = newPayrollsCount - oldPayrollsCount;
             console.log(newPayrollsCount, oldPayrollsCount, 'before after rowcounts')
+            fs.unlink(fPath, (err => {
+              if (err) console.log(err);
+              else {
+                console.log(`\nDeleted file: ${fPath}`);
+              }
+            }));
 
             if (diff > 0) {
-              fs.unlink(fPath, (err => {
-                if (err) console.log(err);
-                else {
-                  console.log(`\nDeleted file: ${fPath}`);
-                }
-              }));
-              console.log(exceptions, 'exceptions')
+              
+              // console.log(exceptions, 'exceptions')
 
               return res.status(200).json({
                 message: "csv Uploaded  " + diff + " records except " + exceptions.length + " records",
@@ -535,7 +543,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             } else {
               return res.status(500).json({message: "csv not uploaded"})
             }
-          }, 3000);
+          }, 2000);
           
         })
     } 

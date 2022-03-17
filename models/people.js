@@ -22,7 +22,7 @@ const peopleSchema = mongoose.Schema({
     }],
     
     phone: {type: String},
-    department: {type: String},
+    department: {type: String, enum: ['ADMINISTRATION', "OPERATION", "TECHNOLOGY", "SECURITY", "SALES", "PRODUCTION", "LOGISTICS"]},
     company: {type: String},
     dob: { type: Date },
     qualification: {type: String},

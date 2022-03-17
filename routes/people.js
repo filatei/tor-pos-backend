@@ -725,23 +725,23 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
       return res.status(404).json({ message: "Not Found"  });
     }
 
-    People.find({ $text: { $search: searchTerm } })
-      .sort({ updatedAt: -1 })
-      .populate("creator").populate('site')
-      .limit(200)
-      .then((record) => {
-        if (record) {
-          // console.log(record.length);
-          return res.status(200).json({ peoples: record });
-        } else {
-          return res.status(404).json({ message: "People record not found!" });
-        }
-      })
-      .catch((error) => {
-        return res.status(500).json({
-          message: "Fetching record failed!" + error,
-        });
-      });
+    // People.find({ $text: { $search: searchTerm } })
+    //   .sort({ updatedAt: -1 })
+    //   .populate("creator").populate('site')
+    //   .limit(200)
+    //   .then((record) => {
+    //     if (record) {
+    //       // console.log(record.length);
+    //       return res.status(200).json({ peoples: record });
+    //     } else {
+    //       return res.status(404).json({ message: "People record not found!" });
+    //     }
+    //   })
+    //   .catch((error) => {
+    //     return res.status(500).json({
+    //       message: "Fetching record failed!" + error,
+    //     });
+    //   });
     
   } catch (error) {
     console.log(error)

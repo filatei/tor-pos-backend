@@ -79,7 +79,7 @@ peopleSchema.index({ "$**": "text" });
 peopleSchema.set("autoIndex", process.env.Node_Env != "production");
 
 const rc = mongoose.model("People", peopleSchema);
-rc.createIndexes({default_language: "none"});
+rc.createIndexes({default_language: ""});
 
 module.exports = rc
 

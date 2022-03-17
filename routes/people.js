@@ -493,6 +493,41 @@ router.post("/csvValidate", checkAuth, csvUpload.any(), async function (req, res
     
 });
 
+router.post("/deleteAll", checkAuth, async (req, res, next) => {
+ 
+  const { role, userID } = req.userData;
+
+  if ( role !== 'ADMIN' ) {
+    logIncident(req.userData.email, "Not allowed to delete ");
+    return res.status(500).json({ message: "Only Admin Allowed to Delete" });
+  }
+
+  const { ids } = req.body;
+  // console.log('deleteAll ', ids)
+
+  try {
+    const deleted = await People.deleteMany({ _id: { $in: ids } });
+    if (!deleted) {
+      return  res.status(500).json({
+        message: " Deleting person failed! No Person with such IDs " ,
+      });
+    }
+    
+    if ( deleted.n > 0 ) {
+      console.log(deleted, 'deleted');
+      return  res.status(200).json({
+        message: `Deleted Successfully: ${deleted.deletedCount} records`
+      });
+    }
+    
+  } catch (error) {
+    console.error(error, "catch err");
+    return  res.status(500).json({
+        message: "TryCatch: Deleting people failed! " + error,
+      });
+  }
+});
+
 router.put("/:id", checkAuth, upload.any(), async (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
   

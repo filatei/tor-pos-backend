@@ -65,6 +65,7 @@ peopleSchema.plugin(AutoIncrement, { inc_field: 'people_id' }, { unique: true })
 peopleSchema.plugin(uniqueValidator);
 
 peopleSchema.index({ "$**": "text" });
+peopleSchema.set("autoIndex", process.env.Node_Env != "production");
 
 const rc = mongoose.model("People", peopleSchema);
 rc.createIndexes();

@@ -743,10 +743,13 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
     console.log(req.query, " req-query");
 
     let records;
+    
+
+
     const result = await People.aggregate([
       { $match: { $text: { $search: searchTerm} } },
     ])
-      .sort({ createdAt: -1 })
+      .sort({ name: -1 })
       .limit(200);
     
     if (result) {
@@ -789,9 +792,9 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
 router.get("/:id", (req, res, next) => {
   People.findById(req.params.id).populate('site').populate('creator')
     .then((people) => {
-        if (people) {
-          console.log(people)
-            return res.status(200).json({ people:people });
+      if (people) {
+        people.creator.name=people.creator.name==='Akpodigha Filatei'?'MD':people.creator.name;
+        return res.status(200).json({ people:people });
       } else {
         return res.status(404).json({ message: "people not found!" });
       }

@@ -229,8 +229,8 @@ router.get("/summary", checkAuth, async (req, res, next) => {
   try {
     const { recSummary } = req.query;
     if (recSummary) {
-      if (req.userData.role !== "ADMIN") {
-        return res.status(500).json({ message: "NOT ALLOWED" });
+      if (!['ADMIN', 'MANAGER', 'GENERAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT'].includes(req.userData.role) ) {
+        return;
       }
       const aggData = await Summary.recAgg();
       if (aggData) {

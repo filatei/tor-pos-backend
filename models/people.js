@@ -46,6 +46,7 @@ const peopleSchema = mongoose.Schema({
     }],
     emails: [],
     category: {type: String},
+    remarks: {type: String},
     hireDate: {type: Date},
     exitDate: { type: Date },
     baseSalary: {type: Number},
@@ -65,10 +66,21 @@ peopleSchema.plugin(AutoIncrement, { inc_field: 'people_id' }, { unique: true })
 peopleSchema.plugin(uniqueValidator);
 
 peopleSchema.index({ "$**": "text" });
+// peopleSchema.index(
+//     {
+//         name: "text",
+//         bankName: "text",
+//         bankAccount: "text",
+//         department: "text",
+//         jobName: "text",
+//         phone: "text",
+//         remarks: "text",
+//     });
 peopleSchema.set("autoIndex", process.env.Node_Env != "production");
 
 const rc = mongoose.model("People", peopleSchema);
-rc.createIndexes();
+rc.createIndexes({default_language: "none"});
+
 module.exports = rc
 
 // module.exports = mongoose.model('People', peopleSchema)

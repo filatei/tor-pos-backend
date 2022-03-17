@@ -367,8 +367,8 @@ router.get("/salessummary", checkAuth, async (req, res, next) => {
   }
 
   try {
-    if (req.userData.role !== "ADMIN") {
-      return res.status(500).json({ message: "NOT ALLOWED" });
+    if (!['ADMIN', 'MANAGER', 'GENERAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT'].includes(req.userData.role) ) {
+      return;
     }
     const { salesSummary, month, year, company } = req.query;
     if (salesSummary) {
@@ -404,8 +404,8 @@ router.get("/cashsalessummary", checkAuth, async (req, res, next) => {
   }
 
   try {
-    if (req.userData.role !== "ADMIN") {
-      return res.status(500).json({ message: "NOT ALLOWED" });
+    if (!['ADMIN', 'MANAGER', 'GENERAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT'].includes(req.userData.role) ) {
+      return;
     }
     const { salesSummary, month, year } = req.query;
     if (salesSummary) {
@@ -457,8 +457,8 @@ router.get("/summary2", checkAuth, async (req, res, next) => {
     // );
 
     if (recSummary) {
-      if (req.userData.role !== "ADMIN") {
-        return res.status(500).json({ message: "NOT ALLOWED" });
+      if (!['ADMIN', 'MANAGER', 'GENERAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT'].includes(req.userData.role) ) {
+        return;
       }
 
       let aggData = await Summary.Pipeline(yesterdayStart, yesterdayEnd);

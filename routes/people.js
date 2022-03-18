@@ -749,12 +749,13 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
     const result = await People.aggregate([
       { $match: { $text: { $search: searchTerm} } },
     ])
-      .limit(200);
+    .sort({name:1})
+    .limit(200);
      
     
     if (result) {
        // sort array result by name
-       result.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0))
+      //  result.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0))
 
       return res.status(200).json({ peoples: result });
       // const populatedResult = await People.populate(result, { path: 'site' });

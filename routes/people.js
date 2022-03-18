@@ -758,11 +758,7 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
       //  result.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0))
 
       return res.status(200).json({ peoples: result });
-      // const populatedResult = await People.populate(result, { path: 'site' });
-      // if (populatedResult) {
-      //    console.log(populatedResult, ' pop result')
-      //   return res.status(200).json({ peoples: result });
-      // }
+      
     } else {
       return res.status(404).json({ message: "Not Found"  });
     }

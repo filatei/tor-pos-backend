@@ -3,7 +3,7 @@ uniqueValidator = require('mongoose-unique-validator');
 const AutoIncrement = require('mongoose-sequence')(mongoose);
 
 const peopleSchema = mongoose.Schema({
-    name: { type: String, required: true, unique: true, lowercase: false, trim: true, collation: { locale: "en", strength: 3 } },
+    name: { type: String, required: true, unique: true, lowercase: false, trim: true,  collation: { locale: "en", strength: 3 } },
     fname: {type: String},
     mname: {type: String},
     lname: {type: String},
@@ -65,18 +65,18 @@ peopleSchema.plugin(AutoIncrement, { inc_field: 'people_id' }, { unique: true })
 
 peopleSchema.plugin(uniqueValidator);
 
-// peopleSchema.index({ "$**": "text" });
-peopleSchema.index(
-    {
-        name: "text",
-        bankName: "text",
-        bankAccount: "text",
-        department: "text",
-        jobName: "text",
-        phone: "text",
-        remarks: "text",
-    });
-// peopleSchema.set("autoIndex", process.env.Node_Env != "production");
+peopleSchema.index({ "$**": "text" });
+// peopleSchema.index(
+//     {
+//         name: "text",
+//         bankName: "text",
+//         bankAccount: "text",
+//         department: "text",
+//         jobName: "text",
+//         phone: "text",
+//         remarks: "text",
+//     });
+peopleSchema.set("autoIndex", process.env.Node_Env != "production");
 
 const rc = mongoose.model("People", peopleSchema);
 rc.createIndexes();

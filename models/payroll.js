@@ -53,5 +53,5 @@ payrollSchema.plugin(uniqueValidator);
 payrollSchema.index({ "$**": "text" });
 
 const rc = mongoose.model("Payroll", payrollSchema);
-rc.createIndexes({default_language: ""});
+rc.createIndexes();
 module.exports = rc;

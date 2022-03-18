@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 
 const Payroll = require("../models/payroll");
+const Site = require("../models/site");
 const People = require("../models/people");
 const Accesslog = require("../models/accesslog");
 const router = express.Router();
@@ -331,11 +332,11 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           return res.status(500).json({ message: "fs createReadStream error! " + error })
         })
         .on('data', async row => {
-          if (row['TYPE']) {
-            row.type = row['TYPE'].trim();
+          if (row['PAY TYPE']) {
+            row.payType = row['PAY TYPE'].trim();
           }
 
-          if (!row.type) {
+          if (!row.payType) {
             return res.status(500).json({
               message: `Pay Type (MONTH-END or MID-MONTH)  Required `
             });
@@ -398,7 +399,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           row.deductions = 0;
 
           const payee = await People.findOne({ name: row.name });
-          console.log(row.name,payee.name, ' row.name payee ')
+
           if (!payee) {
             return res.status(500).json({
               message: `Person ${row.name}  Not in DB. Create FIRST`
@@ -462,21 +463,31 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           if (row['COMPANY']) {
             row.company = row['COMPANY'];
           }
+
+          if (row['LOCATION']) {
+            const site = await Site.findOne({ name: row['LOCATION'].trim() })
+            if (site) {
+              row.site = site._id;
+            }
+            else {
+              return res.status(500).json({message: "SITE not Valid"})
+            }
+          }
          
           if (row['BAGS BAGGED'] ) {
             // bagger
             row.bagsBagged = +row['BAGS BAGGED'];
-            if (row.type == 'MONTH-END')
+            if (row.payType == 'MONTH-END')
               row.grossPay += row.bagsBagged * 2.5;
-            if (row.type == 'MID-MONTH')
+            if (row.payType == 'MID-MONTH')
               row.grossPay += row.bagsBagged * 0.5;
           }
 
           if (row['BAGS LOADED']) {
             row.bagsLoaded = +row['BAGS LOADED'];
 
-            if (row.type === 'MONTH-END') { row.grossPay += row.bagsLoaded * 2; }
-            else if (row.type === 'MID-MONTH') {
+            if (row.payType === 'MONTH-END') { row.grossPay += row.bagsLoaded * 2; }
+            else if (row.payType === 'MID-MONTH') {
               row.grossPay += row.bagsLoaded * 0.5;
             }
           }
@@ -592,6 +603,8 @@ router.post("/csvValidate", checkAuth, csvUpload.any(), async function (req, res
         row.typeRequired = 'YES'
       }
 
+
+
       const today = new Date();
       const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
       console.log(row['PAY START DATE'], row['PAY END DATE'], 'start end')
@@ -623,9 +636,18 @@ router.post("/csvValidate", checkAuth, csvUpload.any(), async function (req, res
       if (!payee) {
         row.payeeNotInDB = 'YES'
       } 
+
+      if (row['LOCATION']) {
+        const site = await Site.findOne({ name: row['LOCATION'].trim() })
+        if (!site) {
+          row.siteRequired = 'YES';
+        }
+       
+      }
+     
       
       if (row.payEndRequired || row.payeeNotInDB 
-        || row.firstOrLastNameRequired
+        || row.firstOrLastNameRequired || row.siteRequired
         || row.baseSalaryRequired
         || row.payStartRequired
         || row.payEndRequired) {
@@ -834,10 +856,11 @@ router.get("",  checkAuth, async (req, res, next) => {
     payrollQuery =  Payroll.find({ month: month, year: +year, type: type })
       .sort({ createdAt: 1 })
       .populate('payee')
+      .populate('site')
       .populate('creator', ['name', 'email', 'role']);
     
   } else {
-    payrollQuery =  Payroll.find().sort({ createdAt: 1 }).populate('payee')
+    payrollQuery =  Payroll.find().sort({ createdAt: 1 }).populate('payee').populate('site')
     .populate('creator', ['name', 'email', 'role'])
   }
 

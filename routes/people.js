@@ -223,6 +223,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
     const { csvUpload } = req.query;
     let inserted, fPath;
       let ppl = [];
+      let exceptions = [];
 
     if (csvUpload === '1') {
 
@@ -262,7 +263,6 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           } else {
             return res.status(500).json({message: "LAST NAME REQUIRED"})
           }
-          
 
           if (row['NAME ON ODOO']) {
             row.nameOnOdoo = row['NAME ON ODOO']?.trim();
@@ -280,8 +280,13 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             }
           }
 
-          if (row['TYPE']) {
-            row.type = row['TYPE'].trim();
+          if (row['EMP TYPE']) {
+            if (['CONTRACTOR', 'STAFF', 'REFEREE', 'OTHER'].includes(row['EMP TYPE'].trim())) {
+              row.empType = row['EMP TYPE'].trim();
+
+            } else {
+              return res.status(500).json({message: 'WRONG EMP TYPE'})
+            }
           }
 
           if (row['STATUS']) {
@@ -309,17 +314,26 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           }
 
           if ( row['DEPARTMENT'] ) {
-            row.department = row['DEPARTMENT'].trim();
+            if (['ADMINISTRATION', "OPERATION", "TECHNOLOGY", "SECURITY", "SALES", "PRODUCTION", "LOGISTICS"].includes(row['DEPARTMENT'].trim())) {
+              row.department = row['DEPARTMENT'].trim();
+            } else {
+              return res.status(500).json({message: 'WRONG DEPARTMENT STRING'})
+            }
+            
           }
 
           if (row['COMPANY']) {
             row.company = row['COMPANY'].trim();
           }
 
-          // row['Gender'].trim()?row.gender = row['Gender'].trim() : null;
+          if ( row['GENDER'] ) {
+            row.gender = row['GENDER'].trim();
+          }
+          
           if ( row['NIN'] ) {
             row.nin = row['NIN'].trim();
           }
+
           if ( row['IDENTIFICATION'] ) {
             row.identification = row['IDENTIFICATION'].trim();
           }
@@ -348,15 +362,25 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
          
           // console.log(row.name)
           if (row.name ) {
-            const person = await People.findOne({ name: row.name });
-            if (!person) {
-              // console.log(person, ' person')
-              const people = new People(row);
-              inserted = await people.save();
-              insertedIDs.push(inserted);
-              ppl.push(row);
-              // console.log(ppl.length)
+            console.log(row.name)
+            try {
+              const person = await People.findOne({ name: row.name });
+              if (!person) {
+                // console.log(person, ' person')
+                const people = new People(row);
+                inserted = await people.save();
+                insertedIDs.push(inserted);
+                ppl.push(row);
+                // console.log(ppl.length)
+              } else {
+                exceptions.push(row);
+             }
+            } catch (error) {
+              console.log(error)
+              return res.status(500).json({message: JSON.stringify(error)})
+
             }
+            
           }
         })
         .on('close', function () {
@@ -370,15 +394,17 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             // the destroy method can be used to
             // close the stream manually
             console.log(`Parsed ${rowCount} rows ${ppl.length}`);
+            fs.unlink(fPath, (err => {
+              if (err) console.log(err);
+              else {
+                console.log(`\nDeleted file: ${fPath}`);
+              }
+            }));
             if (ppl.length) {
-              fs.unlink(fPath, (err => {
-                if (err) console.log(err);
-                else {
-                  console.log(`\nDeleted file: ${fPath}`);
-                }
-              }));
+              
               return res.status(200).json({
-                message: "csv Uploaded  " + insertedIDs.length + " records out of " + rowCount
+                message: "csv Uploaded  " + insertedIDs.length + " records out of " + rowCount,
+                exceptions: exceptions
               });
             } else {
               return res.status(500).json({message: "csv not uploaded"})
@@ -393,11 +419,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Try error! " + error })
-  } finally {
-    // const newPeoples = await People.countDocuments();
-
-    
-  }
+  } 
   
     
 });
@@ -458,39 +480,30 @@ router.post("/csvValidate", checkAuth, csvUpload.any(), async function (req, res
           
         })
         .on('end',  async rowCount => {
-          
           setTimeout( () => {
             // the destroy method can be used to
             // close the stream manually
             console.log(`Parsed ${rowCount} rows ${ppl.length}`);
-              fs.unlink(fPath, (err => {
-                if (err) console.log(err);
-                else {
-                  console.log(`\nDeleted file: ${fPath}`);
-                }
-              }));
-            
-              return res.status(200).json({
-                message: `csv file has ${exceptions.length} issues` ,
-                exceptions: exceptions
-              });
-             
+            fs.unlink(fPath, (err => {
+              if (err) console.log(err);
+              else {
+                console.log(`\nDeleted file: ${fPath}`);
+              }
+            }));
+          
+            return res.status(200).json({
+              message: `csv file has ${exceptions.length} issues` ,
+              exceptions: exceptions
+            });
       
           }, 3000);
-          
           
         })
     
   } catch (error) {
     console.log(error);
     res.status(500).json({ message: "Try error! " + error })
-  } finally {
-    // const newPeoples = await People.countDocuments();
-
-    
   }
-  
-    
 });
 
 router.post("/deleteAll", checkAuth, async (req, res, next) => {
@@ -743,20 +756,15 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
     console.log(req.query, " req-query");
 
     let records;
-    
-
 
     const result = await People.aggregate([
       { $match: { $text: { $search: searchTerm} } },
     ])
     .sort({name:1})
     .limit(200);
-     
+     console.log(result, 'result')
     
     if (result) {
-       // sort array result by name
-      //  result.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0))
-
       return res.status(200).json({ peoples: result });
       
     } else {

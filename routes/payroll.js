@@ -919,30 +919,33 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
     const result = await Payroll.aggregate([
       { $match: { $text: { $search: searchTerm} } },
     ])
-      .sort({ createdAt: -1 })
       .limit(200);
       // console.log(result)
-    
-    if (result) return res.status(200).json({ payrolls: result });
 
-    Payroll.find({ $text: { $search: searchTerm } })
-      .sort({ updatedAt: -1 })
-      .populate("creator")
-      .populate("payee")
-      .limit(200)
-      .then((record) => {
-        if (record) {
-          console.log(record.length);
-          res.status(200).json({ payrolls: record });
-        } else {
-          res.status(404).json({ message: "Payroll record not found!" });
-        }
-      })
-      .catch((error) => {
-        res.status(500).json({
-          message: "Fetching record failed!" + error,
-        });
-      });
+    
+    if (result) {
+      result.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0))
+      return res.status(200).json({ payrolls: result });
+    }
+
+    // Payroll.find({ $text: { $search: searchTerm } })
+    //   .sort({ updatedAt: -1 })
+    //   .populate("creator")
+    //   .populate("payee")
+    //   .limit(200)
+    //   .then((record) => {
+    //     if (record) {
+    //       console.log(record.length);
+    //       res.status(200).json({ payrolls: record });
+    //     } else {
+    //       res.status(404).json({ message: "Payroll record not found!" });
+    //     }
+    //   })
+    //   .catch((error) => {
+    //     res.status(500).json({
+    //       message: "Fetching record failed!" + error,
+    //     });
+    //   });
     
   } catch (error) {
     console.log(error)

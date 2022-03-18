@@ -49,7 +49,7 @@ payrollSchema.plugin(uniqueValidator);
 // compount unique
 // payrollSchema.index({ payee: 1, month: 1, year: 1, type: 1 }, { unique: true });
 
-payrollSchema.set("autoIndex", process.env.Node_Env != "production");
+// payrollSchema.set("autoIndex", process.env.Node_Env != "production");
 payrollSchema.index({ "$**": "text" });
 
 const rc = mongoose.model("Payroll", payrollSchema);

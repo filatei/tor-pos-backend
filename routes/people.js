@@ -508,36 +508,49 @@ router.post("/csvValidate", checkAuth, csvUpload.any(), async function (req, res
 
 router.post("/deleteAll", checkAuth, async (req, res, next) => {
  
-  const { role, userID } = req.userData;
+  const { role } = req.userData;
 
   if ( role !== 'ADMIN' ) {
-    logIncident(req.userData.email, "Not allowed to delete ");
     return res.status(500).json({ message: "Only Admin Allowed to Delete" });
   }
 
   const { ids } = req.body;
+  let newIds =[]
   // console.log('deleteAll ', ids)
 
-  try {
-    const deleted = await People.deleteMany({ _id: { $in: ids } });
-    if (!deleted) {
-      return  res.status(500).json({
-        message: " Deleting person failed! No Person with such IDs " ,
-      });
+  ids.forEach( async id =>  {
+    const payroll = await Payroll.find({payee:id})
+    if (payroll.length) {
+      newIds = ids.filter(ii => ii === id)
     }
+  })
+
+  try {
+    if (newIds.length) {
+      const deleted = await People.deleteMany({ _id: { $in: newIds } });
+      if (!deleted) {
+        return  res.status(500).json({
+          message: " Deleting person failed! No Person with such IDs " ,
+        });
+      }
     
-    if ( deleted.n > 0 ) {
-      console.log(deleted, 'deleted');
-      return  res.status(200).json({
-        message: `Deleted Successfully: ${deleted.deletedCount} records`
+      if ( deleted.n > 0 ) {
+        console.log(deleted, 'deleted');
+        return  res.status(200).json({
+          message: `Deleted Successfully: ${deleted.deletedCount} records`
+        });
+      }
+    } else {
+      return  res.status(500).json({
+        message: "No qualifying id for deletion " ,
       });
     }
     
   } catch (error) {
     console.error(error, "catch err");
     return  res.status(500).json({
-        message: "TryCatch: Deleting people failed! " + error,
-      });
+      message: "TryCatch: Deleting people failed! " + error,
+    });
   }
 });
 
@@ -675,16 +688,17 @@ router.put(
 );
 
 router.delete("/:id", checkAuth, async (req, res, next) => {
-  const alloweds = process.env.DELALLOWEDS;
+  const { role } = req.userData;
 
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to delete ");
-    return res.status(500).json({ message: "Not allowed" });
+  if ( role !== 'ADMIN' ) {
+    return res.status(500).json({ message: "Only Admin Allowed to Delete" });
   }
+
   const id = req.params.id;
   let filePath;
 
   const payrolls = await Payroll.find({ payee: id });
+  console.log(payrolls, ' Payrolls ')
   if (payrolls?.length) {
     return res.status(500).json({ message: `Can't Delete Person with Payroll(${payrolls.length})` });
   }

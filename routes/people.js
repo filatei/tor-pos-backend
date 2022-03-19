@@ -557,6 +557,19 @@ router.put("/:id", checkAuth, upload.any(), async (req, res, next) => {
   if (peopleObj.image === 'null') {
     delete peopleObj.image; // dont update image if not sent
  }
+
+ Object.entries(peopleObj).forEach(([key, value]) => {
+  if (
+    !value ||
+    value === undefined ||
+    value === null ||
+    value === "null" ||
+    value === "undefined"
+  ) {
+    delete peopleObj[key];
+  }
+});
+
   const people = new People(peopleObj);
   
   console.log(people, 'people object');

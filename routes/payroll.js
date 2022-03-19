@@ -294,6 +294,41 @@ router.post("/deleteAll", checkAuth, async (req, res, next) => {
   }
 });
 
+router.post("/updatePayStatus", checkAuth, async (req, res, next) => {
+ 
+  const { role, userID } = req.userData;
+
+  if ( role !== 'ADMIN' ) {
+    logIncident(req.userData.email, "Not allowed to delete ");
+    return res.status(500).json({ message: "Only Admin Allowed to Delete" });
+  }
+
+  const { ids } = req.body;
+
+  try {
+    const updateAll = await Payroll.updateMany({ _id: { $in: ids }}, {status:'PAID' });
+    console.log(updateAll, 'updateAll');
+
+    if (!updateAll) {
+      return  res.status(500).json({
+        message: " Updating payrolls failed! No Payroll with such IDs " ,
+      });
+    }
+    
+    if ( updateAll.n > 0 ) {
+      return  res.status(200).json({
+        message: `updated Successfully: ${updateAll.nModified} records`
+      });
+    }
+    
+  } catch (error) {
+    console.error(error, "catch err");
+    return  res.status(500).json({
+        message: "TryCatch: updating payroll failed! " + error,
+      });
+  }
+});
+
 router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) {
   let insertedIDs = [];
   try {
@@ -492,7 +527,6 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             }
           }
           if (row.grossPay > 0) {
-              console.log(row.grossPay, ' grossPay', row.deductions, ' deduct')
              row.netPay = row.grossPay - row.deductions
           } else {
             row.netPay = 0;
@@ -501,6 +535,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           row.creator = req.userData.userId;
           row.payeeMonthYrType = row.payee + row.month + row.year + row.type;
           row.remarks = "via CSV Upload - " + row.payeeMonthYrType ;
+          row.status = 'UNPAID';
           // if (row.netPay) {
             prl.push(row);
           // } else {

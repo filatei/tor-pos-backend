@@ -1021,7 +1021,9 @@ router.get("/:id", checkAuth, (req, res, next) => {
     });
   }
 
-  Payroll.findById(req.params.id).populate('payee') .populate('creator', ['name', 'email', 'role'])
+  Payroll.findById(req.params.id).populate('payee')
+    .populate('creator', ['name', 'email', 'role'])
+    .populate('site')
     .then((payroll) => {
         if (payroll) {
             res.status(200).json({ payroll:payroll });

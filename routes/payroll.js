@@ -883,12 +883,12 @@ router.get("",  checkAuth, async (req, res, next) => {
     });
   }
   const pageSize = +req.query.pagesize;
-  const { month, year, type } = req.query;
+  const { month, year, payType } = req.query;
   const currentPage = +req.query.page;
   let payrollQuery;
-  if (year && month && type) {
+  if (year && month && payType) {
     
-    payrollQuery =  Payroll.find({ month: month, year: +year, type: type })
+    payrollQuery =  Payroll.find({ month: month, year: +year, payType: payType })
       .sort({ createdAt: 1 })
       .populate('payee')
       .populate('site')

@@ -167,6 +167,7 @@ router.post("", checkAuth, async  (req, res, next) => {
   
     payObj.creator = req.userData.userId;
     payObj.year = +payObj.year;
+    payObj.status = 'UNPAID';
     payObj.grossPay= +payObj.grossPay || 0;
     payObj.deductions = +payObj.deductions || 0;
     payObj.payeeTax = +payObj.payeeTax;
@@ -179,7 +180,6 @@ router.post("", checkAuth, async  (req, res, next) => {
       const totalDays = getBusinessDatesCount(payObj.payStartDate, payObj.payEndDate);
       payObj.totalWorkDaysInMonth = totalDays;
       payObj.deductions += (payObj.daysAbsent / totalDays) * payObj.baseSalary;
-
     }
 
     if ( payObj.bagsBagged && payObj.type === 'MONTH-END' ) {
@@ -203,7 +203,6 @@ router.post("", checkAuth, async  (req, res, next) => {
     }
 
     payObj.netPay = payObj.grossPay - payObj.deductions - payObj.payeeTax - payObj.salaryAdvance; 
-    console.log(payObj.netPay, 'netPay')
 
     if (payObj.netPay <= 0) {
       return res.status(500).json({
@@ -223,23 +222,15 @@ router.post("", checkAuth, async  (req, res, next) => {
       }
     });
 
-    if (payObj.empType === 'REGULAR') {
-
-    }
-
-    if (payObj.empType === 'CONTRACTOR') {
-
-    }
     payObj.payeeMonthYrType = payObj.payee + payObj.month + payObj.year + payObj.type
     
-    payObj.remarks = "via CSV Upload - " + payObj.payeeMonthYrType ;
+    payObj.remarks = "PAY ADD - " + payObj.payeeMonthYrType ;
 
     // console.log(dObj);
     let prl = new Payroll(payObj);
     const saved = await prl.save();
     
     if (saved) {
-      console.log(saved)
       return res.status(201).json({
         message: "payroll Uploaded successfully",
         
@@ -270,19 +261,29 @@ router.post("/deleteAll", checkAuth, async (req, res, next) => {
 
   const { ids } = req.body;
   // console.log('deleteAll ', ids)
+  //  if status is PAID, dont delete
+  const payrolls = await Payroll.find({ _id: { $in: ids } })
+  const allowedIds = payrolls.filter(p => p.status !=='PAID').map(pp=>pp._id);
 
   try {
-    const deleted = await Payroll.deleteMany({ _id: { $in: ids } });
+    const deleted = await Payroll.deleteMany({ _id: { $in: allowedIds } });
     if (!deleted) {
       return  res.status(500).json({
         message: " Deleting payroll failed! No Payroll with such IDs " ,
       });
     }
+    const len = ids.length;
     
     if ( deleted.n > 0 ) {
-      console.log(deleted, 'deleted');
+     
+      console.log(deleted, 'deleted out of ', len);
+
       return  res.status(200).json({
-        message: `Deleted Successfully: ${deleted.deletedCount} records`
+        message: `Deleted Successfully: ${deleted.deletedCount} records out of ${len}`
+      });
+    } else {
+      return  res.status(401).json({
+        message: ` ${deleted.deletedCount} records out of ${len} affected. Make sure status is not PAID`
       });
     }
     
@@ -296,18 +297,17 @@ router.post("/deleteAll", checkAuth, async (req, res, next) => {
 
 router.post("/updatePayStatus", checkAuth, async (req, res, next) => {
  
-  const { role, userID } = req.userData;
+  const { role, userId } = req.userData;
 
   if ( role !== 'ADMIN' ) {
-    logIncident(req.userData.email, "Not allowed to delete ");
-    return res.status(500).json({ message: "Only Admin Allowed to Delete" });
+    return res.status(500).json({ message: "Only Admin Allowed to update" });
   }
 
   const { ids } = req.body;
 
   try {
-    const updateAll = await Payroll.updateMany({ _id: { $in: ids }}, {status:'PAID' });
-    console.log(updateAll, 'updateAll');
+    const updateAll = await Payroll.updateMany({ _id: { $in: ids }}, {status:'PAID', updater: userId });
+    console.log(updateAll, 'updateAll', userId);
 
     if (!updateAll) {
       return  res.status(500).json({
@@ -318,6 +318,10 @@ router.post("/updatePayStatus", checkAuth, async (req, res, next) => {
     if ( updateAll.n > 0 ) {
       return  res.status(200).json({
         message: `updated Successfully: ${updateAll.nModified} records`
+      });
+    } else {
+      return  res.status(401).json({
+        message: " zero record updated! " ,
       });
     }
     
@@ -388,8 +392,6 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           if (row['PAY END DATE']) {
             const dt = row['PAY END DATE'].split('/');
             row.payEndDate = new Date(dt[2], dt[1]-1, dt[0])
-
-            console.log(row['PAY END DATE'], row.payEndDate, 'end date')
 
             const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             row.month = months[row.payEndDate.getMonth()];
@@ -470,7 +472,6 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             row.daysWorked = +row['DAYS WORKED'];
             const totalDays = row.daysAbsent + row.daysWorked;
             row.totalWorkDaysInMonth = totalDays;
-            console.log(totalDays, 'totalDays')
 
             const thisPerson = await People.findById(row.payee);
             row.baseSalary = +thisPerson.baseSalary;
@@ -488,7 +489,6 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           // row.dob = new Date(row['DOB']);
           if (row['BANK ACCOUNT']) {
             row.bankAccount = row['BANK ACCOUNT']?.trim();
-            console.log(`updating bank account of ${row.name}`)
             const bankUpdate = await People.updateOne({ name: row.name }, { bankAccount: row.bankAccount });
             if (bankUpdate) {
               console.log(`updated bank account of ${row.name} - ${bankUpdate}`);
@@ -556,17 +556,6 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
         .on('end', async rowCount => {
           setTimeout( async () => {
             console.log(`Parsed ${rowCount} rows ${prl.length}`);
-            // for (var k = 0; k < prl.length; ++k) {
-            //   try {
-            //     const payroll = new Payroll(prl[k]);
-            //     inserted = await payroll.save();
-            //     // console.log(inserted, 'inserted')
-            //     // inserted = await Payroll.create(prl[k]);
-            //     insertedIDs.push(inserted._id);
-            //   } catch (error) {
-            //     return res.status(500).json({message: 'try error in save ' + error})
-            //   }
-            // }
             
             const newPayrollsCount = await Payroll.countDocuments();
             const diff = newPayrollsCount - oldPayrollsCount;
@@ -579,8 +568,6 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             }));
 
             if (diff > 0) {
-              
-              // console.log(exceptions, 'exceptions')
 
               return res.status(200).json({
                 message: "csv Uploaded  " + diff + " records except " + exceptions.length + " records",
@@ -841,7 +828,7 @@ router.put(
   }
 );
 
-router.delete("/:id", checkAuth, (req, res, next) => {
+router.delete("/:id", checkAuth, async (req, res, next) => {
   const { role, userID } = req.userData;
   if ( role !== 'ADMIN' ) {
     logIncident(req.userData.email, "Not allowed to delete ");
@@ -849,6 +836,12 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   }
 
   const id = req.params.id;
+  const payroll = await Payroll.findById(id);
+  if (payroll.status === 'PAID') {
+    return  res.status(500).json({
+      message: " Deleting PAID payroll not allowed! Reset status "
+    });
+  }
 
   try {
     Payroll.deleteOne({ _id: req.params.id })
@@ -1022,8 +1015,9 @@ router.get("/:id", checkAuth, (req, res, next) => {
   }
 
   Payroll.findById(req.params.id).populate('payee')
-    .populate('creator', ['name', 'email', 'role'])
-    .populate('site')
+  .populate('creator', ['name', 'email', 'role'])
+  .populate('updater', ['name', 'email', 'role'])
+  .populate('site')
     .then((payroll) => {
         if (payroll) {
             res.status(200).json({ payroll:payroll });

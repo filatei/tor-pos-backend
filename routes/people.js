@@ -518,33 +518,40 @@ router.post("/deleteAll", checkAuth, async (req, res, next) => {
   let newIds =[]
   // console.log('deleteAll ', ids)
 
-  ids.forEach( async id =>  {
-    const payroll = await Payroll.find({payee:id})
-    if (payroll.length) {
-      newIds = ids.filter(ii => ii === id)
-    }
-  })
+  
 
   try {
-    if (newIds.length) {
-      const deleted = await People.deleteMany({ _id: { $in: newIds } });
-      if (!deleted) {
+    ids.forEach( async id =>  {
+      const payroll = await Payroll.find({payee:id})
+      console.log(payroll, 'payroll')
+      if (!payroll.length) {
+        newIds.push(id)
+        console.log(newIds)
+      }
+    })
+    console.log(ids, newIds, 'ids newids');
+    setTimeout(async () => {
+      if (newIds.length) {
+        const deleted = await People.deleteMany({ _id: { $in: newIds } });
+        if (!deleted) {
+          return  res.status(500).json({
+            message: " Deleting person failed! No Person with such IDs " ,
+          });
+        }
+      
+        if ( deleted.n > 0 ) {
+          console.log(deleted, 'deleted');
+          return  res.status(200).json({
+            message: `Deleted Successfully: ${deleted.deletedCount} records`
+          });
+        }
+      } else {
         return  res.status(500).json({
-          message: " Deleting person failed! No Person with such IDs " ,
+          message: "No qualifying id for deletion " ,
         });
       }
+    }, 2000);
     
-      if ( deleted.n > 0 ) {
-        console.log(deleted, 'deleted');
-        return  res.status(200).json({
-          message: `Deleted Successfully: ${deleted.deletedCount} records`
-        });
-      }
-    } else {
-      return  res.status(500).json({
-        message: "No qualifying id for deletion " ,
-      });
-    }
     
   } catch (error) {
     console.error(error, "catch err");
@@ -730,9 +737,9 @@ router.delete("/:id", checkAuth, async (req, res, next) => {
               }
             });
           }
-          res.status(200).json({ message: "Deletion successful!" });
+          return res.status(200).json({ message: "Deletion successful!" });
         } else {
-          res.status(401).json({ message: "Not authorized!" });
+          return res.status(401).json({ message: "Not authorized!" });
         }
       })
       .catch((error) => {

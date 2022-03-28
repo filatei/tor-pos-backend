@@ -183,19 +183,19 @@ router.post("", checkAuth, async  (req, res, next) => {
       payObj.deductions += (payObj.daysAbsent / totalDays) * payObj.baseSalary;
     }
 
-    if ( payObj.bagsBagged && payObj.type === 'MONTH-END' ) {
+    if ( payObj.bagsBagged && payObj.payType === 'MONTH-END' ) {
       payObj.grossPay +=  payObj.bagsBagged * 2.5;
     }
 
-    if ( payObj.bagsBagged && payObj.type === 'MID-MONTH' ) {
+    if ( payObj.bagsBagged && payObj.payType === 'MID-MONTH' ) {
       payObj.grossPay += payObj.bagsBagged * 0.5;
     }
 
-    if ( payObj.bagsLoaded && payObj.type === 'MONTH-END' ) {
+    if ( payObj.bagsLoaded && payObj.payType === 'MONTH-END' ) {
       payObj.grossPay += payObj.bagsLoaded * 2;
     }
 
-    if ( payObj.bagsLoaded && payObj.type === 'MID-MONTH' ) {
+    if ( payObj.bagsLoaded && payObj.payType === 'MID-MONTH' ) {
       payObj.grossPay += payObj.bagsLoaded * 0.5;
     }
 
@@ -223,7 +223,7 @@ router.post("", checkAuth, async  (req, res, next) => {
       }
     });
 
-    payObj.payeeMonthYrType = payObj.payee + payObj.month + payObj.year + payObj.type
+    payObj.payeeMonthYrType = payObj.payee + payObj.month + payObj.year + payObj.payType
     
     payObj.remarks = "PAY ADD - " + payObj.payeeMonthYrType ;
 
@@ -436,19 +436,60 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           row.netPay = 0;
           row.deductions = 0;
 
-          const payee = await People.findOne({ name: row.name });
-
-          if (!payee) {
-            return res.status(500).json({
-              message: `Person ${row.name}  Not in DB. Create FIRST`
-            })
-            
-          } else {
-            row.payee = payee._id;
-          }
+          
 
           if (row['EMPLOYEE TYPE']) {
             row.empType = row['EMPLOYEE TYPE'].trim();
+          }
+
+          if (row['BASE SALARY']) {
+            row.baseSalary = +row['BASE SALARY'];
+          }
+
+          const payee = await People.findOne({ name: row.name });
+
+          if (!payee) {
+            //  we create payee
+            if (row['DEPARTMENT']) {
+              row.department = row['DEPARTMENT'].trim();
+            }
+
+            if (row['DESIGNATION']) {
+              row.jobName = row['DESIGNATION'].trim();
+            }
+
+            // do for location too
+            if (row['LOCATION']) {
+              const loc = row['DESIGNATION'].trim();
+
+              if (loc === 'KPANSIA-E') {
+                loc = 'KPANSIA E'
+              }
+
+              if (loc === 'AGADAGBA') {
+                loc = 'AGADAGBA-BLOCKS'
+              }
+              const locInDB = await Site.findOne({name:loc})
+              if (locInDB) {
+                row.site = locInDB._id;
+              } else {
+                return res.status(500).json({
+                  message: 'Problem with this location for ' + row.name
+                });
+              }
+              
+            }
+
+            const payeeObj = new People(row);
+            const payeeSave = await payeeObj.save();
+            console.log(payeeSave.name, ' created!')
+            // return res.status(500).json({
+            //   message: `Person ${row.name}  Not in DB. Create FIRST`
+            // })
+            row.payee = payeeSave._id;
+            
+          } else {
+            row.payee = payee._id;
           }
 
           if (row['DEDUCTION']) {
@@ -474,8 +515,10 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             const totalDays = row.daysAbsent + row.daysWorked;
             row.totalWorkDaysInMonth = totalDays;
 
-            const thisPerson = await People.findById(row.payee);
-            row.baseSalary = +thisPerson.baseSalary;
+            if (!row.baseSalary) {
+              const thisPerson = await People.findById(row.payee);
+              row.baseSalary = +thisPerson.baseSalary;
+            }
 
             if (!row.baseSalary) {
               return res.status(500).json({
@@ -486,6 +529,8 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             
             row.deductions += (row.daysAbsent/totalDays)* row.baseSalary
           }
+
+
 
           // row.dob = new Date(row['DOB']);
           if (row['BANK ACCOUNT']) {
@@ -508,7 +553,8 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             if (row['LOCATION']==='AGADAGBA') {
               row['LOCATION'] = 'AGADAGBA-BLOCKS'
             }
-            const site = await Site.findOne({ name: row['LOCATION'].trim() })
+
+            const site = await Site.findOne({ name: row['LOCATION'].trim() });
             if (site) {
               row.site = site._id;
             }
@@ -541,7 +587,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           }
 
           row.creator = req.userData.userId;
-          row.payeeMonthYrType = row.payee + row.month + row.year + row.type;
+          row.payeeMonthYrType = row.payee + row.month + row.year + row.payType;
           row.remarks = "via CSV Upload - " + row.payeeMonthYrType ;
           row.status = 'UNPAID';
           // if (row.netPay) {
@@ -656,14 +702,14 @@ router.post("/csvValidate", checkAuth, csvUpload.any(), async function (req, res
         row.name = row.name + ' ' + row['LAST NAME'].trim();
       }
 
-      if (!row['FIRST NAME'] || !row['LAST NAME']) {
-        row.firstOrLastNameRequired = 'YES'
-      }
+      // if (!row['FIRST NAME'] || !row['LAST NAME']) {
+      //   row.firstOrLastNameRequired = 'YES'
+      // }
 
-      const payee = await People.findOne({ name: row.name });
-      if (!payee) {
-        row.payeeNotInDB = 'YES'
-      } 
+      // const payee = await People.findOne({ name: row.name });
+      // if (!payee) {
+      //   row.payeeNotInDB = 'YES'
+      // } 
 
       if (row['LOCATION']) {
         if (row['LOCATION']==='KPANSIA-E') {

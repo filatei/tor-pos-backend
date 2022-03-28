@@ -147,6 +147,7 @@ function getBusinessDatesCount(startDate, endDate) {
 }
 
 const checkAuth = require("../middleware/check-auth");
+const e = require("express");
 
 router.post("", checkAuth, async  (req, res, next) => {
   try {
@@ -491,7 +492,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             row.bankAccount = row['BANK ACCOUNT']?.trim();
             const bankUpdate = await People.updateOne({ name: row.name }, { bankAccount: row.bankAccount });
             if (bankUpdate) {
-              console.log(`updated bank account of ${row.name} - ${bankUpdate}`);
+              console.log("updated bank account of", row.name, bankUpdate);
             }
           }
 
@@ -500,6 +501,13 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           }
 
           if (row['LOCATION']) {
+            if (row['LOCATION']==='KPANSIA-E') {
+              row['LOCATION'] = 'KPANSIA E'
+            }
+    
+            if (row['LOCATION']==='AGADAGBA') {
+              row['LOCATION'] = 'AGADAGBA-BLOCKS'
+            }
             const site = await Site.findOne({ name: row['LOCATION'].trim() })
             if (site) {
               row.site = site._id;
@@ -568,7 +576,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             }));
 
             if (diff > 0) {
-
+              console.log('exceptions', exceptions)
               return res.status(200).json({
                 message: "csv Uploaded  " + diff + " records except " + exceptions.length + " records",
                 exceptions: exceptions
@@ -617,15 +625,13 @@ router.post("/csvValidate", checkAuth, csvUpload.any(), async function (req, res
     })
     .on('data', async row => {
 
-      if (!row['TYPE']) {
+      if (!row['PAY TYPE']) {
         row.typeRequired = 'YES'
       } else if (
-        !['MONTH-END', 'MID-MONTH', 'OTHER'].includes(row['TYPE'])
+        !['MONTH-END', 'MID-MONTH', 'OTHER'].includes(row['PAY TYPE'])
       ) {
         row.typeRequired = 'YES'
       }
-
-
 
       const today = new Date();
       const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -660,6 +666,13 @@ router.post("/csvValidate", checkAuth, csvUpload.any(), async function (req, res
       } 
 
       if (row['LOCATION']) {
+        if (row['LOCATION']==='KPANSIA-E') {
+          row['LOCATION'] = 'KPANSIA E'
+        }
+
+        if (row['LOCATION']==='AGADAGBA') {
+          row['LOCATION'] = 'AGADAGBA-BLOCKS'
+        }
         const site = await Site.findOne({ name: row['LOCATION'].trim() })
         if (!site) {
           row.siteRequired = 'YES';

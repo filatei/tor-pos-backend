@@ -460,7 +460,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
 
             // do for location too
             if (row['LOCATION']) {
-              const loc = row['DESIGNATION'].trim();
+              const loc = row['LOCATION'].trim();
 
               if (loc === 'KPANSIA-E') {
                 loc = 'KPANSIA E'

@@ -351,6 +351,13 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           }
 
           if (row['LOCATION']) {
+            if (row['LOCATION']==='KPANSIA-E') {
+              row['LOCATION'] = 'KPANSIA E'
+            }
+    
+            if (row['LOCATION']==='AGADAGBA') {
+              row['LOCATION'] = 'AGADAGBA-BLOCKS'
+            }
             const site = await Site.findOne({ name: row['LOCATION'].trim() }).lean();
             if (site) {
               row.site = site._id

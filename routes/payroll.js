@@ -941,14 +941,13 @@ router.get("",  checkAuth, async (req, res, next) => {
   if (year && month && payType) {
     
     payrollQuery =  Payroll.find({ month: month, year: +year, payType: payType })
-      .sort({ createdAt: 1 })
       .populate('payee')
       .populate('site')
-      .populate('creator', ['name', 'email', 'role']);
+      .populate('creator', ['name', 'email', 'role']).sort({ createdAt: 1 })
     
   } else {
-    payrollQuery =  Payroll.find().sort({ createdAt: 1 }).populate('payee').populate('site')
-    .populate('creator', ['name', 'email', 'role'])
+    payrollQuery =  Payroll.find().populate('payee').populate('site')
+    .populate('creator', ['name', 'email', 'role']).sort({ createdAt: 1 })
   }
 
   if (pageSize && currentPage) {
@@ -956,10 +955,32 @@ router.get("",  checkAuth, async (req, res, next) => {
   }
   payrollQuery
     .then((documents) => {
-      return res.status(200).json({
-        message: "payrolls fetched successfully!",
-        payrolls: documents,
-      });
+      // sort by payee nam
+      if (documents?.length) {
+        const payrolls = documents.sort(function (a, b) {
+          var nameA = a?.payee?.name?.toUpperCase(); // ignore upper and lowercase
+          var nameB = b?.payee?.name?.toUpperCase(); // ignore upper and lowercase
+          if (nameA < nameB) {
+            return -1;
+          }
+          if (nameA > nameB) {
+            return 1;
+          }
+    
+          // names must be equal
+          return 0;
+        });
+  
+        return res.status(200).json({
+          message: "payrolls fetched successfully!",
+          payrolls: payrolls,
+        });
+      } else {
+        return res.status(500).json({
+          message: "No Payrolls ",
+        });
+      }
+     
     })
     .catch((error) => {
       return res.status(500).json({
@@ -982,7 +1003,7 @@ router.get("/getByName", checkAuth, async (req, res, next) => {
     const { searchTerm } = req.query;
     let sTerm  =  searchTerm?.toUpperCase()?.trim()
     console.log(sTerm, "sterm");
-    const matchedPeople = await People.find({ 'name': { '$regex': sTerm } })
+    const matchedPeople = await People.find({ 'name': { '$regex': sTerm } }).sort({name:1})
   
     console.log(matchedPeople, 'matched')
     let records = [];
@@ -996,8 +1017,21 @@ router.get("/getByName", checkAuth, async (req, res, next) => {
     
     setTimeout(() => {
 
-      if (records) {
-        return res.status(200).json({ payrolls: records })
+      if (records?.length) {
+        const payrolls = records.sort(function (a, b) {
+          var nameA = a?.payee?.name?.toUpperCase(); // ignore upper and lowercase
+          var nameB = b?.payee?.name?.toUpperCase(); // ignore upper and lowercase
+          if (nameA < nameB) {
+            return -1;
+          }
+          if (nameA > nameB) {
+            return 1;
+          }
+    
+          // names must be equal
+          return 0;
+        });
+        return res.status(200).json({ payrolls: payrolls })
       }
       else {
         return res.status(404).json({ message: "No records! "  });
@@ -1032,9 +1066,21 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
     .sort({name:1})
     .limit(200);
     
-    if (result) {
-      // result.sort((a,b) => (a.name > b.name) ? 1 : ((b.name > a.name) ? -1 : 0))
-      return res.status(200).json({ payrolls: result });
+    if (result.length) {
+      const payrolls = result.sort(function (a, b) {
+        var nameA = a?.payee?.name?.toUpperCase(); // ignore upper and lowercase
+        var nameB = b?.payee?.name?.toUpperCase(); // ignore upper and lowercase
+        if (nameA < nameB) {
+          return -1;
+        }
+        if (nameA > nameB) {
+          return 1;
+        }
+  
+        // names must be equal
+        return 0;
+      });
+      return res.status(200).json({ payrolls: payrolls });
     }
 
     // Payroll.find({ $text: { $search: searchTerm } })

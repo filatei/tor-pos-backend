@@ -151,10 +151,18 @@ router.put("/:id", checkAuth, async (req, res, next) => {
     });
 
   const id = req.params.id;
+  const oldExpense = await Expense.findById(id);
   expenseObj._id = id;
   expenseObj.updater = req.userData.userId;
-  const expense = new Expense(expenseObj);
+ 
+  // console.log(expenseObj, 'expenseObj')
 
+  const expense = new Expense(expenseObj);
+  expense.balance = expense.txn_amount;
+  console.log(expenseObj.notes, 'expenseObj notes')
+  expense.notes = oldExpense.notes;
+  
+  
   Expense.updateOne({ _id: req.params.id }, expense)
     .then((result) => {
       if (result.n > 0) {
@@ -421,9 +429,9 @@ router.put(
     }
 
     let updater = req.userData.userId;
-    console.log(updater, "updater");
+    console.log(updater, "updater here ");
     let myPath;
-    console.log(req.files, "files");
+    // console.log(req.files, "files");
     if (req.files) {
       let fileName;
       req.files.forEach((file) => {
@@ -441,7 +449,7 @@ router.put(
     }
     const note = req.body;
     let recId = req.params.id;
-    console.log(note, recId, "1");
+    console.log('my path, ', myPath)
     await saveExpense();
 
     async function saveExpense() {
@@ -471,8 +479,8 @@ router.put(
           { notes: notes, updater: updater, log: log }
         )
           .then((result) => {
-            // console.log(result);
-            res.status(201).json({
+            console.log(result, 'result');
+            return res.status(201).json({
               message: " note with image updated successfully",
               expense: {
                 ...result,
@@ -481,13 +489,13 @@ router.put(
             });
           })
           .catch((error) => {
-            res.status(500).json({
+            return res.status(500).json({
               message: "Creating an Image upload failed! " + error,
             });
           });
       } catch (err) {
-        res.status(500).json({
-          message: "Error with update in try block " + err,
+        return res.status(500).json({
+          message: "Error with update  " + err,
         });
       }
     }

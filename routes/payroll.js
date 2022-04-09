@@ -305,9 +305,10 @@ router.post("/updatePayStatus", checkAuth, async (req, res, next) => {
   }
 
   const { ids } = req.body;
-
+  const { status } = req.query;
+  console.log(status, 'status')
   try {
-    const updateAll = await Payroll.updateMany({ _id: { $in: ids }}, {status:'PAID', updater: userId });
+    const updateAll = await Payroll.updateMany({ _id: { $in: ids }}, {status:status, updater: userId });
     console.log(updateAll, 'updateAll', userId);
 
     if (!updateAll) {

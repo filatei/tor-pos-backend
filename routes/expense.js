@@ -158,7 +158,10 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   // console.log(expenseObj, 'expenseObj')
 
   const expense = new Expense(expenseObj);
-  // expense.balance = expense.txn_amount;
+  if (status !== 'PAID') {
+    expense.balance =  expense.balance || expense.txn_amount;
+  }
+  
   console.log(expenseObj.txn_amount, expenseObj.balance, 'txnamt bal ')
   expense.notes = oldExpense.notes;
   

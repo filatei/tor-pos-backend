@@ -70,7 +70,7 @@ var upload = multer({
 const storage2 = multer.diskStorage({
   destination: (req, file, cb) => {
     userid = req.userData.userId;
-    const myDir = "uploads/expenses/" + userid + "/";
+    const myDir = "/var/www/uploads/expenses/" + userid + "/";
     try {
       if (!fs.existsSync(myDir)) {
         fs.mkdirSync(myDir, { recursive: true });

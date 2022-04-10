@@ -161,11 +161,10 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   if (status !== 'PAID') {
     expense.balance =  expense.balance || expense.txn_amount;
   }
-  
+
   console.log(expenseObj.txn_amount, expenseObj.balance, 'txnamt bal ')
   expense.notes = oldExpense.notes;
-  
-  
+
   Expense.updateOne({ _id: req.params.id }, expense)
     .then((result) => {
       if (result.n > 0) {
@@ -438,21 +437,22 @@ router.put(
     if (req.files) {
       let fileName;
       req.files.forEach((file) => {
-        fileName =
-          "uploads/expenses/" + req.userData.userId + "/" + file.filename;
-
         if (hostname.includes("torama.ng")) {
           url = "https://api.torama.ng";
         } else {
           url = req.protocol + "://" + req.get("host");
         }
 
-        myPath = url + "/" + fileName;
+        // myPath = url + "/" + file.path;
+        console.log(file.path, 'file path')
+
+        myPath = url + '/expenseUploads/' + file.path.split('/var/www/uploads/expenses')[1]
+        console.log(myPath, 'myPath')
+
       });
     }
     const note = req.body;
     let recId = req.params.id;
-    console.log('my path, ', myPath)
     await saveExpense();
 
     async function saveExpense() {
@@ -482,7 +482,6 @@ router.put(
           { notes: notes, updater: updater, log: log }
         )
           .then((result) => {
-            console.log(result, 'result');
             return res.status(201).json({
               message: " note with image updated successfully",
               expense: {

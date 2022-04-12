@@ -119,7 +119,7 @@ router.put("/:id", checkAuth, async (req, res, next) => {
 
   let siteObj = req.body;
   const id = req.params.id;
-
+  
   let user = req.userData;
   const updater = req.userData.userId;
 
@@ -136,13 +136,11 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   siteObj._id = id;
   let mailStat;
 
-  //   const site = new Site(siteObj);
 
   Site.updateOne({ _id: id }, siteObj)
     .then(async (result) => {
       if (result.n > 0) {
         const updated = Site.findById(id);
-        // mailStat = await Mail.sendSite(updated, user);
 
         res.status(200).json({ message: "Update successful!", site: result });
       } else {

@@ -59,6 +59,8 @@ const distRoutes = require("./routes/distributor");
 const vehRoutes = require("./routes/vehicle");
 const payRoutes = require("./routes/payroll");
 const pplRoutes = require("./routes/people");
+const callRoutes = require("./routes/callmanager");
+
 
 
 const DB = "torposedb";
@@ -70,6 +72,7 @@ app.use(require("express-status-monitor")());
 app.use("/data", express.static(path.join(__dirname, "data")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/expenseuploads", express.static('/var/www/uploads/expenses'));
+app.use("/callManageruploads", express.static('/var/www/uploads/calls'));
 app.use("/public", express.static(path.join(__dirname, "public")));
 app.use("/varimages", express.static('/var/images'));
 
@@ -176,5 +179,6 @@ app.use("/api/distributor", distRoutes);
 app.use("/api/vehicle", vehRoutes);
 app.use("/api/people", pplRoutes);
 app.use("/api/payroll", payRoutes);
+app.use("/api/callManager", callRoutes);
 
 module.exports = app;

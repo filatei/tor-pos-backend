@@ -2,10 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const User = require("../models/user");
 
-const Expense = require("../models/expense");
-const Stockitem = require("../models/stockitem");
-const Contact = require("../models/contact");
-const Inventory = require("../models/inventory");
+const CallManager = require("../models/callmanager");
 const Accesslog = require("../models/accesslog");
 const router = express.Router();
 const path = require("path");
@@ -36,85 +33,52 @@ function logIncident(email, description) {
 }
 
 const checkAuth = require("../middleware/check-auth");
-const expense = require("../models/expense");
 
 router.post("", checkAuth, function (req, res, next) {
   const alloweds = process.env.STOREALLOWEDS;
 
   if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to create Expense");
-    return res.status(500).json({ message: "Not allowed to create Expense" });
+    logIncident(req.userData.email, "Not allowed to create CallManager");
+    return res.status(500).json({ message: "Not allowed to create CallManager" });
   }
 
-  let expenseObj = req.body;
+  let callManagerObj = req.body;
 
-  expenseObj.creator = req.userData.userId;
-  expenseObj.status = "DRAFT";
+  callManagerObj.creator = req.userData.userId;
+  callManagerObj.status = "DRAFT";
 
-  const expense = new Expense(expenseObj);
+  const callmanager = new CallManager(callManagerObj);
 
-  expense
+  callmanager
     .save()
     .then((result) => {
       res.status(201).json({
-        message: "Expense added successfully",
-        expense: { ...result, id: result._id },
+        message: "CallManager added successfully",
+        callmanager: { ...result, id: result._id },
       });
     })
     .catch((error) => {
       res.status(500).json({
-        message: "Creating a expense failed! " + error,
+        message: "Creating a callmanager failed! " + error,
       });
     });
 });
 
-router.put("/expenseAcct/:id", checkAuth, async (req, res, next) => {
-  const alloweds = process.env.STOREALLOWEDS;
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to create Expense");
-    return res.status(500).json({ message: "Not allowed to create Expense" });
-  }
-
-  const { expenseAccount } = req.body;
-  console.log(expenseAccount, "expenseAcct");
-
-  const id = req.params.id;
-  const updater = req.userData.userId;
-
-  Expense.updateOne(
-    { _id: req.params.id },
-    { expenseAccount: expenseAccount, updater }
-  )
-    .then((result) => {
-      if (result.n > 0) {
-        res
-          .status(200)
-          .json({ message: "Update successful!", expense: result });
-      } else {
-        res.status(401).json({ message: "Not authorized!" });
-      }
-    })
-    .catch((error) => {
-      res.status(500).json({
-        message: "Couldn't update expense! " + error,
-      });
-    });
-});
 
 router.put("/:id", checkAuth, async (req, res, next) => {
   const alloweds = process.env.STOREALLOWEDS;
   if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to create Expense");
-    return res.status(500).json({ message: "Not allowed to create expense" });
+    logIncident(req.userData.email, "Not allowed to create CallManager");
+    return res.status(500).json({ message: "Not allowed to create callmanager" });
   }
 
-  let expenseObj = req.body;
-  let status = expenseObj.status;
+  let callManagerObj = req.body;
+  let status = callManagerObj.status;
   let updater = req.userData.userId;
   // console.log(updater);
   // update statusHistory
   let statusHist;
-  const currExp = await Expense.findById(req.params.id);
+  const currExp = await CallManager.findById(req.params.id);
   statusHist = {
     oldStatus: currExp.status,
     newStatus: status,
@@ -123,9 +87,9 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   };
 
   if (currExp && currExp.statusHistory) {
-    expenseObj.statusHistory = [...currExp.statusHistory, statusHist];
+    callManagerObj.statusHistory = [...currExp.statusHistory, statusHist];
   } else {
-    expenseObj.statusHistory = [...statusHist];
+    callManagerObj.statusHistory = [...statusHist];
   }
 
   async function isOpen() {
@@ -139,7 +103,7 @@ router.put("/:id", checkAuth, async (req, res, next) => {
       status === "PART-PAY"
     ) {
       //  send mail
-      const mailStat = await Mail.sendExpense(expenseObj, updater);
+      const mailStat = await Mail.sendExpense(callManagerObj, updater);
     }
   }
   isOpen()
@@ -151,32 +115,33 @@ router.put("/:id", checkAuth, async (req, res, next) => {
     });
 
   const id = req.params.id;
-  const oldExpense = await Expense.findById(id);
-  expenseObj._id = id;
-  expenseObj.updater = req.userData.userId;
+  const oldExpense = await CallManager.findById(id);
+  callManagerObj._id = id;
+  callManagerObj.updater = req.userData.userId;
  
-  // console.log(expenseObj, 'expenseObj')
+  // console.log(callManagerObj, 'callManagerObj')
 
-  const expense = new Expense(expenseObj);
+  const callmanager = new CallManager(callManagerObj);
   if (status !== 'PAID') {
-    expense.balance =  expense.balance || expense.txn_amount;
+    callmanager.balance =  callmanager.balance || callmanager.txn_amount;
   }
 
-  expense.notes = oldExpense.notes;
+  console.log(callManagerObj.txn_amount, callManagerObj.balance, 'txnamt bal ')
+  callmanager.notes = oldExpense.notes;
 
-  Expense.updateOne({ _id: req.params.id }, expense)
+  CallManager.updateOne({ _id: req.params.id }, callmanager)
     .then((result) => {
       if (result.n > 0) {
         res
           .status(200)
-          .json({ message: "Update successful!", expense: result });
+          .json({ message: "Update successful!", callmanager: result });
       } else {
         res.status(401).json({ message: "Not authorized!" });
       }
     })
     .catch((error) => {
       res.status(500).json({
-        message: "Couldn't update expense! " + error,
+        message: "Couldn't update callmanager! " + error,
       });
     });
 });
@@ -191,7 +156,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   deleteExpense();
 
   function deleteExpense() {
-    Expense.deleteOne({ _id: req.params.id })
+    CallManager.deleteOne({ _id: req.params.id })
       .then((result) => {
         if (result.n > 0) {
           res.status(200).json({ message: "Deletion successful!" });
@@ -202,7 +167,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
       .catch((error) => {
         console.error(error, "catch err");
         res.status(500).json({
-          message: "Deleting expense failed! " + error,
+          message: "Deleting callmanager failed! " + error,
         });
       });
   }
@@ -219,8 +184,9 @@ router.get("", checkAuth, async (req, res, next) => {
     const generalManagers = process.env.GENERALMANAGERS;
     const managers = process.env.MANAGERS;
     const sites = [
-      "KPANSIA",
-      "SWALI",
+        "KPANSIA",
+        "AKENFA",
+        "SWALI",
       "OKUTUKUTU",
       "YENEGWE",
       "OBUNNA",
@@ -229,13 +195,13 @@ router.get("", checkAuth, async (req, res, next) => {
 
     const blockSites = ["OKUTUKUTU-BLOCKS", "AGADAGBA-BLOCKS"];
 
-    let expenseQuery;
+    let callManagerQuery;
 
     // console.log("todaystart", startOfDay(new Date()), new Date());
     if (imprest) {
-      expenseQuery = await Expense.find({
+      callManagerQuery = await CallManager.find({
         status: "APPROVED",
-        expenseAccount: "Daily Imprest",
+        callManagerAccount: "Daily Imprest",
         updatedAt: { $gte: startOfDay(new Date()) },
       })
         .sort({ createdAt: -1 })
@@ -245,9 +211,8 @@ router.get("", checkAuth, async (req, res, next) => {
     } else if (req.userData.role === "ADMIN") {
       // console.log("in directors");
 
-      expenseQuery = await Expense.find()
+      callManagerQuery = await CallManager.find()
         .sort({ createdAt: -1 })
-        .populate("vendor")
         .populate("creator")
         .limit(pageSize);
     } else if (
@@ -255,86 +220,51 @@ router.get("", checkAuth, async (req, res, next) => {
     ) {
       console.log("general manager or snr accountant");
       // see all in designated field sites.
-      expenseQuery = await Expense.find({
+      callManagerQuery = await CallManager.find({
         site: { $in: sites },
       })
         .sort({ createdAt: -1 })
-        .populate("vendor")
         .populate("creator")
         .limit(pageSize);
     } else if (req.userData.role === "MANAGER") {
       console.log("in managers");
 
-      expenseQuery = await Expense.find({
+      callManagerQuery = await CallManager.find({
         // if i own it, good. or if site is my site, good.
         $or: [{ creator: user[0]._id }, { site: req.userData.site }],
       })
         .sort({ createdAt: -1 })
-        .populate("vendor")
         .populate("creator")
 
         .limit(pageSize);
     } else {
       console.log("in other");
 
-      expenseQuery = await Expense.find({ creator: user[0]._id })
+      callManagerQuery = await CallManager.find({ creator: user[0]._id })
         .sort({ createdAt: -1 })
-        .populate("vendor")
         .populate("creator")
 
         .limit(pageSize);
     }
-    // console.log(expenseQuery);
+    // console.log(callManagerQuery);
 
-    if (expenseQuery) {
+    if (callManagerQuery) {
       return res.status(200).json({
-        expense: expenseQuery,
-        message: "Expenses fetched Successfully",
+        callmanager: callManagerQuery,
+        message: "Calls fetched Successfully",
       });
     } else {
       return res
         .status(500)
-        .json({ message: "fetching expenses not successful" });
+        .json({ message: "fetching callManagers not successful" });
     }
   } catch (err) {
     return res
       .status(500)
-      .json({ message: "fetching expenses not successful" + err });
+      .json({ message: "fetching callManagers not successful" + err });
   }
 });
 
-router.get("/mail/mailImprest", checkAuth, async (req, res, next) => {
-  const alloweds = process.env.ALLOWEDS;
-
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to see Receipts");
-    return res.status(500).json({ message: "Not allowed" });
-  }
-  const userName = req.userData.name;
-  const userEmail = req.userData.email;
-
-  const { searchTerm } = req.query;
-  console.log(req.query, " req-query");
-  // get array
-  let records;
-  const now = new Date();
-  const startOfToday = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate()
-  );
-  const result = await Expense.find({
-    createdAt: { $gte: startOfToday },
-    expenseAccount: "Daily Imprest",
-  }).sort({ createdAt: -1 });
-  // mail result
-  // console.log(result);
-  await Mail.sendImprest(result, { name: userName, email: userEmail });
-  if (result) { return res.status(200).json({ expense: result }) }
-  else {
-    return res.status(500).json({message: 'Error Retrieving result'})
-  }
-});
 
 router.get("/getByText", checkAuth, async (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
@@ -348,7 +278,7 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
   console.log(req.query, " req-query");
   // get array
   let records;
-  const result = await Expense.aggregate([
+  const result = await CallManager.aggregate([
     { $match: { $text: { $search: searchTerm } } },
   ])
     .sort({ createdAt: -1 })
@@ -356,19 +286,18 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
   
   
 
-  if (result) return res.status(200).json({ expense: result });
+  if (result) return res.status(200).json({ callmanager: result });
   console.log(result);
 
-  Expense.find({ $text: { $search: searchTerm } })
+  CallManager.find({ $text: { $search: searchTerm } })
     .sort({ updatedAt: -1 })
-    .populate("vendor")
     .populate("creator")
     .populate("updater")
     .limit(200)
     .then((record) => {
       if (record) {
         console.log(record);
-        res.status(200).json({ expense: record });
+        res.status(200).json({ callmanager: record });
       } else {
         res.status(404).json({ message: "record not found!" });
       }
@@ -380,39 +309,22 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
     });
 });
 
-router.get("/expense/:id", (req, res, next) => {
-  const expId = req.params.id;
-  Expense.find({ expense_id: expId })
-    .populate("creator")
-    .then((expense) => {
-      if (expense) {
-        res.status(200).json({ expense });
-      } else {
-        const error = new HttpError("expense not found!", 404);
-        return next(error);
-      }
-    })
-    .catch((error) => {
-      res.status(500).json({
-        message: "Fetching expense failed! " + error,
-      });
-    });
-});
+
 
 router.get("/:id", (req, res, next) => {
-  Expense.findById(req.params.id)
+  CallManager.findById(req.params.id)
     .populate("vendor")
     .populate("creator")
-    .then((expense) => {
-      if (expense) {
-        res.status(200).json({ expense });
+    .then((callmanager) => {
+      if (callmanager) {
+        res.status(200).json({ callmanager });
       } else {
-        res.status(404).json({ message: "expense not found!" });
+        res.status(404).json({ message: "callmanager not found!" });
       }
     })
     .catch((error) => {
       res.status(500).json({
-        message: "Fetching expense failed! " + error,
+        message: "Fetching callmanager failed! " + error,
       });
     });
 });
@@ -420,7 +332,7 @@ router.get("/:id", (req, res, next) => {
 router.put(
   "/notes/:id",
   checkAuth,
-  Utils.upload2.any(),
+  Utils.uploadCall.any(),
   async function (req, res, next) {
     const alloweds = process.env.ALLOWEDS;
 
@@ -445,7 +357,7 @@ router.put(
         // myPath = url + "/" + file.path;
         console.log(file.path, 'file path')
 
-        myPath = url + '/expenseUploads/' + file.path.split('/var/www/uploads/expenses')[1]
+        myPath = url + '/callManagerUploads/' + file.path.split('/var/www/uploads/calls')[1]
         console.log(myPath, 'myPath')
 
       });
@@ -460,37 +372,30 @@ router.put(
           note.image = myPath;
         }
 
-        let expObj = await Expense.findById(recId);
+        let expObj = await CallManager.findById(recId);
         // send mail with Note image
         // let msent = await Mail.sendNote(note, expObj);
-        let notes
+        let notes;
         if (expObj) {
-          notes = expObj.notes;
-
-          notes.push(note);
-          // console.log(notes);
-          log = expObj.log;
-
-          log.push({
-            updater: note.author,
-            status: expObj.status,
-            date: new Date(),
-            note,
-          });
-        } else {
-          return res.status(500).json({
-            message: "No expense Object to update! " ,
-          });
+            notes = expObj.notes || [];
+            notes.push(note);
+        }
+        else {
+            return res.status(500).json({
+                message: "Call not in DB " ,
+              });
         }
         
-        Expense.findByIdAndUpdate(
+        // console.log(notes);
+        
+        CallManager.findByIdAndUpdate(
           { _id: recId },
-          { notes: notes, updater: updater, log: log }
+          { notes: notes, updater: updater }
         )
           .then((result) => {
             return res.status(201).json({
               message: " note with image updated successfully",
-              expense: {
+              callmanager: {
                 ...result,
                 id: result._id,
               },
@@ -511,8 +416,8 @@ router.put(
 );
 
 router.post("/mail", checkAuth, function (req, res, next) {
-  let expenseObj = req.body;
-  expenseObj.creator = req.userData.userId;
+  let callManagerObj = req.body;
+  callManagerObj.creator = req.userData.userId;
 });
 
 module.exports = router;

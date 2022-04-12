@@ -471,6 +471,65 @@ var upload8 = multer({
   },
 });
 
+const storageCall = multer.diskStorage({
+  destination: (req, file, cb) => {
+    userid = req.userData.userId;
+    const myDir = "/var/www/uploads/calls/" + userid + "/";
+    try {
+      if (!fs.existsSync(myDir)) {
+        fs.mkdirSync(myDir, { recursive: true });
+      }
+    } catch (err) {
+      throw err;
+    }
+    cb(null, myDir);
+  },
+  filename: (req, file, cb) => {
+    console.log(path.extname(file.originalname));
+    let fileName;
+    if (path.extname(file.originalname)) {
+      fileName =
+        req.userData.userId +
+        "-" +
+        new Date().getTime() +
+        file.originalname.toLowerCase(file.originalname).split(" ").join("-") +
+        path.extname(file.originalname);
+      console.log(fileName);
+    } else {
+      fileName =
+        req.userData.userId +
+        "-" +
+        new Date().getTime() +
+        file.originalname.toLowerCase().split(" ").join("-") +
+        ".png";
+      console.log(fileName);
+    }
+
+    cb(null, fileName);
+  },
+});
+
+var uploadCall = multer({
+  storage: storageCall,
+  limits: {
+    fileSize: 1024 * 1024 * 10,
+  },
+  fileFilter: (req, file, cb) => {
+    // console.log(file.mimetype)
+    if (
+      file.mimetype == "image/png" ||
+      file.mimetype == "image/jpeg" ||
+      file.mimetype == "image/jpg" ||
+      file.mimetype === "application/pdf"
+    ) {
+      cb(null, true);
+    } else {
+      cb(null, false);
+      return cb(new Error("Only .png or .jpg or pdf format allowed!"));
+    }
+  },
+});
+
 const logIncident = (email, description) => {
   const logObj = new Accesslog({ email: email, description: description });
   logObj
@@ -701,6 +760,7 @@ module.exports = {
   upload6,
   upload7,
   upload8,
+  uploadCall,
   logIncident,
   dayAgg,
   weekAgg,

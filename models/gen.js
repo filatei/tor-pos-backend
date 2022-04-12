@@ -33,15 +33,6 @@ const genSchema = mongoose.Schema(
       image: { type: String },
       
     }],
-    // diesel_history: [{
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: "Gendiesel",
-    // }],
-
-    // maintenance_history: [{
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: "Genmaint",
-    // }],
       
     current_hour: {
       date: {type: Date},
@@ -62,6 +53,12 @@ const genSchema = mongoose.Schema(
       fuelfilters: {type: Boolean},
       oilfilters: {type: Boolean},
       radiator: {type: Boolean},
+      rings: {type: Boolean},
+      crankShaft: {type: Boolean},
+      metals: {type: Boolean},
+      turboCharger: {type: Boolean},
+      pistons: {type: Boolean},
+      fuelPump: {type: Boolean},
       oil: {type: Boolean},
       maintenance_hour: {type: Number},
       remarks: {type: String},
@@ -74,6 +71,12 @@ const genSchema = mongoose.Schema(
       date: {type: Date},
       fuelfilters: {type: Boolean},
       oilfilters: {type: Boolean},
+      rings: {type: Boolean},
+      crankShaft: {type: Boolean},
+      metals: {type: Boolean},
+      turboCharger: {type: Boolean},
+      pistons: {type: Boolean},
+      fuelPump: {type: Boolean},
       radiator: {type: Boolean},
       oil: {type: Boolean},
       maintenance_hour: {type: Number},
@@ -88,10 +91,7 @@ const genSchema = mongoose.Schema(
       author: { type: String },
       image: {type: String}
     }],
-    // notes: [{
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   ref: "Gennotes",
-    // }],
+    
 
     note: {
       text: {type: String},

@@ -234,13 +234,13 @@ Gen.findById(recId)
         updated = await Gen.updateOne({ _id: req.params.id }, { $set: { current_hour: gen.current_hour, hour_history: gen.hour_history }});
     } 
     
-     else {
+    else {
         updated = await Gen.updateOne({ _id: req.params.id }, { $set: {purchase_price: gen.purchase_price, purchase_date: gen.purchase_date, sn: gen.sn, kva: gen.kva, model: gen.model, brand: gen.brand, description: gen.description, site: gen.site }});
     }
 
     if ( updated?.nModified && updated?.ok ) {
       
-      return res.status(200).json({ message: "Update successful! " + JSON.stringify(updated) });
+      return res.status(200).json({ message: "Update successful!"  });
     } else {
         res.status(500).json({ message: "Couldn't update Gen!" })
     }
@@ -284,6 +284,8 @@ Gen.findById(recId)
       if ( myPath ) {
         current_maintenance.image = myPath;
       }
+      console.log(current_maintenance, 'currmaint')
+
       const oldGen = await Gen.findById(recId).lean().populate('site','name');
       
       const gen = new Gen();
@@ -294,7 +296,7 @@ Gen.findById(recId)
 
       current_maintenance.gen = oldGen._id;
       const genMaint = new GenMaint(current_maintenance);
-      console.log(genMaint)
+      console.log(genMaint, 'genmaint')
       inserted = await genMaint.save();
 
       updated = await Gen.updateOne({ _id: req.params.id }, { $set: { current_hour: gen.current_hour, hour_history: gen.hour_history }});

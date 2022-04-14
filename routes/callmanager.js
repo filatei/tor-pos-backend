@@ -52,10 +52,13 @@ router.post("", checkAuth, function (req, res, next) {
   callmanager
     .save()
     .then((result) => {
-      res.status(201).json({
+        const mailed = Mail.sendCallActivity(result, req.userData);
+        console.log(result);
+
+        res.status(201).json({
         message: "CallManager added successfully",
         callmanager: { ...result, id: result._id },
-      });
+        });
     })
     .catch((error) => {
       res.status(500).json({

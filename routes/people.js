@@ -264,6 +264,8 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             return res.status(500).json({message: "LAST NAME REQUIRED"})
           }
 
+          row.creator = req.userData.userId;
+
           if (row['NAME ON ODOO']) {
             row.nameOnOdoo = row['NAME ON ODOO']?.trim();
           }
@@ -365,7 +367,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           }
 
           row.creator = req.userData.userId;
-          //  check if peorson already exists in DB
+          //  check if person already exists in DB
          
           // console.log(row.name)
           if (row.name ) {
@@ -384,7 +386,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
              }
             } catch (error) {
               console.log(error)
-              return res.status(500).json({message: JSON.stringify(error)})
+              return res.status(500).json({message: error})
 
             }
             
@@ -842,7 +844,7 @@ router.get("/:id", (req, res, next) => {
   People.findById(req.params.id).populate('site').populate('creator')
     .then((people) => {
       if (people) {
-        people.creator.name=people.creator.name==='Akpodigha Filatei'?'MD':people.creator.name;
+        // people.creator.name=people?.creator?.name==='Akpodigha Filatei'?'MD':people?.creator?.name;
         return res.status(200).json({ people:people });
       } else {
         return res.status(404).json({ message: "people not found!" });

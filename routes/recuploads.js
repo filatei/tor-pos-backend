@@ -158,6 +158,7 @@ router.post("", checkAuth, Utils.upload.any(), function (req, res, next) {
         // sendMail( result );
       })
       .catch((error) => {
+        console.log(error)
         res.status(500).json({
           message: "Creating a Recupload failed! " + error,
         });

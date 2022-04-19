@@ -370,7 +370,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
         .pipe(csv.parse({ headers: true }))
         .on('error', error => {
           console.error(error);
-          return res.status(500).json({ message: "fs createReadStream error! " + error })
+          return res.status(500).json({ message: "fs createReadStream error! " + error.Error })
         })
         .on('data', async row => {
           if (row['PAY TYPE']) {
@@ -383,6 +383,31 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             });
           }
 
+
+          let personId;
+          if (row['ID']) {
+            personId = row['ID'].trim();
+          }
+
+          if ( !personId) {
+            return res.status(500).json({
+              message: 'Person ID is required'
+            });
+          }
+
+          const payee = await People.findOne({ people_id: personId });
+
+          if (payee) {
+            row.payee = payee._id;
+          } else {
+            console.log('ID not in db');
+            return res.status(500).json({
+                      message: 'ID not in People DB for ID ' + personId 
+                    });
+          }
+
+
+         
           const today = new Date();
           const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
           console.log(row['PAY START DATE'], row['PAY END DATE'], 'start end')
@@ -426,18 +451,11 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             row.lname = row['LAST NAME'].trim();
             row.name = row.name + ' ' + row.lname
           }
-
-          if (!row.fname || !row.lname) {
-            return res.status(500).json({
-              message: 'First Name and Last Name required'
-            });
-          }
+         
 
           row.grossPay = 0;
           row.netPay = 0;
           row.deductions = 0;
-
-          
 
           if (row['EMPLOYEE TYPE']) {
             row.empType = row['EMPLOYEE TYPE'].trim();
@@ -447,51 +465,52 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             row.baseSalary = +row['BASE SALARY'];
           }
 
-          const payee = await People.findOne({ name: row.name });
+          
+         
 
-          if (!payee) {
-            //  we create payee
-            if (row['DEPARTMENT']) {
-              row.department = row['DEPARTMENT'].trim();
-            }
+          // if (!payee) {
+          //   //  we create payee
+          //   if (row['DEPARTMENT']) {
+          //     row.department = row['DEPARTMENT'].trim();
+          //   }
 
-            if (row['DESIGNATION']) {
-              row.jobName = row['DESIGNATION'].trim();
-            }
+          //   if (row['DESIGNATION']) {
+          //     row.jobName = row['DESIGNATION'].trim();
+          //   }
 
-            // do for location too
-            if (row['LOCATION']) {
-              const loc = row['LOCATION'].trim();
+          //   // do for location too
+          //   if (row['LOCATION']) {
+          //     const loc = row['LOCATION'].trim();
 
-              if (loc === 'KPANSIA-E') {
-                loc = 'KPANSIA E'
-              }
+          //     if (loc === 'KPANSIA-E') {
+          //       loc = 'KPANSIA E'
+          //     }
 
-              if (loc === 'AGADAGBA') {
-                loc = 'AGADAGBA-BLOCKS'
-              }
-              const locInDB = await Site.findOne({name:loc})
-              if (locInDB) {
-                row.site = locInDB._id;
-              } else {
-                return res.status(500).json({
-                  message: 'Problem with this location for ' + row.name
-                });
-              }
+          //     if (loc === 'AGADAGBA') {
+          //       loc = 'AGADAGBA-BLOCKS'
+          //     }
+          //     const locInDB = await Site.findOne({name:loc})
+          //     if (locInDB) {
+          //       row.site = locInDB._id;
+          //     } else {
+          //       return res.status(500).json({
+          //         message: 'Problem with this location for ' + row.name
+          //       });
+          //     }
               
-            }
+          //   }
 
-            const payeeObj = new People(row);
-            const payeeSave = await payeeObj.save();
-            console.log(payeeSave.name, ' created!')
-            // return res.status(500).json({
-            //   message: `Person ${row.name}  Not in DB. Create FIRST`
-            // })
-            row.payee = payeeSave._id;
+          //   const payeeObj = new People(row);
+          //   const payeeSave = await payeeObj.save();
+          //   console.log(payeeSave.name, ' created!')
+          //   // return res.status(500).json({
+          //   //   message: `Person ${row.name}  Not in DB. Create FIRST`
+          //   // })
+          //   row.payee = payeeSave._id;
             
-          } else {
-            row.payee = payee._id;
-          }
+          // } else {
+          //   row.payee = payee._id;
+          // }
 
           if (row['DEDUCTION']) {
             row.deductions = +row['DEDUCTION'];
@@ -536,6 +555,14 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           // row.dob = new Date(row['DOB']);
           if (row['BANK ACCOUNT']) {
             row.bankAccount = row['BANK ACCOUNT']?.trim();
+            const bankUpdate = await People.updateOne({ name: row.name }, { bankAccount: row.bankAccount });
+            if (bankUpdate) {
+              console.log("updated bank account of", row.name, bankUpdate);
+            }
+          }
+
+          if (row['ACCOUNT NUMBER']) {
+            row.bankAccount = row['ACCOUNT NUMBER']?.trim();
             const bankUpdate = await People.updateOne({ name: row.name }, { bankAccount: row.bankAccount });
             if (bankUpdate) {
               console.log("updated bank account of", row.name, bankUpdate);
@@ -598,19 +625,29 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           // }
           if (row.netPay === 0) {
             exceptions.push(row);
+          } else {
+            prl.push(row);
           }
 
-          if (row.payee ) {
+          // if (row.payee ) {
            
-              const payroll = new Payroll(row);
-              inserted = await payroll.save();
-              insertedIDs.push(inserted);
-              // console.log(ppl.length)
-          }
+          //     const payroll = new Payroll(row);
+          //     inserted = await payroll.save();
+          //     insertedIDs.push(inserted);
+          //     // console.log(ppl.length)
+          // }
         })
         .on('end', async rowCount => {
           setTimeout( async () => {
             console.log(`Parsed ${rowCount} rows ${prl.length}`);
+
+            // let insertedIDs = [];
+            for (let p of prl) {
+              const payroll = new Payroll(p);
+              inserted = await payroll.save();
+              insertedIDs.push(inserted);
+            }
+           
             
             const newPayrollsCount = await Payroll.countDocuments();
             const diff = newPayrollsCount - oldPayrollsCount;
@@ -625,7 +662,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             if (diff > 0) {
               console.log('exceptions', exceptions)
               return res.status(200).json({
-                message: "csv Uploaded  " + diff + " records except " + exceptions.length + " records",
+                message: `${insertedIDs.length} csv Uploaded  " + ${diff} + " records except " + ${exceptions.length} + " records `,
                 exceptions: exceptions
               });
             } else {
@@ -668,7 +705,7 @@ router.post("/csvValidate", checkAuth, csvUpload.any(), async function (req, res
     .pipe(csv.parse({ headers: true }))
     .on('error', error => {
       console.error(error);
-      return res.status(500).json({ message: "fs createReadStream error! " + error })
+      return res.status(500).json({ message: "fs createReadStream error! " + error.Error })
     })
     .on('data', async row => {
 
@@ -678,6 +715,21 @@ router.post("/csvValidate", checkAuth, csvUpload.any(), async function (req, res
         !['MONTH-END', 'MID-MONTH', 'OTHER'].includes(row['PAY TYPE'])
       ) {
         row.typeRequired = 'YES'
+      }
+
+      let personId;
+      if (row['ID']) {
+        personId = row['ID'].trim();
+      }
+
+      if ( !personId) {
+        row.personIDRequired = 'YES'
+      }
+
+      const payee = await People.findOne({ people_id: personId });
+
+      if (!payee) {
+        row.payeeRequired = 'YES';
       }
 
       const today = new Date();
@@ -691,27 +743,12 @@ router.post("/csvValidate", checkAuth, csvUpload.any(), async function (req, res
         row.payEndRequired = 'YES'
       }
      
-      if (row['FIRST NAME']) {
-        row.name = row['FIRST NAME'].trim();
-        // row.fname = row['FIRST NAME'].trim();
+
+      if (!row['FIRST NAME'] || !row['LAST NAME']) {
+        row.firstOrLastNameRequired = 'YES'
       }
 
-      if (row['MIDDLE NAME']) {
-        row.name = row.name + ' ' + row['MIDDLE NAME'].trim();
-      }
-      if (row['LAST NAME']) {
-        row.name = row.name + ' ' + row['LAST NAME'].trim();
-      }
-
-      // if (!row['FIRST NAME'] || !row['LAST NAME']) {
-      //   row.firstOrLastNameRequired = 'YES'
-      // }
-
-      // const payee = await People.findOne({ name: row.name });
-      // if (!payee) {
-      //   row.payeeNotInDB = 'YES'
-      // } 
-
+     
       if (row['LOCATION']) {
         if (row['LOCATION']==='KPANSIA-E') {
           row['LOCATION'] = 'KPANSIA E'
@@ -726,12 +763,11 @@ router.post("/csvValidate", checkAuth, csvUpload.any(), async function (req, res
         }
        
       }
-     
       
       if (row.payEndRequired || row.payeeNotInDB 
         || row.firstOrLastNameRequired || row.siteRequired
         || row.baseSalaryRequired
-        || row.payStartRequired
+        || row.payStartRequired || row.personIDRequired
         || row.payEndRequired) {
           exceptions.push(row);
 
@@ -944,11 +980,11 @@ router.get("",  checkAuth, async (req, res, next) => {
     payrollQuery =  Payroll.find({ month: month, year: +year, payType: payType })
       .populate('payee')
       .populate('site')
-      .populate('creator', ['name', 'email', 'role']).sort({ createdAt: 1 })
+      .populate('creator', ['name', 'email', 'role']).sort({ createdAt: -1 })
     
   } else {
     payrollQuery =  Payroll.find().populate('payee').populate('site')
-    .populate('creator', ['name', 'email', 'role']).sort({ createdAt: 1 })
+    .populate('creator', ['name', 'email', 'role']).sort({ createdAt: -1 })
   }
 
   if (pageSize && currentPage) {
@@ -977,8 +1013,9 @@ router.get("",  checkAuth, async (req, res, next) => {
           payrolls: payrolls,
         });
       } else {
-        return res.status(500).json({
+        return res.status(200).json({
           message: "No Payrolls ",
+          payrolls: []
         });
       }
      
@@ -1009,9 +1046,10 @@ router.get("/getByName", checkAuth, async (req, res, next) => {
     console.log(matchedPeople, 'matched')
     let records = [];
     matchedPeople.forEach( async m => {
-      let mPay = await Payroll.findOne({ payee: m._id }).populate('payee').populate('creator')
-      if (mPay) {
-        records.push(mPay)
+      let mPay = await Payroll.find({ payee: m._id }).populate('payee').populate('creator').populate('site')
+      if (mPay.length) {
+        // records.push(mPay)
+        records = [...records, ...mPay]
 
       }
     })
@@ -1035,7 +1073,7 @@ router.get("/getByName", checkAuth, async (req, res, next) => {
         return res.status(200).json({ payrolls: payrolls })
       }
       else {
-        return res.status(404).json({ message: "No records! "  });
+        return res.status(200).json({ message: "No records! ", payrolls:records  });
       }
     }, 1000);
     
@@ -1045,7 +1083,6 @@ router.get("/getByName", checkAuth, async (req, res, next) => {
   }
   
 });
-
 
 router.get("/getByText", checkAuth, async (req, res, next) => {
   
@@ -1081,27 +1118,10 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
         // names must be equal
         return 0;
       });
-      return res.status(200).json({ payrolls: payrolls });
+      return res.status(200).json({ message:"Payrolls Fetched Successfully", payrolls: payrolls });
+    } else {
+      return res.status(200).json({message: "No Data", payrolls: result });
     }
-
-    // Payroll.find({ $text: { $search: searchTerm } })
-    //   .sort({ updatedAt: -1 })
-    //   .populate("creator")
-    //   .populate("payee")
-    //   .limit(200)
-    //   .then((record) => {
-    //     if (record) {
-    //       console.log(record.length);
-    //       res.status(200).json({ payrolls: record });
-    //     } else {
-    //       res.status(404).json({ message: "Payroll record not found!" });
-    //     }
-    //   })
-    //   .catch((error) => {
-    //     res.status(500).json({
-    //       message: "Fetching record failed!" + error,
-    //     });
-    //   });
     
   } catch (error) {
     console.log(error)

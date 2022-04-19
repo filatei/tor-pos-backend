@@ -72,6 +72,7 @@ app.use(require("express-status-monitor")());
 app.use("/data", express.static(path.join(__dirname, "data")));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/expenseuploads", express.static('/var/www/uploads/expenses'));
+app.use("/recuploads", express.static('/var/www/uploads/torama/recuploads2'));
 app.use("/callManageruploads", express.static('/var/www/uploads/calls'));
 app.use("/public", express.static(path.join(__dirname, "public")));
 app.use("/varimages", express.static('/var/images'));

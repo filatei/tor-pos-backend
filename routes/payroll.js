@@ -370,7 +370,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
         .pipe(csv.parse({ headers: true }))
         .on('error', error => {
           console.error(error);
-          return res.status(500).json({ message: "fs createReadStream error! " + error.Error })
+          return res.status(500).json({ message: "fs createReadStream error! " + error })
         })
         .on('data', async row => {
           if (row['PAY TYPE']) {
@@ -449,7 +449,6 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             row.lname = row['LAST NAME'].trim();
             row.name = row.name + ' ' + row.lname
           }
-         
 
           row.grossPay = 0;
           row.netPay = 0;
@@ -462,53 +461,6 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           if (row['BASE SALARY']) {
             row.baseSalary = +row['BASE SALARY'];
           }
-
-          
-         
-
-          // if (!payee) {
-          //   //  we create payee
-          //   if (row['DEPARTMENT']) {
-          //     row.department = row['DEPARTMENT'].trim();
-          //   }
-
-          //   if (row['DESIGNATION']) {
-          //     row.jobName = row['DESIGNATION'].trim();
-          //   }
-
-          //   // do for location too
-          //   if (row['LOCATION']) {
-          //     const loc = row['LOCATION'].trim();
-
-          //     if (loc === 'KPANSIA-E') {
-          //       loc = 'KPANSIA E'
-          //     }
-
-          //     if (loc === 'AGADAGBA') {
-          //       loc = 'AGADAGBA-BLOCKS'
-          //     }
-          //     const locInDB = await Site.findOne({name:loc})
-          //     if (locInDB) {
-          //       row.site = locInDB._id;
-          //     } else {
-          //       return res.status(500).json({
-          //         message: 'Problem with this location for ' + row.name
-          //       });
-          //     }
-              
-          //   }
-
-          //   const payeeObj = new People(row);
-          //   const payeeSave = await payeeObj.save();
-          //   console.log(payeeSave.name, ' created!')
-          //   // return res.status(500).json({
-          //   //   message: `Person ${row.name}  Not in DB. Create FIRST`
-          //   // })
-          //   row.payee = payeeSave._id;
-            
-          // } else {
-          //   row.payee = payee._id;
-          // }
 
           if (row['DEDUCTION']) {
             row.deductions = +row['DEDUCTION'];
@@ -547,8 +499,6 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             
             row.deductions += (row.daysAbsent/totalDays)* row.baseSalary
           }
-
-
 
           // row.dob = new Date(row['DOB']);
           if (row['BANK ACCOUNT']) {
@@ -591,7 +541,16 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
          
           if (row['BAGS BAGGED'] ) {
             // bagger
-            row.bagsBagged = +row['BAGS BAGGED'];
+            row.bagsBagged = parseFloat(row['BAGS BAGGED'].replace(/,/g, '')) ;
+            if (row.payType == 'MONTH-END')
+              row.grossPay = row.bagsBagged * 2.5;
+            if (row.payType == 'MID-MONTH')
+              row.grossPay += row.bagsBagged * 0.5;
+          }
+
+          if (row['QTY'] ) {
+            // bagger
+            row.bagsBagged = parseFloat(row['QTY'].replace(/,/g, '')) ;
             if (row.payType == 'MONTH-END')
               row.grossPay += row.bagsBagged * 2.5;
             if (row.payType == 'MID-MONTH')
@@ -599,7 +558,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           }
 
           if (row['BAGS LOADED']) {
-            row.bagsLoaded = +row['BAGS LOADED'];
+            row.bagsLoaded = parseFloat(row['BAGS LOADED'].replace(/,/g, '')) ;
 
             if (row.payType === 'MONTH-END') { row.grossPay += row.bagsLoaded * 2; }
             else if (row.payType === 'MID-MONTH') {
@@ -616,36 +575,38 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           row.payeeMonthYrType = row.payee + row.month + row.year + row.payType;
           row.remarks = "via CSV Upload - " + row.payeeMonthYrType ;
           row.status = 'UNPAID';
-          // if (row.netPay) {
-            prl.push(row);
-          // } else {
-            
-          // }
+
+          // Delete me
+          // prl.push(row);
+
           if (row.netPay === 0) {
             exceptions.push(row);
           } else {
             prl.push(row);
           }
 
-          // if (row.payee ) {
-           
-          //     const payroll = new Payroll(row);
-          //     inserted = await payroll.save();
-          //     insertedIDs.push(inserted);
-          //     // console.log(ppl.length)
-          // }
+          
         })
         .on('end', async rowCount => {
           setTimeout( async () => {
             console.log(`Parsed ${rowCount} rows ${prl.length}`);
 
-            // let insertedIDs = [];
             for (let p of prl) {
-              const payroll = new Payroll(p);
-              inserted = await payroll.save();
-              insertedIDs.push(inserted);
+              try {
+                // const { MongoError } = require('mongodb')
+                const payroll = new Payroll(p);
+                inserted = await payroll.save();
+                if(inserted) {
+                  insertedIDs.push(inserted);
+                }
+
+              } catch (error) {
+                console.log('message', error._message,'errors ', error.errors)
+
+                return res.status(500).json({ message: "Error adding Payroll " + error })
+              }
+              
             }
-           
             
             const newPayrollsCount = await Payroll.countDocuments();
             const diff = newPayrollsCount - oldPayrollsCount;
@@ -660,7 +621,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             if (diff > 0) {
               console.log('exceptions', exceptions)
               return res.status(200).json({
-                message: `${insertedIDs.length} csv Uploaded  " + ${diff} + " records except " + ${exceptions.length} + " records `,
+                message: `${insertedIDs.length} records Uploaded  from csv,   exceptions:  ${exceptions.length}`,
                 exceptions: exceptions
               });
             } else {
@@ -703,7 +664,7 @@ router.post("/csvValidate", checkAuth, csvUpload.any(), async function (req, res
     .pipe(csv.parse({ headers: true }))
     .on('error', error => {
       console.error(error);
-      return res.status(500).json({ message: "fs createReadStream error! " + error.Error })
+      return res.status(500).json({ message: "fs createReadStream error! " + error })
     })
     .on('data', async row => {
 

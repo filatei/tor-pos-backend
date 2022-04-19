@@ -405,8 +405,6 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
                       message: 'ID not in People DB for ID ' + personId 
                     });
           }
-
-
          
           const today = new Date();
           const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -988,7 +986,7 @@ router.get("",  checkAuth, async (req, res, next) => {
   }
 
   if (pageSize && currentPage) {
-    payrollQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
+    payrollQuery.skip(pageSize * (currentPage - 1)).limit(1000);
   }
   payrollQuery
     .then((documents) => {

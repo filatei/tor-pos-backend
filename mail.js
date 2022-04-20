@@ -8,10 +8,12 @@ const { google } = require("googleapis");
 const OAuth2 = google.auth.OAuth2;
 const moment = require("moment");
 const User = require("./models/user");
+const People = require("./models/people");
 const Contact = require("./models/contact");
 const Stockitem = require("./models/stockitem");
 const Message = require("./models/message");
 const Site = require("./models/site");
+const { people } = require("googleapis/build/src/apis/people");
 
 const oauth2Client = new google.auth.OAuth2(
   tokens.clientID,
@@ -1172,6 +1174,91 @@ async function sendCallActivity(report, user) {
   }
 }
 
+async function sendPeopleMail(record) {
+
+  try {
+    let creatorId;
+    if (record ) {
+      
+        creatorId = record?.creator;
+        const creator = await User.findById(creatorId);
+        const userEmail = creator.email
+        const creatorName = creator.name==='Akpodigha Filatei'?'MD':creator.name;
+        const personId = record.people_id;
+        const name =  `<p>Name: ${record.name}</p> `;
+        const fname = record.fname;
+        const lname = record.lname;
+        let mname;
+        if (record.mname) {
+          mname =  `<p>Middle Name: ${record.mname}</p> `
+        }
+        const siteObj = await Site.findById(record.site);
+        const site = siteObj.name;
+        console.log('siteobj', siteObj, 'site', site, 'recordsite', record.site, )
+        const job = record.jobName;
+        let subject = `New Staff Added (# ${personId})`;
+
+        let format1 = "DD-MM-YYYY hh:mm:ss";
+        let date;
+        date = moment(record.createdAt).format(format1);
+        const logo = "https://api.torama.ng/uploads/productimages/fidologo.png";
+        const fullDate = new Date().getFullYear();
+        let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
+                  ${date}</p><h2>New Staff  ID: ${personId}</h2><p> Hi ${creatorName}, A new staff created as follows:</p>`;
+        html += `<p>Creator: ${creatorName}</p> <p>New Staff  ID: ${personId}</p>
+            ${name} <p>First Name: ${fname}</p> ${mname} <p>Last Name: ${lname}</p> <p>Site: ${site}</p> <p>Job: ${job}</p> <p>Department: ${record.department}</p> `;
+        html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
+
+        console.log(html)
+        if (hostname.includes("torama")) {
+          toEmail = "people@torama.ng";
+          creatorEmail = userEmail;
+          bccMail = 'odia.gabriel@gtsng.com'
+        } else {
+          toEmail = null;
+          toEmail = "people@torama.ng";
+
+          creatorEmail = null;
+          bccMail = null;
+          // return;
+        }
+
+        const to = creatorEmail;
+        const sender = process.env.tormail;
+        const cc = toEmail;
+        const bcc = bccMail;
+        const body = html;
+        let model;
+        // const saveMess = await saveMessage(model);
+
+        model = {
+          fromText: "Human Manager",
+          subject,
+          to: creatorEmail,
+          cc: toEmail,
+          bcc: bcc,
+          html,
+        };
+        mailer(model);
+    }
+  } catch (error) {
+    throw error;
+  }
+
+
+
+
+
+
+
+  
+  try {
+    // save in Message schema
+    
+  } catch (err) {
+    console.log(err);
+  }
+}
 async function forgotPassword(userId, otp) {
   try {
     const user = await User.findById(userId);
@@ -1285,5 +1372,6 @@ module.exports = {
   forgotPassword,
   sendDailyReport,
   sendGenActivity,
-  sendCallActivity
+  sendCallActivity,
+  sendPeopleMail
 };

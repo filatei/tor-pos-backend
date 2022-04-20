@@ -11,6 +11,7 @@ const fs = require("fs");
 const os = require("os");
 const hostname = os.hostname();
 const csv = require('fast-csv');
+const Mail = require('../mail');
 
 var multer = require("multer");
 
@@ -187,7 +188,7 @@ router.post("", checkAuth, upload.any(), async function (req, res, next) {
 
     let ppl = new People(dObj);
     const saved = await ppl.save();
-    
+    const mail = Mail.sendPeopleMail(saved);
     if (saved) {
       console.log(saved)
       return res.status(201).json({

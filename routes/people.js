@@ -135,9 +135,9 @@ const site = require("../models/site");
 
 router.post("", checkAuth, upload.any(), async function (req, res, next) {
   try {
-    const alloweds = process.env.ALLOWEDS;
+    const alloweds = ['ADMIN', 'GENERAL MANAGER', 'SNR ACCOUNTANT', 'MANAGER'];
   
-    if (!alloweds.includes(req.userData.email)) {
+    if (!alloweds.includes(req.userData.role)) {
       return res.status(500).json({ message: "Not allowed" });
     }
     

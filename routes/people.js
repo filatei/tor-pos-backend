@@ -806,7 +806,6 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
     ])
     .sort({name:1})
     .limit(200);
-     console.log(result, 'result')
     
     if (result) {
       return res.status(200).json({ peoples: result });

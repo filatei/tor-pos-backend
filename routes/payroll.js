@@ -12,6 +12,7 @@ const os = require("os");
 const hostname = os.hostname();
 const csv = require('fast-csv');
 const moment = require('moment');
+const Mail = require('../mail');
 
 var multer = require("multer");
 
@@ -232,6 +233,8 @@ router.post("", checkAuth, async  (req, res, next) => {
     const saved = await prl.save();
     
     if (saved) {
+      const mail = await Mail.sendPayrollMail(saved);
+
       return res.status(201).json({
         message: "payroll Uploaded successfully",
         
@@ -387,6 +390,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           let personId;
           if (row['ID']) {
             personId = row['ID'].trim();
+            row.personId = personId;
           }
 
           if ( !personId) {
@@ -500,7 +504,6 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             row.deductions += (row.daysAbsent/totalDays)* row.baseSalary
           }
 
-          // row.dob = new Date(row['DOB']);
           if (row['BANK ACCOUNT']) {
             row.bankAccount = row['BANK ACCOUNT']?.trim();
             const bankUpdate = await People.updateOne({ name: row.name }, { bankAccount: row.bankAccount });
@@ -572,19 +575,16 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           }
 
           row.creator = req.userData.userId;
+
           row.payeeMonthYrType = row.payee + row.month + row.year + row.payType;
           row.remarks = "via CSV Upload - " + row.payeeMonthYrType ;
           row.status = 'UNPAID';
-
-          // Delete me
-          // prl.push(row);
 
           if (row.netPay === 0) {
             exceptions.push(row);
           } else {
             prl.push(row);
           }
-
           
         })
         .on('end', async rowCount => {
@@ -620,6 +620,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
 
             if (diff > 0) {
               console.log('exceptions', exceptions)
+              const mail = await Mail.sendPayrollCsvMail(prl,req.userData.userId);
               return res.status(200).json({
                 message: `${insertedIDs.length} records Uploaded  from csv,   exceptions:  ${exceptions.length}`,
                 exceptions: exceptions

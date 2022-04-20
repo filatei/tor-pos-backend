@@ -1259,6 +1259,143 @@ async function sendPeopleMail(record) {
     console.log(err);
   }
 }
+
+async function sendPayrollMail(record) {
+  try {
+    let creatorId;
+    if (record ) {
+      
+        creatorId = record?.creator;
+        let deductions = `<p>Deductions: 0 </p>`;
+        if (record.deductions) {
+          deductions = `<p>Deductions: ${record.deductions} </p>`;
+        }
+        const creator = await User.findById(creatorId);
+        const userEmail = creator.email
+        const creatorName = creator.name==='Akpodigha Filatei'?'MD':creator.name;
+        const payId = record.payroll_id;
+        const payee = await People.findById(record.payee)
+        const name =  `<p>Name: ${payee.name}</p> `;
+        
+        const siteObj = await Site.findById(record.site);
+        const site = siteObj.name;
+        console.log('siteobj', siteObj, 'site', site, 'recordsite', record.site, )
+        const job = payee.jobName;
+        let subject = `New Payroll Added (# ${payId})`;
+
+        let format1 = "DD-MM-YYYY hh:mm:ss";
+        let date;
+        date = moment(record.createdAt).format(format1);
+        const logo = "https://api.torama.ng/uploads/productimages/fidologo.png";
+        const fullDate = new Date().getFullYear();
+        let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
+                  ${date}</p><h2>New Payroll  ID: ${record.payroll_id}</h2><p> Hi ${creatorName}, A new Payroll created as follows:</p>`;
+        html += `<p>Creator: ${creatorName}</p> <p>New Payroll  ID: ${record.payroll_id}</p>
+            ${name}  <p>Site: ${site}</p> <p>Job: ${job}</p>  <p>Pay Type : ${record.payType}</p> 
+            <p>Pay Month : ${record.month}</p>   <p>Pay Year : ${record.year}</p> 
+            <p>Gross Pay: ${record.grossPay}</p> ${deductions}
+              <p>Net Pay: ${record.netPay}</p>  `;
+        html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
+
+        console.log(html)
+        if (hostname.includes("torama")) {
+          toEmail = "people@torama.ng";
+          creatorEmail = userEmail;
+          bccMail = 'odia.gabriel@gtsng.com'
+        } else {
+          toEmail = null;
+          toEmail = "people@torama.ng";
+
+          creatorEmail = null;
+          bccMail = null;
+        }
+
+        const to = creatorEmail;
+        const sender = process.env.tormail;
+        const cc = toEmail;
+        const bcc = bccMail;
+        const body = html;
+        let model;
+
+        model = {
+          fromText: "Payroll ",
+          subject,
+          to: creatorEmail,
+          cc: toEmail,
+          bcc: bcc,
+          html,
+        };
+        mailer(model);
+    }
+  } catch (error) {
+    throw error;
+  }
+
+}
+
+async function sendPayrollCsvMail(payRolls,creatorId) {
+  try {
+    if (payRolls.length ) {
+      let sum = 0;
+      let table = `<table><tr><th>SN</th><th>ID</th><th>Name</th><th>Type</th><th>Month</th><th>Year</th><th>Gross Pay</th><th>Deductions</th><th>NetPay</th></tr>`
+      payRolls.forEach((p,index,arr) => {
+        table += `<tr><td>${index+1}</td><td>${p.personId}</td><td>${p.name}</td><td>${p.payType}</td><td>${p.month}</td><td>${p.year}</td><td>${p.grossPay}</td><td>${p.deductions}</td><td>${p.netPay}</td</tr>`;
+        sum += p.netPay;
+      })
+      table += `<tr><td colspan="5">Total: ${sum.toFixed(2)}</td></tr></table>`
+        const creator = await User.findById(creatorId);
+        const userEmail = creator.email
+        const creatorName = creator.name==='Akpodigha Filatei'?'MD':creator.name;
+       
+        let subject = `Bulk New Payroll Add from CSV`;
+
+        let format1 = "DD-MM-YYYY hh:mm:ss";
+        let date;
+        date = moment(new Date()).format(format1);
+        const logo = "https://api.torama.ng/uploads/productimages/fidologo.png";
+        const fullDate = new Date().getFullYear();
+        let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
+                  ${date}</p><h2>Bulk Payroll Add</h2><p> Hi ${creatorName}, Bulk Payroll created as follows:</p>`;
+        html += `<p>Creator: ${creatorName}</p> ${table} `;
+        html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
+
+        console.log(html)
+        if (hostname.includes("torama")) {
+          toEmail = "people@torama.ng";
+          creatorEmail = userEmail;
+          bccMail = 'odia.gabriel@gtsng.com'
+        } else {
+          toEmail = null;
+          toEmail = "people@torama.ng";
+
+          creatorEmail = null;
+          bccMail = null;
+        }
+
+        const to = creatorEmail;
+        const sender = process.env.tormail;
+        const cc = toEmail;
+        const bcc = bccMail;
+        const body = html;
+        let model;
+
+        model = {
+          fromText: "Payroll ",
+          subject,
+          to: creatorEmail,
+          cc: toEmail,
+          bcc: bcc,
+          html,
+        };
+        mailer(model);
+    }
+  } catch (error) {
+    throw error;
+  }
+
+}
+
+
 async function forgotPassword(userId, otp) {
   try {
     const user = await User.findById(userId);
@@ -1373,5 +1510,7 @@ module.exports = {
   sendDailyReport,
   sendGenActivity,
   sendCallActivity,
-  sendPeopleMail
+  sendPeopleMail,
+  sendPayrollMail,
+  sendPayrollCsvMail
 };

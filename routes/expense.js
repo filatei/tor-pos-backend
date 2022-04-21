@@ -488,7 +488,7 @@ router.put(
           { notes: notes, updater: updater, log: log }
         )
           .then( async (result) => {
-            // let msent = await Mail.sendNote(note, expObj);
+            let msent = await Mail.sendNote(note, expObj);
             return res.status(201).json({
               message: " note with image updated successfully",
               expense: {

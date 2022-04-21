@@ -462,7 +462,7 @@ router.put(
 
         let expObj = await Expense.findById(recId);
         // send mail with Note image
-        // let msent = await Mail.sendNote(note, expObj);
+        
         let notes
         if (expObj) {
           notes = expObj.notes;
@@ -487,7 +487,8 @@ router.put(
           { _id: recId },
           { notes: notes, updater: updater, log: log }
         )
-          .then((result) => {
+          .then( async (result) => {
+            let msent = await Mail.sendNote(note, expObj);
             return res.status(201).json({
               message: " note with image updated successfully",
               expense: {

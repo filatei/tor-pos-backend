@@ -520,7 +520,7 @@ async function sendNote(note, expense) {
     const image = note.image ? note.image : "";
     const body = html;
     let model = { sender, to, cc, subject, body, image };
-    const saveMess = await saveMessage(model);
+    // const saveMess = await saveMessage(model);
 
     model = {
       fromText: "ShopTorama",

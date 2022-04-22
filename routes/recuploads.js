@@ -82,8 +82,8 @@ router.post("", checkAuth, Utils.upload.any(), function (req, res, next) {
         url = req.protocol + "://" + req.get("host");
       }
       const fPath = url + "/" + file.path;
-      recObj.image = fPath;
-      console.log(fPath)
+      recObj.image = fPath.replace('/var/www/','');
+      console.log(recObj.image)
     });
   }
   Object.entries(recObj).forEach(([key, value]) => {

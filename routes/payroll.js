@@ -948,7 +948,7 @@ router.get("",  checkAuth, async (req, res, next) => {
   }
 
   if (pageSize && currentPage) {
-    payrollQuery.skip(pageSize * (currentPage - 1)).limit(1000);
+    payrollQuery.skip(pageSize * (currentPage - 1)).limit(400);
   }
   payrollQuery
     .then((documents) => {

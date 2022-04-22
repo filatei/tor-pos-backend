@@ -1,6 +1,6 @@
 var multer = require("multer");
-const DIR = "./uploads/recuploads2/";
-// const DIR = "/var/www//uploads/torama/recuploads2/";
+// const DIR = "./uploads/recuploads2/";
+const DIR = "/var/www/uploads/torama/recuploads2/";
 const moment = require("moment");
 const path = require("path");
 const Recupload = require("./models/recupload");

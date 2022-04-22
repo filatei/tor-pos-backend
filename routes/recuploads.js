@@ -83,7 +83,7 @@ router.post("", checkAuth, Utils.upload.any(), function (req, res, next) {
       }
       const fPath = url + "/" + file.path;
       recObj.image = fPath;
-      console.log(fpath)
+      console.log(fPath)
     });
   }
   Object.entries(recObj).forEach(([key, value]) => {

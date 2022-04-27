@@ -1208,7 +1208,8 @@ async function sendPeopleMail(record) {
             ${name} <p>First Name: ${fname}</p> ${mname} <p>Last Name: ${lname}</p> <p>Site: ${site}</p> <p>Job: ${job}</p> <p>Department: ${record.department}</p> `;
         html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
 
-        console.log(html)
+        // console.log(html)
+        console.log(hostname, 'hostname')
         if (hostname.includes("torama")) {
           toEmail = "people@gtsng.com";
           creatorEmail = userEmail;

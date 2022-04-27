@@ -1187,10 +1187,10 @@ async function sendPeopleMail(record) {
         const name =  `<p>Name: ${record.name}</p> `;
         const fname = record.fname;
         const lname = record.lname;
-        let mname;
+        let mname = '';
         if (record.mname) {
           mname =  `<p>Middle Name: ${record.mname}</p> `
-        }
+        } 
         const siteObj = await Site.findById(record.site);
         const site = siteObj.name;
         console.log('siteobj', siteObj, 'site', site, 'recordsite', record.site, )
@@ -1210,9 +1210,9 @@ async function sendPeopleMail(record) {
 
         console.log(html)
         if (hostname.includes("torama")) {
-          toEmail = "people@torama.ng";
+          toEmail = "people@gtsng.com";
           creatorEmail = userEmail;
-          bccMail = 'odia.gabriel@gtsng.com'
+          bccMail = null
         } else {
           toEmail = null;
           toEmail = "people@torama.ng";
@@ -1244,19 +1244,6 @@ async function sendPeopleMail(record) {
     throw error;
   }
 
-
-
-
-
-
-
-  
-  try {
-    // save in Message schema
-    
-  } catch (err) {
-    console.log(err);
-  }
 }
 
 async function sendPayrollMail(record) {

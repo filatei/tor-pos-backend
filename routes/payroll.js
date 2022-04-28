@@ -386,7 +386,6 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             });
           }
 
-
           let personId;
           if (row['ID']) {
             personId = row['ID'].trim();
@@ -401,7 +400,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
 
           const payee = await People.findOne({ people_id: personId });
 
-          if (payee) {
+          if (payee && payee?._id)  {
             row.payee = payee._id;
           } else {
             console.log('ID not in db');
@@ -590,6 +589,9 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
         .on('end', async rowCount => {
           setTimeout( async () => {
             console.log(`Parsed ${rowCount} rows ${prl.length}`);
+            if (exceptions.length) {
+              return res.status(500).json({ message: "Error uploading Payroll " + exceptions.length + ' exceptions !'  })
+            }
 
             for (let p of prl) {
               try {
@@ -622,7 +624,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
               console.log('exceptions', exceptions)
               const mail = await Mail.sendPayrollCsvMail(prl,req.userData.userId);
               return res.status(200).json({
-                message: `${insertedIDs.length} records Uploaded  from csv,   exceptions:  ${exceptions.length}`,
+                message: `${insertedIDs.length} records Uploaded  from csv,   exceptions:  ${exceptions.length} `,
                 exceptions: exceptions
               });
             } else {

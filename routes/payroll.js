@@ -478,6 +478,8 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             row.deductions +=  row.salaryAdvance;
           }
 
+         
+
           if (row['DAYS WORKED']) {
             row.daysAbsent = 0;
             if (row['DAYS ABS']) {
@@ -501,6 +503,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             row.grossPay = row.baseSalary;
             
             row.deductions += (row.daysAbsent/totalDays)* row.baseSalary
+            console.log(row.grossPay, row.deductions, 'gpay ded')
           }
 
           if (row['BANK ACCOUNT']) {
@@ -580,7 +583,13 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           row.status = 'UNPAID';
 
           if (row.netPay === 0) {
+            if (!row.bagsLoaded && !row.bagsBagged &&  !row['DAYS WORKED']) {
+              return res.status(500).json({
+                message: `Payee must have one of BagsLoaded or BagsBagged or Days Worked `
+              });
+            }
             exceptions.push(row);
+            
           } else {
             prl.push(row);
           }
@@ -589,6 +598,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
         .on('end', async rowCount => {
           setTimeout( async () => {
             console.log(`Parsed ${rowCount} rows ${prl.length}`);
+
             if (exceptions.length) {
               return res.status(500).json({ message: "Error uploading Payroll " + exceptions.length + ' exceptions !'  })
             }
@@ -679,6 +689,10 @@ router.post("/csvValidate", checkAuth, csvUpload.any(), async function (req, res
         row.typeRequired = 'YES'
       }
 
+      if (!row['BAGS LOADED'] && !row['BAGS BAGGED'] &&  !row['DAYS WORKED']) {
+        row.bagsloadedbaggeddaysworkedrequired= 'YES'
+      }
+
       let personId;
       if (row['ID']) {
         personId = row['ID'].trim();
@@ -696,7 +710,6 @@ router.post("/csvValidate", checkAuth, csvUpload.any(), async function (req, res
 
       const today = new Date();
       const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-      console.log(row['PAY START DATE'], row['PAY END DATE'], 'start end')
       if (!row['PAY START DATE']) {
         row.payStartRequired = 'YES'
       }
@@ -706,8 +719,8 @@ router.post("/csvValidate", checkAuth, csvUpload.any(), async function (req, res
       }
      
 
-      if (!row['FIRST NAME'] || !row['LAST NAME']) {
-        row.firstOrLastNameRequired = 'YES'
+      if (!row['FIRST NAME'] ) {
+        row.firstNameRequired = 'YES'
       }
 
      
@@ -727,9 +740,8 @@ router.post("/csvValidate", checkAuth, csvUpload.any(), async function (req, res
       }
       
       if (row.payEndRequired || row.payeeNotInDB 
-        || row.firstOrLastNameRequired || row.siteRequired
-        || row.baseSalaryRequired
-        || row.payStartRequired || row.personIDRequired
+        || row.firstNameRequired || row.siteRequired
+        || row.payStartRequired || row.personIDRequired || row.bagsloadedbaggeddaysworkedrequired
         || row.payEndRequired) {
           exceptions.push(row);
 

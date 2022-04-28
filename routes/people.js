@@ -721,8 +721,10 @@ router.delete("/:id", checkAuth, async (req, res, next) => {
   }
 
   try {
+    let pFound;
     People.findById(id)
       .then((people) => {
+        pFound = people;
         if (people && people.image) {
           filePath = "uploads/" + people.image.split("/uploads/")[1];
           console.log(filePath);
@@ -747,6 +749,8 @@ router.delete("/:id", checkAuth, async (req, res, next) => {
               }
             });
           }
+          const pMail = Mail.deletePeopleMail(pFound, req.userData.userId);
+
           return res.status(200).json({ message: "Deletion successful!" });
         } else {
           return res.status(401).json({ message: "Not authorized!" });

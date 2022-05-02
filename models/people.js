@@ -9,6 +9,7 @@ const peopleSchema = mongoose.Schema({
     lname: {type: String},
     
     creator: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    updater: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     payrolls: [{type: mongoose.Schema.Types.ObjectId, ref: 'Payroll'}],
     gender: {type: String, enum: ["Male", "Female", "Other"]},
     marital: {type: String, enum: ["Married", "Single", "Not Disclosed"]},

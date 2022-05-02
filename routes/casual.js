@@ -17,10 +17,13 @@ router.post("", checkAuth,   (req, res, next) => {
     obj.creator = req.userData.userId;
   
     const casual = new Casual(obj);
+    casual.personDateType = casual.personId + casual.date+casual.type;
+    console.log(casual, 'casual')
   
     casual
       .save()
       .then((result) => {
+          console.log(result, 'result')
         res.status(201).json({
           message: "figures added successfully",
           casual: { ...result, id: result._id },

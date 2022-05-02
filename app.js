@@ -59,6 +59,7 @@ const distRoutes = require("./routes/distributor");
 const vehRoutes = require("./routes/vehicle");
 const payRoutes = require("./routes/payroll");
 const pplRoutes = require("./routes/people");
+const casualRoutes = require("./routes/casual");
 const callRoutes = require("./routes/callmanager");
 
 
@@ -180,6 +181,7 @@ app.use("/api/gen", genRoutes);
 app.use("/api/distributor", distRoutes);
 app.use("/api/vehicle", vehRoutes);
 app.use("/api/people", pplRoutes);
+app.use("/api/casual", casualRoutes);
 app.use("/api/payroll", payRoutes);
 app.use("/api/callManager", callRoutes);
 

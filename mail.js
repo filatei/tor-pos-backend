@@ -1179,22 +1179,22 @@ async function sendPeopleMail(record) {
     let creatorId;
     if (record ) {
       
-        creatorId = record?.creator;
+        creatorId = record?.creator || record.updater;
         const creator = await User.findById(creatorId);
-        const userEmail = creator.email
+        const userEmail = creator?.email
         const creatorName = creator.name==='Akpodigha Filatei'?'MD':creator.name;
         const personId = record.people_id;
-        const name =  `<p>Name: ${record.name}</p> `;
-        const fname = record.fname;
-        const lname = record.lname;
+        const name =  `<p>Name: ${record?.name}</p> `;
+        const fname = record?.fname;
+        const lname = record?.lname;
         let mname = '';
         if (record.mname) {
           mname =  `<p>Middle Name: ${record.mname}</p> `
         } 
         const siteObj = await Site.findById(record.site);
-        const site = siteObj.name;
+        const site = siteObj?.name;
         console.log('siteobj', siteObj, 'site', site, 'recordsite', record.site, )
-        const job = record.jobName;
+        const job = record?.jobName;
         let subject = `New Staff Added (# ${personId})`;
 
         let format1 = "DD-MM-YYYY hh:mm:ss";
@@ -1230,6 +1230,83 @@ async function sendPeopleMail(record) {
         const body = html;
         let model;
         // const saveMess = await saveMessage(model);
+
+        model = {
+          fromText: "Human Manager",
+          subject,
+          to: creatorEmail,
+          cc: toEmail,
+          bcc: bcc,
+          html,
+        };
+        mailer(model);
+    }
+  } catch (error) {
+    throw error;
+  }
+
+}
+
+async function sendPeopleMailUpdated(record) {
+
+  try {
+    let updaterId;
+    if (record ) {
+      
+        updaterId =  record.updater;
+        const updater = await User.findById(updaterId);
+        const userEmail = updater?.email
+        const updaterName = updater.name==='Akpodigha Filatei'?'MD':updater.name;
+        const personId = record.people_id;
+        const name =  `<p>Name: ${record?.name}</p> `;
+        const fname = record?.fname;
+        const lname = record?.lname;
+        let mname = '';
+        if (record.mname) {
+          mname =  `<p>Middle Name: ${record.mname}</p> `
+        } 
+        const siteObj = await Site.findById(record.site);
+        const site = siteObj?.name;
+        console.log('siteobj', siteObj, 'site', site, 'recordsite', record.site, )
+        const job = record?.jobName;
+        let subject = ` Staff Updated (# ${personId})`;
+        let notes = null;
+        let  notesLength = record?.notes.length
+        if (notesLength) {
+          notes = `<p>Latest Note: ${record?.notes[notesLength-1].text} by: ${record?.notes[notesLength-1].author}</p>`
+        }
+        
+        let format1 = "DD-MM-YYYY hh:mm:ss";
+        let date;
+        date = moment(record.createdAt).format(format1);
+        const logo = "https://api.torama.ng/uploads/productimages/fidologo.png";
+        const fullDate = new Date().getFullYear();
+        let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
+                  ${date}</p><h2> Staff  ID: ${personId}</h2><p> Hi ${updaterName}, A Staff Updated as follows:</p>`;
+        html += `<p>Updater: ${updaterName}</p> <p> Staff  ID: ${personId}</p>
+            ${name} <p>First Name: ${fname}</p> ${mname} <p>Last Name: ${lname}</p> <p>Site: ${site}</p> <p>Job: ${job}</p> ${notes} `;
+        html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
+
+        console.log(html)
+        console.log(hostname, 'hostname')
+        if (hostname.includes("torama")) {
+          toEmail = "people@gtsng.com";
+          creatorEmail = userEmail;
+          bccMail = null
+        } else {
+          toEmail = null;
+          toEmail = "people@torama.ng";
+
+          creatorEmail = null;
+          bccMail = null;
+        }
+
+        const to = creatorEmail;
+        const sender = process.env.tormail;
+        const cc = toEmail;
+        const bcc = bccMail;
+        const body = html;
+        let model;
 
         model = {
           fromText: "Human Manager",
@@ -1576,5 +1653,6 @@ module.exports = {
   sendPeopleMail,
   sendPayrollMail,
   sendPayrollCsvMail,
-  deletePeopleMail
+  deletePeopleMail,
+  sendPeopleMailUpdated
 };

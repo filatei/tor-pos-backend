@@ -602,7 +602,7 @@ router.put("/:id", checkAuth, upload.any(), async (req, res, next) => {
 
   const people = new People(peopleObj);
   
-  console.log(people, 'people object');
+  // console.log(peopleObj, 'people object');
 
   if (req.files) {
     req.files.forEach((file) => {
@@ -617,8 +617,10 @@ router.put("/:id", checkAuth, upload.any(), async (req, res, next) => {
   }
 
   People.updateOne({ _id: req.params.id }, people)
-  .then((result) => {
+  .then( async (result) => {
+    const updated = await People.findById(req.params.id);
     if (result.n > 0) {
+      const mail = Mail.sendPeopleMailUpdated(updated);
       res.status(200).json({ message: "Update successful!" });
     } else {
       res.status(401).json({ message: "Not authorized!" });
@@ -640,7 +642,6 @@ router.put(
       if (!alloweds.includes(req.userData.email)) {
         return res.status(500).json({ message: "Not allowed" });
       }
-      console.log(req.body)
       
       const text = req.body.text;
       const date = req.body.date;
@@ -682,17 +683,20 @@ router.put(
         oldPeople.notes = [];
       }
       const notes = [...oldPeople.notes, note];
-      const people = new People({ notes: notes });
-      people._id = recId;
-      people.updater = req.userData.userId;
+      // const people = new People({ notes: notes });
+      oldPeople.notes = notes;
+      // people._id = recId;
+      oldPeople.updater = req.userData.userId;
       // people.notes = [...notes];
 
-      console.log(people)
-      const updated = await People.updateOne({ _id: req.params.id }, people)
+      console.log(oldPeople)
+      const updated = await People.updateOne({ _id: req.params.id }, oldPeople)
 
       // people.save();
       
       if (updated) {
+
+        const mail = Mail.sendPeopleMailUpdated({...oldPeople});
         return res.status(200).json({ message: "Update successful! "  });
       } else {
         return res.status(500).json({ message: "Couldn't update People! " + JSON.stringify(inserted) })

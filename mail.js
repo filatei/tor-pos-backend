@@ -1187,13 +1187,13 @@ async function sendPeopleMail(record) {
         const name =  `<p>Name: ${record?.name}</p> `;
         const fname = record?.fname;
         const lname = record?.lname;
+        const phone = record?.phone;
         let mname = '';
         if (record.mname) {
           mname =  `<p>Middle Name: ${record.mname}</p> `
         } 
         const siteObj = await Site.findById(record.site);
         const site = siteObj?.name;
-        console.log('siteobj', siteObj, 'site', site, 'recordsite', record.site, )
         const job = record?.jobName;
         let subject = `New Staff Added (# ${personId})`;
 
@@ -1205,11 +1205,10 @@ async function sendPeopleMail(record) {
         let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
                   ${date}</p><h2>New Staff  ID: ${personId}</h2><p> Hi ${creatorName}, A new staff created as follows:</p>`;
         html += `<p>Creator: ${creatorName}</p> <p>New Staff  ID: ${personId}</p>
-            ${name} <p>First Name: ${fname}</p> ${mname} <p>Last Name: ${lname}</p> <p>Site: ${site}</p> <p>Job: ${job}</p> <p>Department: ${record.department}</p> `;
+            ${name} <p>First Name: ${fname}</p> ${mname} <p>Last Name: ${lname}</p> <p>Phone: ${phone}</p> <p>Site: ${site}</p> <p>Job: ${job}</p> <p>Department: ${record.department}</p> `;
         html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
 
         console.log(html)
-        console.log(hostname, 'hostname')
         if (hostname.includes("torama")) {
           toEmail = "people@gtsng.com";
           creatorEmail = userEmail;
@@ -1261,6 +1260,7 @@ async function sendPeopleMailUpdated(record) {
         const name =  `<p>Name: ${record?.name}</p> `;
         const fname = record?.fname;
         const lname = record?.lname;
+        const phone = record?.phone;
         let mname = '';
         if (record.mname) {
           mname =  `<p>Middle Name: ${record.mname}</p> `
@@ -1270,7 +1270,7 @@ async function sendPeopleMailUpdated(record) {
         console.log('siteobj', siteObj, 'site', site, 'recordsite', record.site, )
         const job = record?.jobName;
         let subject = ` Staff Updated (# ${personId})`;
-        let notes = null;
+        let notes = '';
         let  notesLength = record?.notes.length
         if (notesLength) {
           notes = `<p>Latest Note: ${record?.notes[notesLength-1].text} by: ${record?.notes[notesLength-1].author}</p>`
@@ -1284,7 +1284,8 @@ async function sendPeopleMailUpdated(record) {
         let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
                   ${date}</p><h2> Staff  ID: ${personId}</h2><p> Hi ${updaterName}, A Staff Updated as follows:</p>`;
         html += `<p>Updater: ${updaterName}</p> <p> Staff  ID: ${personId}</p>
-            ${name} <p>First Name: ${fname}</p> ${mname} <p>Last Name: ${lname}</p> <p>Site: ${site}</p> <p>Job: ${job}</p> ${notes} `;
+            ${name} <p>First Name: ${fname}</p> ${mname} <p>Last Name: ${lname}</p><p>Phone: ${phone}</p>
+             <p>Site: ${site}</p> <p>Job: ${job}</p> ${notes} `;
         html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
 
         console.log(html)

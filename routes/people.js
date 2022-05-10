@@ -136,7 +136,7 @@ const site = require("../models/site");
 
 router.post("", checkAuth, upload.any(), async function (req, res, next) {
   try {
-    const alloweds = ['ADMIN', 'GENERAL MANAGER', 'SNR ACCOUNTANT', 'MANAGER'];
+    const alloweds = ['ADMIN', 'GENERAL MANAGER', 'SNR ACCOUNTANT', 'MANAGER', 'ACCOUNTANT'];
   
     if (!alloweds.includes(req.userData.role)) {
       return res.status(500).json({ message: "Not allowed" });
@@ -572,11 +572,12 @@ router.post("/deleteAll", checkAuth, async (req, res, next) => {
 });
 
 router.put("/:id", checkAuth, upload.any(), async (req, res, next) => {
-  const alloweds = process.env.ALLOWEDS;
+  const alloweds = ['ADMIN', 'GENERAL MANAGER', 'SNR ACCOUNTANT', 'MANAGER', 'ACCOUNTANT'];
   
-  if (!alloweds.includes(req.userData.email)) {
+  if (!alloweds.includes(req.userData.role)) {
     return res.status(500).json({ message: "Not allowed" });
   }
+
   let path = "";
   let url = "";
   let peopleObj = req.body;
@@ -636,7 +637,6 @@ router.put("/:id", checkAuth, upload.any(), async (req, res, next) => {
 
 router.put(
   "/notes/:id", checkAuth, upload.any(), async function (req, res, next)  {
-    console.log('here')
     try {
       const alloweds = process.env.ALLOWEDS;
       if (!alloweds.includes(req.userData.email)) {

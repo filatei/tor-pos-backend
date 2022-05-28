@@ -79,7 +79,7 @@ router.post("", checkAuth, upload.single("image"), function (req, res, next) {
     // url = 'https://api.torama.ng'
     // console.log(url)
     myPath = url + "/" + req.file.path;
-    // console.log(path)
+    console.log(myPath, 'myPath')
   }
 
   let prodObj = req.body;
@@ -94,6 +94,7 @@ router.post("", checkAuth, upload.single("image"), function (req, res, next) {
 
   const product = new Product(prodObj);
   product.icon = myPath;
+  console.log (product);
 
   product
     .save()
@@ -125,7 +126,7 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
   prodObj._id = req.params.id;
   prodObj.updater = req.userData.userId;
   const product = new Product(prodObj);
-  if (req.file && req.file.filename && req.file.filename.length > 0) {
+  if (req.file ) {
     if (hostname.includes("torama")) {
       url = "https://api.torama.ng";
     } else {
@@ -173,6 +174,8 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
   }
 });
 
+
+
 router.delete("/:id", checkAuth, (req, res, next) => {
   const alloweds = process.env.DELALLOWEDS;
 
@@ -186,7 +189,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
     .then((product) => {
       if (product && product.icon) {
         filePath = "uploads/" + product.icon.split("/uploads/")[1];
-        // console.log(filePath)
+        console.log(filePath)
       }
     })
     .catch((err) => {
@@ -194,7 +197,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
         .status(401)
         .json({ message: "product not found in db!" + err });
     });
-  // console.log('params ', req.params)
+  console.log('params ', req.params)
   Product.deleteOne({ _id: req.params.id })
     .then((result) => {
       if (result.n > 0) {

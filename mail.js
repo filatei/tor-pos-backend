@@ -818,7 +818,6 @@ async function sendCashdeposit(item, user) {
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${fullDate}</p> </body></html>`;
 
-    console.log(html);
     
     if (hostname.includes("torama")) {
       toEmail = "expenses@torama.ng";
@@ -830,8 +829,6 @@ async function sendCashdeposit(item, user) {
       link = `http://localhost:8100/#/home/qaqc-detail/${item._id}`;
       return;
     }
-
-    console.log(html);
 
     // save in Message schema
     const to = creatorEmail;
@@ -1087,7 +1084,6 @@ async function sendGenActivity(report, user) {
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${fullDate}</p> </body></html>`;
 
-    // console.log(html)
     // save in Message schema
     const to = user.email;
     const sender = process.env.tormail;
@@ -1153,7 +1149,6 @@ async function sendCallActivity(report, user) {
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${fullDate}</p> </body></html>`;
 
-    // console.log(html)
     // save in Message schema
     const to = user.email;
     const sender = process.env.tormail;
@@ -1208,7 +1203,6 @@ async function sendPeopleMail(record) {
             ${name} <p>First Name: ${fname}</p> ${mname} <p>Last Name: ${lname}</p> <p>Phone: ${phone}</p> <p>Site: ${site}</p> <p>Job: ${job}</p> <p>Department: ${record.department}</p> `;
         html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
 
-        console.log(html)
         if (hostname.includes("torama")) {
           toEmail = "people@gtsng.com";
           creatorEmail = userEmail;
@@ -1288,7 +1282,6 @@ async function sendPeopleMailUpdated(record) {
              <p>Site: ${site}</p> <p>Job: ${job}</p> ${notes} `;
         html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
 
-        console.log(html)
         console.log(hostname, 'hostname')
         if (hostname.includes("torama")) {
           toEmail = "people@gtsng.com";
@@ -1362,7 +1355,6 @@ async function deletePeopleMail(record, deleterId) {
             ${name} <p>First Name: ${fname}</p> ${mname} <p>Last Name: ${lname}</p> <p>Site: ${site}</p> <p>Job: ${job}</p> <p>Department: ${record.department}</p> `;
         html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
 
-        console.log(html)
         console.log(hostname, 'hostname')
         if (hostname.includes("torama")) {
           toEmail = "people@gtsng.com";
@@ -1438,7 +1430,6 @@ async function sendPayrollMail(record) {
               <p>Net Pay: ${record.netPay}</p>  `;
         html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
 
-        console.log(html)
         if (hostname.includes("torama")) {
           toEmail = "people@torama.ng";
           creatorEmail = userEmail;
@@ -1500,7 +1491,6 @@ async function sendPayrollCsvMail(payRolls,creatorId) {
         html += `<p>Creator: ${creatorName}</p> ${table} `;
         html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
 
-        console.log(html)
         if (hostname.includes("torama")) {
           toEmail = "people@torama.ng";
           creatorEmail = userEmail;

@@ -415,11 +415,13 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           if (row['PAY START DATE']) {
             const dt = row['PAY START DATE'].split('/');
             row.payStartDate = new Date(dt[2], dt[1]-1, dt[0])
+            console.log(row.payStartDate, 'start date')
           }
 
           if (row['PAY END DATE']) {
             const dt = row['PAY END DATE'].split('/');
             row.payEndDate = new Date(dt[2], dt[1]-1, dt[0])
+            console.log(row.payEndDate, 'end date')
 
             const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             row.month = months[row.payEndDate.getMonth()];
@@ -591,6 +593,9 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             exceptions.push(row);
             
           } else {
+            row.netPay = row.netPay.toFixed(2);
+            row.grossPay = row.grossPay.toFixed(2);
+            row.deductions = row.deductions.toFixed(2); 
             prl.push(row);
           }
           

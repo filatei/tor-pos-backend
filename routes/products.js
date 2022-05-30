@@ -6,7 +6,7 @@ const fs = require("fs");
 const os = require("os");
 const hostname = os.hostname();
 var multer = require("multer");
-const DIR = "./uploads/productimages/";
+const DIR = "/var/www/uploads/productimages/";
 
 const MIME_TYPE_MAP = {
   "image/png": "png",
@@ -78,7 +78,7 @@ router.post("", checkAuth, upload.single("image"), function (req, res, next) {
     }
     // url = 'https://api.torama.ng'
     // console.log(url)
-    myPath = url + "/" + req.file.path;
+    myPath = url + "/" + req.file.path.split('/var/www/')[1];
     console.log(myPath, 'myPath')
   }
 
@@ -112,9 +112,12 @@ router.post("", checkAuth, upload.single("image"), function (req, res, next) {
 });
 
 router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
-  let myPath = "";
+
+  try {
+    let myPath = "";
   let url = "";
   let prodObj = req.body;
+  console.log(prodObj)
   const price = req.body.price;
   const taxRate = req.body.taxRate;
   const description = req.body.description;
@@ -133,8 +136,9 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
       url = req.protocol + "://" + req.get("host");
     }
 
-    myPath = url + "/" + req.file.path;
+    myPath = url + "/" + req.file.path.split('/var/www/')[1];
     product.icon = myPath;
+    console.log(product, 'product1')
     Product.updateOne({ _id: req.params.id }, product)
       .then((result) => {
         if (result.n > 0) {
@@ -149,6 +153,7 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
         });
       });
   } else {
+    console.log(product, 'product2')
     Product.updateOne(
       { _id: req.params.id },
       {
@@ -172,6 +177,11 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
         });
       });
   }
+  }
+  catch(err) {
+    console.log(err)
+  }
+  
 });
 
 

@@ -14,12 +14,13 @@ function json2csv(fetchedOrders) {
 
 exports.createOrder =  (req, res, next) => {
     let orderObj = req.body;
-   // zawsw console.log('orderObj ',req)
+    console.log(req, 'req')
+    console.log(orderObj, 'orderObj')
     // userData was added to checkAuth middleware and passed along
     // console.log('userdata in order ', req.userData)
     orderObj.creator = req.userData.userId; 
     const order = new Order(orderObj);
-    // console.log('order ', order);
+    console.log('order ', order);
       order.save()
       .then(result => {
         res.status(201).json({
@@ -31,8 +32,9 @@ exports.createOrder =  (req, res, next) => {
         });
       })
       .catch(error => {
-        res.status(500).json({
-          message: "Creating an order failed!"
+        console.log(error, 'error')
+        return res.status(500).json({
+          message: "Creating an order failed!" + error
         });
       });
   }

@@ -1,5 +1,5 @@
 const express = require("express");
-const Order = require("../models/shoporder");
+const FidoOrder = require("../models/fidoorder");
 const moment = require("moment");
 const Customer = require("../models/customer");
 const PayMethod = require("../models/paymethod");
@@ -20,7 +20,7 @@ const OAuth2 = google.auth.OAuth2;
 const Utils = require("../utils");
 
 var multer = require("multer");
-const DIR = "./uploads/shoporderimages/";
+const DIR = "/var/www/uploads/fidoorderimages/";
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     try {
@@ -103,7 +103,7 @@ async function sendMail(order) {
     toEmail =  "emptymail@torama.ng";
   }
   orderId = orderId.toString().padStart(8, "0");
-  let subject = `ShopTorama Order Confirmation for Order (# ${orderId})`;
+  let subject = `ShopTorama FidoOrder Confirmation for FidoOrder (# ${orderId})`;
   let curr = order.curr || process.env.naira;
   let total = order.paidAmount;
   let payType = order.paymentMethod;
@@ -136,7 +136,7 @@ async function sendMail(order) {
   let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">${date}</p><h2>ORDER CONFIRMED</h2><p> Hi ${customer},</p>`;
   html += `<p>We received your order # ${orderId} for ${curr} ${total.toLocaleString()} </p> <p>Factory Location: ${location}</p> <p>User: ${userName}</p>`;
   html += `${product}`;
-  html += `<table style="margin-left:auto; margin-right:auto"><tr style="text-align:left;"><td><h3>Order summary</h3></td></tr><tr style="text-align:left;"><td>Pay Type:</td><td> ${payType}</td></tr><tr style="text-align:left;"><td> Subtotal:</td><td> ${curr} ${total.toLocaleString()} </td></tr>
+  html += `<table style="margin-left:auto; margin-right:auto"><tr style="text-align:left;"><td><h3>FidoOrder summary</h3></td></tr><tr style="text-align:left;"><td>Pay Type:</td><td> ${payType}</td></tr><tr style="text-align:left;"><td> Subtotal:</td><td> ${curr} ${total.toLocaleString()} </td></tr>
  <tr style="text-align:left;"> <td>Tax: </td><td>${curr} 0.00</td></tr> <tr style="text-align:left;"><td>Total: </td><td>${curr} ${total.toLocaleString()}</td></tr></table>`;
 
   html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama - All rights reserved. &#169; ${new Date().getFullYear()}</h4> </body></html>`;
@@ -164,6 +164,7 @@ async function sendMail(order) {
 }
 
 const checkAuth = require("../middleware/check-auth");
+
 router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
   const alloweds = process.env.SHOPALLOWEDS;
 
@@ -174,6 +175,7 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
 
   let url = "";
   let shopObj = req.body;
+  console.log(shopObj, shopObj)
 
   if (!shopObj.customer || shopObj.customer === undefined) {
     return res
@@ -185,14 +187,15 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
     if (hostname.includes("torama.ng")) {
       url =
         "https://api.torama.ng" +
-        "/uploads/shoporderimages" 
+        "/uploads/fidoorderimages" 
     } else {
       url = req.protocol + "://" + req.get("host");
     }
     shopObj.image = url + '/' + req.file.path;
   }
-  const dirPath = Path.join(__dirname, "../uploads/printqueue/");
-  let printQueue = dirPath + new Date().getTime() + ".json";
+
+  // const dirPath = Path.join(__dirname, "../uploads/printqueue/");
+  // let printQueue = dirPath + new Date().getTime() + ".json";
 
   shopObj.creator = req.userData.userId;
   if (shopObj.action_taken === "PRODUCT RELEASED") {
@@ -210,7 +213,7 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
   }
   // let prods = [];
   shopObj.products = JSON.parse(req.body.products);
-  shopObj.receipt = JSON.parse(req.body.receipt);
+  // shopObj.receipt = JSON.parse(req.body.receipt);
   const geoLocation = JSON.parse(req.body.geoLocation);
   shopObj.geoLocation = {
     latitude: geoLocation.latitude,
@@ -231,41 +234,30 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
   saveOrder(shopObj);
 
   function saveOrder(shopObj) {
-    const shoporder = new Order(shopObj);
+    const fidoorder = new FidoOrder(shopObj);
 
-    shoporder
+    fidoorder
       .save()
       .then(async (result) => {
         res.status(201).json({
-          message: "Order added successfully",
-          shoporder: {
+          message: "FidoOrder added successfully",
+          fidoorder: {
             ...result,
             id: result.id,
             paidAmount: result.paidAmount,
           },
         });
-        sendMail(result);
+        // sendMail(result);
       })
       .catch((error) => {
         res.status(500).json({
-          message: "Creating a shoporder failed! " + error,
+          message: "Creating a fidoorder failed! " + error,
         });
       });
   }
 });
 
-router.post("/mail", checkAuth, function (req, res, next) {
-  let orderObj = req.body;
-  orderObj.creator = req.userData.userId;
 
-  if (sendMail(orderObj)) {
-    return res.status(200).json({ message: "Mail Send successful!" });
-  } else {
-    res.status(500).json({
-      message: "Mail Send unsuccessful" + error,
-    });
-  }
-});
 
 router.get("/events", checkAuth, async (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
@@ -287,9 +279,9 @@ router.get("/events", checkAuth, async (req, res, next) => {
     // // end today
     // var end = moment(start).endOf("day").toDate();
 
-    // let order = await Order.find({}, { trans_date: 1, _id: 1 }).lean();
+    // let order = await FidoOrder.find({}, { trans_date: 1, _id: 1 }).lean();
 
-    let summary = await Order.aggregate([
+    let summary = await FidoOrder.aggregate([
       // {
       //   $match: {
       //     action_taken: "PRODUCT RELEASED",
@@ -366,19 +358,19 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
   shopObj._id = req.params.id;
   shopObj.updater = req.userData.userId;
 
-  const shoporder = new Order(shopObj);
+  const fidoorder = new FidoOrder(shopObj);
   if (req.file && req.file.filename && req.file.filename.length > 0) {
     if (hostname.includes("torama.ng")) {
       path =
         "https://api.torama.ng" +
-        "/uploads/shoporderimages/" +
+        "/uploads/fidoorderimages/" +
         req.file.filename;
     } else {
       url = req.protocol + "s://" + req.get("host");
-      path = url + "/uploads/shoporderimages/" + req.file.filename;
+      path = url + "/uploads/fidoorderimages/" + req.file.filename;
     }
-    shoporder.image = path;
-    Order.updateOne({ _id: req.params.id }, shoporder)
+    fidoorder.image = path;
+    FidoOrder.updateOne({ _id: req.params.id }, fidoorder)
       .then((result) => {
         if (result.n > 0) {
           res.status(200).json({ message: "Update successful!" });
@@ -388,11 +380,11 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
       })
       .catch((error) => {
         res.status(500).json({
-          message: "Couldn't update shoporder! " + error,
+          message: "Couldn't update fidoorder! " + error,
         });
       });
   } else {
-    Order.updateOne(
+    FidoOrder.updateOne(
       { _id: req.params.id },
       {
         name: name,
@@ -412,11 +404,12 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
       })
       .catch((error) => {
         res.status(500).json({
-          message: "Couldn't update shoporder! " + error,
+          message: "Couldn't update fidoorder! " + error,
         });
       });
   }
 });
+
 router.put(
   "/notes/:id",
   checkAuth,
@@ -435,17 +428,17 @@ router.put(
       if (hostname.includes("torama.ng")) {
         path =
           "https://api.torama.ng" +
-          "/uploads/shoporderimages/" +
+          "/uploads/fidoorderimages/" +
           req.file.filename;
       } else {
         url = req.protocol + "://" + req.get("host");
-        path = url + "/uploads/shoporderimages/" + req.file.filename;
+        path = url + "/uploads/fidoorderimages/" + req.file.filename;
       }
       note.image = path;
     }
     let recId = req.params.id;
     try {
-      let orderObj = await Order.findById(recId);
+      let orderObj = await FidoOrder.findById(recId);
       // send mail with Note image
       // let msent = await Mail.sendNote(note, expObj);
 
@@ -464,7 +457,7 @@ router.put(
         date: new Date(),
         note,
       });
-      Order.findByIdAndUpdate(
+      FidoOrder.findByIdAndUpdate(
         { _id: recId },
         { notes: notes, updater: updater, log: log }
       )
@@ -499,21 +492,21 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   }
 
   let filePath;
-  Order.findById(req.params.id)
-    .then((shoporder) => {
-      if (shoporder && shoporder.image) {
-        filePath = "uploads/" + shoporder.image.split("/uploads/")[1];
+  FidoOrder.findById(req.params.id)
+    .then((fidoorder) => {
+      if (fidoorder && fidoorder.image) {
+        filePath = "uploads/" + fidoorder.image.split("/uploads/")[1];
       }
     })
     .catch((err) => {
       return res
         .status(401)
-        .json({ message: "shoporder not found in db!" + err });
+        .json({ message: "fidoorder not found in db!" + err });
     });
-  Order.deleteOne({ _id: req.params.id })
+  FidoOrder.deleteOne({ _id: req.params.id })
     .then((result) => {
       if (result.n > 0) {
-        // delete shoporder.image
+        // delete fidoorder.image
         if (filePath) {
           fs.unlink(filePath, (err) => {
             if (err) {
@@ -533,7 +526,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
     .catch((error) => {
       console.error(error);
       res.status(500).json({
-        message: "Deleting shoporder failed! " + error,
+        message: "Deleting fidoorder failed! " + error,
       });
     });
 });
@@ -541,25 +534,25 @@ router.delete("/:id", checkAuth, (req, res, next) => {
 router.get("", (req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
-  const shoporderQuery = Order.find()
+  const fidoorderQuery = FidoOrder.find()
     .lean()
     .sort({ createdAt: -1 })
     .populate("customer")
     .populate("creator")
     .populate("terminal_id");
   if (pageSize && currentPage) {
-    shoporderQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
+    fidoorderQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
   }
-  shoporderQuery
+  fidoorderQuery
     .then((documents) => {
       res.status(200).json({
         message: "Orders fetched successfully!",
-        shoporders: documents,
+        fidoorders: documents,
       });
     })
     .catch((error) => {
       res.status(500).json({
-        message: "Fetching shoporders failed! " + error,
+        message: "Fetching fidoorders failed! " + error,
       });
     });
 });
@@ -580,7 +573,7 @@ router.get("/bydate", checkAuth, async (req, res, next) => {
 
     // end day
     var end = moment(ddate).endOf("day");
-    let dayData = await Order.find({
+    let dayData = await FidoOrder.find({
       createdAt: { $gte: start, $lt: end },
     })
       .lean()
@@ -601,20 +594,20 @@ router.get("/bydate", checkAuth, async (req, res, next) => {
 });
 
 router.get("/:id", (req, res, next) => {
-  Order.findById(req.params.id)
+  FidoOrder.findById(req.params.id)
     .populate("creator")
     .populate("customer")
     .populate("terminal_id")
-    .then((shoporder) => {
-      if (shoporder) {
-        res.status(200).json(shoporder);
+    .then((fidoorder) => {
+      if (fidoorder) {
+        res.status(200).json(fidoorder);
       } else {
-        res.status(404).json({ message: "shoporder not found!" });
+        res.status(404).json({ message: "fidoorder not found!" });
       }
     })
     .catch((error) => {
       res.status(500).json({
-        message: "Fetching shoporder failed! " + error,
+        message: "Fetching fidoorder failed! " + error,
       });
     });
 });

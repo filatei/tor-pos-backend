@@ -17,6 +17,7 @@ const paymethodsRoutes = require("./routes/paymethods");
 const productsRoutes = require("./routes/products");
 const customersRoutes = require("./routes/customers");
 const ordersRoutes = require("./routes/orders");
+const fidoordersRoutes = require("./routes/fidoorders");
 
 const userRoutes = require("./routes/user");
 const fileRoutes = require("./routes/file");
@@ -142,6 +143,7 @@ app.use("/api/paymethods", paymethodsRoutes);
 app.use("/api/products", productsRoutes);
 app.use("/api/customers", customersRoutes);
 app.use("/api/orders", ordersRoutes);
+app.use("/api/fidoorders", fidoordersRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/files", fileRoutes);
 app.use("/api/prints", printRoutes);

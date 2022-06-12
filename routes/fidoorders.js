@@ -81,180 +81,116 @@ function logIncident(email, description) {
     });
 }
 
-async function sendMail(order) {
-  customer = await Customer.findById(order.customer).exec();
-  customer = customer?.name;
-  const smtpTransport = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      type: "OAuth2",
-      user: process.env.tormail,
-      clientId: tokens.clientID,
-      clientSecret: tokens.clientSecret,
-      refreshToken: tokens.refresh_token,
-      accessToken: tokens.access_token,
-    },
-  });
-
-  // some content
-  let orderId = order?.orderId;
-  let toEmail = order?.customer?.email 
-  if (!toEmail) {
-    toEmail =  "emptymail@torama.ng";
-  }
-  orderId = orderId.toString().padStart(8, "0");
-  let subject = `ShopTorama FidoOrder Confirmation for FidoOrder (# ${orderId})`;
-  let curr = order.curr || process.env.naira;
-  let total = order.paidAmount;
-  let payType = order.paymentMethod;
-  if (order && order.creator) {
-    user = await User.findById(order.creator);
-    userName = user.name;
-    userEmail = user.email;
-  }
-
-  let location = order?.terminal_location;
-  let date = order.createdAt.toString() 
-  if (!date) {
-    date = new Date().toString();
-  }
-  let logo = "https://api.torama.ng/uploads/productimages/fidologo.png";
-
-  let products = order?.products;
-
-  let product = `<table style="margin-left:auto; margin-right:auto"><thead><tr style="text-align:left;"> <th>Product</th> <th></th> <th></th><th>Amount</th></tr></thead><tbody>`;
-  let derived_total = 0;
-  products.forEach((p) => {
-    amount = (p.qty * p.price).toLocaleString();
-    product += `<tr style="text-align:left;"><td>${p.qty} x ${p.name} </td> <td colspan="3" style="text-align:right;">${amount} ${curr}</td><tr>`;
-    derived_total += p.qty * p.price;
-  });
-  derived_total = derived_total.toLocaleString();
-
-  product += `</tbody><tfoot><tr><td colspan="4" style="text-align:right;" > Sum: ${derived_total} ${curr}</td></tr></tfoot></table>`;
-
-  let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">${date}</p><h2>ORDER CONFIRMED</h2><p> Hi ${customer},</p>`;
-  html += `<p>We received your order # ${orderId} for ${curr} ${total.toLocaleString()} </p> <p>Factory Location: ${location}</p> <p>User: ${userName}</p>`;
-  html += `${product}`;
-  html += `<table style="margin-left:auto; margin-right:auto"><tr style="text-align:left;"><td><h3>FidoOrder summary</h3></td></tr><tr style="text-align:left;"><td>Pay Type:</td><td> ${payType}</td></tr><tr style="text-align:left;"><td> Subtotal:</td><td> ${curr} ${total.toLocaleString()} </td></tr>
- <tr style="text-align:left;"> <td>Tax: </td><td>${curr} 0.00</td></tr> <tr style="text-align:left;"><td>Total: </td><td>${curr} ${total.toLocaleString()}</td></tr></table>`;
-
-  html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by ShopTorama - All rights reserved. &#169; ${new Date().getFullYear()}</h4> </body></html>`;
-  const mailOptions = {
-    from: `ShopTorama ${process.env.tormail}`,
-    to: toEmail,
-    bcc: process.env.tormail,
-    subject: subject,
-    generateTextFromHTML: true,
-    html: html,
-  };
-
-  // send mail
-  smtpTransport.sendMail(mailOptions, (error, response) => {
-    let result;
-    if (error) {
-      console.log(error);
-      result = false;
-    } else {
-      result = true;
-    }
-    smtpTransport.close();
-    return result;
-  });
-}
 
 const checkAuth = require("../middleware/check-auth");
 
 router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
-  const alloweds = process.env.SHOPALLOWEDS;
+  try {
+    // console.log('entering post in fidoorders')
+    const alloweds = process.env.SHOPALLOWEDS;
 
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to create Sales");
-    return res.status(500).json({ message: "Not allowed to create Sales" });
-  }
+    if (!alloweds.includes(req.userData.email)) {
+      logIncident(req.userData.email, "Not allowed to create Sales");
+      return res.status(500).json({ message: "Not allowed to create Sales" });
+    }
 
-  let url = "";
-  let shopObj = req.body;
-  console.log(shopObj, shopObj)
+    let url = "";
+    let shopObj = req.body;
+    // console.log(shopObj, 'shopObj')
 
-  if (!shopObj.customer || shopObj.customer === undefined) {
-    return res
-      .status(500)
-      .json({ message: "check your data. empty customer?" });
-  }
+    if (!shopObj.customer || shopObj.customer === undefined) {
+      return res
+        .status(500)
+        .json({ message: "check your data. empty customer?" });
+    }
 
-  if (req.file) {
-    if (hostname.includes("torama.ng")) {
-      url =
-        "https://api.torama.ng" +
+    if (req.file) {
+      if (hostname.includes("torama.ng")) {
+        url = "https://api.torama.ng" +
         "/uploads/fidoorderimages" 
+      } else {
+        url = req.protocol + "://" + req.get("host");
+      }
+      const fPath = url + "/" + req.file.path;
+      shopObj.image = fPath.replace('/var/www/','');
+
+
+      // if (hostname.includes("torama.ng")) {
+      //   url =
+      //     "https://api.torama.ng" +
+      //     "/uploads/fidoorderimages" 
+      // } else {
+      //   url = req.protocol + "://" + req.get("host");
+      // }
+      // shopObj.image = url + '/' + req.file.path;
+      // console.log(url , shopObj.image, 'url and shopobj.image')
+    }
+
+    // const dirPath = Path.join(__dirname, "../uploads/printqueue/");
+    // let printQueue = dirPath + new Date().getTime() + ".json";
+
+    shopObj.creator = req.userData.userId;
+    if (shopObj.action_taken === "PRODUCT RELEASED") {
+      shopObj.status = "PAID";
     } else {
-      url = req.protocol + "://" + req.get("host");
+      shopObj.status = "NOT PAID";
     }
-    shopObj.image = url + '/' + req.file.path;
-  }
 
-  // const dirPath = Path.join(__dirname, "../uploads/printqueue/");
-  // let printQueue = dirPath + new Date().getTime() + ".json";
-
-  shopObj.creator = req.userData.userId;
-  if (shopObj.action_taken === "PRODUCT RELEASED") {
-    shopObj.status = "PAID";
-  } else {
-    shopObj.status = "NOT PAID";
-  }
-
-  if (shopObj.customer && typeof shopObj.customer === "object") {
-    shopObj.customer = shopObj.customer._id;
-  }
-
-  if (!shopObj.teller_id) {
-    delete shopObj.teller_id;
-  }
-  // let prods = [];
-  shopObj.products = JSON.parse(req.body.products);
-  // shopObj.receipt = JSON.parse(req.body.receipt);
-  const geoLocation = JSON.parse(req.body.geoLocation);
-  shopObj.geoLocation = {
-    latitude: geoLocation.latitude,
-    longitude: geoLocation.longitude,
-  };
-  Object.entries(shopObj).forEach(([key, value]) => {
-    if (
-      !value ||
-      value === undefined ||
-      value === null ||
-      value === "null" ||
-      value === "undefined"
-    ) {
-      delete shopObj[key];
+    if (shopObj.customer && typeof shopObj.customer === "object") {
+      shopObj.customer = shopObj.customer._id;
     }
-  });
 
-  saveOrder(shopObj);
+    if (!shopObj.teller_id) {
+      delete shopObj.teller_id;
+    }
+    // let prods = [];
+    shopObj.products = JSON.parse(req.body.products);
+    // shopObj.receipt = JSON.parse(req.body.receipt);
+    const geoLocation = JSON.parse(req.body.geoLocation);
+    shopObj.geoLocation = {
+      latitude: geoLocation.latitude,
+      longitude: geoLocation.longitude,
+    };
+    Object.entries(shopObj).forEach(([key, value]) => {
+      if (
+        !value ||
+        value === undefined ||
+        value === null ||
+        value === "null" ||
+        value === "undefined"
+      ) {
+        delete shopObj[key];
+      }
+    });
 
-  function saveOrder(shopObj) {
-    const fidoorder = new FidoOrder(shopObj);
+    saveOrder(shopObj);
 
-    fidoorder
-      .save()
-      .then(async (result) => {
-        res.status(201).json({
-          message: "FidoOrder added successfully",
-          fidoorder: {
-            ...result,
-            id: result.id,
-            paidAmount: result.paidAmount,
-          },
+    function saveOrder(shopObj) {
+      const fidoorder = new FidoOrder(shopObj);
+
+      fidoorder
+        .save()
+        .then(async (result) => {
+          res.status(201).json({
+            message: "FidoOrder added successfully",
+            fidoorder: {
+              ...result,
+              id: result.id,
+              paidAmount: result.paidAmount,
+            },
+          });
+          // sendMail(result);
+        })
+        .catch((error) => {
+          res.status(500).json({
+            message: "Creating a fidoorder failed! " + error,
+          });
         });
-        // sendMail(result);
-      })
-      .catch((error) => {
-        res.status(500).json({
-          message: "Creating a fidoorder failed! " + error,
-        });
-      });
-  }
+    }
+    } catch (error) {
+      console.log(error)
+    }
+  
 });
 
 
@@ -593,23 +529,42 @@ router.get("/bydate", checkAuth, async (req, res, next) => {
   }
 });
 
-router.get("/:id", (req, res, next) => {
-  FidoOrder.findById(req.params.id)
-    .populate("creator")
-    .populate("customer")
-    .populate("terminal_id")
-    .then((fidoorder) => {
-      if (fidoorder) {
-        res.status(200).json(fidoorder);
-      } else {
-        res.status(404).json({ message: "fidoorder not found!" });
-      }
-    })
-    .catch((error) => {
-      res.status(500).json({
-        message: "Fetching fidoorder failed! " + error,
-      });
+router.get("/:id", async (req, res, next) => {
+
+  try {
+    console.log(req.params.id, 'id')
+  const fidoOrder = await FidoOrder.findById(req.params.id).populate("creator")
+  .populate("customer")
+  .populate("terminal_id")
+  if (fidoOrder) {
+    console.log(fidoOrder)
+    res.status(200).json(fidoOrder);
+  }
+  
+  } catch (error) {
+    res.status(500).json({
+      message: "CatchError: Fetching fidoorder failed! " + error,
     });
+  }
+
+  // FidoOrder.findById(req.params.id)
+  //   .populate("creator")
+  //   .populate("customer")
+  //   .populate("terminal_id")
+  //   .then((fidoorder) => {
+  //     if (fidoorder) {
+  //       res.status(200).json(fidoorder);
+  //     } else {
+  //       res.status(404).json({ message: "fidoorder not found!" });
+  //     }
+  //   })
+  //   .catch((error) => {
+  //     console.error(error)
+  //     res.status(500).json({
+  //       message: "Fetching fidoorder failed! " + error,
+  //     });
+  //   });
+  
 });
 
 module.exports = router;

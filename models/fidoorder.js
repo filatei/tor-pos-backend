@@ -15,6 +15,7 @@ const fidoorderSchema = mongoose.Schema(
     transfer_from_date: { type: Date },
     txn_amount: { type: Number },
     paidAmount: { type: Number },
+    balance: { type: Number },
     name_teller: { type: String },
     userName: { type: String },
     orderType: { type: String, enum:['INCENTIVE', 'NORMAL']},
@@ -31,7 +32,8 @@ const fidoorderSchema = mongoose.Schema(
     rrn: { type: String },
     trans_id: { type: String },
     tx_ref: { type: String },
-    status: { type: String, enum: ["NOT PAID", "PAID", "LOADED", "COMPLETED"] },
+    status: { type: String, enum: ["NOT PAID", "PAID", "LOADED", "COMPLETED", "DELIVERED"] },
+    
     delivery: [
       {
         status: { type: String, enum: ["DRAFT", "LOADED", "SEEN-OUT"] },

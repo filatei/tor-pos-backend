@@ -17,7 +17,9 @@ const tokens = require(`${homedir}/.token.json`);
 const nodemailer = require("nodemailer");
 const { google } = require("googleapis");
 const OAuth2 = google.auth.OAuth2;
-const Utils = require("../utils");
+// const Utils = require("../utils");
+
+const ObjectId = require('mongoose').Types.ObjectId;
 
 var multer = require("multer");
 const DIR = "/var/www/uploads/fidoorderimages/";
@@ -68,6 +70,17 @@ var upload = multer({
 });
 
 const Accesslog = require("../models/accesslog");
+
+// Validator function
+function isValidObjectId(id){
+     
+  if(ObjectId.isValid(id)){
+      if((String)(new ObjectId(id)) === id)
+          return true;       
+      return false;
+  }
+  return false;
+}
 
 function logIncident(email, description) {
   const logObj = new Accesslog({ email: email, description: description });
@@ -533,37 +546,33 @@ router.get("/:id", async (req, res, next) => {
 
   try {
     console.log(req.params.id, 'id')
-  const fidoOrder = await FidoOrder.findById(req.params.id).populate("creator")
-  .populate("customer")
-  .populate("terminal_id")
-  if (fidoOrder) {
-    console.log(fidoOrder)
-    res.status(200).json(fidoOrder);
-  }
+    const id = req.params.id;
+
+    //  return blank object if id is wrong
+    if ( ! isValidObjectId(id) ) {
+      console.log('invalid id')
+      return res.status(200).json({});
+    } else {
+      console.log('valid id... proceeding')
+    }
+    const fidoOrder = await FidoOrder.findById(id)
+    .populate("creator")
+    .populate("updater")
+    .populate("customer")
+    .populate("terminal_id")
+    if (fidoOrder) {
+      res.status(200).json(fidoOrder);
+    } else {
+      console.log('no order')
+    }
   
   } catch (error) {
-    res.status(500).json({
-      message: "CatchError: Fetching fidoorder failed! " + error,
-    });
+    console.log(error, 'catch error')
+    // res.status(500).json({
+    //   message: "CatchError: Fetching fidoorder failed! " + error,
+    // });
   }
 
-  // FidoOrder.findById(req.params.id)
-  //   .populate("creator")
-  //   .populate("customer")
-  //   .populate("terminal_id")
-  //   .then((fidoorder) => {
-  //     if (fidoorder) {
-  //       res.status(200).json(fidoorder);
-  //     } else {
-  //       res.status(404).json({ message: "fidoorder not found!" });
-  //     }
-  //   })
-  //   .catch((error) => {
-  //     console.error(error)
-  //     res.status(500).json({
-  //       message: "Fetching fidoorder failed! " + error,
-  //     });
-  //   });
   
 });
 

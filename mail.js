@@ -1474,7 +1474,7 @@ async function sendPayrollCsvMail(payRolls,creatorId) {
         table += `<tr><td>${index+1}</td><td>${p.personId}</td><td>${p.name}</td><td>${p.payType}</td><td>${p.month}</td><td>${p.year}</td><td>${p.grossPay}</td><td>${p.deductions}</td><td>${p.netPay}</td</tr>`;
         sum += p.netPay;
       })
-      table += `<tr><td colspan="5">Total: ${sum.toFixed(2)}</td></tr></table>`
+      table += `<tr><td colspan="5">Total: ${String(sum).toFixed(2)}</td></tr></table>`
         const creator = await User.findById(creatorId);
         const userEmail = creator.email
         const creatorName = creator.name==='Akpodigha Filatei'?'MD':creator.name;

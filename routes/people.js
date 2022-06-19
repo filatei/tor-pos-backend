@@ -291,7 +291,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
               return res.status(500).json({message: 'WRONG EMP TYPE'})
             }
           }
-
+          row.status = "ACTIVE";
           if (row['STATUS']) {
             row.status = row['STATUS'].trim();
           }

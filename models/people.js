@@ -55,7 +55,7 @@ const peopleSchema = mongoose.Schema({
     type: {type: String, enum: ["STAFF", "CONTRACTOR", "OTHER", "REFEREE"]},
     empType: {type: String, enum: ["STAFF", "CONTRACTOR", "OTHER", "REFEREE"]},
     address: {type: String},
-    status: {type: String, enum:["ACTIVE", "DORMANT"]},
+    status: {type: String, enum:["ACTIVE", "DORMANT", "FIRED FOR CAUSE", "FIRED WITH HONOUR"]},
     
 },
 {

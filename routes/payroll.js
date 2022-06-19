@@ -399,6 +399,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           }
 
           const payee = await People.findOne({ people_id: personId });
+         
 
           if (payee && payee?._id)  {
             row.payee = payee._id;
@@ -480,8 +481,6 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             row.deductions +=  row.salaryAdvance;
           }
 
-         
-
           if (row['DAYS WORKED']) {
             row.daysAbsent = 0;
             if (row['DAYS ABS']) {
@@ -505,7 +504,6 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             row.grossPay = row.baseSalary;
             
             row.deductions += (row.daysAbsent/totalDays)* row.baseSalary
-            console.log(row.grossPay, row.deductions, 'gpay ded')
           }
 
           if (row['BANK ACCOUNT']) {
@@ -596,8 +594,16 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             row.netPay = row.netPay.toFixed(2);
             row.grossPay = row.grossPay.toFixed(2);
             row.deductions = row.deductions.toFixed(2); 
-            prl.push(row);
+            if (payee.status === 'ACTIVE') {
+              prl.push(row);
+            } else {
+              exceptions.push(row);
+              return res.status(500).json({
+                message: `Payee must be active `
+              });
+            }
           }
+
           
         })
         .on('end', async rowCount => {

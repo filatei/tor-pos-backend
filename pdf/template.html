@@ -2,6 +2,28 @@
 <html>
   <head>
     <meta charset="utf-8" />
+    <style> 
+        body {
+            
+            margin-right: 13mm;
+            padding-right: 13mm;
+            margin-top: 5mm;
+            padding-top:5mm;
+        }
+        h4 {
+            color: red;
+            text-decoration: underline;
+        }
+
+        p {
+            font-size: 12px;
+            word-wrap: break-word;
+        }
+
+        #title {
+            color: blue;
+        }
+    </style>
     <link
       rel="stylesheet"
       href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
@@ -17,7 +39,7 @@
       
       alt="Responsive image"
     />
-    <p >
+    <p id="title">
         FIDO WATERS LTD
 
     </p>
@@ -29,13 +51,17 @@
 
     <!-- </div> -->
     Dear {{person.name}},
+    <p></p>
 
     <h4>Offer Letter for {{person.name}}</h4>
-    <p>The management of Fido Water Waters Ltd is pleased to offer you the position of {{person.jobName}} with effect from {{person.hireDate}}.</p>
-    <p>You are required to resume at our factory at {{person.site.name}}</p>
+    <p></p>
+    <p>The management of Fido Water Waters Ltd is pleased to offer you the position </p>
+       <p>  of {{person.jobName}} with effect from {{person.hireDate}}.</p>
+    <p>You are required to resume at our factory at {{person.site.name}}.</p>
 
     <p>Your base salary is {{person.baseSalary}} paid monthly.</p>
-    <p>Feel free to contact your manager or the undersigned should you require more information.</p>
+    <p>Feel free to contact your manager or the undersigned should you</p>
+     <p>require more information.</p>
 
     <p>Yours sincerely,</p>
     <p></p>

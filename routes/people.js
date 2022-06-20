@@ -865,7 +865,7 @@ router.get("/pdfcreate", checkAuth, async (req, res, next) => {
 
 
     var options = {
-      format: "A3",
+      format: "A4",
       orientation: "portrait",
       border: "10mm",
       header: {
@@ -877,7 +877,7 @@ router.get("/pdfcreate", checkAuth, async (req, res, next) => {
           contents: {
               first: '',
               2: '', // Any page number is working. 1-based index
-              default: `<span style="color: #444;">${new Date}</span>`, // fallback value
+              default: `<span style="color: #444;"></span>`, // fallback value
               last: ''
           }
       }

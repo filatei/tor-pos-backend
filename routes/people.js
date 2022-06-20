@@ -9,6 +9,7 @@ const router = express.Router();
 const Path = require("path");
 const fs = require("fs");
 const os = require("os");
+var pdf = require("pdf-creator-node");
 const hostname = os.hostname();
 const csv = require('fast-csv');
 const Mail = require('../mail');
@@ -774,6 +775,7 @@ router.delete("/:id", checkAuth, async (req, res, next) => {
   }
 });
 
+
 router.get("", (req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
@@ -822,23 +824,6 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
       return res.status(404).json({ message: "Not Found"  });
     }
 
-    // People.find({ $text: { $search: searchTerm } })
-    //   .sort({ updatedAt: -1 })
-    //   .populate("creator").populate('site')
-    //   .limit(200)
-    //   .then((record) => {
-    //     if (record) {
-    //       // console.log(record.length);
-    //       return res.status(200).json({ peoples: record });
-    //     } else {
-    //       return res.status(404).json({ message: "People record not found!" });
-    //     }
-    //   })
-    //   .catch((error) => {
-    //     return res.status(500).json({
-    //       message: "Fetching record failed!" + error,
-    //     });
-    //   });
     
   } catch (error) {
     console.log(error)
@@ -847,6 +832,105 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
 
   
 });
+
+router.get("/pdfcreate", checkAuth, async (req, res, next) => {
+  
+  try {
+    const alloweds = process.env.ALLOWEDS;
+
+    if ( !alloweds.includes(req.userData.email) ) {
+      return res.status(500).json({ message: "Not allowed" });
+    }
+
+    const { personId } = req.query;
+    console.log(personId, " personId");
+    if (!personId) {
+      return res.status(404).json({ message: "PersonId not set! " });
+    }
+
+    const person  = await People.findById(personId).populate('site').lean();
+    console.log(person, 'person')
+    if (!person) {
+      return res.status(404).json({ message: "Person Not Found! " });
+    }
+
+    let records;
+    const htmlFile = Path.join(__dirname, "../pdf/template.html")
+    var html = fs.readFileSync(htmlFile, "utf8");
+
+
+    var options = {
+      format: "A4",
+      orientation: "portrait",
+      border: "10mm",
+      header: {
+          height: "45mm",
+          contents: '<div style="text-align: right; "> <p  style="font-weight:bold; font-size:2em; margin:0;padding:0;color:blue;"> Fido Waters Ltd</p>Kpansia Market Road, Yenagoa, Bayelsa State. </div>'
+      },
+      footer: {
+          height: "28mm",
+          contents: {
+              first: '',
+              2: 'Second page', // Any page number is working. 1-based index
+              default: '<span style="color: #444;"></span>/<span></span>', // fallback value
+              last: 'Last Page'
+          }
+      }
+  };
+
+  // var person = 
+  // {
+  //     firstName: "Solomon",
+  //     lastName: "Torulagha",
+  //     name: "Solomon Torulagha",
+  //     age: "26",
+  //     hireDate: new Date(),
+  //     site: {name: 'Yenegwe'},
+  //     jobName: 'Loader',
+  //     baseSalary: 30000,
+  //     sex: 'Male',
+  //     phone: '08198723453'
+  // }
+
+  var document = {
+      html: html,
+      data: {
+          person:person
+      },
+      path: `/var/www/uploads/offers/offer_letter_${person.fname}.pdf`,
+      type: "",
+  };
+
+  pdf
+  .create(document, options)
+  .then((result) => {
+
+    if (hostname.includes("torama")) {
+      url = "https://api.torama.ng";
+    } else {
+      url = "http://localhost:3500";
+    }
+    result.filename = result.filename.replace('/var/www/uploads', `${url}/uploads`)
+    console.log(result);
+
+    res.status(200).json({ message: "pdf created ", result });
+
+  })
+  .catch((error) => {
+    console.error(error);
+    res.status(404).json({ message: "Error creating PDF! " + error });
+  });
+
+    
+  } catch (error) {
+    console.log(error)
+    res.status(404).json({ message: "try Block Error! " + error });
+  }
+
+  
+});
+
+
 
 router.get("/:id", (req, res, next) => {
   People.findById(req.params.id).populate('site').populate('creator')

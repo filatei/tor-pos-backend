@@ -397,8 +397,13 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
               message: 'Person ID is required'
             });
           }
-
+          
           const payee = await People.findOne({ people_id: personId });
+
+          // update payee with status ACTIVE if not active
+          if (!payee.status) {
+            const payeeUpdateStatus = await People.updateOne({_id:payee._id},{ status: 'ACTIVE'})
+          }
          
 
           if (payee && payee?._id)  {
@@ -412,22 +417,18 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
          
           const today = new Date();
           const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-          console.log(row['PAY START DATE'], row['PAY END DATE'], 'start end')
           if (row['PAY START DATE']) {
             const dt = row['PAY START DATE'].split('/');
             row.payStartDate = new Date(dt[2], dt[1]-1, dt[0])
-            console.log(row.payStartDate, 'start date')
           }
 
           if (row['PAY END DATE']) {
             const dt = row['PAY END DATE'].split('/');
             row.payEndDate = new Date(dt[2], dt[1]-1, dt[0])
-            console.log(row.payEndDate, 'end date')
 
             const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             row.month = months[row.payEndDate.getMonth()];
             row.year = row.payEndDate.getFullYear()
-            console.log(row.month, 'month')
           }
 
           if (!row.month ) {
@@ -594,7 +595,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             row.netPay = row.netPay.toFixed(2);
             row.grossPay = row.grossPay.toFixed(2);
             row.deductions = row.deductions.toFixed(2); 
-            if (payee.status === 'ACTIVE') {
+            if (payee.status === 'ACTIVE' || !payee.status) {
               prl.push(row);
             } else {
               exceptions.push(row);
@@ -714,6 +715,13 @@ router.post("/csvValidate", checkAuth, csvUpload.any(), async function (req, res
       }
 
       const payee = await People.findOne({ people_id: personId });
+          
+          // update payee with status ACTIVE if not active
+          if (!payee.status) {
+            const payeeUpdateStatus = await People.updateOne({_id:payee._id},{ status: 'ACTIVE'})
+          }
+         
+
 
       if (!payee) {
         row.payeeRequired = 'YES';

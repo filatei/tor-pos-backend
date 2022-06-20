@@ -620,10 +620,10 @@ router.put("/:id", checkAuth, upload.any(), async (req, res, next) => {
 
   People.updateOne({ _id: req.params.id }, people)
   .then( async (result) => {
-    const updated = await People.findById(req.params.id);
+    const updated = await People.findById(req.params.id).populate('site').lean();
     if (result.n > 0) {
       const mail = Mail.sendPeopleMailUpdated(updated);
-      res.status(200).json({ message: "Update successful!" });
+      res.status(200).json({ message: "Update successful!", person:updated });
     } else {
       res.status(401).json({ message: "Not authorized!" });
     }
@@ -858,45 +858,38 @@ router.get("/pdfcreate", checkAuth, async (req, res, next) => {
     const htmlFile = Path.join(__dirname, "../pdf/template.html")
     var html = fs.readFileSync(htmlFile, "utf8");
 
+    var imgSrc = __dirname + "/../pdf/fidologo.png";
+    imgSrc = Path.normalize(imgSrc);
+    console.log(imgSrc)
+    // const bitmap = Path.join(__dirname, "../pdf/fidologo.png")
+
 
     var options = {
-      format: "A4",
+      format: "A3",
       orientation: "portrait",
       border: "10mm",
       header: {
-          height: "45mm",
-          contents: '<div style="text-align: right; "> <p  style="font-weight:bold; font-size:2em; margin:0;padding:0;color:blue;"> Fido Waters Ltd</p>Kpansia Market Road, Yenagoa, Bayelsa State. </div>'
+          height: "0mm",
+          contents: '<div style="text-align:right"> <p  style="font-weight:bold; font-size:20px; margin:0;padding:0;color:blue;"> Fido Waters Ltd</p>Kpansia Market Road, Yenagoa, Bayelsa State. </div>'
       },
       footer: {
           height: "28mm",
           contents: {
               first: '',
-              2: 'Second page', // Any page number is working. 1-based index
-              default: '<span style="color: #444;"></span>/<span></span>', // fallback value
-              last: 'Last Page'
+              2: '', // Any page number is working. 1-based index
+              default: `<span style="color: #444;">${new Date}</span>`, // fallback value
+              last: ''
           }
       }
   };
 
-  // var person = 
-  // {
-  //     firstName: "Solomon",
-  //     lastName: "Torulagha",
-  //     name: "Solomon Torulagha",
-  //     age: "26",
-  //     hireDate: new Date(),
-  //     site: {name: 'Yenegwe'},
-  //     jobName: 'Loader',
-  //     baseSalary: 30000,
-  //     sex: 'Male',
-  //     phone: '08198723453'
-  // }
 
   var document = {
       html: html,
       data: {
-          person:person
+          person:person,
       },
+      logo: imgSrc,
       path: `/var/www/uploads/offers/offer_letter_${person.fname}.pdf`,
       type: "",
   };

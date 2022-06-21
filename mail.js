@@ -1257,7 +1257,38 @@ async function sendPeopleMailUpdated(record) {
       ) {
         delete record[key];
       } else {
-        table += `<tr><td>${key}</td><td>${value}</td></tr>`
+        if (key == 'site') {
+          table += `<tr><td>${key}</td><td>${value.name}</td></tr>`
+        } else if (key ==='_id'){
+
+        } else if (key === 'creator') {
+
+        } else if (key === 'updater') {
+
+        }
+        else if (key === 'payrolls') {
+
+        }
+        else if (key === 'email') {
+
+        }
+        else if (key === 'createdAt') {
+          table += `<tr><td>${key}</td><td>${value.toLocaleString()}</td></tr>`
+        }
+        else if (key === 'updatedAt') {
+          table += `<tr><td>${key}</td><td>${value.toLocaleString()}</td></tr>`
+        }
+        else if (key === 'hireDate') {
+          table += `<tr><td>${key}</td><td>${value.toLocaleString()}</td></tr>`
+        }
+        else if (key === 'exitDate') {
+          table += `<tr><td>${key}</td><td>${value.toLocaleString()}</td></tr>`
+        }
+        
+        else {
+          table += `<tr><td>${key}</td><td>${value}</td></tr>`
+        }
+       
       }
 
     });
@@ -1294,10 +1325,12 @@ async function sendPeopleMailUpdated(record) {
         date = moment(record.createdAt).format(format1);
         const logo = "https://api.torama.ng/uploads/productimages/fidologo.png";
         const fullDate = new Date().getFullYear();
+        // const oldStuff=`<p>First Name: ${fname}</p> ${mname} <p>Last Name: ${lname}</p><p>Phone: ${phone}</p><p>Bank Account: ${record.bankAccount}</p><p>Status: ${record.status}</p><p>Exit Date: ${record.exitDate}</p><p>Hire Date: ${record.hireDate}</p>`;
+        const oldStuff=``;
         let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
-                  ${date}</p><h2> Staff  ID: ${personId}</h2><p> Hi ${updaterName}, A Staff Updated as follows:</p> `;
-        html += `<p>Updater: ${updaterName}</p> <p> Staff  ID: ${personId}</p>
-            ${name} <p>First Name: ${fname}</p> ${mname} <p>Last Name: ${lname}</p><p>Phone: ${phone}</p><p>Bank Account: ${record.bankAccount}</p><p>Status: ${record.status}</p><p>Exit Date: ${record.exitDate}</p><p>Hire Date: ${record.hireDate}</p>
+                  ${date}</p><h2> Staff  ID: ${personId}</h2><p> Hi ${updaterName}, A Staff Updated as follows:</p>  ${table}`;
+        html += `<p style="text-decoration:underline;">SUMMARY</p><p>Updater: ${updaterName}</p> <p> Staff  ID: ${personId}</p>
+            ${name} ${oldStuff}
              <p>Site: ${site}</p> <p>Job: ${job}</p> ${notes} `;
         html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
 

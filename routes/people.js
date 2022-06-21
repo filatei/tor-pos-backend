@@ -134,6 +134,7 @@ function logIncident(email, description) {
 
 const checkAuth = require("../middleware/check-auth");
 const site = require("../models/site");
+const { doubleclickbidmanager } = require("googleapis/build/src/apis/doubleclickbidmanager");
 
 router.post("", checkAuth, upload.any(), async function (req, res, next) {
   try {
@@ -186,6 +187,7 @@ router.post("", checkAuth, upload.any(), async function (req, res, next) {
         delete dObj[key];
       }
     });
+    dObj.status = 'ACTIVE';
 
     let ppl = new People(dObj);
     const saved = await ppl.save();

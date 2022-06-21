@@ -1200,9 +1200,11 @@ async function sendPeopleMail(record) {
         let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
                   ${date}</p><h2>New Staff  ID: ${personId}</h2><p> Hi ${creatorName}, A new staff created as follows:</p>`;
         html += `<p>Creator: ${creatorName}</p> <p>New Staff  ID: ${personId}</p>
-            ${name} <p>First Name: ${fname}</p> ${mname} <p>Last Name: ${lname}</p> <p>Phone: ${phone}</p> <p>Site: ${site}</p> <p>Job: ${job}</p> <p>Department: ${record.department}</p> `;
+            ${name} <p>First Name: ${fname}</p> ${mname} <p>Last Name: ${lname}</p> <p>Phone: ${phone}</p> <p>Site: ${site}</p> <p>Job: ${job}</p> <p>Department: ${record.department}</p> 
+             <p>Bank Account: ${record.bankAccount}</p> <p>hireDate: ${record.hireDate}</p>  <p>Exit Date: ${record.exitDate}</p>  <p>Status: ${record.status}</p>   `;
         html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
 
+        console.log(html)
         if (hostname.includes("torama")) {
           toEmail = "people@gtsng.com";
           creatorEmail = userEmail;
@@ -1244,6 +1246,23 @@ async function sendPeopleMailUpdated(record) {
 
   try {
     let updaterId;
+    let table ='<table>'
+    Object.entries(record).forEach(([key, value]) => {
+      if (
+        !value ||
+        value === undefined ||
+        value === null ||
+        value === "null" ||
+        value === "undefined"
+      ) {
+        delete record[key];
+      } else {
+        table += `<tr><td>${key}</td><td>${value}</td></tr>`
+      }
+
+    });
+    table +='</table>';
+
     if (record ) {
       
         updaterId =  record.updater;
@@ -1276,13 +1295,13 @@ async function sendPeopleMailUpdated(record) {
         const logo = "https://api.torama.ng/uploads/productimages/fidologo.png";
         const fullDate = new Date().getFullYear();
         let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
-                  ${date}</p><h2> Staff  ID: ${personId}</h2><p> Hi ${updaterName}, A Staff Updated as follows:</p>`;
+                  ${date}</p><h2> Staff  ID: ${personId}</h2><p> Hi ${updaterName}, A Staff Updated as follows:</p> `;
         html += `<p>Updater: ${updaterName}</p> <p> Staff  ID: ${personId}</p>
-            ${name} <p>First Name: ${fname}</p> ${mname} <p>Last Name: ${lname}</p><p>Phone: ${phone}</p>
+            ${name} <p>First Name: ${fname}</p> ${mname} <p>Last Name: ${lname}</p><p>Phone: ${phone}</p><p>Bank Account: ${record.bankAccount}</p><p>Status: ${record.status}</p><p>Exit Date: ${record.exitDate}</p><p>Hire Date: ${record.hireDate}</p>
              <p>Site: ${site}</p> <p>Job: ${job}</p> ${notes} `;
         html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
 
-        console.log(hostname, 'hostname')
+        console.log(html, 'html')
         if (hostname.includes("torama")) {
           toEmail = "people@gtsng.com";
           creatorEmail = userEmail;

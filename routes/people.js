@@ -14,6 +14,8 @@ const hostname = os.hostname();
 const csv = require('fast-csv');
 const Mail = require('../mail');
 
+const pdfService = require('../services/pdf-service');
+
 var multer = require("multer");
 
 const MIME_TYPE_MAP = {
@@ -119,6 +121,9 @@ const MIME_TYPE_MAP = {
       }
     },
   });
+
+
+  
 
 function logIncident(email, description) {
   const logObj = new Accesslog({ email: email, description: description });
@@ -835,7 +840,98 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
   
 });
 
-router.get("/pdfcreate", checkAuth, async (req, res, next) => {
+// router.get("/pdfcreate2", checkAuth, async (req, res, next) => {
+  
+//   try {
+//     const alloweds = process.env.ALLOWEDS;
+
+//     if ( !alloweds.includes(req.userData.email) ) {
+//       return res.status(500).json({ message: "Not allowed" });
+//     }
+
+//     const { personId } = req.query;
+//     console.log(personId, " personId");
+//     if (!personId) {
+//       return res.status(404).json({ message: "PersonId not set! " });
+//     }
+
+//     const person  = await People.findById(personId).populate('site').lean();
+//     await pdfService.pdfKitCreate(person)
+//     console.log(person, 'person')
+//     if (!person) {
+//       return res.status(404).json({ message: "Person Not Found! " });
+//     }
+
+//     let records;
+//     const htmlFile = Path.join(__dirname, "../pdf/template.html")
+//     var html = fs.readFileSync(htmlFile, "utf8");
+
+//     var imgSrc = __dirname + "/../pdf/fidologo.png";
+//     imgSrc = Path.normalize(imgSrc);
+//     console.log(imgSrc)
+//     // const bitmap = Path.join(__dirname, "../pdf/fidologo.png")
+
+
+//     var options = {
+//       format: "A4",
+//       orientation: "portrait",
+//       border: "10mm",
+//       header: {
+//           height: "0mm",
+//           contents: '<div style="text-align:right"> <p  style="font-weight:bold; font-size:20px; margin:0;padding:0;color:blue;"> Fido Waters Ltd</p>Kpansia Market Road, Yenagoa, Bayelsa State. </div>'
+//       },
+//       footer: {
+//           height: "28mm",
+//           contents: {
+//               first: '',
+//               2: '', // Any page number is working. 1-based index
+//               default: `<span style="color: #444;"></span>`, // fallback value
+//               last: ''
+//           }
+//       }
+//   };
+
+
+//   var document = {
+//       html: html,
+//       data: {
+//           person:person,
+//       },
+//       logo: imgSrc,
+//       path: `/var/www/uploads/offers/offer_letter_${person.fname}.pdf`,
+//       type: "",
+//   };
+
+//   pdf
+//   .create(document, options)
+//   .then((result) => {
+
+//     if (hostname.includes("torama")) {
+//       url = "https://api.torama.ng";
+//     } else {
+//       url = "http://localhost:3500";
+//     }
+//     result.filename = result.filename.replace('/var/www/uploads', `${url}/uploads`)
+//     console.log(result);
+
+//     res.status(200).json({ message: "pdf created ", result });
+
+//   })
+//   .catch((error) => {
+//     console.error(error);
+//     res.status(404).json({ message: "Error creating PDF! " + error });
+//   });
+
+    
+//   } catch (error) {
+//     console.log(error)
+//     res.status(404).json({ message: "try Block Error! " + error });
+//   }
+
+  
+// });
+
+router.get("/pdfcreate",  checkAuth, async (req, res, next) => {
   
   try {
     const alloweds = process.env.ALLOWEDS;
@@ -844,86 +940,87 @@ router.get("/pdfcreate", checkAuth, async (req, res, next) => {
       return res.status(500).json({ message: "Not allowed" });
     }
 
+
     const { personId } = req.query;
-    console.log(personId, " personId");
     if (!personId) {
       return res.status(404).json({ message: "PersonId not set! " });
     }
 
     const person  = await People.findById(personId).populate('site').lean();
-    console.log(person, 'person')
+    // console.log(person, 'personnn')
     if (!person) {
       return res.status(404).json({ message: "Person Not Found! " });
     }
-
-    let records;
-    const htmlFile = Path.join(__dirname, "../pdf/template.html")
-    var html = fs.readFileSync(htmlFile, "utf8");
-
-    var imgSrc = __dirname + "/../pdf/fidologo.png";
-    imgSrc = Path.normalize(imgSrc);
-    console.log(imgSrc)
-    // const bitmap = Path.join(__dirname, "../pdf/fidologo.png")
-
-
-    var options = {
-      format: "A4",
-      orientation: "portrait",
-      border: "10mm",
-      header: {
-          height: "0mm",
-          contents: '<div style="text-align:right"> <p  style="font-weight:bold; font-size:20px; margin:0;padding:0;color:blue;"> Fido Waters Ltd</p>Kpansia Market Road, Yenagoa, Bayelsa State. </div>'
-      },
-      footer: {
-          height: "28mm",
-          contents: {
-              first: '',
-              2: '', // Any page number is working. 1-based index
-              default: `<span style="color: #444;"></span>`, // fallback value
-              last: ''
-          }
-      }
-  };
-
-
-  var document = {
-      html: html,
-      data: {
-          person:person,
-      },
-      logo: imgSrc,
-      path: `/var/www/uploads/offers/offer_letter_${person.fname}.pdf`,
-      type: "",
-  };
-
-  pdf
-  .create(document, options)
-  .then((result) => {
-
-    if (hostname.includes("torama")) {
-      url = "https://api.torama.ng";
-    } else {
-      url = "http://localhost:3500";
-    }
-    result.filename = result.filename.replace('/var/www/uploads', `${url}/uploads`)
-    console.log(result);
-
-    res.status(200).json({ message: "pdf created ", result });
-
-  })
-  .catch((error) => {
-    console.error(error);
-    res.status(404).json({ message: "Error creating PDF! " + error });
-  });
-
     
+
+    const stream = res.writeHead(200, {
+      'Content-Type':'application/pdf',
+      'Content-Disposition': `attachment;filename=appointment-${person.fname}.pdf`
+    })
+
+    pdfService.pdfKitCreate( person,
+      (chunk) => stream.write(chunk),
+      () => {
+        stream.end();
+      }
+    );
+
+    // console.log(stream)
+
+    // return res.status(200).json({message:"Pdf generated"});
   } catch (error) {
     console.log(error)
-    res.status(404).json({ message: "try Block Error! " + error });
+    return res.status(404).json({ message: "try Block Error! " + error });
   }
 
   
 });
+
+// router.post("/pdfcreate", checkAuth,  async (req, res, next) => {
+  
+//   try {
+//     const alloweds = process.env.ALLOWEDS;
+
+//     if ( !alloweds.includes(req.userData.email) ) {
+//       return res.status(500).json({ message: "Not allowed" });
+//     }
+
+
+//     const { personId } = req.query;
+//     if (!personId) {
+//       return res.status(404).json({ message: "PersonId not set! " });
+//     }
+
+//     const person  = await People.findById(personId).populate('site').lean();
+//     // console.log(person, 'personnn')
+//     if (!person) {
+//       return res.status(404).json({ message: "Person Not Found! " });
+//     }
+    
+
+//     const stream = res.writeHead(200, {
+//       'Content-Type':'application/pdf',
+//       'Content-Disposition': 'attachment; filename=appointment.pdf'
+//     })
+
+//     pdfService.pdfKitCreate( person,
+//       (chunk) => stream.write(chunk),
+//       () => {
+//         stream.end();
+//       }
+//     );
+
+//     // console.log(stream)
+
+//     // return res.status(200).json({message:"Pdf generated"});
+//   } catch (error) {
+//     console.log(error)
+//     return res.status(404).json({ message: "try Block Error! " + error });
+//   }
+
+  
+// });
+
 
 
 

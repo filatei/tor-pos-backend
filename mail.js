@@ -1172,6 +1172,7 @@ async function sendPeopleMail(record) {
 
   try {
     let creatorId;
+    const table = createMailRecordTable(record)
     if (record ) {
       
         creatorId = record?.creator || record.updater;
@@ -1197,11 +1198,13 @@ async function sendPeopleMail(record) {
         date = moment(record.createdAt).format(format1);
         const logo = "https://api.torama.ng/uploads/productimages/fidologo.png";
         const fullDate = new Date().getFullYear();
+        // const oldStuff = `<p>Phone: ${phone}</p> <p>Site: ${site}</p> <p>Job: ${job}</p> <p>Department: ${record.department}</p> 
+        //             <p>Bank Account: ${record.bankAccount}</p> <p>hireDate: ${record.hireDate}</p>  <p>Exit Date: ${record.exitDate}</p>  <p>Status: ${record.status}</p> `;
+        const oldStuff =``
         let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
-                  ${date}</p><h2>New Staff  ID: ${personId}</h2><p> Hi ${creatorName}, A new staff created as follows:</p>`;
+                  ${date}</p><h2>New Staff  ID: ${personId}</h2><p> Hi ${creatorName}, A new staff created as follows:</p>${table}`;
         html += `<p>Creator: ${creatorName}</p> <p>New Staff  ID: ${personId}</p>
-            ${name} <p>First Name: ${fname}</p> ${mname} <p>Last Name: ${lname}</p> <p>Phone: ${phone}</p> <p>Site: ${site}</p> <p>Job: ${job}</p> <p>Department: ${record.department}</p> 
-             <p>Bank Account: ${record.bankAccount}</p> <p>hireDate: ${record.hireDate}</p>  <p>Exit Date: ${record.exitDate}</p>  <p>Status: ${record.status}</p>   `;
+            ${name} <p>First Name: ${fname}</p> ${mname} <p>Last Name: ${lname}</p> ${oldStuff}  `;
         html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
 
         console.log(html)
@@ -1242,11 +1245,8 @@ async function sendPeopleMail(record) {
 
 }
 
-async function sendPeopleMailUpdated(record) {
-
-  try {
-    let updaterId;
-    let table ='<table>'
+function createMailRecordTable(record) {
+  let table ='<table>'
     Object.entries(record).forEach(([key, value]) => {
       if (
         !value ||
@@ -1293,6 +1293,14 @@ async function sendPeopleMailUpdated(record) {
 
     });
     table +='</table>';
+    return table;
+}
+
+async function sendPeopleMailUpdated(record) {
+
+  try {
+    let updaterId;
+    const table = createMailRecordTable(record)
 
     if (record ) {
       

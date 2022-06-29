@@ -1247,7 +1247,7 @@ async function sendPeopleMail(record) {
 
 function createMailRecordTable(record) {
   let table ='<table>'
-    Object.entries(record).forEach(([key, value]) => {
+    Object.entries(record).forEach( async ([key, value]) => {
       if (
         !value ||
         value === undefined ||
@@ -1258,6 +1258,7 @@ function createMailRecordTable(record) {
         delete record[key];
       } else {
         if (key == 'site') {
+          // const site = await Site.findById(value);
           table += `<tr><td>${key}</td><td>${value.name}</td></tr>`
         } else if (key ==='_id'){
 

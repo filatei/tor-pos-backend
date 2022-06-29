@@ -151,7 +151,7 @@ router.post("", checkAuth, upload.any(), async function (req, res, next) {
     
     let saveCounter = 0;
     let dObj = req.body;
-  
+    let site;
     dObj.creator = req.userData.userId;
     if (dObj.nextOfKin) {
       dObj.nextOfKin.name = req.body?.nextOfKinName;
@@ -162,7 +162,7 @@ router.post("", checkAuth, upload.any(), async function (req, res, next) {
     if (dObj.site) {
       if (dObj.site === 'KPANSIA-E') dObj.site = 'KPANSIA E';
 
-      const site = await Site.findOne({ name: dObj.site });
+       site = await Site.findOne({ name: dObj.site });
       if (site) {
         dObj.site = site._id;
       }
@@ -196,7 +196,8 @@ router.post("", checkAuth, upload.any(), async function (req, res, next) {
 
     let ppl = new People(dObj);
     const saved = await ppl.save();
-    const mail = Mail.sendPeopleMail(saved);
+    const mail = Mail.sendPeopleMail({...saved._doc, site:site});
+    console.log(saved._doc, 'saved')
     if (saved) {
       console.log(saved)
       return res.status(201).json({

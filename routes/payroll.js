@@ -598,10 +598,13 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
             if (payee.status === 'ACTIVE' || !payee.status) {
               prl.push(row);
             } else {
-              exceptions.push(row);
-              return res.status(500).json({
-                message: `Payee must be active `
-              });
+              // exceptions.push(row);
+              console.log(payee, 'Status not active')
+              const mail = await Mail.sendPayrollNotActive(payee,req.userData.userId);
+
+              // return res.status(500).json({
+              //   message: `Payee must be active `
+              // });
             }
           }
 
@@ -716,11 +719,10 @@ router.post("/csvValidate", checkAuth, csvUpload.any(), async function (req, res
 
       const payee = await People.findOne({ people_id: personId });
           
-          // update payee with status ACTIVE if not active
-          if (!payee.status) {
-            const payeeUpdateStatus = await People.updateOne({_id:payee._id},{ status: 'ACTIVE'})
-          }
-         
+      // update payee with status ACTIVE if not active
+      if (!payee.status) {
+        const payeeUpdateStatus = await People.updateOne({_id:payee._id},{ status: 'ACTIVE'})
+      }
 
 
       if (!payee) {

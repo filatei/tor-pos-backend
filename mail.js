@@ -1525,6 +1525,59 @@ async function sendPayrollMail(record) {
 
 }
 
+async function sendPayrollNotActive(payRoll, creatorId) {
+  try {
+    if (payRoll ) {
+        const creator = await User.findById(creatorId);
+        const userEmail = creator.email
+        const creatorName = creator.name==='Akpodigha Filatei'?'MD':creator.name;
+       
+        let subject = `Payroll Exception`;
+
+        let format1 = "DD-MM-YYYY hh:mm:ss";
+        let date;
+        date = moment(new Date()).format(format1);
+        const logo = "https://api.torama.ng/uploads/productimages/fidologo.png";
+        const fullDate = new Date().getFullYear();
+        let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
+                  ${date}</p><h2>Bulk Payroll Exception</h2><p> Hi ${creatorName},  Payroll Exception cited  as follows:</p>`;
+        html += `<p>Creator: ${creatorName}</p> ${payRoll.name} is ${payRoll.status} `;
+        html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
+
+        if (hostname.includes("torama")) {
+          toEmail = "filatei@gtsng.com";
+          creatorEmail = userEmail;
+        } else {
+          toEmail = null;
+          toEmail = "filatei@gtsng.com";
+
+          creatorEmail = null;
+          bccMail = null;
+        }
+
+        const to = creatorEmail;
+        const sender = process.env.tormail;
+        const cc = toEmail;
+        const bcc = bccMail;
+        const body = html;
+        let model;
+
+        model = {
+          fromText: "Payroll ",
+          subject,
+          to: creatorEmail,
+          cc: toEmail,
+          bcc: bcc,
+          html,
+        };
+        mailer(model);
+    }
+  } catch (error) {
+    throw error;
+  }
+}
+
+
 async function sendPayrollCsvMail(payRolls,creatorId) {
   try {
     if (payRolls.length ) {
@@ -1705,5 +1758,6 @@ module.exports = {
   sendPayrollMail,
   sendPayrollCsvMail,
   deletePeopleMail,
-  sendPeopleMailUpdated
+  sendPeopleMailUpdated,
+  sendPayrollNotActive
 };

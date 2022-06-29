@@ -1531,7 +1531,8 @@ async function sendPayrollNotActive(payRoll, creatorId) {
         const creator = await User.findById(creatorId);
         const userEmail = creator.email
         const creatorName = creator.name==='Akpodigha Filatei'?'MD':creator.name;
-       
+        let creatorEmail;
+        let toEmail;
         let subject = `Payroll Exception`;
 
         let format1 = "DD-MM-YYYY hh:mm:ss";
@@ -1548,18 +1549,9 @@ async function sendPayrollNotActive(payRoll, creatorId) {
           toEmail = "filatei@gtsng.com";
           creatorEmail = userEmail;
         } else {
-          toEmail = null;
           toEmail = "filatei@gtsng.com";
-
           creatorEmail = null;
-          bccMail = null;
         }
-
-        const to = creatorEmail;
-        const sender = process.env.tormail;
-        const cc = toEmail;
-        const bcc = bccMail;
-        const body = html;
         let model;
 
         model = {
@@ -1567,7 +1559,6 @@ async function sendPayrollNotActive(payRoll, creatorId) {
           subject,
           to: creatorEmail,
           cc: toEmail,
-          bcc: bcc,
           html,
         };
         mailer(model);
@@ -1591,7 +1582,6 @@ async function sendPayrollCsvMail(payRolls,creatorId) {
         const creator = await User.findById(creatorId);
         const userEmail = creator.email
         const creatorName = creator.name==='Akpodigha Filatei'?'MD':creator.name;
-       
         let subject = `Bulk New Payroll Add from CSV`;
 
         let format1 = "DD-MM-YYYY hh:mm:ss";

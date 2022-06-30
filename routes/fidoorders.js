@@ -506,6 +506,23 @@ router.get("", (req, res, next) => {
     });
 });
 
+router.get("/ordersbyuser", checkAuth, async (req, res, next) => {
+  try {
+    const userId = req.userData.userId; 
+    console.log(userId, 'userid');
+    const orders =  await FidoOrder.find({creator:userId}) .lean()
+    .sort({createdAt:-1})
+    .limit(400)
+    .populate('creator')
+    .populate('customer')
+    .populate('terminal_id')
+    res.status(200).json({message: 'Orders fetched successfully', fidoorders:orders})
+
+  } catch (error) {
+    return res.status(500).json({message: 'Error fetching orders - ' + error})
+  }
+})
+
 router.get("/bydate", checkAuth, async (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
 

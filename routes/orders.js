@@ -8,6 +8,9 @@ const orderController = require('../controllers/order');
 
 router.post("", checkAuth, orderController.createOrder);
 router.get('', orderController.getOrders);
+
+router.get("/ordersbyuser", checkAuth, orderController.ordersByUser);
+
 router.get("/:id", orderController.getOrder);
   
 router.delete("/:id", checkAuth, orderController.deleteOrder);

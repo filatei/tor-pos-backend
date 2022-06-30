@@ -93,6 +93,19 @@ exports.createOrder =  (req, res, next) => {
       });
    }
 
+  exports.ordersByUser = async (req, res, next) => {
+    try {
+      const userId = req.userData.userId; 
+      console.log(userId, 'userid');
+      const orders =  await Order.find({creator:userId}).sort({createdAt:-1}).limit(400).populate('creator').populate('customer').lean();
+      console.log(orders[0])
+      res.status(200).json({message: 'Orders fetched successfully', orders})
+
+    } catch (error) {
+      return res.status(500).json({message: 'Error fetching orders - ' + error})
+    }
+  }
+
    exports.getOrder = (req, res, next) => {
     Order.findById(req.params.id).then(order => {
       if (order) {

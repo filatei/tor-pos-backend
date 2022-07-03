@@ -18,6 +18,8 @@ const nodemailer = require("nodemailer");
 const { google } = require("googleapis");
 const OAuth2 = google.auth.OAuth2;
 // const Utils = require("../utils");
+const Summary = require("../summary/recsummary");
+
 
 const ObjectId = require('mongoose').Types.ObjectId;
 
@@ -480,9 +482,50 @@ router.delete("/:id", checkAuth, (req, res, next) => {
     });
 });
 
-router.get("", (req, res, next) => {
-  const pageSize = +req.query.pagesize;
-  const currentPage = +req.query.page;
+router.get("", checkAuth, async (req, res, next) => {
+  // if you are an ordinary user, you only see orders created in your site or by you
+  try {
+    let pageSize = +req.query.pagesize;
+    if (!pageSize) pageSize = 400;
+    const role = req.userData.role;
+    const userId = req.userData.userId
+    const site = req.userData.site
+    let currentPage = +req.query.page;
+    if (!currentPage) currentPage = 1;
+    let orders;
+
+    if (['ADMIN','GENERAL MANAGER', 'SNR ACCOUNTANT'].includes(role)) {
+      orders = await FidoOrder.find()
+                          .lean()
+                          .sort({ createdAt: -1 })
+                          .populate("customer")
+                          .populate("creator")
+                          .populate("terminal_id")
+                          .skip(pageSize * (currentPage - 1))
+                          .limit(pageSize);
+      
+    } else {
+      orders = await FidoOrder.find({$or: [{ site: site }, { creator: userId }]})
+                          .lean()
+                          .sort({ createdAt: -1 })
+                          .populate("customer")
+                          .populate("creator")
+                          .populate("terminal_id")
+                          .skip(pageSize * (currentPage - 1))
+                          .limit(pageSize);
+    }
+    return res.status(200).json({
+      message: "Orders fetched successfully!",
+      fidoorders: orders,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Fetching fidoorders failed! " + error,
+    });
+  }
+  
+ 
+
   const fidoorderQuery = FidoOrder.find()
     .lean()
     .sort({ createdAt: -1 })
@@ -559,6 +602,63 @@ router.get("/bydate", checkAuth, async (req, res, next) => {
   }
 });
 
+router.get("/summary", checkAuth, async (req, res, next) => {
+  const alloweds = process.env.ALLOWEDS;
+
+  console.log(req.userData.site)
+  if (!alloweds.includes(req.userData.email)) {
+    logIncident(req.userData.email, "Not allowed to see Receipts");
+    return res.status(500).json({ message: "Not allowed" });
+  }
+
+  try {
+    const yesterdayStart = moment()
+      .subtract(1, "days")
+      .startOf("day")
+      .toDate();
+    const yesterdayEnd = moment().subtract(0, "days").endOf("day").toDate();
+    // start of today
+    var start = moment().startOf("day").toDate();
+
+    // end today
+    var end = moment(start).endOf("day").toDate();
+
+    const { recSummary } = req.query;
+    const site = req.userData.site;
+
+    if (recSummary) {
+      // if (!['ADMIN', 'MANAGER', 'GENERAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT'].includes(req.userData.role) ) {
+      //   return;
+      // }
+
+      let aggData = await Pipeline(yesterdayStart, yesterdayEnd, site);
+
+      console.log(aggData, 'aggData', yesterdayStart, yesterdayEnd, site)
+      // bring out the ._id
+      aggData = aggData.map((a) => {
+        return {
+          ...a._id,
+          totalSalesAmount: a.totalSalesAmount.toLocaleString(),
+          totalQty: a.totalQty.toLocaleString(),
+        };
+      });
+
+      if (aggData) {
+        return res.status(200).json({ records: aggData });
+      } else {
+        return res
+          .status(500)
+          .json({ message: "Error with recUpload summary" });
+      }
+    }
+  } catch (err) {
+    console.log(err)
+    return res
+      .status(500)
+      .json({ message: "Server Error with recUpload summary try block" + err });
+  }
+});
+
 router.get("/:id", async (req, res, next) => {
 
   try {
@@ -592,5 +692,62 @@ router.get("/:id", async (req, res, next) => {
 
   
 });
+
+
+async function Pipeline(start, end, site) {
+  const pipeline = [
+    {
+      $match: {
+        action_taken: "PRODUCT RELEASED",
+        createdAt: { $gte: start, $lte: end },
+        site: site
+      },
+    },
+    {
+      $unwind: {
+        path: "$products",
+      },
+    },
+    {
+      $group: {
+        _id: {
+          year: {
+            $year: "$createdAt",
+          },
+          month: {
+            $month: "$createdAt",
+          },
+          day: {
+            $dayOfMonth: "$createdAt",
+          },
+          product: "$products.name",
+          site: "$terminal_location",
+        },
+        totalSalesAmount: {
+          $sum: "$txn_amount",
+        },
+        totalQty: {
+          $sum: "$products.qty",
+        },
+      },
+    },
+    {
+      $sort: {
+        "_id.year": -1,
+        "_id.month": -1,
+        "_id.day": -1,
+        "_id.product": 1,
+        totalQty: -1,
+        "_id.site": 1,
+      },
+    },
+  ];
+
+  // return pipeline;
+  const summary = await FidoOrder.aggregate(pipeline);
+  // console.log(summary, "summary ");
+  return summary;
+}
+
 
 module.exports = router;

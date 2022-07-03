@@ -449,14 +449,6 @@ router.get("/summary2", checkAuth, async (req, res, next) => {
     var end = moment(start).endOf("day").toDate();
 
     const { recSummary } = req.query;
-    // console.log(
-    //   " in recsummary2",
-    //   yesterdayStart,
-    //   yesterdayEnd,
-    //   start,
-    //   end,
-    //   recSummary
-    // );
 
     if (recSummary) {
       if (!['ADMIN', 'MANAGER', 'GENERAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT'].includes(req.userData.role) ) {
@@ -465,6 +457,7 @@ router.get("/summary2", checkAuth, async (req, res, next) => {
 
       let aggData = await Summary.Pipeline(yesterdayStart, yesterdayEnd);
 
+      console.log(aggData, 'aggData', yesterdayStart, yesterdayEnd)
       // bring out the ._id
       aggData = aggData.map((a) => {
         return {

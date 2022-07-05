@@ -435,15 +435,16 @@ router.put(
 );
 
 router.delete("/:id", checkAuth, (req, res, next) => {
-  const alloweds = process.env.DELALLOWEDS;
 
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to delete ");
+  if (!['ADMIN'].includes(req.userData.role)) {
     return res.status(500).json({ message: "Not allowed" });
   }
 
   let filePath;
-  FidoOrder.findById(req.params.id)
+  const ids = JSON.parse(req.params.id);
+  ids.forEach(id => {
+    console.log(id, 'deleting')
+    FidoOrder.findById(id)
     .then((fidoorder) => {
       if (fidoorder && fidoorder.image) {
         filePath = "uploads/" + fidoorder.image.split("/uploads/")[1];
@@ -454,7 +455,8 @@ router.delete("/:id", checkAuth, (req, res, next) => {
         .status(401)
         .json({ message: "fidoorder not found in db!" + err });
     });
-  FidoOrder.deleteOne({ _id: req.params.id })
+
+    FidoOrder.deleteOne({ _id: id })
     .then((result) => {
       if (result.n > 0) {
         // delete fidoorder.image
@@ -480,6 +482,8 @@ router.delete("/:id", checkAuth, (req, res, next) => {
         message: "Deleting fidoorder failed! " + error,
       });
     });
+  })
+  
 });
 
 router.get("", checkAuth, async (req, res, next) => {

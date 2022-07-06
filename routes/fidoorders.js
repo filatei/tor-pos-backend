@@ -441,7 +441,7 @@ router.put(
 
 router.delete("/:id", checkAuth, async (req, res, next) => {
 
-  if (!['ADMIN'].includes(req.userData.role) || !['olawefaodumu@gmail.com'].includes(req.userData.email)) {
+  if (!['ADMIN'].includes(req.userData.role) ) {
     return res.status(500).json({ message: "Not allowed" });
   }
 

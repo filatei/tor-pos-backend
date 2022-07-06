@@ -104,12 +104,9 @@ const Mail = require("nodemailer/lib/mailer");
 
 router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
   try {
-    // console.log('entering post in fidoorders')
-    const alloweds = process.env.SHOPALLOWEDS;
 
-    if (!alloweds.includes(req.userData.email)) {
-      logIncident(req.userData.email, "Not allowed to create Sales");
-      return res.status(500).json({ message: "Not allowed to create Sales" });
+    if (!req.userData.role) {
+      return res.status(500).json({ message: "Not allowed to create Orders" });
     }
 
     let url = "";
@@ -298,6 +295,10 @@ router.get("/events", checkAuth, async (req, res, next) => {
 });
 
 router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
+  if (!req.userData.role) {
+    // logIncident(req.userData.email, "Not allowed to create notes");
+    return res.status(500).json({ message: "Not allowed" });
+  }
   let path = "";
   let url = "";
   let shopObj = req.body;
@@ -369,10 +370,10 @@ router.put(
   checkAuth,
   upload.single("image"),
   async function (req, res, next) {
-    const alloweds = process.env.ALLOWEDS;
+    const alloweds = ['ADMIN','GENERAL MANAGER','MANAGER', 'SECRETARY', 'SUPERVISOR', 'SECURITY', "OFFICER", "SNR ACCOUNTANT"];
 
-    if (!alloweds.includes(req.userData.email)) {
-      logIncident(req.userData.email, "Not allowed to create notes");
+    if (!req.userData.role) {
+      // logIncident(req.userData.email, "Not allowed to create notes");
       return res.status(500).json({ message: "Not allowed" });
     }
 
@@ -439,7 +440,7 @@ router.put(
 
 router.delete("/:id", checkAuth, async (req, res, next) => {
 
-  if (!['ADMIN'].includes(req.userData.role)) {
+  if (!['ADMIN'].includes(req.userData.role) || !['olawefaodumu@gmail.com'].includes(req.userData.email)) {
     return res.status(500).json({ message: "Not allowed" });
   }
 
@@ -551,7 +552,7 @@ router.get("", checkAuth, async (req, res, next) => {
 router.post("/eodOrders", checkAuth, async (req, res, next) => {
   // if you are an ordinary user, you only see orders created in your site or by you
   try {
-    const alloweds = req.userData.rol;
+    const alloweds = req.userData.role;
 
   // console.log(req.userData.site)
   if (!['ADMIN', 'GENEAL MANAGER', 'SNR ACCOUNTANT', 'MANAGER'].includes(req.userData.role)) {
@@ -734,7 +735,6 @@ router.get("/summary", checkAuth, async (req, res, next) => {
 router.get("/:id", async (req, res, next) => {
 
   try {
-    console.log(req.params.id, 'id')
     const id = req.params.id;
 
     //  return blank object if id is wrong

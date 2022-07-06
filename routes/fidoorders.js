@@ -186,6 +186,7 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
       fidoorder
         .save()
         .then(async (result) => {
+          console.log(result, 'result')
           res.status(201).json({
             message: "FidoOrder added successfully",
             fidoorder: {
@@ -624,8 +625,17 @@ router.post("/eodOrders", checkAuth, async (req, res, next) => {
 router.get("/ordersbyuser", checkAuth, async (req, res, next) => {
   try {
     const userId = req.userData.userId; 
+    const site = req.userData.site; 
     console.log(userId, 'userid');
-    const orders =  await FidoOrder.find({creator:userId}) .lean()
+
+    // start of today
+    var start = moment().startOf("day").toDate();
+
+    // end today
+    var end = moment(start).endOf("day").toDate();
+
+    // by user today
+    const orders =  await FidoOrder.find({createdAt: { $gte: start, $lte: end },$or: [{ site: site }, { creator: userId }]}) .lean()
     .sort({createdAt:-1})
     .limit(400)
     .populate('creator')
@@ -634,6 +644,7 @@ router.get("/ordersbyuser", checkAuth, async (req, res, next) => {
     res.status(200).json({message: 'Orders fetched successfully', fidoorders:orders})
 
   } catch (error) {
+    console.log(error)
     return res.status(500).json({message: 'Error fetching orders - ' + error})
   }
 })

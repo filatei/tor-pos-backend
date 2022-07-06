@@ -1665,7 +1665,12 @@ async function forgotPassword(userId, otp) {
   }
 }
 
-async function sendEodOrders(orders) {
+async function sendEodOrders(orders, userData) {
+  const site = userData.site;
+  const userEmail = userData.email;
+  const date = new Date().toLocaleDateString('en-GB').replace(/\//g,'_')
+  const fileName = `${site}-order-${date}.xlsx`;
+  const filePath = `/tmp/${fileName}`;
   let bodyA = '';
   let header = Object.keys(orders[0])
   let tableHeader = '<tr>';
@@ -1700,18 +1705,18 @@ async function sendEodOrders(orders) {
   })
   const finalTable = `<table>${tableHeader}${bodyA}</table>`
   const fullDate = new Date().toLocaleDateString('en-GB');
-  const subject = `EOD Order Report for ${fullDate}`;
+  const subject = `EOD Order Report for ${site} ${fullDate}`;
   
   let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50">
-        <p style="background:rgba(0, 128, 0,0.051); text-align:center;">${fullDate}</p><h2> End of Day Report</h2><p> Hi, Here is EOD Report:</p>  ${finalTable}`;
+        <p style="background:rgba(0, 128, 0,0.051); text-align:center;">${fullDate}</p><h2> End of Day Report for ${site}</h2><p> Hi, Here is EOD Report:</p>  ${finalTable}`;
         
         html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
 
         console.log(html, 'html')
         if (hostname.includes("torama")) {
-          toEmail = "orderReports@gtsng.com";
+          toEmail = userEmail;
           creatorEmail = userEmail;
-          bccMail = null
+          bccMail = 'dailyreports@gtsng.com'
         } else {
           toEmail = null;
           toEmail = "orderManagers@torama.ng";
@@ -1734,6 +1739,14 @@ async function sendEodOrders(orders) {
           cc: toEmail,
           bcc: bcc,
           html,
+          attachments: [
+      
+            {   // file on disk as an attachment
+                filename: fileName,
+                path: filePath // stream this file
+            },
+            
+          ]
         };
         mailer(model);
 
@@ -1772,6 +1785,7 @@ async function mailer(model) {
     subject: model.subject,
     generateTextFromHTML: true,
     html: model.html,
+    attachments: model.attachments?model.attachments:null
   };
 
   // send mail

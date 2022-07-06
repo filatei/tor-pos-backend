@@ -6,6 +6,7 @@ const PayMethod = require("../models/paymethod");
 const Terminal = require("../models/terminal");
 const User = require("../models/user");
 const _ = require("lodash");
+const XLSX = require('xlsx');
 
 const router = express.Router();
 const Path = require("path");
@@ -592,7 +593,8 @@ router.post("/eodOrders", checkAuth, async (req, res, next) => {
     //                       .populate("terminal_id")
     // }
     if (orders && orders.length) {
-      const mailOut =  await mail.sendEodOrders(orders);
+      const mailOut =  await mail.sendEodOrders(orders, req.userData);
+      await json2excel(orders, req.userData.site);
       console.log(orders.length)
       return res.status(200).json({
         message: "Orders Sent successfully!",
@@ -811,6 +813,25 @@ async function Pipeline(start, end, site) {
   const summary = await FidoOrder.aggregate(pipeline);
   // console.log(summary, "summary ");
   return summary;
+}
+
+async function json2excel(orders, site) { 
+  const today= new Date().toLocaleDateString('en-GB').replace(/\//g,'_');
+
+  const worksheet = XLSX.utils.json_to_sheet(orders);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook,worksheet,'orders')
+
+  // generate buffer
+  XLSX.write(workbook, {bookType:'xlsx', type:'buffer'})
+
+  // generate binary
+  XLSX.write(workbook, {bookType:'xlsx', type:'binary'})
+
+  // generate buffer
+  XLSX.writeFile(workbook, `/tmp/${site}-order-${today}.xlsx`)
+
+
 }
 
 

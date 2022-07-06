@@ -1688,6 +1688,9 @@ async function sendEodOrders(orders) {
       else if (h === '_id') {
         bodyA += `<td></td>`
       } 
+      else if (h === 'trans_date' || h === 'createdAt' || h === 'updatedAt'  ) {
+        bodyA += `<td>${o[h].toLocaleDateString('en-GB')}</td>`
+      } 
       else {
         bodyA += `<td>${o[h]}</td>`
       }
@@ -1701,8 +1704,7 @@ async function sendEodOrders(orders) {
   
   let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50">
         <p style="background:rgba(0, 128, 0,0.051); text-align:center;">${fullDate}</p><h2> End of Day Report</h2><p> Hi, Here is EOD Report:</p>  ${finalTable}`;
-        html += `<p style="text-decoration:underline;">SUMMARY</p>
-              `;
+        
         html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
 
         console.log(html, 'html')

@@ -547,7 +547,7 @@ router.get("", checkAuth, async (req, res, next) => {
   
 });
 
-router.get("/eodOrders", checkAuth, async (req, res, next) => {
+router.post("/eodOrders", checkAuth, async (req, res, next) => {
   // if you are an ordinary user, you only see orders created in your site or by you
   try {
     const alloweds = req.userData.rol;
@@ -570,32 +570,44 @@ router.get("/eodOrders", checkAuth, async (req, res, next) => {
     const userId = req.userData.userId
     const site = req.userData.site
     
-    let orders;
+    let orders = req.body;
+    console.log(orders, 'orders')
 
-    if (['ADMIN','GENERAL MANAGER'].includes(role)) {
-      orders = await FidoOrder.find({createdAt: { $gte: start, $lte: end }})
-                          .lean()
-                          .sort({ createdAt: -1 })
-                          .populate("customer")
-                          .populate("creator")
-                          .populate("terminal_id")
+    // orders = JSON.parse(orders)
+
+    // if (['ADMIN','GENERAL MANAGER'].includes(role)) {
+    //   orders = await FidoOrder.find({createdAt: { $gte: start, $lte: end }})
+    //                       .lean()
+    //                       .sort({ createdAt: -1 })
+    //                       .populate("customer")
+    //                       .populate("creator")
+    //                       .populate("terminal_id")
       
+    // } else {
+    //   orders = await FidoOrder.find({createdAt: { $gte: start, $lte: end }},{$or: [{ site: site }, { creator: userId }]})
+    //                       .lean()
+    //                       .sort({ createdAt: -1 })
+    //                       .populate("customer")
+    //                       .populate("creator")
+    //                       .populate("terminal_id")
+    // }
+    if (orders && orders.length) {
+      const mailOut =  await mail.sendEodOrders(orders);
+      console.log(orders.length)
+      return res.status(200).json({
+        message: "Orders Sent successfully!",
+        fidoorders: orders,
+      });
     } else {
-      orders = await FidoOrder.find({createdAt: { $gte: start, $lte: end }},{$or: [{ site: site }, { creator: userId }]})
-                          .lean()
-                          .sort({ createdAt: -1 })
-                          .populate("customer")
-                          .populate("creator")
-                          .populate("terminal_id")
+      return res.status(200).json({
+        message: " Nill Orders. Not Sent!",
+        fidoorders: orders,
+      });
     }
-    const mailOut =  await mail.sendEodOrders(orders);
     
-    console.log(orders.length)
-    return res.status(200).json({
-      message: "Orders fetched successfully!",
-      fidoorders: orders,
-    });
+    
   } catch (error) {
+    console.log(error)
     res.status(500).json({
       message: "Fetching fidoorders failed! " + error,
     });
@@ -706,14 +718,14 @@ router.get("/summary", checkAuth, async (req, res, next) => {
       } else {
         return res
           .status(500)
-          .json({ message: "Error with recUpload summary" });
+          .json({ message: "Error with fidoOrder summary" });
       }
     }
   } catch (err) {
     console.log(err)
     return res
       .status(500)
-      .json({ message: "Server Error with recUpload summary try block" + err });
+      .json({ message: "Server Error with fidoOrder summary try block" + err });
   }
 });
 

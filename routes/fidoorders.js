@@ -19,6 +19,7 @@ const { google } = require("googleapis");
 const OAuth2 = google.auth.OAuth2;
 // const Utils = require("../utils");
 const Summary = require("../summary/recsummary");
+const mail = require("../mail");
 
 
 const ObjectId = require('mongoose').Types.ObjectId;
@@ -98,6 +99,7 @@ function logIncident(email, description) {
 
 
 const checkAuth = require("../middleware/check-auth");
+const Mail = require("nodemailer/lib/mailer");
 
 router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
   try {
@@ -528,29 +530,65 @@ router.get("", checkAuth, async (req, res, next) => {
     });
   }
   
+});
+
+router.get("/eodOrders", checkAuth, async (req, res, next) => {
+  // if you are an ordinary user, you only see orders created in your site or by you
+  try {
+    const alloweds = req.userData.rol;
+
+  // console.log(req.userData.site)
+  if (!['ADMIN', 'GENEAL MANAGER', 'SNR ACCOUNTANT', 'MANAGER'].includes(req.userData.role)) {
+    return res.status(500).json({ message: "Not allowed" });
+  }
+
+  const yesterdayStart = moment().subtract(1, "days").startOf("day").toDate();
+  const yesterdayEnd = moment().subtract(0, "days").endOf("day").toDate();
+  // start of today
+  var start = moment().startOf("day").toDate();
+
+  // end today
+  var end = moment(start).endOf("day").toDate();
+
+    
+    const role = req.userData.role;
+    const userId = req.userData.userId
+    const site = req.userData.site
+    
+    let orders;
+
+    if (['ADMIN','GENERAL MANAGER'].includes(role)) {
+      orders = await FidoOrder.find({createdAt: { $gte: start, $lte: end }})
+                          .lean()
+                          .sort({ createdAt: -1 })
+                          .populate("customer")
+                          .populate("creator")
+                          .populate("terminal_id")
+      
+    } else {
+      orders = await FidoOrder.find({createdAt: { $gte: start, $lte: end }},{$or: [{ site: site }, { creator: userId }]})
+                          .lean()
+                          .sort({ createdAt: -1 })
+                          .populate("customer")
+                          .populate("creator")
+                          .populate("terminal_id")
+    }
+    const mailOut =  await mail.sendEodOrders(orders);
+    
+    console.log(orders.length)
+    return res.status(200).json({
+      message: "Orders fetched successfully!",
+      fidoorders: orders,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Fetching fidoorders failed! " + error,
+    });
+  }
+  
  
 
-  const fidoorderQuery = FidoOrder.find()
-    .lean()
-    .sort({ createdAt: -1 })
-    .populate("customer")
-    .populate("creator")
-    .populate("terminal_id");
-  if (pageSize && currentPage) {
-    fidoorderQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
-  }
-  fidoorderQuery
-    .then((documents) => {
-      res.status(200).json({
-        message: "Orders fetched successfully!",
-        fidoorders: documents,
-      });
-    })
-    .catch((error) => {
-      res.status(500).json({
-        message: "Fetching fidoorders failed! " + error,
-      });
-    });
+  
 });
 
 router.get("/ordersbyuser", checkAuth, async (req, res, next) => {
@@ -609,7 +647,7 @@ router.get("/bydate", checkAuth, async (req, res, next) => {
 router.get("/summary", checkAuth, async (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
 
-  console.log(req.userData.site)
+  // console.log(req.userData.site)
   if (!alloweds.includes(req.userData.email)) {
     logIncident(req.userData.email, "Not allowed to see Receipts");
     return res.status(500).json({ message: "Not allowed" });
@@ -617,7 +655,7 @@ router.get("/summary", checkAuth, async (req, res, next) => {
 
   try {
     const yesterdayStart = moment()
-      .subtract(1, "days")
+      .subtract(7, "days")
       .startOf("day")
       .toDate();
     const yesterdayEnd = moment().subtract(0, "days").endOf("day").toDate();
@@ -637,7 +675,6 @@ router.get("/summary", checkAuth, async (req, res, next) => {
 
       let aggData = await Pipeline(yesterdayStart, yesterdayEnd, site);
 
-      console.log(aggData, 'aggData', yesterdayStart, yesterdayEnd, site)
       // bring out the ._id
       aggData = aggData.map((a) => {
         return {
@@ -646,6 +683,8 @@ router.get("/summary", checkAuth, async (req, res, next) => {
           totalQty: a.totalQty.toLocaleString(),
         };
       });
+      // console.log(aggData, 'aggData', yesterdayStart, yesterdayEnd)
+
 
       if (aggData) {
         return res.status(200).json({ records: aggData });
@@ -715,15 +754,8 @@ async function Pipeline(start, end, site) {
     {
       $group: {
         _id: {
-          year: {
-            $year: "$createdAt",
-          },
-          month: {
-            $month: "$createdAt",
-          },
-          day: {
-            $dayOfMonth: "$createdAt",
-          },
+          date: {$dateToString:{format: "%d-%m-%Y", date: "$createdAt"}},
+         
           product: "$products.name",
           site: "$terminal_location",
         },
@@ -737,10 +769,10 @@ async function Pipeline(start, end, site) {
     },
     {
       $sort: {
-        "_id.year": -1,
-        "_id.month": -1,
-        "_id.day": -1,
+        "_id.date": -1,
+        "_id.site": 1,
         "_id.product": 1,
+
         totalQty: -1,
         "_id.site": 1,
       },

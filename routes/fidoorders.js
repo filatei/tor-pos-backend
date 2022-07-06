@@ -756,9 +756,10 @@ async function Pipeline(start, end, site) {
   const pipeline = [
     {
       $match: {
-        action_taken: "PRODUCT RELEASED",
+        // action_taken: "PRODUCT RELEASED",
+        orderType: "NORMAL",
         createdAt: { $gte: start, $lte: end },
-        site: site
+        // site: site
       },
     },
     {

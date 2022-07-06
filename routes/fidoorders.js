@@ -436,55 +436,70 @@ router.put(
   }
 );
 
-router.delete("/:id", checkAuth, (req, res, next) => {
+router.delete("/:id", checkAuth, async (req, res, next) => {
 
   if (!['ADMIN'].includes(req.userData.role)) {
     return res.status(500).json({ message: "Not allowed" });
   }
 
   let filePath;
-  const ids = JSON.parse(req.params.id);
-  ids.forEach(id => {
-    console.log(id, 'deleting')
-    FidoOrder.findById(id)
-    .then((fidoorder) => {
-      if (fidoorder && fidoorder.image) {
-        filePath = "uploads/" + fidoorder.image.split("/uploads/")[1];
-      }
-    })
-    .catch((err) => {
-      return res
-        .status(401)
-        .json({ message: "fidoorder not found in db!" + err });
-    });
 
-    FidoOrder.deleteOne({ _id: id })
-    .then((result) => {
-      if (result.n > 0) {
-        // delete fidoorder.image
-        if (filePath) {
-          fs.unlink(filePath, (err) => {
-            if (err) {
-              console.error(err);
-            }
-            console.log("related file deleted");
-          });
+  let ids = JSON.parse(req.params.id);
+  if (typeof ids === 'object') {
+    ids.forEach(id => {
+      console.log(id, 'deleting')
+      FidoOrder.findById(id)
+      .then((fidoorder) => {
+        if (fidoorder && fidoorder.image) {
+          filePath = "uploads/" + fidoorder.image.split("/uploads/")[1];
         }
-
-        res.status(200).json({ message: "Deletion successful!" });
-      } else {
-        res
+      })
+      .catch((err) => {
+        return res
           .status(401)
-          .json({ message: "deletion failed ...id may not exist!" });
-      }
-    })
-    .catch((error) => {
-      console.error(error);
-      res.status(500).json({
-        message: "Deleting fidoorder failed! " + error,
+          .json({ message: "fidoorder not found in db!" + err });
       });
-    });
-  })
+  
+      FidoOrder.deleteOne({ _id: id })
+      .then((result) => {
+        if (result.n > 0) {
+          // delete fidoorder.image
+          if (filePath) {
+            fs.unlink(filePath, (err) => {
+              if (err) {
+                console.error(err);
+              }
+              console.log("related file deleted");
+            });
+          }
+  
+          return res.status(200).json({ message: "Deletion successful!" });
+        } else {
+          return res
+            .status(401)
+            .json({ message: "deletion failed ...id may not exist!" });
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        return res.status(500).json({
+          message: "Deleting fidoorder failed! " + error,
+        });
+      });
+    })
+  } else {
+    const del = await FidoOrder.deleteOne({ _id: ids })
+    if (del) {
+      return res.status(200).json({ message: "Deletion successful!" });
+    } else {
+      return res
+      .status(401)
+      .json({ message: "deletion failed ...id may not exist!" });
+    }
+  }
+  
+
+  
   
 });
 

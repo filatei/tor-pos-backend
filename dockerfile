@@ -1,10 +1,10 @@
-FROM node:alpine
+FROM node:16.14.0
+
 LABEL FIDO POS STAND-ALONE
 RUN echo ' pulling node'
 # RUN mkdir /usr/src/app
 
 WORKDIR /app
-COPY package*.json .
 COPY . .
 RUN apt-get update -y
 RUN  apt-get install build-essential  libudev-dev libcairo2-dev libpango1.0-dev libjpeg-dev libgif-dev librsvg2-dev -y

@@ -634,12 +634,21 @@ router.get("/ordersbyuser", checkAuth, async (req, res, next) => {
     var end = moment(start).endOf("day").toDate();
 
     // by user today
-    const orders =  await FidoOrder.find({createdAt: { $gte: start, $lte: end },$or: [{ site: site }, { creator: userId }]}) .lean()
+    let orders =  await FidoOrder.find({createdAt: { $gte: start, $lte: end },$or: [{ site: site }, { creator: userId }]}) .lean()
     .sort({createdAt:-1})
     .limit(400)
     .populate('creator')
     .populate('customer')
     .populate('terminal_id')
+
+    orders = orders.map((o) => {
+      if (!o.acquirer) {
+        o.acquirer = 'CASH';
+      }
+      return o;
+    })
+    console.log(orders)
+
     res.status(200).json({message: 'Orders fetched successfully', fidoorders:orders})
 
   } catch (error) {

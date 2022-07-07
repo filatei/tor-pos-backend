@@ -48,7 +48,6 @@
     "nodemon": "^2.0.2",
     "pdf-creator-node": "^2.3.4",
     "pdfkit": "^0.13.0",
-    "printer": "^0.4.0",
     "q": "^1.5.1",
     "qz-tray": "^2.1.0-2",
     "read-excel-file": "^4.0.6",

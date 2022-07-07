@@ -99,12 +99,9 @@ app.use(bodyParser.json({ limit: "1mb" }));
 
 app.use(cors());
 let connectStr;
-connectStr = process.env.CONNECT_STR;
-// if (hostname.includes("torama.ng")) {
-//   connectStr = process.env.CONNECT_STR;
-// } else {
-//   connectStr = dbinfo.DBURL;
-// }
+connectStr = process.env.CONNECT_STR; // mongodb://localhost:27017/torposdb
+
+
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
@@ -124,19 +121,30 @@ mongoose.set("useCreateIndex", true);
 mongoose.set("useFindAndModify", false);
 
 mongoose
-  .connect(connectStr, {
-    useNewUrlParser: true,
-    useFindAndModify: false,
-    useUnifiedTopology: true,
-    autoIndex: true,
-    useCreateIndex: true
-  })
-  .then(() => {
+    .connect(process.env.MONGODB_URI, {
+      dbName: process.env.DB_NAME,
+      user: process.env.DB_USER,
+      pass: process.env.DB_PASS,
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      useFindAndModify: false,
+      autoIndex: true,
+      useCreateIndex: true
+    }).then(() => {
     console.log("Connected to DB");
   })
   .catch((err) => {
     console.log(err);
   });
+
+  // mongoose
+//   .connect(connectStr, {
+//     useNewUrlParser: true,
+//     useFindAndModify: false,
+//     useUnifiedTopology: true,
+//     autoIndex: true,
+//     useCreateIndex: true
+//   })
 
 
 app.use("/api/paymethods", paymethodsRoutes);

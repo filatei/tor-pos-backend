@@ -4,7 +4,10 @@ services:
   mongoDb:
     container_name: db_container
     image: mongo:latest
+    platform: linux/amd64
     restart: always
+    ports:
+      - 2717:27017  # port 2717 of local machine now connects to port 27017 of docker container
     volumes:
       - mongoDb:/data/db
 
@@ -13,12 +16,19 @@ services:
     build: .
     ports: 
       -  3000:3500  # 3000 on local to 3500 in docker
+    # volumes:  # only for dev
+    #   - .:/app # only for dev
     environment:
       PORT: 3000
       MONGO_URI: mongodb://mongoDb:27017
-      DB_NAME: fido_db
+      MONGODB_URI: mongodb://mongoDb:27017
+      DB_NAME: torposdb
+      DB_USER: ""
+      DB_PASS: ""
     depends_on:
       - mongoDb
      
 volumes:
   mongoDb: {}
+#  docker compose build  # rebuild app 
+#  docker compose up|down -d

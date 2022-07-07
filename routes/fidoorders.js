@@ -555,10 +555,9 @@ router.post("/eodOrders", checkAuth, async (req, res, next) => {
   try {
     const alloweds = req.userData.role;
 
-  // console.log(req.userData.site)
-  if (!['ADMIN', 'GENEAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT',  'MANAGER'].includes(req.userData.role)) {
-    return res.status(500).json({ message: "Not allowed" });
-  }
+    if (!['ADMIN', 'GENEAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT',  'MANAGER'].includes(req.userData.role)) {
+      return res.status(500).json({ message: "Not allowed" });
+    }
 
   const yesterdayStart = moment().subtract(1, "days").startOf("day").toDate();
   const yesterdayEnd = moment().subtract(0, "days").endOf("day").toDate();
@@ -686,15 +685,16 @@ router.get("/bydate", checkAuth, async (req, res, next) => {
 });
 
 router.get("/summary", checkAuth, async (req, res, next) => {
-  const alloweds = process.env.ALLOWEDS;
-
-  // console.log(req.userData.site)
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to see Receipts");
-    return res.status(500).json({ message: "Not allowed" });
-  }
+  
 
   try {
+    const alloweds = req.userData.role;
+
+    if (!['ADMIN', 'GENEAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT', 'MANAGER', 'SECRETARY'].includes(req.userData.role)) {
+      return res.status(500).json({ message: "Not allowed" });
+    }
+
+
     const yesterdayStart = moment()
       .subtract(7, "days")
       .startOf("day")

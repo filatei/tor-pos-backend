@@ -106,7 +106,7 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
   try {
 
     if (!req.userData.role) {
-      return res.status(500).json({ message: "Not allowed to create Orders" });
+      return res.status(401).json({ message: "Not allowed to create Orders" });
     }
 
     let url = "";
@@ -115,7 +115,7 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
 
     if (!shopObj.customer || shopObj.customer === undefined) {
       return res
-        .status(500)
+        .status(204)
         .json({ message: "check your data. empty customer?" });
     }
 
@@ -198,7 +198,7 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
           // sendMail(result);
         })
         .catch((error) => {
-          res.status(500).json({
+          res.status(401).json({
             message: "Creating a fidoorder failed! " + error,
           });
         });
@@ -216,7 +216,7 @@ router.get("/events", checkAuth, async (req, res, next) => {
 
   if (!alloweds.includes(req.userData.email)) {
     logIncident(req.userData.email, "Not allowed to see produces");
-    return res.status(500).json({ message: "Not allowed" });
+    return res.status(401).json({ message: "Not allowed" });
   }
 
   try {
@@ -296,10 +296,13 @@ router.get("/events", checkAuth, async (req, res, next) => {
 });
 
 router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
-  if (!req.userData.role) {
-    // logIncident(req.userData.email, "Not allowed to create notes");
+
+  const ALLOWEDS = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT','SECRETARY', "SUPERVISOR", 'SECURITY', 'POS OFFICER'];
+
+  if ( !ALLOWEDS.includes(req.userData.role) ) {
     return res.status(500).json({ message: "Not allowed" });
   }
+
   let path = "";
   let url = "";
   let shopObj = req.body;
@@ -501,9 +504,6 @@ router.delete("/:id", checkAuth, async (req, res, next) => {
     }
   }
   
-
-  
-  
 });
 
 router.get("", checkAuth, async (req, res, next) => {
@@ -556,7 +556,7 @@ router.post("/eodOrders", checkAuth, async (req, res, next) => {
     const alloweds = req.userData.role;
 
   // console.log(req.userData.site)
-  if (!['ADMIN', 'GENEAL MANAGER', 'SNR ACCOUNTANT', 'MANAGER'].includes(req.userData.role)) {
+  if (!['ADMIN', 'GENEAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT',  'MANAGER'].includes(req.userData.role)) {
     return res.status(500).json({ message: "Not allowed" });
   }
 
@@ -768,7 +768,7 @@ router.get("/:id", async (req, res, next) => {
   
   } catch (error) {
     console.log(error, 'catch error')
-    // res.status(500).json({
+    // res.status(400).json({
     //   message: "CatchError: Fetching fidoorder failed! " + error,
     // });
   }

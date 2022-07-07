@@ -46,12 +46,13 @@ const { Console } = require("console");
 const { Compressor } = require("mongodb");
 
 router.post("", checkAuth, Utils.upload.any(), function (req, res, next) {
-  const alloweds = process.env.ALLOWEDS;
+  // const alloweds = process.env.ALLOWEDS;
+  const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'ACCOUNTANT', 'SNR ACCOUNTANT', 'SECRETARY', 'POS OFFICER'];
 
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to create Receipts");
-    return res.status(500).json({ message: "Not allowed" });
+  if (!alloweds.includes(req.userData.role)) {
+    return res.status(401).json({ message: "Not allowed" });
   }
+  
   let customerName;
   let recObj = req.body;
   recObj.products = JSON.parse(recObj.products);
@@ -221,11 +222,10 @@ router.delete("/:id", checkAuth, async (req, res, next) => {
 });
 
 router.get("/summary", checkAuth, async (req, res, next) => {
-  const alloweds = process.env.ALLOWEDS;
+  const role = req.userData.role;
 
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to see Receipts");
-    return res.status(500).json({ message: "Not allowed" });
+  if (!role) {
+    return res.status(401).json({ message: "Not allowed" });
   }
 
   try {
@@ -361,11 +361,10 @@ router.get("/summary", checkAuth, async (req, res, next) => {
 });
 
 router.get("/salessummary", checkAuth, async (req, res, next) => {
-  const alloweds = process.env.ALLOWEDS;
+  const role = req.userData.role;
 
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to see Receipts");
-    return res.status(500).json({ message: "Not allowed" });
+  if (!role) {
+    return res.status(401).json({ message: "Not allowed" });
   }
 
   try {
@@ -429,11 +428,11 @@ router.get("/cashsalessummary", checkAuth, async (req, res, next) => {
 });
 
 router.get("/summary2", checkAuth, async (req, res, next) => {
-  const alloweds = process.env.ALLOWEDS;
+  // const alloweds = process.env.ALLOWEDS;
+  const role = req.userData.role;
 
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to see Receipts");
-    return res.status(500).json({ message: "Not allowed" });
+  if (!role) {
+    return res.status(401).json({ message: "Not allowed" });
   }
 
   try {
@@ -459,6 +458,7 @@ router.get("/summary2", checkAuth, async (req, res, next) => {
 
       console.log(aggData, 'aggData', yesterdayStart, yesterdayEnd)
       // bring out the ._id
+
       aggData = aggData.map((a) => {
         return {
           ...a._id,
@@ -467,28 +467,27 @@ router.get("/summary2", checkAuth, async (req, res, next) => {
         };
       });
 
-      if (aggData) {
-        return res.status(200).json({ records: aggData });
-      } else {
-        return res
-          .status(500)
-          .json({ message: "Error with recUpload summary" });
-      }
+      return res.status(200).json({ records: aggData });
+      // else {
+      //   // return res
+      //   //   .status(500)
+      //   //   .json({ message: "Error with recUpload summary" });
+      // }
     }
   } catch (err) {
     return res
-      .status(500)
+      .status(404)
       .json({ message: "Error with recUpload summary try block" });
   }
 });
 
 router.get("/bydate", checkAuth, async (req, res, next) => {
-  const alloweds = process.env.ALLOWEDS;
+  const role = req.userData.role;
 
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to see Receipts");
-    return res.status(500).json({ message: "Not allowed" });
+  if (!role) {
+    return res.status(401).json({ message: "Not allowed" });
   }
+
   //  given a date, return all receipts for day
 
   try {
@@ -521,11 +520,10 @@ router.get("/bydate", checkAuth, async (req, res, next) => {
 });
 
 router.get("", checkAuth,  (req, res, next) => {
-  const alloweds = process.env.ALLOWEDS;
+  const role = req.userData.role;
 
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to see Receipts");
-    return res.status(500).json({ message: "Not allowed" });
+  if (!role) {
+    return res.status(401).json({ message: "Not allowed" });
   }
 
   const pageSize = +req.query.pagesize;
@@ -565,19 +563,19 @@ router.get("", checkAuth,  (req, res, next) => {
       });
     })
     .catch((error) => {
-      res.status(500).json({
+      res.status(400).json({
         message: "Fetching companies failed! " + error,
       });
     });
 });
 
 router.get("/getByCustomer", checkAuth, async (req, res, next) => {
-  const alloweds = process.env.ALLOWEDS;
+  const role = req.userData.role;
 
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to see Receipts");
-    return res.status(500).json({ message: "Not allowed" });
+  if (!role) {
+    return res.status(401).json({ message: "Not allowed" });
   }
+
   let customerId = req.query.customerId;
   if (!customerId || customerId === 'undefined' || customerId === undefined) {
     return res.status(404).json({ message: "customerId not defined!" });
@@ -599,12 +597,12 @@ router.get("/getByCustomer", checkAuth, async (req, res, next) => {
 });
 
 router.get("/getByText", checkAuth, (req, res, next) => {
-  const alloweds = process.env.ALLOWEDS;
+  const role = req.userData.role;
 
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to see Receipts");
-    return res.status(500).json({ message: "Not allowed" });
+  if (!role) {
+    return res.status(401).json({ message: "Not allowed" });
   }
+
   let stan = req.query.stan;
   console.log("stan ", stan);
   // get array
@@ -648,12 +646,12 @@ router.get("/getByText", checkAuth, (req, res, next) => {
 });
 
 router.get("/:id", checkAuth, (req, res, next) => {
-  const alloweds = process.env.ALLOWEDS;
+  const role = req.userData.role;
 
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to see Receipts");
-    return res.status(500).json({ message: "Not allowed" });
+  if (!role) {
+    return res.status(401).json({ message: "Not allowed" });
   }
+  
   Recupload.findById(req.params.id)
     .populate("customer")
     .populate("creator")

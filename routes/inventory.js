@@ -60,10 +60,9 @@ function logIncident(email, description) {
 }
 
 router.post("", checkAuth, function (req, res, next) {
-  const alloweds = process.env.STOREALLOWEDS;
-
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to create Inventory");
+  // const alloweds = process.env.STOREALLOWEDS;
+  const ALLOWED = ['ADMIN', 'STOREKEEPER', 'MANAGER','GENERAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT']
+  if (!ALLOWED.includes(req.userData.role)) {
     return res.status(500).json({ message: "Not allowed to create inventory" });
   }
 
@@ -122,10 +121,8 @@ router.post("", checkAuth, function (req, res, next) {
 });
 
 router.put("/:id", checkAuth, (req, res, next) => {
-  const alloweds = process.env.STOREALLOWEDS;
-
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to update inventory");
+  const ALLOWED = ['ADMIN', 'STOREKEEPER', 'MANAGER','GENERAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT']
+  if (!ALLOWED.includes(req.userData.role)) {
     return res.status(500).json({ message: "Not allowed to create inventory" });
   }
   let path = "";
@@ -201,11 +198,9 @@ router.delete("/:id", checkAuth, (req, res, next) => {
 });
 
 router.get("", checkAuth, (req, res, next) => {
-  const alloweds = process.env.STOREALLOWEDS;
-
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to see inventory");
-    return res.status(500).json({ message: "Not allowed to see inventory" });
+  const ALLOWED = ['ADMIN', 'STOREKEEPER', 'SECRETARY', 'MANAGER','GENERAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT']
+  if (!ALLOWED.includes(req.userData.role)) {
+    return res.status(500).json({ message: "Not allowed to create inventory" });
   }
 
   const pageSize = +req.query.pagesize;

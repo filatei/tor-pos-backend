@@ -111,7 +111,6 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
 
     let url = "";
     let shopObj = req.body;
-    // console.log(shopObj, 'shopObj')
 
     if (!shopObj.customer || shopObj.customer === undefined) {
       return res
@@ -121,28 +120,14 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
 
     if (req.file) {
       if (hostname.includes("torama.ng")) {
-        url = "https://api.torama.ng" +
-        "/uploads/fidoorderimages" 
+        url = "https://api.torama.ng" + "/uploads/fidoorderimages" 
       } else {
         url = req.protocol + "://" + req.get("host");
       }
       const fPath = url + "/" + req.file.path;
       shopObj.image = fPath.replace('/var/www/','');
 
-
-      // if (hostname.includes("torama.ng")) {
-      //   url =
-      //     "https://api.torama.ng" +
-      //     "/uploads/fidoorderimages" 
-      // } else {
-      //   url = req.protocol + "://" + req.get("host");
-      // }
-      // shopObj.image = url + '/' + req.file.path;
-      // console.log(url , shopObj.image, 'url and shopobj.image')
     }
-
-    // const dirPath = Path.join(__dirname, "../uploads/printqueue/");
-    // let printQueue = dirPath + new Date().getTime() + ".json";
 
     shopObj.creator = req.userData.userId;
     if (shopObj.action_taken === "PRODUCT RELEASED") {
@@ -158,14 +143,14 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
     if (!shopObj.teller_id) {
       delete shopObj.teller_id;
     }
-    // let prods = [];
+
     shopObj.products = JSON.parse(req.body.products);
-    // shopObj.receipt = JSON.parse(req.body.receipt);
     const geoLocation = JSON.parse(req.body.geoLocation);
     shopObj.geoLocation = {
       latitude: geoLocation.latitude,
       longitude: geoLocation.longitude,
     };
+    
     Object.entries(shopObj).forEach(([key, value]) => {
       if (
         !value ||
@@ -182,6 +167,7 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
 
     function saveOrder(shopObj) {
       const fidoorder = new FidoOrder(shopObj);
+      console.log(fidoorder, 'fidoorder')
 
       fidoorder
         .save()
@@ -208,8 +194,6 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
     }
   
 });
-
-
 
 router.get("/events", checkAuth, async (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
@@ -634,8 +618,8 @@ router.get("/ordersbyuser", checkAuth, async (req, res, next) => {
     var end = moment(start).endOf("day").toDate();
 
     // by user today
-    let orders =  await FidoOrder.find({createdAt: { $gte: start, $lte: end },$or: [{ site: site }, { creator: userId }]}) .lean()
-    .sort({createdAt:-1})
+    let orders =  await FidoOrder.find({trans_date: { $gte: start, $lte: end },$or: [{ site: site }, { creator: userId }]}) .lean()
+    .sort({trans_date:-1})
     .limit(400)
     .populate('creator')
     .populate('customer')
@@ -792,7 +776,7 @@ async function Pipeline(start, end, site) {
       $match: {
         // action_taken: "PRODUCT RELEASED",
         orderType: "NORMAL",
-        createdAt: { $gte: start, $lte: end },
+        trans_date: { $gte: start, $lte: end },
         // site: site
       },
     },
@@ -804,7 +788,7 @@ async function Pipeline(start, end, site) {
     {
       $group: {
         _id: {
-          date: {$dateToString:{format: "%d-%m-%Y", date: "$createdAt"}},
+          date: {$dateToString:{format: "%d-%m-%Y", date: "$trans_date"}},
          
           product: "$products.name",
           site: "$terminal_location",

@@ -122,6 +122,7 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
   const taxRate = req.body.taxRate;
   const description = req.body.description;
   const name = req.body.name;
+  const group = req.body.group;
   const category = req.body.category;
   // const updatedAt = req.body.updatedAt;
   const updater = req.userData.userId;
@@ -156,13 +157,7 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
     console.log(product, 'product2')
     Product.updateOne(
       { _id: req.params.id },
-      {
-        name: name,
-        price: price,
-        description: description,
-        taxRate: taxRate,
-        category,
-      }
+      product
     )
       .then((result) => {
         if (result.n > 0) {

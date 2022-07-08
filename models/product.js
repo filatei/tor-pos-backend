@@ -9,6 +9,7 @@ const productSchema = mongoose.Schema({
     price: {type: Number, required: true},
     costprice: {type: Number},
     category: {type: String},
+    group: {type: String},
     barcode: {type: String},
     icon: {type: String},
     taxRate: {type: Number},

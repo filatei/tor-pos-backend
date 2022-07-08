@@ -537,9 +537,9 @@ router.get("", checkAuth, async (req, res, next) => {
 router.post("/eodOrders", checkAuth, async (req, res, next) => {
   // if you are an ordinary user, you only see orders created in your site or by you
   try {
-    const alloweds = req.userData.role;
+    const allowed = ['ADMIN', 'GENEAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT',  'MANAGER'];
 
-    if (!['ADMIN', 'GENEAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT',  'MANAGER'].includes(req.userData.role)) {
+    if (!allowed.includes(req.userData.role)) {
       return res.status(500).json({ message: "Not allowed" });
     }
 
@@ -578,17 +578,17 @@ router.post("/eodOrders", checkAuth, async (req, res, next) => {
     //                       .populate("terminal_id")
     // }
     if (orders && orders.length) {
-      const mailOut =  await mail.sendEodOrders(orders, req.userData);
       await json2excel(orders, req.userData.site);
-      console.log(orders.length)
+      const mailOut =  await mail.sendEodOrders(orders, req.userData);
+
       return res.status(200).json({
         message: "Orders Sent successfully!",
-        fidoorders: orders,
+        // fidoorders: orders,
       });
     } else {
-      return res.status(200).json({
-        message: " Nill Orders. Not Sent!",
-        fidoorders: orders,
+      return res.status(401).json({
+        message: " Null Orders. Not Sent!",
+        
       });
     }
     

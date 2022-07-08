@@ -123,7 +123,7 @@ router.post("", checkAuth, function (req, res, next) {
 router.put("/:id", checkAuth, (req, res, next) => {
   const ALLOWED = ['ADMIN', 'STOREKEEPER', 'MANAGER','GENERAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT']
   if (!ALLOWED.includes(req.userData.role)) {
-    return res.status(500).json({ message: "Not allowed to create inventory" });
+    return res.status(500).json({ message: "Not allowed to update inventory" });
   }
   let path = "";
   let url = "";
@@ -200,7 +200,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
 router.get("", checkAuth, (req, res, next) => {
   const ALLOWED = ['ADMIN', 'STOREKEEPER', 'SECRETARY', 'MANAGER','GENERAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT']
   if (!ALLOWED.includes(req.userData.role)) {
-    return res.status(500).json({ message: "Not allowed to create inventory" });
+    return res.status(500).json({ message: "Not allowed to access inventory" });
   }
 
   const pageSize = +req.query.pagesize;

@@ -42,13 +42,9 @@ router.post(
   checkAuth,
   Utils.upload3.single("image"),
   async (req, res, next) => {
-    const alloweds = process.env.QAQCALLOWEDS;
-
-    if (!alloweds.includes(req.userData.email)) {
-      logIncident(req.userData.email, "Not allowed to create QA/QC Ticket");
-      return res
-        .status(500)
-        .json({ message: "Not allowed to create qa/qc ticket" });
+    const ALLOWED = ['ADMIN', 'STOREKEEPER','QAQC', 'SECRETARY', 'MANAGER','GENERAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT']
+    if (!ALLOWED.includes(req.userData.role)) {
+      return res.status(500).json({ message: "Not allowed to create QC" });
     }
 
     try {
@@ -110,13 +106,11 @@ router.put(
   checkAuth,
   Utils.upload3.single("image"),
   async (req, res, next) => {
-    const alloweds = process.env.QAQCALLOWEDS;
-    if (!alloweds.includes(req.userData.email)) {
-      logIncident(req.userData.email, "Not allowed to update qa/qc ticket");
-      return res
-        .status(500)
-        .json({ message: "Not allowed to update qa/qc ticket" });
+    const ALLOWED = ['ADMIN', 'STOREKEEPER', 'QAQC', 'SECRETARY', 'MANAGER','GENERAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT']
+    if (!ALLOWED.includes(req.userData.role)) {
+      return res.status(500).json({ message: "Not allowed to update QC" });
     }
+
 
     try {
       const id = req.params.id;
@@ -294,11 +288,9 @@ router.put(
   checkAuth,
   Utils.upload3.any(),
   async function (req, res, next) {
-    const alloweds = process.env.QAQCALLOWEDS;
-
-    if (!alloweds.includes(req.userData.email)) {
-      logIncident(req.userData.email, "Not allowed to create Receipts");
-      return res.status(500).json({ message: "Not allowed" });
+    const ALLOWED = ['ADMIN', 'STOREKEEPER', 'QAQC', 'SECRETARY', 'MANAGER','GENERAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT']
+    if (!ALLOWED.includes(req.userData.role)) {
+      return res.status(500).json({ message: "Not allowed to update QC" });
     }
 
     try {
@@ -378,12 +370,10 @@ router.put(
 );
 
 router.put("/action/:id", checkAuth, async function (req, res, next) {
-  const alloweds = process.env.QAQCALLOWEDS;
-
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to create Receipts");
-    return res.status(500).json({ message: "Not allowed" });
-  }
+  const ALLOWED = ['ADMIN', 'STOREKEEPER', 'QAQC', 'SECRETARY', 'MANAGER','GENERAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT']
+    if (!ALLOWED.includes(req.userData.role)) {
+      return res.status(500).json({ message: "Not allowed to update QC" });
+    }
 
   let updater = req.userData.userId;
   const { actionTaken, actionText } = req.body;

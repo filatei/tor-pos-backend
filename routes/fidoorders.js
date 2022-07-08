@@ -790,7 +790,7 @@ async function Pipeline(start, end, site) {
         _id: {
           date: {$dateToString:{format: "%d-%m-%Y", date: "$trans_date"}},
          
-          product: "$products.group",
+          product: "$products.name",
           site: "$terminal_location",
         },
         totalSalesAmount: {

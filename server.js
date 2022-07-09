@@ -9,6 +9,7 @@ const Expense = require("./models/expense");
 const Inventory = require("./models/inventory");
 const User = require("./models/user");
 let directors = process.env.DIRECTORS;
+const cron =  require('node-cron');
 
 const http = require("http");
 
@@ -150,4 +151,12 @@ server.on("error", onError);
 server.on("listening", onListening);
 server.listen(port, () => {
   console.log(`listening on port ${port}`);
+
 });
+
+// const task = cron.schedule("05 05 * * *", () => {
+//   require('./generate-order-reports.js').main()
+// }, {
+//   scheduled: true,
+//   timezone: "Africa/Lagos"
+// })

@@ -66,9 +66,7 @@ mongoose
   let attachments = []
 
   async function sendEodOrders() {
-    if (!attachments.length) {
-        process.kill(process.pid, "SIGTERM");
-    }
+   
     const date = new Date().toLocaleDateString('en-GB').replace(/\//g,'_')
    
     
@@ -116,8 +114,9 @@ mongoose
               
             // ]
           };
-          mailer(model);
-  
+          console.log(model.attachments, 'attachments')
+            mailer(model);
+
   }
 
   async function mailer(model) {
@@ -143,9 +142,14 @@ mongoose
       subject: model.subject,
       generateTextFromHTML: true,
       html: model.html,
-      attachments: model.attachments?model.attachments:null
+      attachments: model.attachments
     };
   
+    console.log(model.attachments, 'attachments')
+    if( !model.attachments.length) {
+        console.log('no attachments, exiting...')
+        process.kill(process.pid, "SIGTERM");
+    }
     // send mail
     smtpTransport.sendMail(mailOptions, (error, response) => {
       let result;
@@ -255,18 +259,15 @@ async function mailEodReport( ) {
             const accountant = users.filter(u => u.role === 'ACCOUNTANT' && u.site === s.name)[0];
             const secretary = users.filter(u => u.role === 'SECRETARY' && u.site === s.name)[0];
             if (secretary && s.name === 'KPANSIA E') {
-                console.log(secretary.email, 'user', 'sending report...')
                 // await sendEodOrders(formattedOrders, secretary)
                 return 0;
             }
             if (manager && s.name !== 'OKUTUKUTU') {
-                console.log(manager.email, 'user', 'sending report...')
                 // await sendEodOrders(formattedOrders, manager)
                 return 0;
             }
 
             if (s.name === 'OKUTUKUTU' && accountant) {
-                console.log(manager.email, 'user', 'sending report...')
                 // await sendEodOrders(orders, accountant)
                 return 0;
             }
@@ -274,6 +275,7 @@ async function mailEodReport( ) {
         }
         else return 1;
     })  
+    console.log('sending report')
     await sendEodOrders()    
 }
 

@@ -155,7 +155,7 @@ server.listen(port, () => {
 });
 
 //  run the scheduled task at 5:10pm every day Lagos time
-const task = cron.schedule("10 17 * * *", () => {
+const task = cron.schedule("10 50 * * *", () => {
   require('./generate-order-reports.js').main()
 }, {
   scheduled: true,

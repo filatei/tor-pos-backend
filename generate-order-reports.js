@@ -23,6 +23,9 @@ const FidoOrder = require('./models/fidoorder');
 const User = require('./models/user');
 const Site = require('./models/site');
 const Customer = require('./models/customer');
+const Terminal = require('./models/terminal');
+const Product = require('./models/product');
+
 const mongoose = require('mongoose');
 const XLSX = require('xlsx');
 

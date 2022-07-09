@@ -834,9 +834,6 @@ async function json2excel(orders, site) {
 
   // generate buffer
   XLSX.writeFile(workbook, `/tmp/${site}-order-${today}.xlsx`)
-
-
 }
-
 
 module.exports = router;

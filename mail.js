@@ -25,6 +25,7 @@ const oauth2Client = new google.auth.OAuth2(
 oauth2Client.setCredentials({
   refresh_token: tokens.refresh_token,
 });
+
 let fullDate = new Date().getFullYear()
 
 async function sendInventory(inventory) {
@@ -1712,7 +1713,7 @@ async function sendEodOrders(orders, userData) {
         
         html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
 
-        console.log(html, 'html')
+        // console.log(html, 'html')
         if (hostname.includes("torama")) {
           toEmail = userEmail;
           creatorEmail = userEmail;

@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const uniqueValidator = require('mongoose-unique-validator');
 const AutoIncrement = require("mongoose-sequence")(mongoose);
 
 const fidoorderSchema = mongoose.Schema(

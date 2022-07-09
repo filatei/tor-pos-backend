@@ -536,6 +536,11 @@ router.get("", checkAuth, async (req, res, next) => {
 
 router.post("/eodOrders", checkAuth, async (req, res, next) => {
   // if you are an ordinary user, you only see orders created in your site or by you
+  
+  return res.status(401).json({
+    message: " Not Sent! Automated",
+  });
+  
   try {
     const allowed = ['ADMIN', 'GENEAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT',  'MANAGER'];
 
@@ -578,8 +583,8 @@ router.post("/eodOrders", checkAuth, async (req, res, next) => {
     //                       .populate("terminal_id")
     // }
     if (orders && orders.length) {
-      await json2excel(orders, req.userData.site);
-      const mailOut =  await mail.sendEodOrders(orders, req.userData);
+      // await json2excel(orders, req.userData.site);
+      // const mailOut =  await mail.sendEodOrders(orders, req.userData);
 
       return res.status(200).json({
         message: "Orders Sent successfully!",

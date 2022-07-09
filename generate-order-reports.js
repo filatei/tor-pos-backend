@@ -74,7 +74,7 @@ mongoose
     const subject = `EOD Order Reports for ${fullDate}`;
     
     let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50">
-          <p style="background:rgba(0, 128, 0,0.051); text-align:center;">${fullDate}</p><h2> End of Day Report for ${fullDate}</h2><p> Hi, Attached are Today's EOD Reports.</p><br><br><br> `;
+          <h2> End of Day Report for ${fullDate}</h2><p> Hi, Attached are Today's EOD Reports.</p><br><br><br> `;
           
           html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
   

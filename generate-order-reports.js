@@ -66,7 +66,9 @@ mongoose
   let attachments = []
 
   async function sendEodOrders() {
-    if (!attachments.length) return 1;
+    if (!attachments.length) {
+        process.kill(process.pid, "SIGTERM");
+    }
     const date = new Date().toLocaleDateString('en-GB').replace(/\//g,'_')
    
     

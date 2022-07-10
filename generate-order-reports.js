@@ -124,7 +124,6 @@ mongoose
 
                          th, td {
                             border: 1px solid black;
-                            
                         }
 
                         #wrapper {
@@ -155,7 +154,6 @@ mongoose
          <body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50">
           <h2> End of Day Report for ${fullDate}</h2><p> Hi, Attached are Today's EOD Reports.</p><br><br>
          
-         
           <center id="wrapper">
             <h4>Summaries</h4>
             <div class="tables" >
@@ -167,10 +165,6 @@ mongoose
                 </div>
             </div>
           </center
-           
-          
-         
-         
            `;
 
            const footer = `<footer>
@@ -362,22 +356,22 @@ async function mailEodReport( ) {
 
            
             // console.log(users)
-            const manager = users.filter(u => u.role === 'MANAGER' && u.site === s.name)[0];
-            const accountant = users.filter(u => u.role === 'ACCOUNTANT' && u.site === s.name)[0];
-            const secretary = users.filter(u => u.role === 'SECRETARY' && u.site === s.name)[0];
-            if (secretary && s.name === 'KPANSIA E') {
-                // await sendEodOrders(formattedOrders, secretary)
-                return 0;
-            }
-            if (manager && s.name !== 'OKUTUKUTU') {
-                // await sendEodOrders(formattedOrders, manager)
-                return 0;
-            }
+            // const manager = users.filter(u => u.role === 'MANAGER' && u.site === s.name)[0];
+            // const accountant = users.filter(u => u.role === 'ACCOUNTANT' && u.site === s.name)[0];
+            // const secretary = users.filter(u => u.role === 'SECRETARY' && u.site === s.name)[0];
+            // if (secretary && s.name === 'KPANSIA E') {
+            //     // await sendEodOrders(formattedOrders, secretary)
+            //     return 0;
+            // }
+            // if (manager && s.name !== 'OKUTUKUTU') {
+            //     // await sendEodOrders(formattedOrders, manager)
+            //     return 0;
+            // }
 
-            if (s.name === 'OKUTUKUTU' && accountant) {
-                // await sendEodOrders(orders, accountant)
-                return 0;
-            }
+            // if (s.name === 'OKUTUKUTU' && accountant) {
+            //     // await sendEodOrders(orders, accountant)
+            //     return 0;
+            // }
 
         }
         else return 1;
@@ -508,7 +502,7 @@ function reFormatOrders(data) {
         })
 
         // account for INCENTIVE as PRODUCT if paymentMethod is INCENTIVE
-        orderArr = orderArr.map(o =>  { return {...o,PRODUCT:o["PAYMENT METHOD"]==='INCENTIVE'?'INCENTIVE':o["PRODUCT"]}})
+        orderArr = orderArr.map(o =>  { return {...o,PRODUCT:o["PAYMENT METHOD"]==='INCENTIVE' || o['orderType']==='INCENTIVE'?'INCENTIVE':o["PRODUCT"]}})
 
 
     })

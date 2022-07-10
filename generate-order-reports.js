@@ -502,7 +502,7 @@ function reFormatOrders(data) {
         })
 
         // account for INCENTIVE as PRODUCT if paymentMethod is INCENTIVE
-        orderArr = orderArr.map(o =>  { return {...o,PRODUCT:o["PAYMENT METHOD"]==='INCENTIVE' || o['orderType']==='INCENTIVE'?'INCENTIVE':o["PRODUCT"]}})
+        // orderArr = orderArr.map(o =>  { return {...o,PRODUCT:o["PAYMENT METHOD"]==='INCENTIVE' || o['orderType']==='INCENTIVE'?'INCENTIVE':o["PRODUCT"]}})
 
 
     })

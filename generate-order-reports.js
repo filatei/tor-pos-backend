@@ -9,6 +9,7 @@ const tokens = require(`${homedir}/.token.json`);
 const nodemailer = require("nodemailer");
 const { google } = require("googleapis");
 const OAuth2 = google.auth.OAuth2;
+const _ = require('lodash')
 const oauth2Client = new google.auth.OAuth2(
     tokens.clientID,
     tokens.clientSecret,
@@ -28,6 +29,7 @@ const Product = require('./models/product');
 
 const mongoose = require('mongoose');
 const XLSX = require('xlsx');
+const order = require("./models/order");
 
 let logo = "https://api.torama.ng/uploads/productimages/fidologo.jpg";
 
@@ -66,20 +68,117 @@ mongoose
     console.log('mongoose disconnected')
   })
 
-  let attachments = []
+  let attachments = [];
+  let summaryTable = [];
+  let summaryByProduct =[];
+  let formattedOrders;
 
   async function sendEodOrders() {
    
     const date = new Date().toLocaleDateString('en-GB').replace(/\//g,'_')
-   
     
     const fullDate = new Date().toLocaleDateString('en-GB');
     const subject = `EOD Order Reports for ${fullDate}`;
-    
-    let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50">
-          <h2> End of Day Report for ${fullDate}</h2><p> Hi, Attached are Today's EOD Reports.</p><br><br><br> `;
+
+    // const sumString = await createTableFromSummary();
+    let sumString, string2
+    setTimeout(() => {
+         sumString = summary2;
+         string2 = summary1;
+         
+        //  console.log(sumString, 'sumstring')
+         let html = `<!DOCTYPE html><html>
+                <head>
+                    <meta http-equiv="Content-Type" content="text/html; charset="UTF-8">
+                    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <title> ${subject}</title>
+                    <style> 
+                        @import url('https://fonts.googleapis.com/css2?family=Quicksand&display=swap');
+                        * {
+                            margin: 0;
+                            padding:0;
+                            border: 0;
+                        }
+
+                        body {
+                            font-family: 'Quicksand', sans-serif;
+                            font-size: 19px;
+                            max-width: 800px;
+                            background-color: #cccccc;
+                            margin: 0 auto;
+                            padding: 3%;
+                        }
+
+                        img {
+                            max-width: 100%;
+                        }
+
+                        table {
+                            margin-bottom: 10px;
+                            margin-left: 20px;
+                            border: 1px solid black;
+                            width:500px;
+                            max-width: 100%;
+                        }
+
+                         th, td {
+                            border: 1px solid black;
+                            
+                        }
+
+                        #wrapper {
+                            width: 100%;
+                            table-layout: fixed;
+                        }
+                        
+                        .tables {
+                            display: inline-block;
+                            border-spacing: 0;
+                        }
+
+                        hr {
+                            height: 1px;
+                            background-color: blue;
+                            clear: both;
+                            with: 96%;
+                            margin: auto;
+                        }
+
+                    </style>
+                    <script>
+                        function unhide() {
+                            return;
+                        }
+                    </script>
+                </head>
+         <body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50">
+          <h2> End of Day Report for ${fullDate}</h2><p> Hi, Attached are Today's EOD Reports.</p><br><br>
+         
+         
+          <center id="wrapper">
+            <h4>Summaries</h4>
+            <div class="tables" >
+                <div style="margin-right:10px">
+                    ${sumString}
+                </div>
+                <div style="margin-left:10px">
+                    ${string2}
+                </div>
+            </div>
+          </center
+           
           
-          html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
+         
+         
+           `;
+
+           const footer = `<footer>
+                                <p><b> Powered by Torama<sup>&#174;</sup> </b></p>
+                                <p>All rights reserved. &#169; ${fullDate}</p>
+                            </footer>`
+          
+          html += `<br><br><hr>${footer} </body></html>`;
   
           if (hostname.includes("torama")) {
             toEmail = 'dailyreports@gtsng.com';
@@ -119,6 +218,9 @@ mongoose
           };
           console.log(model.attachments, 'attachments')
             mailer(model);
+    }, 300);
+    
+    
 
   }
 
@@ -238,22 +340,24 @@ function json2excel( orders,site) {
 }
 
 async function mailEodReport( ) {
-
-    const users = await User.find().lean();
-    const sites = await Site.find().lean();
+   
     // console.log( sites)
-    let site = 'KPANSIA E'
+    
     
     sites.map( async s => {
         if (!s.name) return;
+        let refOrders = null;
 
-        site = s.name;
         const  orders = await getSiteOrdersForToday( s.name);
         // console.log(orders)
-        console.log(s.name, orders.length)
+        // console.log(s.name, orders.length)
+        //  get order summaries for this site
+        
 
         if (orders && orders.length) {
-            json2excel( reFormatOrders(orders), s.name); // creates in tmp dir excel file containing reports
+            refOrders = reFormatOrders(orders);
+            
+            json2excel( refOrders, s.name); // creates in tmp dir excel file containing reports
             // we are sending all attachments in one email to dailyreports@gtsng.com
 
            
@@ -278,11 +382,10 @@ async function mailEodReport( ) {
         }
         else return 1;
     })  
-    console.log('sending report')
+    // console.log('sending report', sumString, 'test')
     await sendEodOrders()    
 }
 
-  let formattedOrders;
 
 function reFormatOrders(data) {
     const today = new Date().toLocaleDateString('en-GB').replace(/\//g,'');
@@ -418,10 +521,105 @@ function reFormatOrders(data) {
     return formattedOrders;
 }
 
+function orderSummaryByProduct(ord,loc) {
+        summaryByProduct = []
+        const grpArr = groupBy(ord, 'PRODUCT');
+        // console.log(loc, 'site', grpArr, 'grpArr')
+        Object.keys(grpArr).map(k => {
+            const QTY= sumToField(grpArr[k],'QTY' );
+            const AMT = sumToField(grpArr[k],'AMOUNT' );
+            summaryByProduct.push({site:loc,name:k,qty:QTY,amount:AMT.toLocaleString()});
+        })
+        // console.log(summaryByProduct, 'sumbyproduct')
+        return summaryByProduct;
+    
+}
+
+function orderSummaryByPayMethod(ord,loc) {
+    let summaryByPay = []
+    const grpArr = groupBy(ord, 'PAYMENT METHOD');
+    console.log( grpArr, 'payM')
+    Object.keys(grpArr).map(k => {
+        const QTY= sumToField(grpArr[k],'QTY' );
+        const AMT = sumToField(grpArr[k],'AMOUNT' );
+        summaryByPay.push({site:loc,name:k,qty:QTY,amount:AMT.toLocaleString()});
+    })
+    // console.log(summaryByProduct, 'sumbyproduct')
+    return summaryByPay;
+
+}
+
+ function groupBy(array, key) {
+    return _.groupBy(array, key);
+  };
+
+  function sumToField(arr,field){
+    let sum = 0;
+    arr.map(a => {
+      sum += a[field]
+    })
+    return sum;
+
+  }
+
+  
+  async function createTableFromSummary() {
+    // for each site, get orders into ord
+    // const sites = await Site.find().lean();
+    sites.forEach( async s => {
+
+        const  ord = await getSiteOrdersForToday( s.name);
+        if (!ord.length) return;
+
+        // console.log(ord.length, s.name)
+        // summary2 += ""
+       
+
+
+        const refOrders = reFormatOrders(ord);
+        // console.log(refOrders, 'reford')
+
+    
+        const orderSummaryForThisSite = orderSummaryByProduct(refOrders, s.name);
+        const sumByPay = orderSummaryByPayMethod(refOrders,s.name);
+        // console.log(orderSummaryForThisSite, 'summaries for this site')
+        summaryTable = [...summaryTable, ...orderSummaryForThisSite]
+        // console.log(summaryTable, 'sumtable')
+        summary2 += `<table><tr><th>Site</th><th>Product</th><th>QTY</th><th>AMOUNT</th></tr>`
+        summary1 += `<table><tr><th>Site</th><th>PAYMETHOD</th><th>QTY</th><th>AMOUNT</th></tr>`
+
+        orderSummaryForThisSite.map(o => {
+            summary2 += `<tr><td>${o.site}</td> <td>${o.name}</td> <td>${o.qty}</td> <td>${o.amount}</td></tr>`
+        })
+        summary2 += `</table>`
+
+        sumByPay.map(o => {
+            summary1 += `<tr><td>${o.site}</td> <td>${o.name}</td> <td>${o.qty}</td> <td>${o.amount}</td></tr>`
+        })
+        summary1 += `</table>`
+        
+
+
+    })
+
+    // return summary;
+  }
+
+let users;
+let sites;
+let summary2 = '';
+let summary1 = '';
 async function main() {
     try {
+         users = await User.find().lean();
+         sites = await Site.find().lean();
+        // console.log(summary2, 'sum1')
+
+        await createTableFromSummary();
         const mailSend = await mailEodReport();
-        process.on('SIGTERM', () => {
+
+
+         process.on('SIGTERM', () => {
             console.info('SIGTERM signal received.');
             mongoose.connection.close(false, () => {
                 console.log('MongoDb connection closed.');

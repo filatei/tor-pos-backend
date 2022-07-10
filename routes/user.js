@@ -427,8 +427,9 @@ router.get("", checkAuth, async (req, res, next) => {
   console.log(req.userData);
 
   try {
-    const users = await User.find();
+    const users = await User.find({},{name:1, email:1, role:1, site:1});
     if (users) {
+
       return res.status(200).json({
         users: users,
       });
@@ -449,7 +450,7 @@ router.get("/:id", checkAuth, async (req, res, next) => {
     return res.status("401").json({ message: "not Allowed" });
   }
   try {
-    const user = await User.findById(req.params.id);
+    const user = await User.findById(req.params.id, {name:1, email:1, role:1, site:1});
     if (user) {
       delete user.password;
       return res.status(200).json({ user });

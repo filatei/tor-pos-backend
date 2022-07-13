@@ -46,6 +46,7 @@ const expenseSchema = mongoose.Schema(
       ],
     },
     approvalComment: { type: String },
+    title: { type: String },
     category: { type: String },
     expenseAccount: { type: String },
 

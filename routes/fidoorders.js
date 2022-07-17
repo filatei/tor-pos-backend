@@ -101,6 +101,7 @@ function logIncident(email, description) {
 
 const checkAuth = require("../middleware/check-auth");
 const Mail = require("nodemailer/lib/mailer");
+const { deleteModel } = require("mongoose");
 
 router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
   try {
@@ -432,52 +433,36 @@ router.delete("/:id", checkAuth, async (req, res, next) => {
     return res.status(500).json({ message: "Not allowed" });
   }
 
-  let filePath;
-
   let ids = JSON.parse(req.params.id);
+  let qualifiedForDeletion
+  
+
   if (typeof ids === 'object') {
-    ids.forEach(id => {
-      console.log(id, 'deleting')
-      FidoOrder.findById(id)
-      .then((fidoorder) => {
-        if (fidoorder && fidoorder.image) {
-          filePath = "uploads/" + fidoorder.image.split("/uploads/")[1];
-        }
-      })
-      .catch((err) => {
-        return res
-          .status(401)
-          .json({ message: "fidoorder not found in db!" + err });
-      });
-  
-      FidoOrder.deleteOne({ _id: id })
-      .then((result) => {
-        if (result.n > 0) {
-          // delete fidoorder.image
-          if (filePath) {
-            fs.unlink(filePath, (err) => {
-              if (err) {
-                console.error(err);
-              }
-              console.log("related file deleted");
-            });
-          }
-  
-          return res.status(200).json({ message: "Deletion successful!" });
-        } else {
-          return res
-            .status(401)
-            .json({ message: "deletion failed ...id may not exist!" });
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-        return res.status(500).json({
-          message: "Deleting fidoorder failed! " + error,
-        });
-      });
-    })
+    //  delete many
+    //  filter the ids if object and remove ids of orders that are beyond paid
+    const orders = await FidoOrder.find({_id: {$in: ids}}).lean();
+    if ( orders && orders.length ) {
+      qualifiedForDeletion = orders.filter(o => o.status === 'PAID').map(oo => oo._id);
+    }
+
+    if (qualifiedForDeletion && qualifiedForDeletion.length) {
+      const deleted = await FidoOrder.deleteMany( {_id: { $in: qualifiedForDeletion }} )
+      console.log('deleted', deleted)
+      if (deleted.n) {
+        return res.status(200).json({ message: " multipleDeletion successful!" });
+      } else {
+        return res.status(401).json({ message: " multi deletion failed ...!" });
+      }
+    }
+    
   } else {
+    const order = await FidoOrder.findById(ids)
+
+    if(order && order.status !== 'PAID') {
+      return res
+      .status(401)
+      .json({ message: "deletion failed ...Status already beyond PAID!" });
+    }
     const del = await FidoOrder.deleteOne({ _id: ids })
     if (del) {
       return res.status(200).json({ message: "Deletion successful!" });

@@ -491,14 +491,16 @@ router.get("/bydate", checkAuth, async (req, res, next) => {
   //  given a date, return all receipts for day
 
   try {
-    const { ddate } = req.query;
-    // console.log(date, " date");
+    const { date } = req.query;
+    console.log(date, " date", req.query);
     // let ddate = date.split("T")[0];
     // start of day
-    var start = moment(ddate).startOf("day");
+    var start = moment(date).startOf("day").toDate();
 
     // end day
-    var end = moment(ddate).endOf("day");
+    var end = moment(date).endOf("day").toDate();
+
+    console.log(start, 'start', end, 'end')
     let dayData = await Recupload.find({
       createdAt: { $gte: start, $lt: end },
     })

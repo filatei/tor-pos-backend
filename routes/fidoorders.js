@@ -121,7 +121,7 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
 
     if (req.file) {
       if (hostname.includes("torama.ng")) {
-        url = "https://api.torama.ng" + "/uploads/fidoorderimages" 
+        url = "https://api.torama.ng"  
       } else {
         url = req.protocol + "://" + req.get("host");
       }

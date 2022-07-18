@@ -492,17 +492,17 @@ router.get("", checkAuth, async (req, res, next) => {
     if (!currentPage) currentPage = 1;
     let orders;
 
-    if (['ADMIN','GENERAL MANAGER', 'SNR ACCOUNTANT'].includes(role)) {
-      orders = await FidoOrder.find()
-                          .lean()
-                          .sort({ createdAt: -1 })
-                          .populate("customer")
-                          .populate("creator")
-                          .populate("terminal_id")
-                          .skip(pageSize * (currentPage - 1))
-                          .limit(pageSize);
+    // if (['ADMIN','GENERAL MANAGER'].includes(role)) {
+    //   orders = await FidoOrder.find()
+    //                       .lean()
+    //                       .sort({ createdAt: -1 })
+    //                       .populate("customer")
+    //                       .populate("creator")
+    //                       .populate("terminal_id")
+    //                       .skip(pageSize * (currentPage - 1))
+    //                       .limit(pageSize);
       
-    } else {
+    // } else {
       orders = await FidoOrder.find({$or: [{ site: site }, { creator: userId }]})
                           .lean()
                           .sort({ createdAt: -1 })
@@ -511,7 +511,7 @@ router.get("", checkAuth, async (req, res, next) => {
                           .populate("terminal_id")
                           .skip(pageSize * (currentPage - 1))
                           .limit(pageSize);
-    }
+    // }
     return res.status(200).json({
       message: "Orders fetched successfully!",
       fidoorders: orders,

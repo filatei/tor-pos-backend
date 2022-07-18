@@ -4,6 +4,8 @@ const Recupload = require("../models/recupload");
 const Customer = require("../models/customer");
 const router = express.Router();
 const moment = require("moment");
+var startOfDay = require('date-fns/startOfDay')
+var endOfDay = require('date-fns/endOfDay')
 
 const fs = require("fs");
 const os = require("os");
@@ -496,8 +498,11 @@ router.get("/bydate", checkAuth, async (req, res, next) => {
     // let ddate = date.split("T")[0];
     // start of day
     var start = moment(date).startOf("day").toDate();
+    
+    // const start = startOfDay(new Date(date));
 
     // end day
+    // const end = endOfDay(new Date(date));
     var end = moment(date).endOf("day").toDate();
 
     console.log(start, 'start', end, 'end')

@@ -668,8 +668,6 @@ router.get("/bydate", checkAuth, async (req, res, next) => {
 });
 
 router.get("/summary", checkAuth, async (req, res, next) => {
-  
-
   try {
     const alloweds = req.userData.role;
 

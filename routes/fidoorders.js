@@ -127,6 +127,7 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
       }
       const fPath = url + "/" + req.file.path;
       shopObj.image = fPath.replace('/var/www/','');
+      console.log(shopObj.path, 'image Path')
 
     }
 
@@ -168,17 +169,21 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
 
     function saveOrder(shopObj) {
       const fidoorder = new FidoOrder(shopObj);
-      console.log(fidoorder, 'fidoorder')
 
       fidoorder
         .save()
         .then(async (result) => {
-          console.log(result, 'result')
+          const res2 = await FidoOrder.findById(result._doc._id).lean()
+          .populate('customer')
+          .populate('creator')
+          .populate('terminal_id')
+          console.log(res2, 'res2')
+
           res.status(201).json({
             message: "FidoOrder added successfully",
             fidoorder: {
-              ...result,
-              id: result.id,
+              ...res2,
+              id: res2.id,
               paidAmount: result.paidAmount,
             },
           });

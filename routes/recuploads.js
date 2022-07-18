@@ -497,13 +497,13 @@ router.get("/bydate", checkAuth, async (req, res, next) => {
     console.log(date, " date", req.query);
     // let ddate = date.split("T")[0];
     // start of day
-    var start = moment(date).startOf("day").toDate();
+    // var start = moment(date).startOf("day").toDate();
     
-    // const start = startOfDay(new Date(date));
+    const start = startOfDay(new Date(date));
 
     // end day
-    // const end = endOfDay(new Date(date));
-    var end = moment(date).endOf("day").toDate();
+    const end = endOfDay(new Date(date));
+    // var end = moment(date).endOf("day").toDate();
 
     console.log(start, 'start', end, 'end')
     let dayData = await Recupload.find({

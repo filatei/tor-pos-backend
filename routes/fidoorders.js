@@ -479,7 +479,7 @@ router.get("", checkAuth, async (req, res, next) => {
   // if you are an ordinary user, you only see orders created in your site or by you
   try {
     let pageSize = +req.query.pagesize;
-    if (!pageSize) pageSize = 400;
+    if (!pageSize) pageSize = 200;
     const role = req.userData.role;
     const userId = req.userData.userId
     const site = req.userData.site

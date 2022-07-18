@@ -507,10 +507,10 @@ router.get("/bydate", checkAuth, async (req, res, next) => {
 
     console.log(start, 'start', end, 'end')
     let dayData = await Recupload.find({
-      createdAt: { $gte: start, $lt: end },
+      trans_date: { $gte: start, $lt: end },
     })
       .lean()
-      .sort({ created: -1 })
+      .sort({ trans_date: -1 })
       .populate("customer")
       .populate("creator")
       .populate("updater");

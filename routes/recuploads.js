@@ -48,7 +48,6 @@ const { Console } = require("console");
 const { Compressor } = require("mongodb");
 
 router.post("", checkAuth, Utils.upload.any(), function (req, res, next) {
-  // const alloweds = process.env.ALLOWEDS;
   const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'ACCOUNTANT', 'SNR ACCOUNTANT', 'SECRETARY', 'POS OFFICER'];
 
   if (!alloweds.includes(req.userData.role)) {
@@ -399,11 +398,10 @@ router.get("/salessummary", checkAuth, async (req, res, next) => {
 });
 
 router.get("/cashsalessummary", checkAuth, async (req, res, next) => {
-  const alloweds = process.env.ALLOWEDS;
+  const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'ACCOUNTANT', 'SNR ACCOUNTANT', 'SECRETARY', 'POS OFFICER'];
 
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to see Receipts");
-    return res.status(500).json({ message: "Not allowed" });
+  if (!alloweds.includes(req.userData.role)) {
+    return res.status(401).json({ message: "Not allowed" });
   }
 
   try {
@@ -678,10 +676,10 @@ router.get("/:id", checkAuth, (req, res, next) => {
 });
 
 router.put("/:id", checkAuth, async (req, res, next) => {
-  const alloweds = process.env.ALLOWEDS;
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to update Receipts");
-    return res.status(500).json({ message: "Not allowed" });
+  const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'ACCOUNTANT', 'SNR ACCOUNTANT', 'SECRETARY', 'POS OFFICER'];
+
+  if (!alloweds.includes(req.userData.role)) {
+    return res.status(401).json({ message: "Not allowed" });
   }
 
   // update bank debit status
@@ -795,12 +793,11 @@ router.put(
   checkAuth,
   Utils.upload.any(),
   function (req, res, next) {
-    const alloweds = process.env.ALLOWEDS;
+    const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'ACCOUNTANT', 'SNR ACCOUNTANT', 'SECRETARY', 'POS OFFICER'];
 
-    if (!alloweds.includes(req.userData.email)) {
-      logIncident(req.userData.email, "Not allowed to create Receipts");
-      return res.status(500).json({ message: "Not allowed" });
-    }
+  if (!alloweds.includes(req.userData.role)) {
+    return res.status(401).json({ message: "Not allowed" });
+  }
 
     let updater = req.userData.userId;
 

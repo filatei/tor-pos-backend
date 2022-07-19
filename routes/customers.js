@@ -118,11 +118,12 @@ router.get("/:id",  (req, res, next) => {
 });
 
 router.post("", checkAuth, (req, res, next) => {
-  const alloweds = process.env.ALLOWEDS;
+  const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'ACCOUNTANT', 'SNR ACCOUNTANT', 'SECRETARY', 'POS OFFICER'];
 
-  if ( !alloweds.includes(req.userData.email)) {
-    return res.status(500).json({message: 'Not allowed'});
+  if (!alloweds.includes(req.userData.role)) {
+    return res.status(401).json({ message: "Not allowed" });
   }
+
   let cust = req.body;
   cust.barcode = req.body.name;
 
@@ -149,10 +150,10 @@ router.post("", checkAuth, (req, res, next) => {
 });
   
 router.put("/:id", checkAuth, (req, res, next) => {
-  const alloweds = process.env.ALLOWEDS;
+  const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'ACCOUNTANT', 'SNR ACCOUNTANT', 'SECRETARY', 'POS OFFICER'];
 
-  if ( !alloweds.includes(req.userData.email)) {
-    return res.status(500).json({message: 'Not allowed'});
+  if (!alloweds.includes(req.userData.role)) {
+    return res.status(401).json({ message: "Not allowed" });
   }
   
   let cust = req.body;

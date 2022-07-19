@@ -188,7 +188,7 @@ mongoose
           if (hostname.includes("torama")) {
             toEmail = 'dailyreports@gtsng.com';
             creatorEmail = 'sales@torama.ng';
-            bccMail = ''
+            bccMail = 'eadekan@gtsng.com'
           } else {
             toEmail = null;
             toEmail = "orderManagers@torama.ng";

@@ -456,7 +456,7 @@ router.get("/summary2", checkAuth, async (req, res, next) => {
 
       let aggData = await Summary.Pipeline(yesterdayStart, yesterdayEnd);
 
-      console.log(aggData, 'aggData', yesterdayStart, yesterdayEnd)
+      // console.log(aggData, 'aggData', yesterdayStart, yesterdayEnd)
       // bring out the ._id
 
       aggData = aggData.map((a) => {
@@ -468,11 +468,7 @@ router.get("/summary2", checkAuth, async (req, res, next) => {
       });
 
       return res.status(200).json({ records: aggData });
-      // else {
-      //   // return res
-      //   //   .status(500)
-      //   //   .json({ message: "Error with recUpload summary" });
-      // }
+     
     }
   } catch (err) {
     return res

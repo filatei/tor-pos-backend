@@ -285,7 +285,7 @@ router.get("/events", checkAuth, async (req, res, next) => {
   }
 });
 
-router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
+router.put("/:id", checkAuth, upload.single("image"), async (req, res, next) => {
 
   const ALLOWEDS = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT','SECRETARY', "SUPERVISOR", 'SECURITY', 'POS OFFICER'];
 
@@ -305,7 +305,12 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
   const updater = req.userData.userId;
   const id = req.params.id;
   shopObj._id = req.params.id;
-  shopObj.updater = req.userData.userId;
+  shopObj.updater = updater;
+  const order = await FidoOrder.findById(id);
+  const updaters = order.updaters;
+  const today = new Date().toLocaleString('en-GB', {timeZone: 'Africa/Lagos'})
+  updaters.push({name: req.userData.name, date: today})
+  shopObj.updaters = updaters;
 
   const fidoorder = new FidoOrder(shopObj);
   if (req.file && req.file.filename && req.file.filename.length > 0) {
@@ -341,7 +346,8 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
         description: description,
         taxRate: taxRate,
         status: status,
-        updaters: shopObj.updaters,
+        updater,
+        updaters: updaters,
       }
     )
       .then((result) => {
@@ -508,10 +514,13 @@ router.get("", checkAuth, async (req, res, next) => {
                           .sort({ createdAt: -1 })
                           .populate("customer")
                           .populate("creator")
+                          .populate("updater")
                           .populate("terminal_id")
                           .skip(pageSize * (currentPage - 1))
                           .limit(pageSize);
+                          
     // }
+    console.log(orders[0])
     return res.status(200).json({
       message: "Orders fetched successfully!",
       fidoorders: orders,
@@ -604,7 +613,6 @@ router.get("/ordersbyuser", checkAuth, async (req, res, next) => {
   try {
     const userId = req.userData.userId; 
     const site = req.userData.site; 
-    console.log(userId, 'userid');
 
     // start of today
     var start = moment().startOf("day").toDate();
@@ -615,8 +623,8 @@ router.get("/ordersbyuser", checkAuth, async (req, res, next) => {
     // by user today
     let orders =  await FidoOrder.find({trans_date: { $gte: start, $lte: end },$or: [{ site: site }, { creator: userId }]}) .lean()
     .sort({trans_date:-1})
-    .limit(400)
     .populate('creator')
+    .populate('updater')
     .populate('customer')
     .populate('terminal_id')
 
@@ -626,7 +634,9 @@ router.get("/ordersbyuser", checkAuth, async (req, res, next) => {
       }
       return o;
     })
-    console.log(orders)
+    // const products = orders.map(o=>o.products );
+    // const sites = orders.map(o=>o.site );
+    // console.log(orders[0], products[0], sites[0])
 
     res.status(200).json({message: 'Orders fetched successfully', fidoorders:orders})
 

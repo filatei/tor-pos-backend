@@ -95,8 +95,8 @@ const fidoorderSchema = mongoose.Schema(
     updater: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     updaters: [
       {
-        updaterId: { type: String },
-        time: { type: Date },
+        name: { type: String },
+        date: { type: String },
       },
     ],
 

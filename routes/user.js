@@ -169,7 +169,6 @@ router.post("/confirmPassword", async (req, res, next) => {
 router.post("/changePassword", async (req, res, next) => {
   try {
     const { token, password } = req.body;
-
     if (!token) {
       return res.status(500).json({
         message: "token is required in body",

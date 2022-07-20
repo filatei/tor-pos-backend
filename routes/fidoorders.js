@@ -370,7 +370,7 @@ router.put(
   checkAuth,
   upload.single("image"),
   async function (req, res, next) {
-    const alloweds = ['ADMIN','GENERAL MANAGER','MANAGER', 'SECRETARY', 'SUPERVISOR', 'SECURITY', "OFFICER", "SNR ACCOUNTANT"];
+    const alloweds = ['ADMIN','GENERAL MANAGER','MANAGER', 'SECRETARY', 'POS OFFICER', 'SUPERVISOR', 'SECURITY', "OFFICER", "SNR ACCOUNTANT"];
 
     if (!req.userData.role) {
       // logIncident(req.userData.email, "Not allowed to create notes");

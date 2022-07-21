@@ -3,7 +3,7 @@ const path = require("path");
 const os = require("os");
 const hostname = os.hostname();
 const homedir = os.homedir();
-// const dbinfo = require(`${homedir}/.db.json`);
+const dbInfo = require(`${homedir}/.db.json`);
 
 const express = require("express");
 const bodyParser = require("body-parser");
@@ -64,8 +64,7 @@ const casualRoutes = require("./routes/casual");
 const callRoutes = require("./routes/callmanager");
 
 
-
-const DB = "torposedb";
+// const DB = "torposedb";
 // if prod use this
 // connectStr ='mongodb+srv://user1:RwyT4Eyw799tQUKF@cluster0-j4gfg.gcp.mongodb.net/torposedb?retryWrites=true&w=majority'
 // app.use('/', express.static(path.join(__dirname, 'www')));
@@ -120,11 +119,26 @@ mongoose.set("useUnifiedTopology", true);
 mongoose.set("useCreateIndex", true);
 mongoose.set("useFindAndModify", false);
 
+let username, password, cluster
+let DB
+
+if ( hostname.includes('local') ) {
+   username = encodeURIComponent(`${dbInfo.ATLAS_DEV_USER}`);
+   password = encodeURIComponent(`${dbInfo.ATLAS_DEV_PASS}`);
+   cluster = `${dbInfo.ATLAS_DEV_CLUSTER}`;
+   DB = `${dbInfo.ATLAS_DEV_DB}`;
+}
+
+if ( hostname.includes('torama.ng') ) {
+   username = encodeURIComponent(`${dbInfo.ATLAS_PROD_USER}`);
+   password = encodeURIComponent(`${dbInfo.ATLAS_PROD_PASS}`);
+   cluster = `${dbInfo.ATLAS_PROD_CLUSTER}`;
+   DB = `${dbInfo.ATLAS_PROD_DB}`;
+}
+connectStr = `mongodb+srv://${username}:${password}@${cluster}/${DB}?retryWrites=true&w=majority`;
+
 mongoose
-    .connect(process.env.MONGODB_URI, {
-      dbName: process.env.DB_NAME,
-      user: process.env.DB_USER,
-      pass: process.env.DB_PASS,
+    .connect(connectStr, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
       useFindAndModify: false,
@@ -136,15 +150,6 @@ mongoose
   .catch((err) => {
     console.log(err);
   });
-
-  // mongoose
-//   .connect(connectStr, {
-//     useNewUrlParser: true,
-//     useFindAndModify: false,
-//     useUnifiedTopology: true,
-//     autoIndex: true,
-//     useCreateIndex: true
-//   })
 
 
 app.use("/api/paymethods", paymethodsRoutes);

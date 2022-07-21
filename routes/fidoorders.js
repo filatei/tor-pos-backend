@@ -21,7 +21,9 @@ const OAuth2 = google.auth.OAuth2;
 // const Utils = require("../utils");
 const Summary = require("../summary/recsummary");
 const mail = require("../mail");
-
+let PRODUCTNAME = { "INCENTIVE": "INCENTIVE","Pure Water": "PUREWATER", "19L Dispenser Refill": "DISPENSER", 
+                  "19L Dispenser Replace":"DISPENSER", "75cl Crate":"CRATE75CL", "50cl Crate":"CRATE50CL", 
+                  "Nylon Waste":"WASTES", "Cement":"CEMENT", "9-inch Block":"BLOCK", "6-inch Block":"BLOCK" };
 
 const ObjectId = require('mongoose').Types.ObjectId;
 
@@ -177,7 +179,6 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
           .populate('customer')
           .populate('creator')
           .populate('terminal_id')
-          console.log(res2, 'res2')
 
           res.status(201).json({
             message: "FidoOrder added successfully",
@@ -520,7 +521,6 @@ router.get("", checkAuth, async (req, res, next) => {
                           .limit(pageSize);
                           
     // }
-    console.log(orders[0])
     return res.status(200).json({
       message: "Orders fetched successfully!",
       fidoorders: orders,
@@ -713,8 +713,6 @@ router.get("/summary", checkAuth, async (req, res, next) => {
           totalQty: a.totalQty.toLocaleString(),
         };
       });
-      // console.log(aggData, 'aggData', yesterdayStart, yesterdayEnd)
-
 
       if (aggData) {
         return res.status(200).json({ records: aggData });
@@ -731,6 +729,183 @@ router.get("/summary", checkAuth, async (req, res, next) => {
       .json({ message: "Server Error with fidoOrder summary try block" + err });
   }
 });
+
+router.get('/todaySummary', checkAuth, async(req,res, next) => {
+  try {
+    const site = req.userData.site; 
+
+    // start of today
+    var start = moment().startOf("day").toDate();
+
+    // end today
+    var end = moment(start).endOf("day").toDate();
+    let summary = null;
+
+    // get today orders for this site
+    let orders = await FidoOrder.find({trans_date: { $gte: start, $lte: end }, site: site })
+      .lean()
+      .sort({trans_date:-1})
+      .populate('creator')
+      .populate('updater')
+      .populate('customer')
+      .populate('terminal_id')
+
+    // if (!orders.length) {
+    //   return res.status(200).json({message: 'No orders match query - ', summary:null })
+    // }
+   if (orders && orders.length) {
+      let header = Object.keys(orders[0]);
+
+      let orderRow
+      let orderArr = [];
+      let sn = 1;
+      let bankVal;
+      //  combine acquirer and payment method
+      
+
+      orders.map(row => {
+      let products = []
+
+      header.map(field => {
+        if( field === 'fidoOrderId' ) {
+          orderRow = {...orderRow, "ORDER ID": row[field]}
+        }
+
+        if( field === 'customer' ) {
+          orderRow = {...orderRow, CUSTOMER: row[field].name}
+        }
+
+        if( field === 'orderType' ) {
+          orderRow = {...orderRow, orderType: row[field]}
+        }
+
+        if( field === 'action_taken' ) {
+          orderRow = {...orderRow, "ACTION TAKEN": row[field]}
+        }
+
+        if( field === 'trans_date' ) {
+          orderRow = {...orderRow, "INVOICE DATE": new Date(row[field]).toLocaleDateString('en-GB')}
+        }
+
+        if( field === 'creator' ) {
+          orderRow = {...orderRow, USER: row[field].name}
+        }
+
+
+        if( field === 'paidAmount' ) {
+          orderRow = {...orderRow, AMT_PAID: row[field]}
+        }
+
+        if( field === 'txn_amount' ) {
+          orderRow = {...orderRow, AMT_TOTAL: row[field], AMOUNT: row[field]}
+        }
+
+        if( field === 'terminal_location' ) {
+          orderRow = {...orderRow, LOCATION: row[field]}
+        }
+
+        if( (field == 'paymentMethod')  ) {
+          orderRow = {...orderRow, "PAYMENT METHOD": row[field] }
+        }
+
+        if( (field == 'PAYBANK')  ) {
+          orderRow = {...orderRow, "PAYBANK": row[field] }
+        }
+
+
+
+        if( field === 'teller_id' ) {
+          orderRow = {...orderRow, "TELLER NO": row[field]}
+        }
+
+        if( field === 'date_teller' ) {
+          orderRow = {...orderRow, "TELLER DATE": row[field]}
+        }
+
+        if( field === 'acquirer' ) {
+          orderRow = {...orderRow, "BANK": row[field] + ' (NGN)'}
+        }
+
+        if( field === 'amt_teller' ) {
+          orderRow = {...orderRow, "TELLER AMOUNT": row[field]}
+        }
+
+        if( field === 'auth_id' ) {
+          orderRow = {...orderRow, "AUTH_ID": row[field]}
+        }
+
+        if( field === 'rrn' ) {
+          orderRow = {...orderRow, "RRN": row[field]}
+        }
+
+        if( field === 'tx_ref' ) {
+          orderRow = {...orderRow, "TX_REF": row[field]}
+        }
+
+        if( field === 'transfer_from_account_name' ) {
+          orderRow = {...orderRow, "transfer_from_account_name": row[field]}
+        }
+
+        if( field === 'transfer_from_bank' ) {
+          orderRow = {...orderRow, "transfer_from_bank": row[field]}
+        }
+
+        if( field === 'company' ) {
+          orderRow = {...orderRow, "COMPANY": row[field]}
+        }
+
+        if ( field === 'status' ) {
+          orderRow = {...orderRow, STATUS: row[field]}
+        }
+
+        if( field === 'products' ) {
+          // create new products object to convert multiple products to multiple orders
+          row[field].map(p => {
+            products = [...products, {name: p.name , qty:p.qty, price: p.price}]
+
+          })
+        }
+      })
+      // convert multiple products to multiple orders
+      products.map(p => {
+        orderArr.push({SN: sn, ...orderRow, PRODUCT: PRODUCTNAME[p.name] , QTY:p.qty, RATE: p.price, AMT_TOTAL:p.qty*p.price,
+        AMOUNT:p.qty*p.price, 
+        AMT_PAID:p.qty*p.price})
+        sn = sn + 1;
+      })
+
+    
+    })
+    orderArr = orderArr.map(o => {
+      if (o['PAYMENT METHOD'] !== 'CASH') {
+        return {...o, 'PAYMENT METHOD':o['PAYMENT METHOD'] + '-' + o['BANK'] }
+
+      }
+      else {
+        return {...o, 'PAYMENT METHOD': o['BANK']}
+      }
+    })
+    // console.log(orderArr, 'orderArr')
+
+    const productSummary = summarize(orderArr,'PRODUCT');
+    const paymentSummary = summarize(orderArr,'PAYMENT METHOD');
+    // const bankSummary = summarize(orderArr,'BANK');
+    summary = {productSummary, paymentSummary };
+
+   } else {
+    summary = {}
+   }
+    console.log('summary', summary)
+  return res.status(200).json({message: 'Orders fetched successfully', summary})
+
+
+ 
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({message: 'Error summarizing today orders - ' + error})
+  }
+
+})
 
 router.get("/:id", async (req, res, next) => {
 
@@ -830,6 +1005,60 @@ async function json2excel(orders, site) {
 
   // generate buffer
   XLSX.writeFile(workbook, `/tmp/${site}-order-${today}.xlsx`)
+}
+
+function summarize(orderArr, val) {
+  const summaryByProdct = [{name:val,qty:null,amount:null}]
+  const grpArr = _groupBy(orderArr, val);
+  Object.keys(grpArr).map(k => {
+    const QTY = sumToField(grpArr[k],'QTY' );
+    const AMT = sumToField(grpArr[k],'AMOUNT' );
+    summaryByProdct.push({name:k, qty:QTY, amount:AMT});
+  })
+  return summaryByProdct;
+}
+
+_groupBy = (array, key) => {
+  return _.groupBy(array, key);
+};
+
+function sumToField(arr,field){
+  let sum = 0;
+  arr.map(a => {
+    sum += a[field]
+  })
+  return sum;
+}
+
+function todayAggregate() {
+  db.collection.aggregate([
+    {
+      "$match": {
+        "$expr": {
+          "$and": [
+            {
+              "$gte": [
+                "$$NOW",
+                "$start_date"
+              ]
+            },
+            {
+              "$lte": [
+                "$$NOW",
+                {
+                  "$dateAdd": {
+                    "startDate": "$start_date",
+                    "unit": "week",
+                    "amount": "$type_quantity"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ])
 }
 
 module.exports = router;

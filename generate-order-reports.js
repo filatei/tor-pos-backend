@@ -403,6 +403,7 @@ function reFormatOrders(data) {
     let orderArr = [];
     let sn = 1;
     let bankVal;
+
     data.map(row => {
         let products = []
         
@@ -521,6 +522,24 @@ function reFormatOrders(data) {
     header = Object.keys(orderArr[0]);
 
     // console.log(orderArr[0])
+    orderArr = orderArr.map(o => {
+        if (o['PAYMENT METHOD'] !== 'CASH') {
+          return {...o, 'PAYMENT METHOD':o['PAYMENT METHOD'] + '-' + o['BANK'] }
+  
+        }
+        else {
+          return {...o, 'PAYMENT METHOD': o['BANK']}
+        }
+      })
+      // console.log(orderArr, 'orderArr')
+  
+    //   const productSummary = summarize(orderArr,'PRODUCT');
+    //   const paymentSummary = summarize(orderArr,'PAYMENT METHOD');
+    //   // const bankSummary = summarize(orderArr,'BANK');
+    //   summary = {productSummary, paymentSummary };
+  
+
+
     formattedOrders = orderArr;
     hours = new Date().getHours();
     return formattedOrders;

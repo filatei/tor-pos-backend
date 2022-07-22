@@ -398,10 +398,10 @@ router.get("/salessummary", checkAuth, async (req, res, next) => {
 });
 
 router.get("/cashsalessummary", checkAuth, async (req, res, next) => {
-  const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'ACCOUNTANT', 'SNR ACCOUNTANT', 'SECRETARY', 'POS OFFICER'];
-
-  if (!alloweds.includes(req.userData.role)) {
-    return res.status(401).json({ message: "Not allowed" });
+  const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'ACCOUNTANT', 'SNR ACCOUNTANT', 'SECRETARY', "SUPERVISOR", 'POS OFFICER'];
+  const role = req.userData.role;
+  if (!alloweds.includes(role)) {
+    return res.status(401).json({ message: "Not allowed " + role });
   }
 
   try {

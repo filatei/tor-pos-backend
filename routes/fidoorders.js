@@ -291,7 +291,7 @@ router.put("/:id", checkAuth, upload.single("image"), async (req, res, next) => 
   const ALLOWEDS = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT','SECRETARY', "SUPERVISOR", 'SECURITY', 'POS OFFICER'];
 
   if ( !ALLOWEDS.includes(req.userData.role) ) {
-    return res.status(500).json({ message: "Not allowed" });
+    return res.status(500).json({ message: "Not allowed " + req.userData.role});
   }
 
   let path = "";
@@ -679,8 +679,8 @@ router.get("/summary", checkAuth, async (req, res, next) => {
   try {
     const alloweds = req.userData.role;
 
-    if (!['ADMIN', 'GENEAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT', 'MANAGER', 'SECRETARY', 'POS OFFICER'].includes(req.userData.role)) {
-      return res.status(500).json({ message: "Not allowed" });
+    if (!['ADMIN', 'GENEAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT', 'MANAGER', 'SECRETARY', 'POS OFFICER', 'SUPERVISOR'].includes(req.userData.role)) {
+      return res.status(500).json({ message: "Not allowed " + req.userData.role});
     }
 
 

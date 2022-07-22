@@ -17,3 +17,6 @@ go through recuploads collection and any receipt with image  like https://api.to
 
 or 
 'https://api.torama.ng//var/www/' becomes 'https://api.torama.ng/'
+
+DATA API
+https://data.mongodb-api.com/app/data-tmhml/endpoint/data/v1

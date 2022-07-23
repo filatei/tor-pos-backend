@@ -51,6 +51,7 @@ router.post("", checkAuth, Utils.upload.any(), function (req, res, next) {
   const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'ACCOUNTANT', 'SNR ACCOUNTANT', 'SECRETARY', 'POS OFFICER'];
 
   if (!alloweds.includes(req.userData.role)) {
+    return;
     return res.status(401).json({ message: "Not allowed" });
   }
   
@@ -524,7 +525,8 @@ router.get("", checkAuth,  (req, res, next) => {
   const role = req.userData.role;
 
   if (!role) {
-    return res.status(401).json({ message: "Not allowed" });
+    
+    return res.status(200).json({ message: "Not allowed" });
   }
 
   const pageSize = +req.query.pagesize;
@@ -675,7 +677,7 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'ACCOUNTANT', 'SNR ACCOUNTANT', 'SECRETARY', 'POS OFFICER'];
 
   if (!alloweds.includes(req.userData.role)) {
-    return res.status(401).json({ message: "Not allowed" });
+    return res.status(200).json({ message: "Not allowed" });
   }
 
   // update bank debit status

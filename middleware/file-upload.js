@@ -1,15 +1,15 @@
 const multer = require("multer");
 // const uuid = require("uuid/v1");
 
-const OUTDIR = "uploads/awards";
+const OUTDIR = "/var/www/uploads/awards";
 const path = require("path");
 const fs = require("fs");
 
 const createDir = async () => {
-  if (fs.existsSync(path.join(__dirname, "..", OUTDIR))) {
+  if (fs.existsSync(path.join( OUTDIR))) {
     return;
   }
-  await fs.mkdir(path.join(__dirname, "..", OUTDIR), function (err) {
+  await fs.mkdir(path.join( OUTDIR), function (err) {
     if (err) {
       console.log("failed to create directory");
       return console.error(err);

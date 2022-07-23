@@ -345,11 +345,25 @@ router.put(
       req.files.forEach((file) => {
         const fileName = file.filename;
         if (hostname.includes("torama.ng")) {
-          url = "https://api.torama.ng";
+          filePath =
+            "https://api.torama.ng" +
+            "/uploads/awards/" +
+            req.file.filename;
         } else {
-          url = req.protocol + "://" + req.get("host");
+          url = req.protocol + "s://" + req.get("host");
+          filePath = url + "/uploads/awards/" + req.file.filename;
         }
-        filePath = url + "/uploads/awards/" + fileName;
+
+        // if (hostname.includes("torama.ng")) {
+        //   filePath =
+        //     "https://api.torama.ng" +
+        //     "/uploads/awards/" +
+        //     req.file.filename;
+        // } else {
+        //   url = req.protocol + "s://" + req.get("host");
+        //   filePath = url + "/uploads/awards/" + req.file.filename;
+        // }
+       
 
         if (award && award.images && typeof award.images === "object") {
           award.images.push({

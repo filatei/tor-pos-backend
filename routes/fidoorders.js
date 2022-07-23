@@ -104,6 +104,7 @@ function logIncident(email, description) {
 const checkAuth = require("../middleware/check-auth");
 const Mail = require("nodemailer/lib/mailer");
 const { deleteModel } = require("mongoose");
+const { setMinutes } = require("date-fns");
 
 router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
   try {
@@ -594,9 +595,10 @@ router.get("/bydate", checkAuth, async (req, res, next) => {
 router.get("/summary", checkAuth, async (req, res, next) => {
   try {
     const alloweds = req.userData.role;
+    const allowedStaff = ['ADMIN', 'GENEAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT', 'MANAGER', 'SECRETARY', 'POS OFFICER', 'SUPERVISOR'];
 
-    if (!['ADMIN', 'GENEAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT', 'MANAGER', 'SECRETARY', 'POS OFFICER', 'SUPERVISOR'].includes(req.userData.role)) {
-      return res.status(500).json({ message: "Not allowed " + req.userData.role});
+    if (!allowedStaff.includes(req.userData.role)) {
+      return res.status(500).json({ message: "Not allowed to summarise " + req.userData.role});
     }
 
 
@@ -620,6 +622,7 @@ router.get("/summary", checkAuth, async (req, res, next) => {
       // }
 
       let aggData = await Pipeline(yesterdayStart, yesterdayEnd, site);
+      console.log(aggData, 'summary aggData')
 
       // bring out the ._id
       aggData = aggData.map((a) => {
@@ -647,8 +650,10 @@ router.get("/summary", checkAuth, async (req, res, next) => {
 });
 
 router.get('/todaySummary', checkAuth, async(req,res, next) => {
+
+  
   try {
-    const site = req.userData.site; 
+    const role = req.userData.role; 
 
     // start of today
     var start = moment().startOf("day").toDate();
@@ -656,20 +661,101 @@ router.get('/todaySummary', checkAuth, async(req,res, next) => {
     // end today
     var end = moment(start).endOf("day").toDate();
     let summary = null;
+    let summ = [];
+    let orders
+    const topStaff=['ADMIN', 'SNR ACCOUNTANT', 'GENERAL MANAGER'];
+    let sites = ['AKENFA', 'SWALI', 'KPANSIA', 'YENEGWE', 'OKUTUKUTU', 'KPANSIA E', 'OBUNNA']
 
-    // get today orders for this site
-    let orders = await FidoOrder.find({trans_date: { $gte: start, $lte: end }, site: site })
-      .lean()
-      .sort({trans_date:-1})
-      .populate('creator')
-      .populate('updater')
-      .populate('customer')
-      .populate('terminal_id')
+    if (topStaff.includes(role)) {
+      sites.forEach( async site =>  {
+        orders = await FidoOrder.find({trans_date: { $gte: start, $lte: end }, site: site })
+        .lean()
+        .sort({trans_date:-1})
+        .populate('creator')
+        .populate('updater')
+        .populate('customer')
+        .populate('terminal_id')
+        // console.log(orders, 'orders')
+        if (orders && orders.length) {
+          summary = await summarizeSiteOrders(orders,site)
+          summ = [...summ, summary]
+         
 
-    // if (!orders.length) {
-    //   return res.status(200).json({message: 'No orders match query - ', summary:null })
-    // }
-   if (orders && orders.length) {
+        }
+       
+        
+      })
+      
+
+    } else {
+      // get today orders for this site
+      let site = req.userData.site; 
+     orders = await FidoOrder.find({trans_date: { $gte: start, $lte: end }, site: site })
+     .lean()
+     .sort({trans_date:-1})
+     .populate('creator')
+     .populate('updater')
+     .populate('customer')
+     .populate('terminal_id')
+     if (orders && orders.length) {
+      summary = await summarizeSiteOrders(orders,site)
+      summ = [...summ, summary]
+
+     }
+    }
+
+    setTimeout(() => {
+      return res.status(200).json({message: 'Orders fetched successfully', summaries: summ})
+      
+      }, 1000);
+ 
+  } catch (error) {
+    console.log(error)
+    return res.status(500).json({message: 'Error summarizing today orders - ' + error})
+  }
+  finally {
+    // console.log(summ, 'SUMMARIES 3')
+
+   
+  }
+
+})
+
+router.get("/:id", async (req, res, next) => {
+
+  try {
+    const id = req.params.id;
+
+    //  return blank object if id is wrong
+    if ( ! isValidObjectId(id) ) {
+      console.log('invalid id')
+      return res.status(200).json({});
+    } else {
+      console.log('valid id... proceeding')
+    }
+    const fidoOrder = await FidoOrder.findById(id)
+    .populate("creator")
+    .populate("updater")
+    .populate("customer")
+    .populate("terminal_id")
+    if (fidoOrder) {
+      res.status(200).json(fidoOrder);
+    } else {
+      console.log('no order')
+    }
+  
+  } catch (error) {
+    console.log(error, 'catch error')
+    // res.status(400).json({
+    //   message: "CatchError: Fetching fidoorder failed! " + error,
+    // });
+  }
+
+  
+});
+
+async function summarizeSiteOrders(orders, site) {
+    if (orders && orders.length) {
       let header = Object.keys(orders[0]);
 
       let orderRow
@@ -679,10 +765,10 @@ router.get('/todaySummary', checkAuth, async(req,res, next) => {
       //  combine acquirer and payment method
       
 
-      orders.map(row => {
+      orders.forEach(row => {
       let products = []
 
-      header.map(field => {
+      header.forEach(field => {
         if( field === 'fidoOrderId' ) {
           orderRow = {...orderRow, "ORDER ID": row[field]}
         }
@@ -806,56 +892,13 @@ router.get('/todaySummary', checkAuth, async(req,res, next) => {
     const productSummary = summarize(orderArr,'PRODUCT');
     const paymentSummary = summarize(orderArr,'PAYMENT METHOD');
     // const bankSummary = summarize(orderArr,'BANK');
-    summary = {productSummary, paymentSummary };
+    summary = {productSummary, paymentSummary, site };
 
-   } else {
+  } else {
     summary = {}
-   }
-    console.log('summary', summary)
-  return res.status(200).json({message: 'Orders fetched successfully', summary})
-
-
- 
-  } catch (error) {
-    console.log(error)
-    return res.status(500).json({message: 'Error summarizing today orders - ' + error})
   }
-
-})
-
-router.get("/:id", async (req, res, next) => {
-
-  try {
-    const id = req.params.id;
-
-    //  return blank object if id is wrong
-    if ( ! isValidObjectId(id) ) {
-      console.log('invalid id')
-      return res.status(200).json({});
-    } else {
-      console.log('valid id... proceeding')
-    }
-    const fidoOrder = await FidoOrder.findById(id)
-    .populate("creator")
-    .populate("updater")
-    .populate("customer")
-    .populate("terminal_id")
-    if (fidoOrder) {
-      res.status(200).json(fidoOrder);
-    } else {
-      console.log('no order')
-    }
-  
-  } catch (error) {
-    console.log(error, 'catch error')
-    // res.status(400).json({
-    //   message: "CatchError: Fetching fidoorder failed! " + error,
-    // });
-  }
-
-  
-});
-
+  return summary;
+}
 
 async function Pipeline(start, end, site) {
   const pipeline = [

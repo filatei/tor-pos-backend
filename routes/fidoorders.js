@@ -654,7 +654,7 @@ router.get('/todaySummary', checkAuth, async(req,res, next) => {
   
   try {
     const role = req.userData.role; 
-    const allowed = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT', 'SECRETARY'];
+    const allowed = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT', 'SECRETARY',  'SUPERVISOR'];
     if (!allowed.includes(role)) {
       return;
     }

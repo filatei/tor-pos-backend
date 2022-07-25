@@ -598,7 +598,8 @@ router.get("/summary", checkAuth, async (req, res, next) => {
     const allowedStaff = ['ADMIN', 'GENEAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT', 'MANAGER', 'SECRETARY', 'POS OFFICER', 'SUPERVISOR'];
 
     if (!allowedStaff.includes(req.userData.role)) {
-      return res.status(500).json({ message: "Not allowed to summarise " + req.userData.role});
+      return 
+      // res.status(500).json({ message: "Not allowed to summarise " + req.userData.role});
     }
 
 

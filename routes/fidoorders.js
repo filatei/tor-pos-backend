@@ -654,6 +654,10 @@ router.get('/todaySummary', checkAuth, async(req,res, next) => {
   
   try {
     const role = req.userData.role; 
+    const allowed = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT', 'SECRETARY'];
+    if (!allowed.includes(role)) {
+      return;
+    }
 
     // start of today
     var start = moment().startOf("day").toDate();

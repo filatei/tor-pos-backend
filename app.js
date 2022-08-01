@@ -62,6 +62,7 @@ const payRoutes = require("./routes/payroll");
 const pplRoutes = require("./routes/people");
 const casualRoutes = require("./routes/casual");
 const callRoutes = require("./routes/callmanager");
+const pgbyRoutes = require("./routes/payrollgrpbyyrmonthstatus");
 
 
 // const DB = "torposedb";
@@ -127,6 +128,8 @@ if ( hostname.includes('local') ) {
    password = encodeURIComponent(`${dbInfo.ATLAS_DEV_PASS}`);
    cluster = `${dbInfo.ATLAS_DEV_CLUSTER}`;
    DB = `${dbInfo.ATLAS_DEV_DB}`;
+   connectStr='mongodb://localhost:27017/fido_db'
+
 }
 
 if ( hostname.includes('torama.ng') ) {
@@ -134,8 +137,11 @@ if ( hostname.includes('torama.ng') ) {
    password = encodeURIComponent(`${dbInfo.ATLAS_PROD_PASS}`);
    cluster = `${dbInfo.ATLAS_PROD_CLUSTER}`;
    DB = `${dbInfo.ATLAS_PROD_DB}`;
+   connectStr = `mongodb+srv://${username}:${password}@${cluster}/${DB}?retryWrites=true&w=majority`;
 }
-connectStr = `mongodb+srv://${username}:${password}@${cluster}/${DB}?retryWrites=true&w=majority`;
+
+
+
 
 mongoose
     .connect(connectStr, {
@@ -199,5 +205,8 @@ app.use("/api/people", pplRoutes);
 app.use("/api/casual", casualRoutes);
 app.use("/api/payroll", payRoutes);
 app.use("/api/callManager", callRoutes);
+app.use("/api/pgby", pgbyRoutes);
+
+
 
 module.exports = app;

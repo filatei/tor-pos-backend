@@ -623,7 +623,7 @@ router.get("/summary", checkAuth, async (req, res, next) => {
       // }
 
       let aggData = await Pipeline(yesterdayStart, yesterdayEnd, site);
-      console.log(aggData, 'summary aggData')
+      // console.log(aggData, 'summary aggData')
 
       // bring out the ._id
       aggData = aggData.map((a) => {

@@ -13,6 +13,7 @@ const hostname = os.hostname();
 const csv = require('fast-csv');
 const moment = require('moment');
 const Mail = require('../mail');
+const Payrollgrpbyyrmonthstatus = require('../models/payrollgrpbyyrmonthstatus')
 
 var multer = require("multer");
 
@@ -1022,6 +1023,29 @@ router.get("",  checkAuth, async (req, res, next) => {
     });
 });
 
+router.get("/getGroup1",  checkAuth, async (req, res, next) => {
+  try {
+    const { role } = req.userData;
+
+    if (!['ADMIN', 'GENERAL MANAGER', 'SNR ACCOUNTANT'].includes(role)) {
+      return res.status(500).json({
+        message: "Fetching payrolls failed! Not Allowed "
+      });
+    }
+
+    const result = await Payrollgrpbyyrmonthstatus.find({});
+    console.log(result, 'paygrp')
+    return res.status(200).json({
+      message: "Payroll Aggregates Result ", payrolls: result
+    }); 
+  } catch (error) {
+    return res.status(500).json({
+      message: "Payroll Aggregates Error " + error
+    }); 
+  }
+
+})
+
 router.get("/getByName", checkAuth, async (req, res, next) => {
   
   try {
@@ -1153,5 +1177,7 @@ router.get("/:id", checkAuth, (req, res, next) => {
       });
     });
 });
+
+
 
 module.exports = router;

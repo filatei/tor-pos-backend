@@ -117,7 +117,6 @@ app.use((req, res, next) => {
 });
 
 mongoose.set("useUnifiedTopology", true);
-mongoose.set("useCreateIndex", true);
 mongoose.set("useFindAndModify", false);
 
 let username, password, cluster

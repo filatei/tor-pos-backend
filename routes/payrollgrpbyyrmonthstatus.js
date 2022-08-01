@@ -25,14 +25,12 @@ const Payrollgrpbyyrmonthstatus = require('../models/payrollgrpbyyrmonthstatus')
 
 const checkAuth = require("../middleware/check-auth");
 const e = require("express");
-
+let client;
 
 
 if ( hostname.includes('local') ) {
     const uri = process.env.CONNECT_STR;
-    const client = new MongoClient(uri);
-
-
+    client = new MongoClient(uri);
 
     // username = encodeURIComponent(`${dbInfo.ATLAS_DEV_USER}`);
     // password = encodeURIComponent(`${dbInfo.ATLAS_DEV_PASS}`);
@@ -49,7 +47,7 @@ if ( hostname.includes('local') ) {
     DB = `${dbInfo.ATLAS_PROD_DB}`;
     connectStr = `mongodb+srv://${username}:${password}@${cluster}/${DB}?retryWrites=true&w=majority`;
     const uri = connectStr;
-    const client = new MongoClient(uri);
+    client = new MongoClient(uri);
 }
  
 

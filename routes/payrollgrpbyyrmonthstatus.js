@@ -5,9 +5,7 @@ const {MongoClient} = require('mongodb');
  * Connection URI. Update <username>, <password>, and <your-cluster-url> to reflect your cluster.
  * See https://docs.mongodb.com/ecosystem/drivers/node/ for more details
  */
- const uri = process.env.CONNECT_STR;
- const client = new MongoClient(uri);
-
+ 
 
 const Payroll = require("../models/payroll");
 const Site = require("../models/site");
@@ -25,6 +23,33 @@ const Payrollgrpbyyrmonthstatus = require('../models/payrollgrpbyyrmonthstatus')
 
 const checkAuth = require("../middleware/check-auth");
 const e = require("express");
+
+
+
+if ( hostname.includes('local') ) {
+    const uri = process.env.CONNECT_STR;
+    const client = new MongoClient(uri);
+
+
+
+    // username = encodeURIComponent(`${dbInfo.ATLAS_DEV_USER}`);
+    // password = encodeURIComponent(`${dbInfo.ATLAS_DEV_PASS}`);
+    // cluster = `${dbInfo.ATLAS_DEV_CLUSTER}`;
+    // DB = `${dbInfo.ATLAS_DEV_DB}`;
+    // connectStr='mongodb://localhost:27017/fido_db'
+ 
+ }
+ 
+ if ( hostname.includes('torama.ng') ) {
+    username = encodeURIComponent(`${dbInfo.ATLAS_PROD_USER}`);
+    password = encodeURIComponent(`${dbInfo.ATLAS_PROD_PASS}`);
+    cluster = `${dbInfo.ATLAS_PROD_CLUSTER}`;
+    DB = `${dbInfo.ATLAS_PROD_DB}`;
+    connectStr = `mongodb+srv://${username}:${password}@${cluster}/${DB}?retryWrites=true&w=majority`;
+    const uri = connectStr;
+    const client = new MongoClient(uri);
+}
+ 
 
 
 router.get("",  checkAuth, async (req, res, next) => {

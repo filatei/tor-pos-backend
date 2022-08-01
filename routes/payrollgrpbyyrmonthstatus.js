@@ -92,7 +92,11 @@ router.get("",  checkAuth, async (req, res, next) => {
 
 router.get("/getGroup1",  checkAuth, async (req, res, next) => {
 
+    
     try {
+        const {monthYr, payType, payStatus} = req.query
+
+        console.log(monthYr, payType, payStatus)
         // Connect to the MongoDB cluster
         await client.connect();
  
@@ -101,11 +105,12 @@ router.get("/getGroup1",  checkAuth, async (req, res, next) => {
 
         const coll = client.db("fido_db")
                         .collection("payrollgrpbyyrmonthstatus");
-        const docs = await coll.find({});
+        const docs = await coll.find({"_id.monthYr":monthYr, payType, status:payStatus});
         let result = []
          docs.forEach(pay => {
             result.push(pay);
-            console.log(`${pay.netPay}: ${pay.payee} : ${pay.month}-${pay.year}: ${pay.payType}: ${pay.status}: ${pay.grossPay}`);
+            console.log(pay)
+            // console.log(`${pay.netPay}: ${pay.payee} : ${pay.month}-${pay.year}: ${pay.payType}: ${pay.status}: ${pay.grossPay}`);
           }).then( () => {
             
              res.status(200).json({

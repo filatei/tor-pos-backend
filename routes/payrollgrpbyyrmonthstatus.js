@@ -97,15 +97,34 @@ router.get("/getGroup1",  checkAuth, async (req, res, next) => {
         const {monthYr, payType, payStatus} = req.query
 
         console.log(monthYr, payType, payStatus)
+        let query = {}
+       
+       
+        if (monthYr) {
+            query =   {"_id.monthYr":monthYr}
+        } 
+        
+        if (payStatus) {
+            query.status = payStatus;
+        }
+
+        if (payType) {
+            query.payType =  query.payType;
+        }
+
         // Connect to the MongoDB cluster
         await client.connect();
- 
+        
         // Make the appropriate DB calls
         // const dbs = await  listDatabases(client);
+       
+
+       
+         
 
         const coll = client.db("fido_db")
                         .collection("payrollgrpbyyrmonthstatus");
-        const docs = await coll.find({"_id.monthYr":monthYr, payType, status:payStatus});
+        const docs = await coll.find(query);
         let result = []
          docs.forEach(pay => {
             result.push(pay);

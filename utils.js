@@ -130,7 +130,7 @@ var upload2 = multer({
 const storage22 = multer.diskStorage({
   destination: (req, file, cb) => {
     userid = req.userData.userId;
-    const myDir = "uploads/produceexpenses/" + userid + "/";
+    const myDir = "/var/www/uploads/produceexpenses/" + userid + "/";
     try {
       if (!fs.existsSync(myDir)) {
         fs.mkdirSync(myDir, { recursive: true });
@@ -178,7 +178,7 @@ var upload22 = multer({
 const storage3 = multer.diskStorage({
   destination: (req, file, cb) => {
     userid = req.userData.userId;
-    const myDir = "uploads/qaqc/" + userid + "/";
+    const myDir = "/var/www/uploads/qaqc/" + userid + "/";
     try {
       if (!fs.existsSync(myDir)) {
         fs.mkdirSync(myDir, { recursive: true });
@@ -206,7 +206,7 @@ const storage3 = multer.diskStorage({
 const storage4 = multer.diskStorage({
   destination: (req, file, cb) => {
     userid = req.userData.userId;
-    const myDir = "uploads/cashdeposit/" + userid + "/";
+    const myDir = "/var/www/uploads/cashdeposit/" + userid + "/";
     try {
       if (!fs.existsSync(myDir)) {
         fs.mkdirSync(myDir, { recursive: true });
@@ -275,7 +275,7 @@ var upload4 = multer({
 const storage5 = multer.diskStorage({
   destination: (req, file, cb) => {
     userid = req.userData.userId;
-    const myDir = "uploads/dailyreports/" + userid + "/";
+    const myDir = "/var/www/uploads/dailyreports/" + userid + "/";
     try {
       if (!fs.existsSync(myDir)) {
         fs.mkdirSync(myDir, { recursive: true });
@@ -318,7 +318,7 @@ var upload5 = multer({
 const storage6 = multer.diskStorage({
   destination: (req, file, cb) => {
     userid = req.userData.userId;
-    const myDir = "uploads/liability/" + userid + "/";
+    const myDir = "/var/www/uploads/liability/" + userid + "/";
     try {
       if (!fs.existsSync(myDir)) {
         fs.mkdirSync(myDir, { recursive: true });
@@ -371,7 +371,7 @@ var upload6 = multer({
 const storage7 = multer.diskStorage({
   destination: (req, file, cb) => {
     userid = req.userData.userId;
-    const myDir = "uploads/produce/" + userid + "/";
+    const myDir = "/var/www/uploads/produce/" + userid + "/";
     try {
       if (!fs.existsSync(myDir)) {
         fs.mkdirSync(myDir, { recursive: true });
@@ -424,7 +424,7 @@ var upload7 = multer({
 const storage8 = multer.diskStorage({
   destination: (req, file, cb) => {
     userid = req.userData.userId;
-    const myDir = "uploads/gens/" + userid + "/";
+    const myDir = "/var/www/uploads/gens/" + userid + "/";
     try {
       if (!fs.existsSync(myDir)) {
         fs.mkdirSync(myDir, { recursive: true });

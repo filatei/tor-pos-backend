@@ -82,7 +82,7 @@ app.use("/varimages", express.static('/var/images'));
 
 app.use(
   "/uploads/productimages",
-  express.static(path.join(__dirname, "uploads", "productimages"))
+  express.static('/var/www/productimages')
 );
 
 // app.use(bodyParser.urlencoded({ extended: true }));
@@ -124,7 +124,6 @@ let username, password, cluster
 let DB
 
 if ( hostname.includes('local') ) {
-  console.log(hostname, 'hostname');
   
   username = encodeURIComponent(`${dbInfo.ATLAS_DEV_USER}`);
   password = encodeURIComponent(`${dbInfo.ATLAS_DEV_PASS}`);
@@ -134,7 +133,6 @@ if ( hostname.includes('local') ) {
 }
 
 if ( hostname.includes('torama.ng') ) {
-  console.log(hostname, 'hostname');
   
   username = encodeURIComponent(`${dbInfo.ATLAS_PROD_USER}`);
   password = encodeURIComponent(`${dbInfo.ATLAS_PROD_PASS}`);

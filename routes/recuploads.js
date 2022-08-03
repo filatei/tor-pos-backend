@@ -42,7 +42,6 @@ function logIncident(email, description) {
 }
 
 
-
 const checkAuth = require("../middleware/check-auth");
 const { deleteReceipt } = require("../controllers/receipt");
 const mail = require("../models/mail");
@@ -50,7 +49,10 @@ const { Console } = require("console");
 const { Compressor } = require("mongodb");
 
 router.post("", checkAuth, Utils.upload.any(), function (req, res, next) {
-  const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'ACCOUNTANT', 'SNR ACCOUNTANT', 'SECRETARY', 'POS OFFICER'];
+  console.log('files')
+
+  try {
+    const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'ACCOUNTANT', 'SNR ACCOUNTANT', 'SECRETARY', 'POS OFFICER'];
 
   if (!alloweds.includes(req.userData.role)) {
     return;
@@ -80,7 +82,9 @@ router.post("", checkAuth, Utils.upload.any(), function (req, res, next) {
 
   recObj.creator = req.userData.userId;
 
+
   if (req.files) {
+    console.log('here')
     req.files.forEach((file) => {
       if (hostname.includes("torama.ng")) {
         url = "https://fido-api.torama.ng";
@@ -108,6 +112,7 @@ router.post("", checkAuth, Utils.upload.any(), function (req, res, next) {
     recObj.driver = JSON.parse(recObj.driver);
     recObj.driver = recObj.driver.name;
   } catch (exception) {
+    console.log(exception, 'exception')
     recObj.driver = req.body.driver;
   }
 
@@ -171,6 +176,14 @@ router.post("", checkAuth, Utils.upload.any(), function (req, res, next) {
         });
       });
   }
+  } catch (error) {
+    console.log(error)
+    res.status(500).json({
+      message: "Creating a Recupload failed! catch " + error,
+    });
+    
+  }
+  
 });
 
 router.delete("/:id", checkAuth, async (req, res, next) => {

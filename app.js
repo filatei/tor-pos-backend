@@ -124,23 +124,24 @@ let username, password, cluster
 let DB
 
 if ( hostname.includes('local') ) {
-   username = encodeURIComponent(`${dbInfo.ATLAS_DEV_USER}`);
-   password = encodeURIComponent(`${dbInfo.ATLAS_DEV_PASS}`);
-   cluster = `${dbInfo.ATLAS_DEV_CLUSTER}`;
-   DB = `${dbInfo.ATLAS_DEV_DB}`;
-   connectStr='mongodb://localhost:27017/fido_db'
-
+  console.log(hostname, 'hostname');
+  
+  username = encodeURIComponent(`${dbInfo.ATLAS_DEV_USER}`);
+  password = encodeURIComponent(`${dbInfo.ATLAS_DEV_PASS}`);
+  cluster = `${dbInfo.ATLAS_DEV_CLUSTER}`;
+  DB = `${dbInfo.ATLAS_DEV_DB}`;
+  connectStr='mongodb://localhost:27017/fido_db'
 }
 
 if ( hostname.includes('torama.ng') ) {
-   username = encodeURIComponent(`${dbInfo.ATLAS_PROD_USER}`);
-   password = encodeURIComponent(`${dbInfo.ATLAS_PROD_PASS}`);
-   cluster = `${dbInfo.ATLAS_PROD_CLUSTER}`;
-   DB = `${dbInfo.ATLAS_PROD_DB}`;
-   connectStr = `mongodb+srv://${username}:${password}@${cluster}/${DB}?retryWrites=true&w=majority`;
+  console.log(hostname, 'hostname');
+  
+  username = encodeURIComponent(`${dbInfo.ATLAS_PROD_USER}`);
+  password = encodeURIComponent(`${dbInfo.ATLAS_PROD_PASS}`);
+  cluster = `${dbInfo.ATLAS_PROD_CLUSTER}`;
+  DB = `${dbInfo.ATLAS_PROD_DB}`;
+  connectStr = `mongodb+srv://${username}:${password}@${cluster}/${DB}?retryWrites=true&w=majority`;
 }
-
-
 
 
 mongoose

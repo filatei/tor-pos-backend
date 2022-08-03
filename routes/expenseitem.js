@@ -65,11 +65,11 @@ router.post("", checkAuth, upload.single("image"), function (req, res, next) {
   let url = "";
   if (req.file) {
     if (hostname.includes("torama")) {
-      url = "https://api.torama.ng";
+      url = "https://fido-api.torama.ng";
     } else {
       url = req.protocol + "://" + req.get("host");
     }
-    // url = 'https://api.torama.ng'
+    // url = 'https://fido-api.torama.ng'
     // console.log(url)
     path = url + "/uploads/expenseitemimages/" + req.file.filename;
     // console.log(path)
@@ -119,7 +119,7 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
   const expenseitem = new Expenseitem(expenseObj);
   if (req.file && req.file.filename && req.file.filename.length > 0) {
     if (hostname.includes("torama")) {
-      url = "https://api.torama.ng";
+      url = "https://fido-api.torama.ng";
     } else {
       url = req.protocol + "://" + req.get("host");
     }

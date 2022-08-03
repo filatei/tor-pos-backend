@@ -41,6 +41,8 @@ function logIncident(email, description) {
     });
 }
 
+
+
 const checkAuth = require("../middleware/check-auth");
 const { deleteReceipt } = require("../controllers/receipt");
 const mail = require("../models/mail");
@@ -54,6 +56,7 @@ router.post("", checkAuth, Utils.upload.any(), function (req, res, next) {
     return;
     return res.status(401).json({ message: "Not allowed" });
   }
+
   
   let customerName;
   let recObj = req.body;
@@ -80,13 +83,13 @@ router.post("", checkAuth, Utils.upload.any(), function (req, res, next) {
   if (req.files) {
     req.files.forEach((file) => {
       if (hostname.includes("torama.ng")) {
-        url = "https://api.torama.ng";
+        url = "https://fido-api.torama.ng";
       } else {
         url = req.protocol + "://" + req.get("host");
       }
       const fPath = url + "/" + file.path;
       recObj.image = fPath.replace('/var/www/','');
-      console.log(recObj.image)
+      console.log(recObj.image, 'image')
     });
   }
   Object.entries(recObj).forEach(([key, value]) => {
@@ -529,6 +532,7 @@ router.get("", checkAuth,  (req, res, next) => {
     return res.status(200).json({ message: "Not allowed" });
   }
 
+  
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
   const site = req.query.site;
@@ -802,7 +806,7 @@ router.put(
     if (req.files) {
       req.files.forEach((file) => {
         if (hostname.includes("torama.ng")) {
-          url = "https://api.torama.ng";
+          url = "https://fido-api.torama.ng";
         } else {
           url = req.protocol + "://" + req.get("host");
         }

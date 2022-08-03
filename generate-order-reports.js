@@ -31,7 +31,7 @@ const mongoose = require('mongoose');
 const XLSX = require('xlsx');
 const order = require("./models/order");
 
-let logo = "https://api.torama.ng/uploads/productimages/fidologo.jpg";
+let logo = "https://fido-api.torama.ng/uploads/productimages/fidologo.jpg";
 
 const PRODUCTNAME = { "INCENTIVE": "INCENTIVE", "Pure Water": "PUREWATER", "19L Dispenser Refill": "DISPENSER", 
                 "19L Dispenser Replace":"DISPENSER", "75cl Crate":"CRATE75CL", 

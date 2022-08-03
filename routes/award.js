@@ -173,7 +173,7 @@ router.post(
       fileName = req.file.path;
 
       if (hostname.includes("torama.ng")) {
-        let url = "https://api.torama.ng";
+        let url = "https://fido-api.torama.ng";
       } else {
         url = req.protocol + "://" + req.get("host");
       }
@@ -261,7 +261,7 @@ router.put(
       const fileName = req.file.path;
 
       if (hostname.includes("torama.ng")) {
-        url = "https://api.torama.ng";
+        url = "https://fido-api.torama.ng";
       } else {
         url = req.protocol + "://" + req.get("host");
       }
@@ -346,7 +346,7 @@ router.put(
         const fileName = file.filename;
         if (hostname.includes("torama.ng")) {
           filePath =
-            "https://api.torama.ng" +
+            "https://fido-api.torama.ng" +
             "/uploads/awards/" +
             req.file.filename;
         } else {
@@ -356,7 +356,7 @@ router.put(
 
         // if (hostname.includes("torama.ng")) {
         //   filePath =
-        //     "https://api.torama.ng" +
+        //     "https://fido-api.torama.ng" +
         //     "/uploads/awards/" +
         //     req.file.filename;
         // } else {

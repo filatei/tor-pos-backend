@@ -93,7 +93,7 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
         }
        
         if ( hostname.includes('torama.ng')) {
-          url = 'https://api.torama.ng'
+          url = 'https://fido-api.torama.ng'
         } else {
           url = req.protocol + '://' + req.get('host')
         }
@@ -414,7 +414,7 @@ router.put("/:id", checkAuth, upload.any(), (req, res, next) => {
         }
 
         if (hostname.includes('torama.ng')) {
-          url = 'https://api.torama.ng'
+          url = 'https://fido-api.torama.ng'
         } else {
           url = req.protocol + '://' + req.get('host')
         }

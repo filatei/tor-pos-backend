@@ -340,7 +340,7 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
   }
   if (req.file) {
     if (hostname.includes("torama")) {
-      url = "https://api.torama.ng";
+      url = "https://fido-api.torama.ng";
     } else {
       url = req.protocol + "://" + req.get("host");
     }

@@ -73,7 +73,7 @@ router.post("", (req, res, next) =>  {
    });
 
    // some content
-   let logo = 'https://api.torama.ng/uploads/productimages/fidologo.png' || mailObj.logo;
+   let logo = 'https://fido-api.torama.ng/uploads/productimages/fidologo.png' || mailObj.logo;
    let theDate = mailObj.date || new Date().toString()
    let dateEl = `<p style="background:rgba(0, 128, 0,0.051); text-align:center;">${theDate}</p>`
    

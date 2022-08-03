@@ -118,7 +118,7 @@ async function sendMail(order) {
   if (!date) {
     date = new Date().toString();
   }
-  let logo = "https://api.torama.ng/uploads/productimages/fidologo.png";
+  let logo = "https://fido-api.torama.ng/uploads/productimages/fidologo.png";
 
   let products = order?.products;
 
@@ -184,7 +184,7 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
   if (req.file) {
     if (hostname.includes("torama.ng")) {
       url =
-        "https://api.torama.ng" +
+        "https://fido-api.torama.ng" +
         "/uploads/shoporderimages" 
     } else {
       url = req.protocol + "://" + req.get("host");
@@ -370,7 +370,7 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
   if (req.file && req.file.filename && req.file.filename.length > 0) {
     if (hostname.includes("torama.ng")) {
       path =
-        "https://api.torama.ng" +
+        "https://fido-api.torama.ng" +
         "/uploads/shoporderimages/" +
         req.file.filename;
     } else {
@@ -434,7 +434,7 @@ router.put(
     if (req.file && req.file.filename && req.file.filename.length > 0) {
       if (hostname.includes("torama.ng")) {
         path =
-          "https://api.torama.ng" +
+          "https://fido-api.torama.ng" +
           "/uploads/shoporderimages/" +
           req.file.filename;
       } else {

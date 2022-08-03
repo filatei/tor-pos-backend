@@ -63,7 +63,7 @@ router.post(
 
       if (file) {
         if (hostname.includes("torama.ng")) {
-          url = "https://api.torama.ng";
+          url = "https://fido-api.torama.ng";
         } else {
           url = req.protocol + "://" + req.get("host");
         }

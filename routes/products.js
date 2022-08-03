@@ -72,11 +72,11 @@ router.post("", checkAuth, upload.single("image"), function (req, res, next) {
   let url = "";
   if (req.file) {
     if (hostname.includes("torama")) {
-      url = "https://api.torama.ng";
+      url = "https://fido-api.torama.ng";
     } else {
       url = req.protocol + "://" + req.get("host");
     }
-    // url = 'https://api.torama.ng'
+    // url = 'https://fido-api.torama.ng'
     // console.log(url)
     myPath = url + "/" + req.file.path.split('/var/www/')[1];
     console.log(myPath, 'myPath')
@@ -132,7 +132,7 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
   const product = new Product(prodObj);
   if (req.file ) {
     if (hostname.includes("torama")) {
-      url = "https://api.torama.ng";
+      url = "https://fido-api.torama.ng";
     } else {
       url = req.protocol + "://" + req.get("host");
     }

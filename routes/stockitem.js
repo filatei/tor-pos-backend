@@ -57,11 +57,11 @@ router.post('', checkAuth, upload.single('image'), function (req, res, next) {
   if (req.file) { 
     
     if (hostname.includes('torama')) {
-      url = 'https://api.torama.ng'
+      url = 'https://fido-api.torama.ng'
     } else {
       url = req.protocol + '://' + req.get('host')
     }
-    // url = 'https://api.torama.ng'
+    // url = 'https://fido-api.torama.ng'
     // console.log(url)
     path = url + '/uploads/stockitemimages/' + req.file.filename; 
     // console.log(path)
@@ -117,7 +117,7 @@ router.put("/:id", checkAuth, upload.single('image'), (req, res, next) => {
     if (req.file && req.file.filename && req.file.filename.length > 0) {
 
       if (hostname.includes('torama')) {
-        url = 'https://api.torama.ng';
+        url = 'https://fido-api.torama.ng';
       } else {
         url = req.protocol + '://' + req.get('host');
       }

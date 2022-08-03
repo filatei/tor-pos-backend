@@ -42,7 +42,7 @@ router.post("", checkAuth, upload.single('image'), (req, res, next) => {
     let path;
     if (req.file) { 
       url = req.protocol + '://' + req.get('host');
-      // url = 'https://api.torama.ng'
+      // url = 'https://fido-api.torama.ng'
       path = url + '/uploads/productimages/' + req.file.filename; 
 
     }

@@ -62,7 +62,7 @@ module.exports =  function () {
                 .align('ct')
                 .style('bu')
                 .size(1, 1)
-                // .image('https://api.torama.ng/uploads/productmages/fidologo.png', 's8')
+                // .image('https://fido-api.torama.ng/uploads/productmages/fidologo.png', 's8')
                 .text(receipt.header.company)
                 .align('ct') // or 'RT'
                 .text(receipt.header.address.street + ', ' +

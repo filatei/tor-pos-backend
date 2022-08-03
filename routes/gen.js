@@ -66,7 +66,7 @@ router.post("", checkAuth, Utils.upload.any(), async (req, res, next) => {
     if (req.files) {
       req.files.forEach((file) => {
         if (hostname.includes("torama.ng")) {
-          url = "https://api.torama.ng";
+          url = "https://fido-api.torama.ng";
         } else {
           url = req.protocol + "://" + req.get("host");
         }
@@ -273,7 +273,7 @@ Gen.findById(recId)
       if (req.files) {
         req.files.forEach((file) => {
           if (hostname.includes("torama.ng")) {
-            url = "https://api.torama.ng";
+            url = "https://fido-api.torama.ng";
           } else {
             url = req.protocol + "://" + req.get("host");
           }
@@ -338,7 +338,7 @@ Gen.findById(recId)
       if (req.files) {
         req.files.forEach((file) => {
           if (hostname.includes("torama.ng")) {
-            url = "https://api.torama.ng";
+            url = "https://fido-api.torama.ng";
           } else {
             url = req.protocol + "://" + req.get("host");
           }

@@ -66,7 +66,7 @@ router.post(
         fileName =
           "uploads/cashdeposit/" + req.userData.userId + "/" + file.filename;
         if (hostname.includes("torama.ng")) {
-          url = "https://api.torama.ng";
+          url = "https://fido-api.torama.ng";
         } else {
           url = req.protocol + "://" + req.get("host");
         }

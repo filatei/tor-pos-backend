@@ -14,7 +14,7 @@ const Stockitem = require("./models/stockitem");
 const Message = require("./models/message");
 const Site = require("./models/site");
 const { people } = require("googleapis/build/src/apis/people");
-let logo = "https://api.torama.ng/uploads/productimages/fidologo.jpg";
+let logo = "https://fido-api.torama.ng/uploads/productimages/fidologo.jpg";
 
 const oauth2Client = new google.auth.OAuth2(
   tokens.clientID,
@@ -184,9 +184,9 @@ async function sendExpense(expense, userId = null) {
   
   let products = expense.products;
   if (products[0]?.name.includes("Block")) {
-    logo = "https://api.torama.ng/uploads/productimages/producer.png";
+    logo = "https://fido-api.torama.ng/uploads/productimages/producer.png";
   } else {
-    logo = "https://api.torama.ng/uploads/productimages/fidologo.jpg";
+    logo = "https://fido-api.torama.ng/uploads/productimages/fidologo.jpg";
   }
 
   let product = `<table style="margin-left:auto; margin-right:auto"><thead><tr style="text-align:left;"> <th>Product</th> <th>Rate</th> <th></th><th>Amount</th></tr></thead><tbody>`;

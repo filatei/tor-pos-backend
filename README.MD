@@ -11,12 +11,12 @@ restart pm2 on reboot
 3.  sudo reboot
 
 TO DO
-go through recuploads collection and any receipt with image  like https://api.torama.ng//var/www/uploads/torama/recuploads2/5ff5752c01599b0fc08bb574/5ff5752c01599b0fc08bb574-165 having '/var/www/'  be string replaced with '
+go through recuploads collection and any receipt with image  like https://fido-api.torama.ng//var/www/uploads/torama/recuploads2/5ff5752c01599b0fc08bb574/5ff5752c01599b0fc08bb574-165 having '/var/www/'  be string replaced with '
 
 
 
 or 
-'https://api.torama.ng//var/www/' becomes 'https://api.torama.ng/'
+'https://fido-api.torama.ng//var/www/' becomes 'https://fido-api.torama.ng/'
 
 DATA API
 https://data.mongodb-api.com/app/data-tmhml/endpoint/data/v1

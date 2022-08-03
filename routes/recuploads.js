@@ -49,7 +49,6 @@ const { Console } = require("console");
 const { Compressor } = require("mongodb");
 
 router.post("", checkAuth, Utils.upload.any(), function (req, res, next) {
-  console.log('files')
 
   try {
     const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'ACCOUNTANT', 'SNR ACCOUNTANT', 'SECRETARY', 'POS OFFICER'];

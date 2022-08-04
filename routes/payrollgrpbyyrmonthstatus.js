@@ -117,10 +117,6 @@ router.get("/getGroup1",  checkAuth, async (req, res, next) => {
         
         // Make the appropriate DB calls
         // const dbs = await  listDatabases(client);
-       
-
-       
-         
 
         const coll = client.db("fido_db")
                         .collection("payrollgrpbyyrmonthstatus");
@@ -128,7 +124,7 @@ router.get("/getGroup1",  checkAuth, async (req, res, next) => {
         let result = []
          docs.forEach(pay => {
             result.push(pay);
-            console.log(pay)
+            // console.log(pay)
             // console.log(`${pay.netPay}: ${pay.payee} : ${pay.month}-${pay.year}: ${pay.payType}: ${pay.status}: ${pay.grossPay}`);
           }).then( () => {
             

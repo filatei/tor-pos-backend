@@ -265,7 +265,6 @@ router.post("/deleteAll", checkAuth, async (req, res, next) => {
   }
 
   const { ids } = req.body;
-  // console.log('deleteAll ', ids)
   //  if status is PAID, dont delete
   const payrolls = await Payroll.find({ _id: { $in: ids } })
   const allowedIds = payrolls.filter(p => p.status !=='PAID').map(pp=>pp._id);
@@ -310,10 +309,8 @@ router.post("/updatePayStatus", checkAuth, async (req, res, next) => {
 
   const { ids } = req.body;
   const { status } = req.query;
-  console.log(status, 'status')
   try {
     const updateAll = await Payroll.updateMany({ _id: { $in: ids }}, {status:status, updater: userId });
-    console.log(updateAll, 'updateAll', userId);
 
     if (!updateAll) {
       return  res.status(500).json({
@@ -876,7 +873,6 @@ router.put(
             url = "https://fido-api.torama.ng";
           } else {
             url = req.protocol + "://" + req.get("host");
-            console.log(url, ' url')
           }
           myPath = url + '/' + file.path;
           myPath = myPath.replace(/\/var\/images/, 'varimages');
@@ -1023,6 +1019,70 @@ router.get("",  checkAuth, async (req, res, next) => {
     });
 });
 
+router.get("/getYearKeys",  checkAuth, async (req, res, next) => {
+
+  try {
+    const { role } = req.userData;
+
+    if (!['ADMIN', 'GENERAL MANAGER', 'SNR ACCOUNTANT'].includes(role)) {
+      return res.status(500).json({
+        message: "Fetching payrolls failed! Not Allowed "
+      });
+    }
+
+    // const {getMonths, year} = req.query;
+    // console.log(getMonths, year, 'getm yr')
+    let pipeline,agg, yearKeys
+      pipeline = [
+        {
+          $addFields: {
+              monthYr: {
+                  "$concat": [{
+                      "$toString": "$month"
+                  }, "-", {
+                      $toString: "$year"
+                  }]
+              }
+          }
+      }, 
+        {
+          '$group': {
+            '_id': {
+              'month': '$month',
+              'year': '$year',
+              'monthYr':"$monthYr",
+              'payType':"$payType",
+              'payStatus': "$status"
+            }, 
+            'count': {
+              '$sum': 1
+            }
+          }
+        }, {
+          '$project': {
+            '_id': 1
+          }
+        }
+      ]
+      agg = await Payroll.aggregate(pipeline);
+      monthKeys = agg.map(a => {
+        return {
+          month: a._id.month, 
+          year: a._id.year, 
+          payStatus:a._id.payStatus, 
+          payType:a._id.payType}
+      });
+      console.log(monthKeys)
+      return res.status(200).json({message:'Success', yearKeys:monthKeys})
+     
+  } catch (error) {
+    console.log(error, 'yearkeys error')
+  }
+  
+  
+  
+});
+
 router.get("/getGroup1",  checkAuth, async (req, res, next) => {
   try {
     const { role } = req.userData;
@@ -1034,7 +1094,7 @@ router.get("/getGroup1",  checkAuth, async (req, res, next) => {
     }
 
     const result = await Payrollgrpbyyrmonthstatus.find({});
-    console.log(result, 'paygrp')
+    // console.log(result, 'paygrp')
     return res.status(200).json({
       message: "Payroll Aggregates Result ", payrolls: result
     }); 

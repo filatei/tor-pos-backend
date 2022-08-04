@@ -567,7 +567,7 @@ router.get("", checkAuth,  (req, res, next) => {
 
   let fetchedRecords;
   if (pageSize && currentPage) {
-    coyQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
+    coyQuery.skip(pageSize * (currentPage - 1)).limit(50);
   }
   coyQuery
     .then((documents) => {
@@ -605,7 +605,7 @@ router.get("/getByCustomer", checkAuth, async (req, res, next) => {
     .populate("customer")
     .populate("creator")
     .populate("updater")
-    .lean().limit(100)
+    .lean().limit(50)
   
   if (rec) {
     return res.status(200).json({records: rec});

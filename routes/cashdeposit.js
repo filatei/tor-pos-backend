@@ -72,6 +72,8 @@ router.post(
         }
 
         myPath = url + "/" + file.path;
+
+        myPath = myPath.replace('/var/www/','');
       }
 
       const { depositor, amount, site, payeeAcct } = req.body;

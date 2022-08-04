@@ -450,6 +450,39 @@ router.get("", checkAuth, async (req, res, next) => {
   
 });
 
+router.get("/getByOrderId", checkAuth, async (req, res, next) => {
+  // if you are an ordinary user, you only see orders created in your site or by you
+  try {
+    const {searchTerm} = req.query;
+    console.log(searchTerm, 'searchTerm')
+    let pageSize = +req.query.pagesize;
+    if (!pageSize) pageSize = 100;
+    const role = req.userData.role;
+    const userId = req.userData.userId
+    const site = req.userData.site
+    let currentPage = +req.query.page;
+    if (!currentPage) currentPage = 1;
+    let orders;
+    // to be completed
+      orders = await FidoOrder.find({ fidoOrderId: parseInt(searchTerm)} )
+                          .lean()
+                          .populate("customer")
+                          .populate("creator")
+                          .populate("updater")
+                          .populate("terminal_id")
+                          
+    return res.status(200).json({
+      message: "Order by id fetched successfully!",
+      fidoorders: orders,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Fetching fidoorder by id failed! " + error,
+    });
+  }
+  
+});
+
 router.post("/eodOrders", checkAuth, async (req, res, next) => {
   // if you are an ordinary user, you only see orders created in your site or by you
   

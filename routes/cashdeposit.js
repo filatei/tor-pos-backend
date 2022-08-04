@@ -228,21 +228,30 @@ router.delete("/:id", checkAuth, (req, res, next) => {
 });
 
 router.get("", checkAuth, async (req, res, next) => {
-  const pageSize = +req.query.pagesize;
-  if (!pageSize) pageSize = 200;
-  const currentPage = +req.query.page;
-  const mgr = req.query.mgr;
-  const userEmail = req.userData.email;
-
-  const directors = process.env.DIRECTORS;
   try {
-    cash = await Cashdeposit.find().sort({ createdAt: -1 }).limit(200);
+  
+    let cash, cash2
+    Cashdeposit.find().lean().sort({ createdAt: -1 }).limit(200).then ((result) => {
+      let image = "";
+      cash = result.map(c => {
+        if (c.image && c.image.includes('/var/www')) {
+          image = c.image.replace('/var/www','')
+        } 
+        return {...c, image }
+      });
+      res.status(200).json({ cashdeposit: cash });
+    })
+    .catch(err => {
+      console.log('error in cashdeposit find' + err)
+    })
+
+    
   } catch (err) {
     return res.status(500).json({
       message: "Fetching Cash failed, please try again later." + err,
     });
   }
-  res.json({ cashdeposit: cash });
+  
 });
 
 router.get("/:id", async (req, res, next) => {
@@ -250,7 +259,10 @@ router.get("/:id", async (req, res, next) => {
   Cashdeposit.findById(req.params.id)
     .populate("creator")
     .then((cashdeposit) => {
-      if (cashdeposit) {
+      if (cashdeposit  ) {
+        if ( cashdeposit.image )
+        cashdeposit.image = cashdeposit.image.replace('/var/www','')
+
         res.status(200).json({ cashdeposit });
       } else {
         res.status(404).json({ message: "cashdeposit not found!" });

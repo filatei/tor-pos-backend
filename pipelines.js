@@ -200,3 +200,80 @@ const agg = [
         console.log(err);
       }
     };
+
+
+    const temp = {
+        payroll_id:"$payroll_id",
+        monthYr: {
+                  $concat: [
+                    { $toString: "$month" },
+                    "-",
+                  
+                    { $toString: "$year" },
+                  ],
+                },
+        payee: "$payee.name",
+        payee_id: "$payee.people_id",
+        site: "$site.name",
+        payType: "$payType",
+        status: "$status",
+        createdAt: "$createdAt",
+        
+        jobName: "$payee.jobName",
+        bankAccount: "$payee.bankAccount",
+        netPay: "$netPay",
+        grossPay: "$grossPay",
+        deductions: "$deductions",
+        
+       
+        
+      }
+
+      const agg2 = [{
+        $lookup: {
+         from: 'peoples',
+         localField: 'payee',
+         foreignField: '_id',
+         as: 'payee'
+        }
+       }, {
+        $lookup: {
+         from: 'sites',
+         localField: 'site',
+         foreignField: '_id',
+         as: 'site'
+        }
+       }, {
+        $unwind: {
+         path: '$site'
+        }
+       }, {
+        $unwind: {
+         path: '$payee'
+        }
+       }, {
+        $addFields: {
+         monthYr: {
+          $concat: [
+           {
+            $toString: '$month'
+           },
+           '-',
+           {
+            $toString: '$year'
+           }
+          ]
+         },
+         payee_id: '$payee.people_id',
+         jobName: '$payee.jobName',
+         payee: '$payee.name'
+        }
+       }, {
+        $group: {
+         _id: {
+          monthYr: '$monthYr',
+          payType: '$payType',
+          status: '$status'
+         }
+        }
+       }]

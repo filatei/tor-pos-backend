@@ -24,7 +24,7 @@ const MIME_TYPE_MAP = {
   "image/jpg": "jpg",
   "text/csv": "csv",
   };
-  const DIR = "./uploads/peopleimages/";
+  const DIR = "/var/www/uploads/peopleimages/";
   const csvDIR = "/tmp/csv/";
   const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -141,7 +141,7 @@ const checkAuth = require("../middleware/check-auth");
 const site = require("../models/site");
 const { doubleclickbidmanager } = require("googleapis/build/src/apis/doubleclickbidmanager");
 
-router.post("", checkAuth, upload.any(), async function (req, res, next) {
+router.post("", checkAuth, upload.single('image'), async function (req, res, next) {
   try {
     const alloweds = ['ADMIN', 'GENERAL MANAGER', 'SNR ACCOUNTANT', 'MANAGER', 'ACCOUNTANT'];
   
@@ -167,20 +167,20 @@ router.post("", checkAuth, upload.any(), async function (req, res, next) {
         dObj.site = site._id;
       }
     }
-    
-    
-    if (req.files) {
-      req.files.forEach((file) => {
-        if (hostname.includes("torama.ng")) {
-          url = "https://fido-api.torama.ng";
-        } else {
-          url = req.protocol + "://" + req.get("host");
-        }
-        const fPath = url + "/" + file.path;
-        dObj.image = fPath;
-      });
+
+    if (req.file) {
+      if (hostname.includes("torama.ng")) {
+        url = "https://fido-api.torama.ng"  
+      } else {
+        url = req.protocol + "://" + req.get("host");
+      }
+      const fPath = url + "/" + req.file.path;
+      dObj.image = fPath.replace('/var/www/','');
+
     }
-  
+    
+    
+    
     Object.entries(dObj).forEach(([key, value]) => {
       if (
         !value ||

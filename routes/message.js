@@ -8,7 +8,7 @@ const os = require("os");
 const hostname = os.hostname();
 const Mail = require("../mail.js");
 var multer = require("multer");
-const DIR = "./uploads/messageimages/";
+const DIR = "/var/www/uploads/messageimages/";
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, DIR);
@@ -57,7 +57,7 @@ function logIncident(email, description) {
     });
 }
 
-router.post("", checkAuth, function (req, res, next) {
+router.post("", checkAuth, upload.single("image"),  (req, res, next) => {
   const alloweds = process.env.STOREALLOWEDS;
 
   if (!alloweds.includes(req.userData.email)) {
@@ -68,6 +68,19 @@ router.post("", checkAuth, function (req, res, next) {
     const { subject, body, sender, to, cc } = req.body;
     const obj = req.body;
     obj.creator = req.userData.userId;
+
+
+    if (req.file) {
+      if (hostname.includes("torama.ng")) {
+        url = "https://fido-api.torama.ng"  
+      } else {
+        url = req.protocol + "://" + req.get("host");
+      }
+      const fPath = url + "/" + req.file.path;
+      obj.image = fPath.replace('/var/www/','');
+
+    }
+
     // console.log(stockObj, 'message route')
     const message = new Message(obj);
     // message.image = path || null;

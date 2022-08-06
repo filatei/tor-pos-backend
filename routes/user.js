@@ -11,7 +11,7 @@ const _ = require("lodash");
 var multer = require("multer");
 const checkAuth = require("../middleware/check-auth");
 const Mail = require("nodemailer/lib/mailer");
-const DIR = "./uploads/userimages/";
+const DIR = "/var/www/uploads/userimages/";
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, DIR);
@@ -387,14 +387,11 @@ router.put("/updateRole/:id", checkAuth, async (req, res, next) => {
     if (site) {
       updatedObj = { ...updatedObj, site };
     }
-    console.log("updatedobj", updatedObj);
 
     const id = req.params.id;
     const updater = req.userData.userId;
-    console.log("updating user ", updatedObj, id, updater);
 
     const updatedUser = await User.findByIdAndUpdate(id, { ...updatedObj });
-    console.log(updatedUser, "updated user");
     if (updatedUser) {
       res
         .status(200)
@@ -423,7 +420,6 @@ router.get("", checkAuth, async (req, res, next) => {
   if (req.userData.role !== "ADMIN") {
     return res.status("401").json({ message: "not Allowed" });
   }
-  console.log(req.userData);
 
   try {
     const users = await User.find({},{name:1, email:1, role:1, site:1});

@@ -17,7 +17,7 @@ var sanitize = require('mongo-sanitize');
 
 // multer
 var multer  = require('multer')
-const DIR = './uploads/claims/';
+const DIR = '/var/www/uploads/claims/';
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     userid = req.userData.userId
@@ -66,7 +66,7 @@ function logIncident(email, description) {
   })
 }
 
-router.post('', checkAuth, upload.any(), function (req, res, next) {
+router.post('', checkAuth, upload.single('image'), function (req, res, next) {
   let claimObj = req.body;
   claimObj.creator = req.userData.userId;
   const alloweds = process.env.CLAIMALLOWEDS;
@@ -81,30 +81,45 @@ router.post('', checkAuth, upload.any(), function (req, res, next) {
 
   claimObj.avatar = claimObj.stan + '.jpg'
   // file upload handing
-  if (req.files) {
 
-    req.files.forEach(file => {
-        if (file.originalname == 'blob') {
-            fileName = 'uploads/claims/'  + req.userData.userId + '/' + file.filename 
-        }
-            
-        else {
-            fileName = 'uploads/claims/'  + req.userData.userId + '/' + file.filename
-        }
-       
-        if ( hostname.includes('torama.ng')) {
-          url = 'https://fido-api.torama.ng'
-        } else {
-          url = req.protocol + '://' + req.get('host')
-        }
+  if (req.file) {
+    if (hostname.includes("torama.ng")) {
+      url = "https://fido-api.torama.ng"  
+    } else {
+      url = req.protocol + "://" + req.get("host");
+    }
 
-        path = url + '/' + fileName;
+    path = url + "/" + req.file.path;
+    path = path.replace('/var/www/','');
+    claimObj.image = path;
 
-        if (file.fieldname === 'image') {
-            claimObj.image = path;
-        }
-    })
   }
+
+  // if (req.files) {
+
+  //   req.files.forEach(file => {
+  //       if (file.originalname == 'blob') {
+  //           fileName = DIR  + req.userData.userId + '/' + file.filename 
+  //       }
+            
+  //       else {
+  //           fileName = DIR + req.userData.userId + '/' + file.filename
+  //       }
+
+  //       if (hostname.includes("torama.ng")) {
+  //         url = "https://fido-api.torama.ng"  
+  //       } else {
+  //         url = req.protocol + "://" + req.get("host");
+  //       }
+  //       path = url + "/" + file.path;
+  //       path = path.replace('/var/www/','');
+  //       claimObj.image = path;
+       
+  //       // if (file.fieldname === 'image') {
+  //       //     claimObj.image = path;
+  //       // }
+  //   })
+  // }
 
   if ( typeof claimObj.customer != 'object')
     claimObj.customer = JSON.parse(claimObj.customer);
@@ -407,23 +422,32 @@ router.put("/:id", checkAuth, upload.any(), (req, res, next) => {
     req.files.forEach(file => {
         // console.log(file, ' file in array')
         if (file.originalname == 'blob') {
-            fileName = 'uploads/claims/'  + req.userData.userId + '/' + file.filename 
+            fileName = DIR + req.userData.userId + '/' + file.filename 
         }
         else {
-            fileName = 'uploads/claims/'  + req.userData.userId + '/' + file.filename
+            fileName = DIR  + req.userData.userId + '/' + file.filename
         }
 
-        if (hostname.includes('torama.ng')) {
-          url = 'https://fido-api.torama.ng'
+        if (hostname.includes("torama.ng")) {
+          url = "https://fido-api.torama.ng"  
         } else {
-          url = req.protocol + '://' + req.get('host')
+          url = req.protocol + "://" + req.get("host");
         }
+        path = url + "/" + req.file.path;
+        path = path.replace('/var/www/','');
+        claimObj.image = path;
 
-        path = url + '/' + fileName;
+        // if (hostname.includes('torama.ng')) {
+        //   url = 'https://fido-api.torama.ng'
+        // } else {
+        //   url = req.protocol + '://' + req.get('host')
+        // }
 
-        if (file.fieldname === 'image') {
-            claimObj.image = path;
-        }
+        // path = url + '/' + fileName;
+
+        // if (file.fieldname === 'image') {
+        //     claimObj.image = path;
+        // }
     })
   }
 

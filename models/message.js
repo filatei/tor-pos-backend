@@ -9,6 +9,13 @@ const messageSchema = mongoose.Schema(
     to: { type: String },
     cc: { type: String },
     creator: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    readers: [{
+      id:  {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
+    }],
+    receivers: [{
+      id:  {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
+    }],
+   
     images: [],
     image: { type: String },
     notes: [],

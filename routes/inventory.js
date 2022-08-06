@@ -10,7 +10,7 @@ const os = require("os");
 const hostname = os.hostname();
 const Mail = require("../mail.js");
 var multer = require("multer");
-const DIR = "./uploads/inventoryimages/";
+const DIR = "/var/www/uploads/inventoryimages/";
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, DIR);

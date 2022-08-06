@@ -3,7 +3,7 @@ const express = require("express");
 const Category = require("../models/category");
 const router = express.Router();
 var multer  = require('multer')
-const DIR = './uploads/productimages/';
+const DIR = '/var/www/uploads/productimages/';
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, DIR);
@@ -40,10 +40,21 @@ router.post("", checkAuth, upload.single('image'), (req, res, next) => {
       return res.status(500).json({message: 'Not allowed'});
     }
     let path;
-    if (req.file) { 
-      url = req.protocol + '://' + req.get('host');
-      // url = 'https://fido-api.torama.ng'
-      path = url + '/uploads/productimages/' + req.file.filename; 
+    // if (req.file) { 
+    //   url = req.protocol + '://' + req.get('host');
+    //   // url = 'https://fido-api.torama.ng'
+    //   path = url + '/uploads/productimages/' + req.file.filename; 
+
+    // }
+
+    if (req.file) {
+      if (hostname.includes("torama.ng")) {
+        url = "https://fido-api.torama.ng"  
+      } else {
+        url = req.protocol + "://" + req.get("host");
+      }
+      let path = url + "/" + req.file.path;
+      path  = path.replace('/var/www/','');
 
     }
   

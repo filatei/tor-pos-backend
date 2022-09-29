@@ -10,6 +10,7 @@ const payrollSchema = mongoose.Schema({
     site: { type: mongoose.Schema.Types.ObjectId, ref: 'Site' },
     empType: {type: String},
     payeeTax: {type: Number},
+    
     company: { type: String },
     payType: { type: String, enum: ["MONTH-END", "MID-MONTH", "OTHER"]},
     status: { type: String, enum: ["PAID", "UNPAID", "INVALID"]},

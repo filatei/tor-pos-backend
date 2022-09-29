@@ -28,6 +28,7 @@ const expenseSchema = mongoose.Schema(
     creator: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     updater: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     site: { type: String },
+    company: { type: String },
     deliveryStatus: {
       type: String,
       enum: ["DELIVERED", "NOT DELIVERED"],

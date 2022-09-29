@@ -417,16 +417,22 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
           if (row['PAY START DATE']) {
             const dt = row['PAY START DATE'].split('/');
+            console.log(dt)
             row.payStartDate = new Date(dt[2], dt[1]-1, dt[0])
+          } else {
+            // 
           }
 
           if (row['PAY END DATE']) {
             const dt = row['PAY END DATE'].split('/');
+            console.log(dt)
             row.payEndDate = new Date(dt[2], dt[1]-1, dt[0])
 
             const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
             row.month = months[row.payEndDate.getMonth()];
             row.year = row.payEndDate.getFullYear()
+          } else {
+            // 
           }
 
           if (!row.month ) {
@@ -550,6 +556,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
               row.grossPay = row.bagsBagged * 2.5;
             if (row.payType == 'MID-MONTH')
               row.grossPay += row.bagsBagged * 0.5;
+              
           }
 
           if (row['QTY'] ) {

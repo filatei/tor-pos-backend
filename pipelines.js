@@ -277,3 +277,75 @@ const agg = [
          }
         }
        }]
+
+      //  pure water Qty for today
+      [
+        {
+          '$match': {
+            'createdAt': {
+              '$gte': {
+                '$date': '2022-08-06T00:00:00Z'
+              }, 
+              '$lt': {
+                '$date': '2022-08-07T00:00:00Z'
+              }
+            }, 
+            'products.name': {
+              '$nin': [
+                null, '', '19L Dispenser Refill', '19L Dispenser Replace', '50cl Crate', '75cl Crate', 'INCENTIVE', 'Nylon Waste'
+              ]
+            }, 
+            'paymentMethod': {
+              '$nin': [
+                null, '', 'INCENTIVE'
+              ]
+            }, 
+            'orderType': {
+              '$nin': [
+                null, '', 'INCENTIVE'
+              ]
+            }
+          }
+        }, {
+          '$unwind': {
+            'path': '$products'
+          }
+        }, {
+          '$group': {
+            '_id': {
+              'product': '$products.name'
+            }, 
+            'productQty': {
+              '$sum': '$products.qty'
+            }
+          }
+        }, {
+          '$project': {
+            '_id': 0, 
+            'product': '$_id.product', 
+            'productQty': 1
+          }
+        }, {
+          '$project': {
+            'label': '$product', 
+            'value': '$productQty', 
+            '_id': 0
+          }
+        }, {
+          '$addFields': {
+            '__agg_sum': {
+              '$sum': [
+                '$value'
+              ]
+            }
+          }
+        }, {
+          '$sort': {
+            '__agg_sum': -1
+          }
+        }, {
+          '$project': {
+            '__agg_sum': 0
+          }
+        }
+      ]

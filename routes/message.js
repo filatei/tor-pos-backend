@@ -57,11 +57,10 @@ function logIncident(email, description) {
     });
 }
 
-router.post("", checkAuth, upload.single("image"),  (req, res, next) => {
-  const alloweds = process.env.STOREALLOWEDS;
+router.post("", checkAuth, upload.single("image"), async  (req, res, next) => {
+  const alloweds = ['ADMIN', 'SECRETARY', 'MANAGER', 'GENERAL MANAGER', 'ACCOUNTANT', 'SNR ACCOUNTANT', 'DATA ENTRY'];
 
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to create Message");
+  if (!alloweds.includes(req.userData.role)) {
     return res.status(500).json({ message: "Not allowed to create message" });
   }
   try {
@@ -85,11 +84,10 @@ router.post("", checkAuth, upload.single("image"),  (req, res, next) => {
     const message = new Message(obj);
     // message.image = path || null;
 
-    const invSave = await message.save();
-    //   Mail.sendMessage(invSave);
+    const mSave = await message.save();
     res.status(201).json({
       message: "Message added successfully",
-      message: { ...invSave, id: invSave._id },
+      message: { ...mSave, id: mSave._id },
     });
   } catch (err) {
     if (err) {

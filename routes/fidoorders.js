@@ -637,7 +637,7 @@ router.get("/summary", checkAuth, async (req, res, next) => {
 
 
     const yesterdayStart = moment()
-      .subtract(7, "days")
+      .subtract(14, "days")
       .startOf("day")
       .toDate();
     const yesterdayEnd = moment().subtract(0, "days").endOf("day").toDate();
@@ -656,7 +656,7 @@ router.get("/summary", checkAuth, async (req, res, next) => {
       // }
 
       let aggData = await Pipeline(yesterdayStart, yesterdayEnd, site);
-      // console.log(aggData, 'summary aggData')
+      console.log(aggData, 'summary aggData')
 
       // bring out the ._id
       aggData = aggData.map((a) => {

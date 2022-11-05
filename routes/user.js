@@ -425,11 +425,12 @@ router.get("", checkAuth, async (req, res, next) => {
   // }
 
   try {
-    const users = await User.find({},{name:1, email:1, role:1, site:1, image:1, _id:1});
+    const users = await User.find({},{name:{ $toUpper: "$name" }, email:1, role:1, site:1, image:1, _id:1}).sort({name:1}).lean();
     if (users) {
       // users = users.map(u => u.name==='Akpodigha Filatei'?u.name='MD':null)
+      { $toUpper: "$item" }
 
-      return res.status(200).json({
+      return res.status(200).json({ 
         users: users,
       });
     } else {

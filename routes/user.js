@@ -417,12 +417,12 @@ router.post("/getuser", checkAuth, (req, res, next) => {
 });
 
 router.get("", checkAuth, async (req, res, next) => {
-  if (req.userData.role !== "ADMIN") {
-    return res.status("401").json({ message: "not Allowed" });
-  }
+  // if (req.userData.role !== "ADMIN") {
+  //   return res.status("401").json({ message: "not Allowed" });
+  // }
 
   try {
-    const users = await User.find({},{name:1, email:1, role:1, site:1});
+    const users = await User.find({},{name:1, email:1, role:1, site:1, image:1, _id:1});
     if (users) {
 
       return res.status(200).json({

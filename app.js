@@ -63,6 +63,8 @@ const pplRoutes = require("./routes/people");
 const casualRoutes = require("./routes/casual");
 const callRoutes = require("./routes/callmanager");
 const pgbyRoutes = require("./routes/payrollgrpbyyrmonthstatus");
+const chatRoutes = require("./routes/chat");
+
 
 
 // const DB = "torposedb";
@@ -206,6 +208,7 @@ app.use("/api/casual", casualRoutes);
 app.use("/api/payroll", payRoutes);
 app.use("/api/callManager", callRoutes);
 app.use("/api/pgby", pgbyRoutes);
+app.use("/api/chat", chatRoutes);
 
 
 

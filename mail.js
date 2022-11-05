@@ -1562,7 +1562,7 @@ async function sendPayrollCsvMail(payRolls,creatorId) {
       let table = `<table><tr><th>SN</th><th>ID</th><th>Name</th><th>Type</th><th>Month</th><th>Year</th><th>Gross Pay</th><th>Deductions</th><th>NetPay</th></tr>`
       payRolls.forEach((p,index,arr) => {
         table += `<tr><td>${index+1}</td><td>${p.personId}</td><td>${p.name}</td><td>${p.payType}</td><td>${p.month}</td><td>${p.year}</td><td>${p.grossPay}</td><td>${p.deductions}</td><td>${p.netPay}</td</tr>`;
-        sum += p.netPay;
+        sum += parseInt(p.netPay) ;
       })
       table += `<tr><td colspan="5">Total: ${sum}</td></tr></table>`
         const creator = await User.findById(creatorId);

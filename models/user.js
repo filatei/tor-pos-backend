@@ -17,6 +17,7 @@ const userSchema = mongoose.Schema(
     site: { type: String },
     otp: { type: String },
     phone: { type: String },
+    lastSeen: { type: Date },
     roles: [],
     role: { type: String, enum:["ADMIN", "MANAGER","GENERAL MANAGER","HR","SNR ACCOUNTANT",
       "ACCOUNTANT","SUPERVISOR","QAQC","SNR SECRETARY","SECRETARY","STOREKEEPER",

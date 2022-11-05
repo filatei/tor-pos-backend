@@ -225,6 +225,7 @@ router.get("", checkAuth, async (req, res, next) => {
       "YENEGWE",
       "OBUNNA",
       "KPANSIA E",
+      "AKENFA"
     ];
 
     const blockSites = ["OKUTUKUTU-BLOCKS", "AGADAGBA-BLOCKS"];

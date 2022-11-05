@@ -378,7 +378,7 @@ router.put("/updateRole/:id", checkAuth, async (req, res, next) => {
 
   try {
     console.log(req.body);
-    const { role, site } = req.body;
+    const { role, site, name } = req.body;
     let updatedObj;
     console.log(role, site, "role, site");
     if (role) {
@@ -386,6 +386,9 @@ router.put("/updateRole/:id", checkAuth, async (req, res, next) => {
     }
     if (site) {
       updatedObj = { ...updatedObj, site };
+    }
+    if (name) {
+      updatedObj = { ...updatedObj, name };
     }
 
     const id = req.params.id;

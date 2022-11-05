@@ -424,7 +424,7 @@ router.get("", checkAuth, async (req, res, next) => {
   try {
     const users = await User.find({},{name:1, email:1, role:1, site:1, image:1, _id:1});
     if (users) {
-      users = users.map(u => u.name==='Akpodigha Filatei'?u.name='MD':null)
+      // users = users.map(u => u.name==='Akpodigha Filatei'?u.name='MD':null)
 
       return res.status(200).json({
         users: users,

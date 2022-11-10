@@ -547,6 +547,7 @@ async function dayAgg(obj) {
   try {
     const { site, monthInt, yearInt, product, dayInt } = obj;
     console.log(site, dayInt, monthInt, yearInt, product)
+    
     var error;
     var records;
     return await Recupload.aggregate([
@@ -618,11 +619,13 @@ async function dayAgg(obj) {
 
 async function dayOrderAgg(obj) {
   try {
-    const { site, monthInt, yearInt, product, dayInt } = obj;
+    let { site, monthInt, yearInt, product, dayInt } = obj;
     console.log(site, dayInt, monthInt, yearInt, product)
     var error;
     var records;
-    if (product === 'Fido Pure Water') productRename = 'Pure Water'
+    if (product === 'Fido Pure Water') {
+      product = 'Pure Water'
+    } 
     const tdate = new Date(yearInt +'-'+monthInt+'-'+dayInt);
     console.log('tdate', tdate)
     return await FidoOrder.aggregate([
@@ -652,10 +655,6 @@ async function dayOrderAgg(obj) {
       //     'path': '$customer'
       //   }
       // }, 
-
-     
-      
-      
       
       {
         '$group': {
@@ -693,7 +692,7 @@ async function dayOrderAgg(obj) {
               "_id.day": dayInt,
               "_id.month": monthInt,
               "_id.year": yearInt,
-              "_id.product": productRename,
+              "_id.product": product,
             },
           ],
         },
@@ -719,15 +718,15 @@ async function dayOrderAgg(obj) {
       //   },
       // },
 
-      // {
-      //   $sort: {
-      //     "_id.year": 1,
-      //     "_id.month": -1,
-      //     "_id.day": -1,
-      //     totalQty: -1,
-      //   },
-      // },
-      { $limit: 100 },
+      {
+        $sort: {
+          "_id.year": 1,
+          "_id.month": -1,
+          "_id.day": -1,
+          totalQty: -1,
+        },
+      },
+      // { $limit: 200 },
     ]);
   } catch (err) {
     return { error: err };

@@ -685,34 +685,62 @@ router.get("/summary", checkAuth, async (req, res, next) => {
 
 router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
   try {
-    const alloweds = req.userData.role;
-    const allowedStaff = ['ADMIN', 'GENEAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT', 'MANAGER', 'SECRETARY', 'POS OFFICER', 'SUPERVISOR'];
 
+    const allowedStaff = ['ADMIN', 'GENEAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT', 'MANAGER', 'SECRETARY', 'POS OFFICER', 'SUPERVISOR'];
     if (!allowedStaff.includes(req.userData.role)) {
       return;
     }
 
-    const yesterdayStart = moment()
-      .subtract(14, "days")
-      .startOf("day")
-      .toDate();
-    const yesterdayEnd = moment().subtract(0, "days").endOf("day").toDate();
-    // start of today
-    var start = moment().startOf("day").toDate();
+    const { date, site, product} = req.query;
+    console.log(date, site, product)
+    
 
-    // end today
-    var end = moment(start).endOf("day").toDate();
+    
+    
+    // const yesterdayStart = moment()
+    //   .subtract(1, "days")
+    //   .startOf("day")
+    //   .toDate();
+    // const yesterdayEnd = moment().subtract(0, "days").endOf("day").toDate();
+    // // start of today
+    // var start = moment().startOf("day").toDate();
 
-    const site = req.userData.site;
+    // // end today
+    // var end = moment(start).endOf("day").toDate();
+
+    // const site = req.userData.site;
+
+    if (date) {
+      let ddate = new Date(date);
+      var start = moment(ddate).startOf("day").toDate();
+
+      // end day
+      var end = moment(ddate).endOf("day").toDate();
+      // let dayData = await FidoOrder.find({
+      //   createdAt: { $gte: start, $lt: end }, site:site
+      // }).lean().populate('customer')
+      // console.log('data', dayData);
+      // console.log('date site', site, date);
+  
+      // return;
+    } else {
+      console.log ('date needed')
+      throw error;
+
+    }
+
+    console.log(start, end)
 
 
-    let aggData = await PipelineCustomer(yesterdayStart, yesterdayEnd, site);
-    console.log(aggData, 'summary aggData')
+    let aggData = await PipelineCustomer(start, end, site,product);
+    // console.log(aggData, 'summary aggData by customer')
 
     // bring out the ._id
+    aggData = aggData.filter(a => a.product === product);
     aggData = aggData.map((a) => {
+
       return {
-        ...a._id, customer: a._id.customer,
+        ...a._id,
         totalSalesAmount: a.totalSalesAmount.toLocaleString(),
         totalQty: a.totalQty.toLocaleString(),
       };
@@ -1039,7 +1067,7 @@ async function Pipeline(start, end, site) {
   return summary;
 }
 
-async function PipelineCustomer(start, end, site) {
+async function PipelineCustomer(start, end, site, product) {
   // to redo and return totals per customer per site per date
   const pipeline = [
     {
@@ -1047,12 +1075,27 @@ async function PipelineCustomer(start, end, site) {
         // action_taken: "PRODUCT RELEASED",
         orderType: "NORMAL",
         trans_date: { $gte: start, $lte: end },
-        // site: site
+        site: site,
+       
       },
     },
     {
       $unwind: {
         path: "$products",
+      },
+    },
+
+    {
+      '$lookup': {
+        'from': 'customers', 
+        'localField': 'customer', 
+        'foreignField': '_id', 
+        'as': 'customer'
+      }
+    },
+    {
+      $unwind: {
+        path: "$customer",
       },
     },
     
@@ -1063,7 +1106,7 @@ async function PipelineCustomer(start, end, site) {
          
           product: "$products.name",
           site: "$terminal_location",
-          customer: "$customer"
+          customer: "$customer.name"
         },
         totalSalesAmount: {
           $sum: "$txn_amount",
@@ -1075,14 +1118,24 @@ async function PipelineCustomer(start, end, site) {
     },
     {
       $sort: {
-        "_id.date": -1,
-        "_id.site": 1,
-        "_id.product": 1,
+        // "_id.customer": -1,
+        // "_id.date": -1,
+        // "_id.site": 1,
+        // "_id.product": 1,
 
         totalQty: -1,
-        "_id.site": 1,
       },
     },
+    {$project: {
+      
+      site:"$_id.site",
+      date:"$_id.date",
+      customer:"$_id.customer",
+      product:"$_id.product",
+      totalQty: "$totalQty",
+      totalSalesAmount: "$totalSalesAmount"
+
+    }}
   ];
 
   // return pipeline;

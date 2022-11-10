@@ -45,3 +45,66 @@
 
 "_id.bank": {$in: ["GTBank", "Access", "Stanbic", "Fidelity", "FCMB"]}
 
+
+[
+  {
+    '$unwind': {
+      'path': '$products'
+    }
+  }, {
+    '$lookup': {
+      'from': 'customers', 
+      'localField': 'customer', 
+      'foreignField': '_id', 
+      'as': 'customer'
+    }
+  }, {
+    '$unwind': {
+      'path': '$customer'
+    }
+  }, {
+    '$group': {
+      '_id': {
+        'day': {
+          '$dayOfMonth': '$createdAt'
+        }, 
+        'month': {
+          '$month': '$createdAt'
+        }, 
+        'year': {
+          '$year': '$createdAt'
+        }, 
+        'site': '$site', 
+        'product': '$products.name', 
+        'customer': '$customer.name'
+      }, 
+      'totalAmount': {
+        '$sum': '$txn_amount'
+      }, 
+      'totalQty': {
+        '$sum': '$products.qty'
+      }, 
+      'count': {
+        '$sum': 1
+      }
+    }
+  }, {
+    '$sort': {
+      '_id.year': 1, 
+      '_id.month': -1, 
+      '_id.day': -1, 
+      'totalQty': -1
+    }
+  }, {
+    '$project': {
+      'site': '$_id.site', 
+      'Prooduct': '$_id.product', 
+      'customer': '$_id.customer', 
+      'Qty': '$totalQty', 
+      'Day': '$_id.day', 
+      'Month': '$_id.month', 
+      'Year': '$_id.year'
+    }
+  }
+]
+

@@ -3,6 +3,7 @@ const DIR = "/var/www/uploads/torama/recuploads2/";
 const moment = require("moment");
 const path = require("path");
 const Recupload = require("./models/recupload");
+const FidoOrder = require("./models/fidoorder");
 const fs = require("fs");
 const os = require("os");
 const hostname = os.hostname();
@@ -545,6 +546,7 @@ const logIncident = (email, description) => {
 async function dayAgg(obj) {
   try {
     const { site, monthInt, yearInt, product, dayInt } = obj;
+    console.log(site, dayInt, monthInt, yearInt, product)
     var error;
     var records;
     return await Recupload.aggregate([
@@ -608,6 +610,124 @@ async function dayAgg(obj) {
         },
       },
       // { $limit: 2 },
+    ]);
+  } catch (err) {
+    return { error: err };
+  }
+}
+
+async function dayOrderAgg(obj) {
+  try {
+    const { site, monthInt, yearInt, product, dayInt } = obj;
+    console.log(site, dayInt, monthInt, yearInt, product)
+    var error;
+    var records;
+    if (product === 'Fido Pure Water') productRename = 'Pure Water'
+    const tdate = new Date(yearInt +'-'+monthInt+'-'+dayInt);
+    console.log('tdate', tdate)
+    return await FidoOrder.aggregate([
+      // { 
+      //   $match: { 
+      //     "createdAt": {$gte: tdate},
+      //     "site": site,
+      //     "product": product,
+
+      //   }
+      // },
+
+      {
+        '$unwind': {
+          'path': '$products'
+        }
+      }, {
+        '$lookup': {
+          'from': 'customers', 
+          'localField': 'customer', 
+          'foreignField': '_id', 
+          'as': 'customer'
+        }
+      },
+      //  {
+      //   '$unwind': {
+      //     'path': '$customer'
+      //   }
+      // }, 
+
+     
+      
+      
+      
+      {
+        '$group': {
+          '_id': {
+            'day': {
+              '$dayOfMonth': '$createdAt'
+            }, 
+            'month': {
+              '$month': '$createdAt'
+            }, 
+            'year': {
+              '$year': '$createdAt'
+            }, 
+            'site': '$site', 
+            'product': '$products.name', 
+            'customer': '$customer.name'
+          }, 
+          'totalAmount': {
+            '$sum': '$txn_amount'
+          }, 
+          'totalQty': {
+            '$sum': '$products.qty'
+          }, 
+          'count': {
+            '$sum': 1
+          }
+        }
+      }, 
+
+      {
+        $match: {
+          $and: [
+            {
+              "_id.site": site,
+              "_id.day": dayInt,
+              "_id.month": monthInt,
+              "_id.year": yearInt,
+              "_id.product": productRename,
+            },
+          ],
+        },
+      },
+      
+      {
+        '$sort': {
+          '_id.year': 1, 
+          '_id.month': -1, 
+          '_id.day': -1, 
+          'totalQty': -1
+        }
+      },
+      // {
+      //   $match: {
+         
+      //         "_id.site": site,
+      //         "_id.day": dayInt,
+      //         "_id.month": monthInt,
+      //         "_id.year": yearInt,
+      //         "_id.product": product,
+         
+      //   },
+      // },
+
+      // {
+      //   $sort: {
+      //     "_id.year": 1,
+      //     "_id.month": -1,
+      //     "_id.day": -1,
+      //     totalQty: -1,
+      //   },
+      // },
+      { $limit: 100 },
     ]);
   } catch (err) {
     return { error: err };
@@ -765,4 +885,5 @@ module.exports = {
   dayAgg,
   weekAgg,
   monthAgg,
+  dayOrderAgg
 };

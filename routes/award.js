@@ -12,6 +12,7 @@ const HttpError = require("../models/http-error");
 const checkAuth = require("../middleware/check-auth");
 const fileUpload = require("../middleware/file-upload");
 const Recupload = require("../models/recupload");
+const FidoOrder = require("../models/fidoorder");
 const Utils = require("../utils");
 // const { getHeapSnapshot } = require("v8");
 // const { getDefaultSettings } = require("http2");
@@ -38,6 +39,7 @@ router.get("/top20ForMonth", async (req, res, next) => {
     let dayInt = parseInt(day);
     let weekInt = parseInt(week);
     weekInt = weekInt - 1;
+    let aggDay;
 
     //weekly aggregation
     if (week && week !== "undefined") {
@@ -73,8 +75,19 @@ router.get("/top20ForMonth", async (req, res, next) => {
         product,
       };
 
-      const aggDay = await Utils.dayAgg(aggObject);
-      // console.log(aggDay, "aggDay");
+      const endRecDate = '07/11/2022';
+      const inDate = dayInt + '/' + monthInt + '/' + yearInt;
+      const overCutOffDate = new Date(inDate) >= new Date(endRecDate)
+      console.log('over cut off', overCutOffDate);
+      // const fido = await FidoOrder.findById('62c3fe42dc256b0fd85342db');
+      // console.log('fido', fido);
+
+      if (overCutOffDate) {
+         aggDay = await Utils.dayOrderAgg(aggObject);
+      } else {
+         aggDay = await Utils.dayAgg(aggObject);
+      }
+      console.log(aggDay, "aggDay");
 
       if (aggDay) {
         return res.status(200).json({

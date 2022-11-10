@@ -3,7 +3,7 @@ const AutoIncrement = require("mongoose-sequence")(mongoose);
 
 const messageSchema = mongoose.Schema(
   {
-    messageHash: { unique: true, type: String, required: true},
+    messageHash: {  type: String},
     subject: { type: String },
     body: { type: String },
     timeStamp: { type: Date, required: true },

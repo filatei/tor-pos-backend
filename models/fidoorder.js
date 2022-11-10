@@ -86,7 +86,13 @@ const fidoorderSchema = mongoose.Schema(
     log: [{}],
     comments: { type: String },
     image: { type: String },
-    products: [],
+    products: [
+      {
+        name: { type: String },
+        qty: { type: Number },
+        price: { type: Number },
+      },
+    ],
     totalAmount: { type: Number },
     site: { type: String },
     paymentMethod: { type: String },

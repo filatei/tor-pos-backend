@@ -635,7 +635,6 @@ router.get("/summary", checkAuth, async (req, res, next) => {
       // res.status(500).json({ message: "Not allowed to summarise " + req.userData.role});
     }
 
-
     const yesterdayStart = moment()
       .subtract(14, "days")
       .startOf("day")
@@ -659,6 +658,7 @@ router.get("/summary", checkAuth, async (req, res, next) => {
       // console.log(aggData, 'summary aggData')
 
       // bring out the ._id
+      // await FidoOrder.populate(aggData, {path: "customer"});
       aggData = aggData.map((a) => {
         return {
           ...a._id,
@@ -674,6 +674,56 @@ router.get("/summary", checkAuth, async (req, res, next) => {
           .status(500)
           .json({ message: "Error with fidoOrder summary" });
       }
+    }
+  } catch (err) {
+    console.log(err)
+    return res
+      .status(500)
+      .json({ message: "Server Error with fidoOrder summary try block" + err });
+  }
+});
+
+router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
+  try {
+    const alloweds = req.userData.role;
+    const allowedStaff = ['ADMIN', 'GENEAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT', 'MANAGER', 'SECRETARY', 'POS OFFICER', 'SUPERVISOR'];
+
+    if (!allowedStaff.includes(req.userData.role)) {
+      return;
+    }
+
+    const yesterdayStart = moment()
+      .subtract(14, "days")
+      .startOf("day")
+      .toDate();
+    const yesterdayEnd = moment().subtract(0, "days").endOf("day").toDate();
+    // start of today
+    var start = moment().startOf("day").toDate();
+
+    // end today
+    var end = moment(start).endOf("day").toDate();
+
+    const site = req.userData.site;
+
+
+    let aggData = await PipelineCustomer(yesterdayStart, yesterdayEnd, site);
+    console.log(aggData, 'summary aggData')
+
+    // bring out the ._id
+    aggData = aggData.map((a) => {
+      return {
+        ...a._id, customer: a._id.customer,
+        totalSalesAmount: a.totalSalesAmount.toLocaleString(),
+        totalQty: a.totalQty.toLocaleString(),
+      };
+    });
+
+    if (aggData) {
+      return res.status(200).json({ records: aggData });
+    } else {
+      return res
+        .status(500)
+        .json({ message: "Error with fidoOrder summary" });
     }
   } catch (err) {
     console.log(err)
@@ -953,6 +1003,7 @@ async function Pipeline(start, end, site) {
         path: "$products",
       },
     },
+    
     {
       $group: {
         _id: {
@@ -960,6 +1011,59 @@ async function Pipeline(start, end, site) {
          
           product: "$products.name",
           site: "$terminal_location",
+          
+        },
+        totalSalesAmount: {
+          $sum: "$txn_amount",
+        },
+        totalQty: {
+          $sum: "$products.qty",
+        },
+      },
+    },
+    {
+      $sort: {
+        "_id.date": -1,
+        "_id.site": 1,
+        "_id.product": 1,
+
+        totalQty: -1,
+        "_id.site": 1,
+      },
+    },
+  ];
+
+  // return pipeline;
+  const summary = await FidoOrder.aggregate(pipeline);
+  // console.log(summary, "summary ");
+  return summary;
+}
+
+async function PipelineCustomer(start, end, site) {
+  // to redo and return totals per customer per site per date
+  const pipeline = [
+    {
+      $match: {
+        // action_taken: "PRODUCT RELEASED",
+        orderType: "NORMAL",
+        trans_date: { $gte: start, $lte: end },
+        // site: site
+      },
+    },
+    {
+      $unwind: {
+        path: "$products",
+      },
+    },
+    
+    {
+      $group: {
+        _id: {
+          date: {$dateToString:{format: "%d-%m-%Y", date: "$trans_date"}},
+         
+          product: "$products.name",
+          site: "$terminal_location",
+          customer: "$customer"
         },
         totalSalesAmount: {
           $sum: "$txn_amount",

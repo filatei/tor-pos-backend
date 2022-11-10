@@ -12,6 +12,7 @@ const chatSchema = mongoose.Schema(
     readers: [{
       id:  {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
     }],
+    seen: { type: Boolean },
     deletedByUserIds: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     file: { type: String },
     files: [{ type: String }],

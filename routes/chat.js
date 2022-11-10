@@ -183,8 +183,8 @@ router.get("", checkAuth, (req, res, next) => {
 });
 
 
-router.get("/all", checkAuth, (req, res, next) => {
-  // get all chats that this user sent  or received 
+router.get("/all", checkAuth, async (req, res, next) => {
+  // get all UNIQUE chats that this user sent  or received 
   const pageSize = +req.query.pagesize;
   // const receiverId = req.query.receiverId;
   // const creator = req.userData.userId;
@@ -194,6 +194,7 @@ router.get("/all", checkAuth, (req, res, next) => {
   
 
   const currentPage = +req.query.page;
+  let count;
 
   const chatQuery = Chat.find( { $or: [ { creator: userId }, { receiver: userId } ] })
     .sort({ timeStamp: 1 })
@@ -204,15 +205,17 @@ router.get("/all", checkAuth, (req, res, next) => {
   if (pageSize && currentPage) {
     chatQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
   }
+  //  count = await chatQuery.countDocuments()
   chatQuery
     .then((documents) => {
       // console.log('chats', documents);
+      
       const uniqueChats = makeUnique(documents, userId);
       // console.log(uniqueChats, 'unique chats main')
 
       res.status(200).json({
         message: "Chats fetched successfully!",
-        chats: uniqueChats,
+        chats: uniqueChats, count: documents.length
       });
     })
     .catch((error) => {

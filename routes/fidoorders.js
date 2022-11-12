@@ -694,7 +694,7 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
     }
 
     const { type, date, day, month, year,  site, product} = req.query;
-    console.log(type, day, month, year, site, product);
+    // console.log(type, day, month, year, site, product);
     
     // const yesterdayStart = moment()
     //   .subtract(1, "days")
@@ -752,7 +752,7 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
         };
   
         let aggData = await Utils.monthOrderAgg(aggObject);
-        console.log(aggData)
+        // console.log(aggData)
         aggData = aggData.filter(a => a._id.product === product);
         aggData = aggData.map((a) => {
 

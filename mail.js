@@ -249,7 +249,7 @@ async function sendExpense(expense, userId = null) {
     // const subject = subject;
     const body = html;
     let model = { sender, to, cc, subject, body };
-    const saveMess = await saveMessage(model);
+    // const saveMess = await saveMessage(model);
 
     model = {
       fromText: "ShopTorama",
@@ -415,7 +415,7 @@ async function sendProduceexpense(expense, userId = null) {
     // const subject = subject;
     const body = html;
     let model = { sender, to, cc, subject, body };
-    const saveMess = await saveMessage(model);
+    // const saveMess = await saveMessage(model);
 
     model = {
       fromText: "ShopTorama",
@@ -599,7 +599,7 @@ async function sendQaNote(note, item) {
     const body = html;
     const image = note.image ? note.image : "";
     let model = { sender, to, cc, subject, body, link, image };
-    const saveMess = await saveMessage(model);
+    // const saveMess = await saveMessage(model);
     console.log(" Message Saved ", saveMess);
 
     model = {
@@ -827,7 +827,7 @@ async function sendCashdeposit(item, user) {
     // const subject = subject;
     const body = html;
     let model = { sender, to, cc, subject, body };
-    const saveMess = await saveMessage(model);
+    // const saveMess = await saveMessage(model);
 
     model = {
       fromText: "ToramaDeposit",
@@ -928,7 +928,7 @@ async function verifyAuth(userId, verify,otp) {
     const cc = "auth@torama.ng";
     const body = html;
     let model = { sender, to, cc, subject, body };
-    const saveMess = await saveMessage(model);
+    // const saveMess = await saveMessage(model);
     console.log(" Message Saved ", saveMess);
 
     model = {
@@ -1649,7 +1649,7 @@ async function forgotPassword(userId, otp) {
     const cc = "auth@torama.ng";
     const body = html;
     let model = { sender, to, cc, subject, body };
-    const saveMess = await saveMessage(model);
+    // const saveMess = await saveMessage(model);
     // console.log(" Message Saved ", saveMess);
 
     model = {

@@ -1199,7 +1199,7 @@ async function PipelineCustomer(start, end, site, product) {
           date: {$dateToString:{format: "%d-%m-%Y", date: "$trans_date"}},
          
           product: "$products.name",
-          site: "$terminal_location",
+          site: "$site",
           customer: "$customer.name"
         },
         totalSalesAmount: {

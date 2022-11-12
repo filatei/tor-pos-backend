@@ -786,8 +786,8 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
           };
     
           let aggData = await Utils.weekOrderAgg(aggObject);
-          console.log(aggData)
-          aggData = aggData.filter(a => a._id.product === product);
+          // console.log(aggData)
+          // aggData = aggData.filter(a => a._id.product === product);
           aggData = aggData.map((a) => {
 
             return {

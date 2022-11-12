@@ -840,6 +840,7 @@ async function weekOrderAgg(obj) {
             customer: "$customer.name",
             site: "$site",
             product: "$products.name",
+            orderType: "$orderType",
           },
 
           totalSalesAmount: {

@@ -7,6 +7,8 @@ const Terminal = require("../models/terminal");
 const User = require("../models/user");
 const _ = require("lodash");
 const XLSX = require('xlsx');
+const Utils = require("../utils");
+const fns = require('date-fns');
 
 const router = express.Router();
 const Path = require("path");
@@ -691,11 +693,8 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
       return;
     }
 
-    const { date, site, product} = req.query;
-    console.log(date, site, product)
-    
-
-    
+    const { type, date, day, month, year,  site, product} = req.query;
+    console.log(type, day, month, year, site, product);
     
     // const yesterdayStart = moment()
     //   .subtract(1, "days")
@@ -711,54 +710,149 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
     // const site = req.userData.site;
 
     if (date) {
-      let ddate = new Date(date);
-      var start = moment(ddate).startOf("day").toDate();
+      if (type ==='yearly') {
 
-      // end day
-      var end = moment(ddate).endOf("day").toDate();
-      // let dayData = await FidoOrder.find({
-      //   createdAt: { $gte: start, $lt: end }, site:site
-      // }).lean().populate('customer')
-      // console.log('data', dayData);
-      // console.log('date site', site, date);
+        let yearInt = parseInt(year);
+        const aggObject = {
+          yearInt,
+          site,
+          product,
+        };
   
-      // return;
+        let aggData = await Utils.yearOrderAgg(aggObject);
+        // aggData = aggData.filter(a => a._id.product === product);
+        aggData = aggData.map((a) => {
+
+          return {
+            ...a._id,
+            totalSalesAmount: a.totalSalesAmount,
+            totalQty: a.totalQty,
+          };
+        });
+
+        if (aggData) {
+          return res.status(200).json({
+            message: "top sales for week",
+            records: aggData,
+          });
+        }
+  
+        return res.status(500).json({ message: "aggregate error: " });
+      }
+
+      if (type ==='monthly') {
+
+        let yearInt = parseInt(year);
+        let monthInt = parseInt(month);
+        const aggObject = {
+          yearInt,
+          monthInt,
+          site,
+          product,
+        };
+  
+        let aggData = await Utils.monthOrderAgg(aggObject);
+        console.log(aggData)
+        aggData = aggData.filter(a => a._id.product === product);
+        aggData = aggData.map((a) => {
+
+          return {
+            ...a._id,
+            totalSalesAmount: a.totalSalesAmount,
+            totalQty: a.totalQty,
+          };
+        });
+
+        if (aggData) {
+         
+          return res.status(200).json({
+            message: "top  sales for week",
+            records: aggData,
+          });
+        }
+  
+        return res.status(500).json({ message: "aggregate error: " });
+      }
+
+      if (type ==='weekly') {
+
+          const weekInt = fns.format(new Date(date), 'ww');
+          let yearInt = parseInt(year);
+          const aggObject = {
+            weekInt: weekInt-1,
+            yearInt,
+            site,
+            product,
+          };
+    
+          let aggData = await Utils.weekOrderAgg(aggObject);
+          console.log(aggData)
+          aggData = aggData.filter(a => a._id.product === product);
+          aggData = aggData.map((a) => {
+
+            return {
+              ...a._id,
+              totalSalesAmount: a.totalSalesAmount,
+              totalQty: a.totalQty,
+            };
+          });
+
+          if (aggData) {
+           
+            return res.status(200).json({
+              message: "top  sales for week",
+              records: aggData,
+            });
+          }
+    
+          return res.status(500).json({ message: "aggregate error: " });
+      }
+
+      if (type =='daily') {
+        let ddate = new Date(date);
+        var start = moment(ddate).startOf("day").toDate();
+        // end day
+        var end = moment(ddate).endOf("day").toDate();
+        let aggData = await PipelineCustomer(start, end, site,product);
+        // console.log(aggData, 'summary aggData by customer')
+
+        // bring out the ._id
+        aggData = aggData.filter(a => a.product === product);
+        aggData = aggData.map((a) => {
+
+          return {
+            ...a._id,
+            totalSalesAmount: a.totalSalesAmount,
+            totalQty: a.totalQty,
+          };
+        });
+
+        if (aggData) {
+          return res.status(200).json({ records: aggData });
+        } else {
+          return res
+            .status(500)
+            .json({ message: "Error with fidoOrder summary" });
+        }
+      }
+     
     } else {
       console.log ('date needed')
       throw error;
-
     }
 
-    console.log(start, end)
 
 
-    let aggData = await PipelineCustomer(start, end, site,product);
-    // console.log(aggData, 'summary aggData by customer')
-
-    // bring out the ._id
-    aggData = aggData.filter(a => a.product === product);
-    aggData = aggData.map((a) => {
-
-      return {
-        ...a._id,
-        totalSalesAmount: a.totalSalesAmount.toLocaleString(),
-        totalQty: a.totalQty.toLocaleString(),
-      };
-    });
-
-    if (aggData) {
-      return res.status(200).json({ records: aggData });
-    } else {
-      return res
-        .status(500)
-        .json({ message: "Error with fidoOrder summary" });
-    }
+    
   } catch (err) {
     console.log(err)
     return res
       .status(500)
       .json({ message: "Server Error with fidoOrder summary try block" + err });
   }
+
+
+  
 });
 
 router.get('/todaySummary', checkAuth, async(req,res, next) => {
@@ -1143,6 +1237,8 @@ async function PipelineCustomer(start, end, site, product) {
   // console.log(summary, "summary ");
   return summary;
 }
+
+
 
 async function json2excel(orders, site) { 
   const today= new Date().toLocaleDateString('en-GB').replace(/\//g,'_');

@@ -239,6 +239,7 @@ router.get("", (req, res, next) => {
   }
   productQuery
     .then((documents) => {
+      // console.log(documents, 'products')
       res.status(200).json({
         message: "Products fetched successfully!",
         products: documents,

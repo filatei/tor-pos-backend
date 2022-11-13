@@ -75,6 +75,8 @@ router.get("/top20ForMonth", async (req, res, next) => {
         product,
       };
 
+      // console.log(aggObject, 'award day month year site product');
+
       // const endRecDate = '07/11/2022';
       // const inDate = dayInt + '/' + monthInt + '/' + yearInt;
       // const overCutOffDate = new Date(inDate) >= new Date(endRecDate)

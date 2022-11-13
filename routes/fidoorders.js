@@ -692,10 +692,41 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
     if (!allowedStaff.includes(req.userData.role)) {
       return;
     }
-
-    const { type, date, day, month, year,  site, product} = req.query;
-    // console.log(type, day, month, year, site, product);
     
+
+    let { type, date, day, month, year,  site, product} = req.query;
+    let product2;
+    let new2OldProducts = 
+      {
+        'Pure Water': "Fido Pure Water",
+        '75cl Crate': "75Cl Crate",
+        'Nylon Waste': "Nylon Wastes",
+        '19L Dispenser Refill': "19L Dispenser",
+        '50cl Crate': "50Cl Crate"
+      };
+      const cutOffDate = new Date(2022,06,01);
+      let aggData, aggObject2;
+    // console.log(type, day, month, year, site,  new2OldProducts[product]);
+
+      if (new Date(date) < new Date(cutOffDate))  {
+        //  format products and then use RecUploads
+        product2 = new2OldProducts[product] // Recuploads stored products in old format
+
+      }
+
+    // CUTOFF DATE  = 01/07/2022 -> JULY 1, 2022. ANY DATE PRIOR, USE RECUPLOADS
+    /*
+    { name: "Fido Pure Water" },
+    { name: "19L Dispenser" },
+    { name: "50Cl Crate" },
+    { name: "75Cl Crate" },
+    { name: "Cones" },
+    { name: "Nylon Wastes" },
+    { name: "60Cl Crate" },
+    { name: "6inch Block" },
+    { name: "9inch Block" },
+    { name: "Tile" },
+    */
     // const yesterdayStart = moment()
     //   .subtract(1, "days")
     //   .startOf("day")
@@ -708,18 +739,40 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
     // var end = moment(start).endOf("day").toDate();
 
     // const site = req.userData.site;
-
+     
     if (date) {
       if (type ==='yearly') {
-
         let yearInt = parseInt(year);
-        const aggObject = {
+        let aggObject = {
           yearInt,
           site,
           product,
         };
-  
-        let aggData = await Utils.yearOrderAgg(aggObject);
+        
+        if (year < 2022 ) {
+          // if (new Date(date) < new Date(cutOffDate) ) {
+            aggObject2 = {
+            yearInt,
+            site,
+            product: product2,
+          };
+          
+          aggData = await Utils.yearRecAgg(aggObject2);
+
+          // if (year === 2022) {
+          //   // year the shopping system was introduced
+          //   let aggData2 = await Utils.yearOrderAgg(aggObject);
+          //   //  merge two array
+          //   console.log
+          //   aggData = sumArrayOfObjects(aggData, aggData2)
+
+          // } else {
+          //   aggData = await Utils.yearRecAgg(aggObject2);
+          // }
+        } else {
+          aggData = await Utils.yearOrderAgg(aggObject);
+        }
+        
         // aggData = aggData.filter(a => a._id.product === product);
         aggData = aggData.map((a) => {
 
@@ -736,7 +789,6 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
             records: aggData,
           });
         }
-  
         return res.status(500).json({ message: "aggregate error: " });
       }
 
@@ -750,10 +802,24 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
           site,
           product,
         };
+
+        if (new Date(date) < new Date(cutOffDate)) {
+          aggObject2 = {
+            yearInt,
+            monthInt,
+            site,
+            product: product2,
+          };
+         
+
+          aggData = await Utils.monthRecAgg(aggObject2);
+          // console.log('in monthly agg2', aggData)
+        } else {
+          aggData = await Utils.monthOrderAgg(aggObject);
+        }
   
-        let aggData = await Utils.monthOrderAgg(aggObject);
         // console.log(aggData)
-        aggData = aggData.filter(a => a._id.product === product);
+        // aggData = aggData.filter(a => a._id.product === product);
         aggData = aggData.map((a) => {
 
           return {
@@ -785,7 +851,22 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
             product,
           };
     
-          let aggData = await Utils.weekOrderAgg(aggObject);
+          // let aggData = await Utils.weekOrderAgg(aggObject);
+
+          if (new Date(date) < new Date(cutOffDate)) {
+            aggObject2 = {
+              yearInt,
+              weekInt: weekInt-1,
+              site,
+              product: product2,
+            };
+           
+  
+            aggData = await Utils.weekRecAgg(aggObject2);
+            console.log('in weekly agg2', aggData)
+          } else {
+            aggData = await Utils.weekOrderAgg(aggObject);
+          }
           // console.log(aggData)
           // aggData = aggData.filter(a => a._id.product === product);
           aggData = aggData.map((a) => {
@@ -813,11 +894,31 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
         var start = moment(ddate).startOf("day").toDate();
         // end day
         var end = moment(ddate).endOf("day").toDate();
-        let aggData = await PipelineCustomer(start, end, site,product);
+        let yearInt = parseInt(year);
+        let monthInt = parseInt(month);
+
+        if (new Date(date) < new Date(cutOffDate)) {
+          aggObject2 = {
+            yearInt,
+            monthInt,
+            dayInt: parseInt(day),
+            site,
+            product: product2,
+          };
+         
+
+          aggData = await Utils.dayRecAgg(aggObject2);
+          console.log('in day agg2', aggData)
+        } else {
+          aggData = await PipelineCustomer(start, end, site,product);
+        }
+
+
+        // let aggData = await PipelineCustomer(start, end, site,product);
         // console.log(aggData, 'summary aggData by customer')
 
         // bring out the ._id
-        aggData = aggData.filter(a => a.product === product);
+        // aggData = aggData.filter(a => a.product === product);
         aggData = aggData.map((a) => {
 
           return {
@@ -840,9 +941,6 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
       console.log ('date needed')
       throw error;
     }
-
-
-
     
   } catch (err) {
     console.log(err)
@@ -1266,6 +1364,25 @@ function summarize(orderArr, val) {
     summaryByProdct.push({name:k, qty:QTY, amount:AMT});
   })
   return summaryByProdct;
+}
+
+function sumArrayOfObjects(a, b ) {
+  // utility function to sum to object values (without the id)
+  const sumItem = ({  ...a }, b) => ({
+    
+    ...Object.keys(a)
+      .reduce((r, k) => ({ ...r, [k]: a[k] + b[k] }), {})
+  });
+
+  const sumObjectsByKey = (...arrs) => [...
+    [].concat(...arrs) // combine the arrays
+    .reduce((m, o) => // retuce the combined arrays to a Map
+      m.set(o.id, // if add the item to the Map
+        m.has(o.id) ? sumItem(m.get(o.id), o) : { ...o } // if the item exists in Map, sum the current item with the one in the Map. If not, add a clone of the current item to the Map
+      )
+    , new Map).values()]
+
+    return sumObjectsByKey;
 }
 
 _groupBy = (array, key) => {

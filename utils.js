@@ -617,6 +617,78 @@ async function dayAgg(obj) {
   }
 }
 
+async function dayRecAgg(obj) {
+  try {
+    const { site, monthInt, yearInt, product, dayInt } = obj;
+    console.log(site, dayInt, monthInt, yearInt, product, 'dayrec')
+    
+    var error;
+    var records;
+    return await Recupload.aggregate([
+      { $unwind: "$products" },
+      
+      {
+        $lookup: {
+          from: "customers",
+          localField: "customer",
+          foreignField: "_id",
+          as: "customer",
+        },
+      },
+
+      {
+        $group: {
+          _id: {
+            day: { $dayOfMonth: "$createdAt" },
+            month: { $month: "$createdAt" },
+            year: { $year: "$createdAt" },
+            customer: "$customer.name",
+            site: "$terminal_location",
+            product: "$products.name",
+            action: "$action_taken",
+          },
+
+          totalSalesAmount: {
+            $sum: {
+              $multiply: [
+                { $toInt: "$products.price" },
+                { $toInt: "$products.qty" },
+              ],
+            },
+          },
+          totalQty: { $sum: "$products.qty" },
+        },
+      },
+      {
+        $match: {
+          $and: [
+            {
+              "_id.site": site,
+              "_id.day": dayInt,
+              "_id.month": monthInt,
+              "_id.year": yearInt,
+              "_id.product": product,
+              "_id.action": "PRODUCT RELEASED",
+            },
+          ],
+        },
+      },
+
+      {
+        $sort: {
+          "_id.year": 1,
+          "_id.month": -1,
+          "_id.day": -1,
+          totalQty: -1,
+        },
+      },
+      // { $limit: 2 },
+    ]);
+  } catch (err) {
+    return { error: err };
+  }
+}
+
 async function dayOrderAgg(obj) {
   try {
     let { site, monthInt, yearInt, product, dayInt } = obj;
@@ -647,11 +719,11 @@ async function dayOrderAgg(obj) {
           'as': 'customer'
         }
       },
-      //  {
-      //   '$unwind': {
-      //     'path': '$customer'
-      //   }
-      // }, 
+       {
+        '$unwind': {
+          'path': '$customer'
+        }
+      }, 
       
       {
         '$group': {
@@ -667,6 +739,7 @@ async function dayOrderAgg(obj) {
             }, 
             'site': '$site', 
             'product': '$products.name', 
+            'orderType': '$orderType', 
             'customer': '$customer.name'
           }, 
           'totalAmount': {
@@ -690,36 +763,16 @@ async function dayOrderAgg(obj) {
               "_id.month": monthInt,
               "_id.year": yearInt,
               "_id.product": product,
+              "_id.orderType": "NORMAL",
             },
           ],
         },
       },
       
-      {
-        '$sort': {
-          '_id.year': 1, 
-          '_id.month': -1, 
-          '_id.day': -1, 
-          'totalQty': -1
-        }
-      },
-      // {
-      //   $match: {
-         
-      //         "_id.site": site,
-      //         "_id.day": dayInt,
-      //         "_id.month": monthInt,
-      //         "_id.year": yearInt,
-      //         "_id.product": product,
-         
-      //   },
-      // },
+      
 
       {
         $sort: {
-          "_id.year": 1,
-          "_id.month": -1,
-          "_id.day": -1,
           totalQty: -1,
         },
       },
@@ -880,6 +933,81 @@ async function weekOrderAgg(obj) {
   }
 }
 
+async function weekRecAgg(obj) {
+  try {
+    const { site, yearInt, product, weekInt } = obj;
+
+    console.log(
+      yearInt,
+      weekInt,
+      site,
+      product,
+      "  yearint, weekint, site product utils"
+    );
+    return await Recupload.aggregate([
+      { $unwind: "$products" },
+      {
+        $lookup: {
+          from: "customers",
+          localField: "customer",
+          foreignField: "_id",
+          as: "customer",
+        },
+      },
+      {
+        $unwind: {
+          path: "$customer",
+        },
+      },
+
+      {
+        $group: {
+          _id: {
+            year: { $year: "$createdAt" },
+            week: { $week: "$createdAt" },
+            customer: "$customer.name",
+            site: "$terminal_location",
+            product: "$products.name",
+            action: "$action_taken",
+          },
+
+          totalSalesAmount: {
+            $sum: {
+              $multiply: [
+                { $toInt: "$products.price" },
+                { $toInt: "$products.qty" },
+              ],
+            },
+          },
+          totalQty: { $sum: "$products.qty" },
+        },
+      },
+      {
+        $match: {
+          $and: [
+            {
+              "_id.year": yearInt,
+              "_id.week": weekInt,
+              "_id.site": site,
+              "_id.product": product,
+              "_id.action": "PRODUCT RELEASED",
+            },
+          ],
+        },
+      },
+
+      {
+        $sort: {
+          totalQty: -1,
+        },
+      },
+      // { $limit: 10 },
+    ]);
+  } catch (error) {
+    return { error: error };
+  }
+}
+
 async function monthAgg(obj) {
   try {
     const { site, yearInt, product, monthInt } = obj;
@@ -895,6 +1023,69 @@ async function monthAgg(obj) {
           localField: "customer",
           foreignField: "_id",
           as: "customer",
+        },
+      },
+
+      {
+        $group: {
+          _id: {
+            month: { $month: "$createdAt" },
+            year: { $year: "$createdAt" },
+            customer: "$customer.name",
+            site: "$terminal_location",
+            product: "$products.name",
+            action: "$action_taken",
+          },
+          totalSalesAmount: {
+            $sum: {
+              $multiply: [
+                { $toInt: "$products.price" },
+                { $toInt: "$products.qty" },
+              ],
+            },
+          },
+          totalQty: { $sum: "$products.qty" },
+        },
+      },
+      {
+        $match: {
+          $and: [
+            {
+              "_id.site": site,
+              "_id.month": monthInt,
+              "_id.year": yearInt,
+              "_id.product": product,
+              "_id.action": "PRODUCT RELEASED",
+            },
+          ],
+        },
+      },
+
+      { $sort: { "_id.year": 1, "_id.month": -1, totalQty: -1 } },
+      // { $limit: 200 },
+    ]);
+  } catch (err) {
+    return { error: err };
+  }
+}
+
+async function monthRecAgg(obj) {
+  try {
+    const { site, yearInt, product, monthInt } = obj;
+    console.log(obj, ' in month');
+    return await Recupload.aggregate([
+      { $unwind: "$products" },
+      {
+        $lookup: {
+          from: "customers",
+          localField: "customer",
+          foreignField: "_id",
+          as: "customer",
+        },
+      },
+      {
+        $unwind: {
+          path: "$customer",
         },
       },
 
@@ -1065,6 +1256,69 @@ async function yearOrderAgg(obj) {
   }
 }
 
+async function yearRecAgg(obj) {
+  try {
+    const { site, yearInt, product } = obj;
+    console.log(obj, 'yearRecAgg')
+
+    return await Recupload.aggregate([
+      { $unwind: "$products" },
+      {
+        $lookup: {
+          from: "customers",
+          localField: "customer",
+          foreignField: "_id",
+          as: "customer",
+        },
+      },
+      {
+        $unwind: {
+          path: "$customer",
+        },
+      },
+
+      {
+        $group: {
+          _id: {
+
+            year: { $year: "$createdAt" },
+            customer: "$customer.name",
+            site: "$terminal_location",
+            product: "$products.name",
+            action: "$action_taken",
+          },
+          totalSalesAmount: {
+            $sum: {
+              $multiply: [
+                { $toInt: "$products.price" },
+                { $toInt: "$products.qty" },
+              ],
+            },
+          },
+          totalQty: { $sum: "$products.qty" },
+        },
+      },
+      {
+        $match: {
+          $and: [
+            {
+              "_id.site": site,
+              "_id.year": yearInt,
+              "_id.product": product,
+              "_id.action": "PRODUCT RELEASED",
+            },
+          ],
+        },
+      },
+
+      { $sort: { "_id.year": 1, "_id.month": -1, totalQty: -1 } },
+      // { $limit: 200 },
+    ]);
+  } catch (err) {
+    return { error: err };
+  }
+}
+
 module.exports = {
   upload,
   upload2,
@@ -1083,5 +1337,9 @@ module.exports = {
   dayOrderAgg,
   weekOrderAgg,
   monthOrderAgg,
-  yearOrderAgg
+  yearOrderAgg,
+  yearRecAgg,
+  monthRecAgg,
+  weekRecAgg,
+  dayRecAgg
 };

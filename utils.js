@@ -742,7 +742,7 @@ async function dayOrderAgg(obj) {
             'orderType': '$orderType', 
             'customer': '$customer.name'
           }, 
-          'totalAmount': {
+          'totalSalesAmount': {
             '$sum': '$txn_amount'
           }, 
           'totalQty': {

@@ -700,9 +700,13 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
       {
         'Pure Water': "Fido Pure Water",
         '75cl Crate': "75Cl Crate",
+        '60cl Crate': "60Cl Crate",
         'Nylon Waste': "Nylon Wastes",
         '19L Dispenser Refill': "19L Dispenser",
-        '50cl Crate': "50Cl Crate"
+        '19L Dispenser Replace': "19L Dispenser",
+        'INCENTIVE': "INCENTIVE",
+        '50cl Crate': "50Cl Crate",
+        'FIAFIA WATER': "FIAFIA WATER"
       };
       const cutOffDate = new Date(2022,06,01);
       let aggData, aggObject2;

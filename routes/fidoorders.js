@@ -867,7 +867,7 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
            
   
             aggData = await Utils.weekRecAgg(aggObject2);
-            console.log('in weekly agg2', aggData)
+            // console.log('in weekly agg2', aggData)
           } else {
             aggData = await Utils.weekOrderAgg(aggObject);
           }
@@ -901,6 +901,14 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
         let yearInt = parseInt(year);
         let monthInt = parseInt(month);
 
+        const aggObject = {
+          dayInt: parseInt(day),
+          yearInt,
+          monthInt,
+          site,
+          product,
+        };
+
         if (new Date(date) < new Date(cutOffDate)) {
           aggObject2 = {
             yearInt,
@@ -914,7 +922,8 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
           aggData = await Utils.dayRecAgg(aggObject2);
           console.log('in day agg2', aggData)
         } else {
-          aggData = await PipelineCustomer(start, end, site,product);
+          // aggData = await PipelineCustomer(start, end, site,product);
+          aggData = await Utils.dayOrderAgg(aggObject);
         }
 
 
@@ -1263,7 +1272,7 @@ async function Pipeline(start, end, site) {
   return summary;
 }
 
-async function PipelineCustomer(start, end, site, product) {
+async function PipelineCustomer(start, end, site,  product) {
   // to redo and return totals per customer per site per date
   const pipeline = [
     {
@@ -1322,6 +1331,21 @@ async function PipelineCustomer(start, end, site, product) {
         totalQty: -1,
       },
     },
+    // {
+    //   $match: {
+    //     $and: [
+    //       {
+    //         "_id.site": site,
+    //         "_id.day": dayInt,
+    //         "_id.month": monthInt,
+    //         "_id.year": yearInt,
+    //         "_id.product": product,
+    //         "_id.orderType": "NORMAL",
+    //       },
+    //     ],
+    //   },
+    // },
+
     {$project: {
       
       site:"$_id.site",

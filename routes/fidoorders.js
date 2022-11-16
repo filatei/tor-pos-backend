@@ -920,10 +920,11 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
          
 
           aggData = await Utils.dayRecAgg(aggObject2);
-          console.log('in day agg2', aggData)
+          console.log('in day agg2', aggData[0])
         } else {
           // aggData = await PipelineCustomer(start, end, site,product);
           aggData = await Utils.dayOrderAgg(aggObject);
+          console.log('in day agg', aggData[0])
         }
 
 

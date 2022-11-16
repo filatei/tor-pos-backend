@@ -620,12 +620,29 @@ async function dayAgg(obj) {
 async function dayRecAgg(obj) {
   try {
     const { site, monthInt, yearInt, product, dayInt } = obj;
-    console.log(site, dayInt, monthInt, yearInt, product, 'dayrec')
-    
+    const ddate = new Date(yearInt + '-' + monthInt + '-' + dayInt);
+    const start = moment(ddate).startOf("day").toDate();
+        // end day
+    const end = moment(ddate).endOf("day").toDate();
+
+    console.log(site, start, end, 'date start end rec')
     var error;
     var records;
     return await Recupload.aggregate([
       { $unwind: "$products" },
+
+      {
+        $match: {
+          $and: [
+            {
+              "terminal_location": site,
+              "createdAt": {$gte: start, $lte: end},
+              "action_taken": "PRODUCT RELEASED",
+              "products.name": product
+            },
+          ],
+        },
+      },
       
       {
         $lookup: {
@@ -659,20 +676,20 @@ async function dayRecAgg(obj) {
           totalQty: { $sum: "$products.qty" },
         },
       },
-      {
-        $match: {
-          $and: [
-            {
-              "_id.site": site,
-              "_id.day": dayInt,
-              "_id.month": monthInt,
-              "_id.year": yearInt,
-              "_id.product": product,
-              "_id.action": "PRODUCT RELEASED",
-            },
-          ],
-        },
-      },
+      // {
+      //   $match: {
+      //     $and: [
+      //       {
+      //         "_id.site": site,
+      //         "_id.day": dayInt,
+      //         "_id.month": monthInt,
+      //         "_id.year": yearInt,
+      //         "_id.product": product,
+      //         "_id.action": "PRODUCT RELEASED",
+      //       },
+      //     ],
+      //   },
+      // },
 
       {
         $sort: {
@@ -696,22 +713,31 @@ async function dayOrderAgg(obj) {
     var records;
     
     const tdate = new Date(yearInt +'-'+monthInt+'-'+dayInt);
-    console.log('tdate', tdate)
+    const start = moment(tdate).startOf("day").toDate();
+        // end day
+    const end = moment(tdate).endOf("day").toDate();
+    console.log( site, start, end, "tdate start end order")
+
+
     return await FidoOrder.aggregate([
-      // { 
-      //   $match: { 
-      //     "createdAt": {$gte: tdate},
-      //     "site": site,
-      //     "product": product,
-
-      //   }
-      // },
-
       {
-        '$unwind': {
-          'path': '$products'
-        }
-      }, {
+          '$unwind': {
+            'path': '$products'
+          }
+        },
+        {
+          $match: {
+            $and: [
+              {
+                "site": site,
+                "createdAt": {$gte: start, $lte: end},
+                "orderType": "NORMAL",
+                "products.name": product
+              },
+            ],
+          },
+        },
+       {
         '$lookup': {
           'from': 'customers', 
           'localField': 'customer', 
@@ -754,20 +780,20 @@ async function dayOrderAgg(obj) {
         }
       }, 
 
-      {
-        $match: {
-          $and: [
-            {
-              "_id.site": site,
-              "_id.day": dayInt,
-              "_id.month": monthInt,
-              "_id.year": yearInt,
-              "_id.product": product,
-              "_id.orderType": "NORMAL",
-            },
-          ],
-        },
-      },
+      // {
+      //   $match: {
+      //     $and: [
+      //       {
+      //         "_id.site": site,
+      //         "_id.day": dayInt,
+      //         "_id.month": monthInt,
+      //         "_id.year": yearInt,
+      //         "_id.product": product,
+      //         "_id.orderType": "NORMAL",
+      //       },
+      //     ],
+      //   },
+      // },
       
       
 

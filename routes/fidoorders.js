@@ -373,7 +373,7 @@ router.delete("/:id", checkAuth, async (req, res, next) => {
     //  filter the ids if object and remove ids of orders that are beyond paid
     const orders = await FidoOrder.find({_id: {$in: ids}}).lean();
     if ( orders && orders.length ) {
-      qualifiedForDeletion = orders.filter(o => o.status === 'PAID').map(oo => oo._id);
+      qualifiedForDeletion = orders.filter(o => o.status ).map(oo => oo._id);
     }
 
     if (qualifiedForDeletion && qualifiedForDeletion.length) {

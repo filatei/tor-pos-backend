@@ -1098,9 +1098,28 @@ async function monthAgg(obj) {
 async function monthRecAgg(obj) {
   try {
     const { site, yearInt, product, monthInt } = obj;
+    const dayInt = 1;
+    const dayEndInt = 31;
+    const tdate = new Date(yearInt +'-'+monthInt+'-'+dayInt);
+    const tdate2 = new Date(yearInt +'-'+monthInt+'-'+dayEndInt);
+    const start = moment(tdate).startOf("day").toDate();
+        // end day
+    const end = moment(tdate2).endOf("day").toDate();
     console.log(obj, ' in month');
     return await Recupload.aggregate([
       { $unwind: "$products" },
+      {
+        $match: {
+          $and: [
+            {
+              "terminal_location": site,
+              "createdAt": {$gte: start, $lte: end},
+              "products.name": product,
+              "action_taken": "PRODUCT RELEASED",
+            },
+          ],
+        },
+      },
       {
         $lookup: {
           from: "customers",
@@ -1161,9 +1180,29 @@ async function monthRecAgg(obj) {
 async function monthOrderAgg(obj) {
   try {
     const { site, yearInt, product, monthInt } = obj;
+    const dayInt = 1;
+    const dayEndInt = 31;
+    const tdate = new Date(yearInt +'-'+monthInt+'-'+dayInt);
+    const tdate2 = new Date(yearInt +'-'+monthInt+'-'+dayEndInt);
+    const start = moment(tdate).startOf("day").toDate();
+        // end day
+    const end = moment(tdate2).endOf("day").toDate();
+    console.log( site, start, end, "tdate start end order")
 
     return await FidoOrder.aggregate([
       { $unwind: "$products" },
+      {
+        $match: {
+          $and: [
+            {
+              "site": site,
+              "createdAt": {$gte: start, $lte: end},
+              "products.name": product,
+              "orderType": "NORMAL",
+            },
+          ],
+        },
+      },
       {
         $lookup: {
           from: "customers",
@@ -1224,9 +1263,32 @@ async function monthOrderAgg(obj) {
 async function yearOrderAgg(obj) {
   try {
     const { site, yearInt, product } = obj;
+    const monthInt = 1;
+    const dayInt = 1;
+    const dayEndInt = 31;
+    const monthEndInt = 12;
+    
+    const ddate = new Date(yearInt + '-' + monthInt + '-' + dayInt);
+    const ddate2 = new Date(yearInt + '-' + monthEndInt + '-' + dayEndInt);
+    const start = moment(ddate).startOf("day").toDate();
+        // end day
+    const end = moment(ddate2).endOf("day").toDate();
 
     return await FidoOrder.aggregate([
       { $unwind: "$products" },
+      {
+        $match: {
+          $and: [
+            {
+              "site": site,
+              "createdAt": {$gte: start, $lte: end},
+              
+              "orderType": "NORMAL",
+              "products.name": product
+            },
+          ],
+        },
+      },
       {
         $lookup: {
           from: "customers",
@@ -1286,9 +1348,33 @@ async function yearRecAgg(obj) {
   try {
     const { site, yearInt, product } = obj;
     console.log(obj, 'yearRecAgg')
+    const monthInt = 1;
+    const dayInt = 1;
+    const dayEndInt = 31;
+    const monthEndInt = 12;
+    
+    const ddate = new Date(yearInt + '-' + monthInt + '-' + dayInt);
+    const ddate2 = new Date(yearInt + '-' + monthEndInt + '-' + dayEndInt);
+    const start = moment(ddate).startOf("day").toDate();
+        // end day
+    const end = moment(ddate2).endOf("day").toDate();
+
+
 
     return await Recupload.aggregate([
       { $unwind: "$products" },
+      {
+        $match: {
+          $and: [
+            {
+              "terminal_location": site,
+              "createdAt": {$gte: start, $lte: end},
+              "action_taken": "PRODUCT RELEASED",
+              "products.name": product
+            },
+          ],
+        },
+      },
       {
         $lookup: {
           from: "customers",
@@ -1324,18 +1410,18 @@ async function yearRecAgg(obj) {
           totalQty: { $sum: "$products.qty" },
         },
       },
-      {
-        $match: {
-          $and: [
-            {
-              "_id.site": site,
-              "_id.year": yearInt,
-              "_id.product": product,
-              "_id.action": "PRODUCT RELEASED",
-            },
-          ],
-        },
-      },
+      // {
+      //   $match: {
+      //     $and: [
+      //       {
+      //         "_id.site": site,
+      //         "_id.year": yearInt,
+      //         "_id.product": product,
+      //         "_id.action": "PRODUCT RELEASED",
+      //       },
+      //     ],
+      //   },
+      // },
 
       { $sort: { "_id.year": 1, "_id.month": -1, totalQty: -1 } },
       // { $limit: 200 },

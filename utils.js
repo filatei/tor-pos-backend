@@ -883,20 +883,50 @@ async function weekAgg(obj) {
     return { error: error };
   }
 }
+function getDateOfISOWeek(w, y) {
+  var simple = new Date(y, 0, 1 + (w - 1) * 7);
+  var dow = simple.getDay();
+  var ISOweekStart = simple;
+  if (dow <= 4)
+      ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
+  else
+      ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
+  return ISOweekStart;
+}
 
 async function weekOrderAgg(obj) {
   try {
-    const { site, yearInt, product, weekInt } = obj;
 
-    console.log(
-      yearInt,
-      weekInt,
-      site,
-      product,
-      "  yearint, weekint, site product utils"
-    );
+    const { site, yearInt, product, weekInt, date } = obj;
+    const ddate = getDateOfISOWeek(weekInt, yearInt);
+    //  date is start date of week
+    
+    const dayInt = 1;
+    const tdate = new Date(ddate);
+
+    const dayEndInt = new Date(ddate).getDate() + 6;
+    const monthInt = new Date(ddate).getMonth() + 1;
+    // console.log(date, ddate, dayEndInt, monthInt, ' indate wkdate rec')
+    
+    const tdate2 = new Date(yearInt + '-' + monthInt + '-' + dayEndInt);
+    const start = moment(tdate).startOf("day").toDate();
+        // end day
+    const end = moment(tdate2).endOf("day").toDate();
+
     return await FidoOrder.aggregate([
       { $unwind: "$products" },
+      {
+        $match: {
+          $and: [
+            {
+             "createdAt": {$gt: start, $lte: end},
+              "site": site,
+              "products.name": product,
+              "orderType": "NORMAL",
+            },
+          ],
+        },
+      },
       {
         $lookup: {
           from: "customers",
@@ -961,17 +991,48 @@ async function weekOrderAgg(obj) {
 
 async function weekRecAgg(obj) {
   try {
-    const { site, yearInt, product, weekInt } = obj;
+    const { site, yearInt, product, weekInt, date } = obj;
+    const ddate = getDateOfISOWeek(weekInt, yearInt);
+    //  date is start date of week
+    
+    const dayInt = 1;
+    const tdate = new Date(ddate);
+
+    const dayEndInt = new Date(ddate).getDate() + 6;
+    const monthInt = new Date(ddate).getMonth() + 1;
+    console.log(date, ddate, dayEndInt, monthInt, ' indate wkdate rec')
+
+    
+    const tdate2 = new Date(yearInt + '-' + monthInt + '-' + dayEndInt);
 
     console.log(
+      ddate,
       yearInt,
       weekInt,
       site,
       product,
-      "  yearint, weekint, site product utils"
+      dayEndInt,
+      tdate2,
+      "  isodate, yearint, weekint, site product, dayEnd, tdate2, utils"
     );
+    const start = moment(tdate).startOf("day").toDate();
+        // end day
+    const end = moment(tdate2).endOf("day").toDate();
+
     return await Recupload.aggregate([
       { $unwind: "$products" },
+      {
+        $match: {
+          $and: [
+            {
+             "createdAt": {$gt: start, $lte: end},
+              "terminal_location": site,
+              "products.name": product,
+              "action_taken": "PRODUCT RELEASED",
+            },
+          ],
+        },
+      },
       {
         $lookup: {
           from: "customers",

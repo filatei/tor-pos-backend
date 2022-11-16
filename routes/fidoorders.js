@@ -852,6 +852,7 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
             weekInt: weekInt-1,
             yearInt,
             site,
+            date,
             product,
           };
     
@@ -862,6 +863,7 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
               yearInt,
               weekInt: weekInt-1,
               site,
+              date,
               product: product2,
             };
            

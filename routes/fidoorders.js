@@ -375,9 +375,8 @@ router.delete("/:id", checkAuth, async (req, res, next) => {
 
     const orders = await FidoOrder.find({_id: {$in: ids}}).lean();
     if ( orders && orders.length ) {
-      qualifiedForDeletion = orders.filter(o => ['PAID', 'DELIVERED', 'LOADED' ].includes(o.status) ).map(oo => oo._id);
+      qualifiedForDeletion = orders.filter(o => ['PAID'].includes(o.status) ).map(oo => oo._id);
     }
-    console.log(qualifiedForDeletion, 'qualifiedfordele')
 
     if (qualifiedForDeletion && qualifiedForDeletion.length) {
       const deleted = await FidoOrder.deleteMany( {_id: { $in: qualifiedForDeletion }} )

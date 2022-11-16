@@ -249,7 +249,6 @@ async function sendExpense(expense, userId = null) {
     // const subject = subject;
     const body = html;
     let model = { sender, to, cc, subject, body };
-    // const saveMess = await saveMessage(model);
 
     model = {
       fromText: "ShopTorama",
@@ -415,7 +414,6 @@ async function sendProduceexpense(expense, userId = null) {
     // const subject = subject;
     const body = html;
     let model = { sender, to, cc, subject, body };
-    // const saveMess = await saveMessage(model);
 
     model = {
       fromText: "ShopTorama",
@@ -517,7 +515,6 @@ async function sendNote(note, expense) {
     const image = note.image ? note.image : "";
     const body = html;
     let model = { sender, to, cc, subject, body, image };
-    // const saveMess = await saveMessage(model);
 
     model = {
       fromText: "ShopTorama",
@@ -599,8 +596,6 @@ async function sendQaNote(note, item) {
     const body = html;
     const image = note.image ? note.image : "";
     let model = { sender, to, cc, subject, body, link, image };
-    // const saveMess = await saveMessage(model);
-    console.log(" Message Saved ", saveMess);
 
     model = {
       fromText: "ToramaQA",
@@ -827,7 +822,6 @@ async function sendCashdeposit(item, user) {
     // const subject = subject;
     const body = html;
     let model = { sender, to, cc, subject, body };
-    // const saveMess = await saveMessage(model);
 
     model = {
       fromText: "ToramaDeposit",
@@ -928,8 +922,6 @@ async function verifyAuth(userId, verify,otp) {
     const cc = "auth@torama.ng";
     const body = html;
     let model = { sender, to, cc, subject, body };
-    // const saveMess = await saveMessage(model);
-    console.log(" Message Saved ", saveMess);
 
     model = {
       fromText: "ToramaAuth",
@@ -993,7 +985,6 @@ async function sendDailyReport(report, user) {
     const cc = "auth@torama.ng";
     const body = html;
     let model = { sender, to, cc, subject, body };
-    const saveMess = await saveMessage(model);
 
     model = {
       fromText: fromText,
@@ -1079,8 +1070,6 @@ async function sendGenActivity(report, user) {
     const sender = process.env.tormail;
     const bcc = "odia.gabriel@gtsng.com";
     // let model = { sender, to, cc, subject, body };
-    // const saveMess = await saveMessage(model);
-    // console.log(" Message Saved ", saveMess);
 
     model = {
       fromText: fromText,
@@ -1216,7 +1205,6 @@ async function sendPeopleMail(record) {
         const bcc = bccMail;
         const body = html;
         let model;
-        // const saveMess = await saveMessage(model);
 
         model = {
           fromText: "Human Manager",
@@ -1423,7 +1411,6 @@ async function deletePeopleMail(record, deleterId) {
         const bcc = bccMail;
         const body = html;
         let model;
-        // const saveMess = await saveMessage(model);
 
         model = {
           fromText: "Human Manager",
@@ -1649,8 +1636,6 @@ async function forgotPassword(userId, otp) {
     const cc = "auth@torama.ng";
     const body = html;
     let model = { sender, to, cc, subject, body };
-    // const saveMess = await saveMessage(model);
-    // console.log(" Message Saved ", saveMess);
 
     model = {
       fromText: "ToramaAuth",

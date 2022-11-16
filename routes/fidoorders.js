@@ -371,10 +371,13 @@ router.delete("/:id", checkAuth, async (req, res, next) => {
   if (typeof ids === 'object') {
     //  delete many
     //  filter the ids if object and remove ids of orders that are beyond paid
+  
+
     const orders = await FidoOrder.find({_id: {$in: ids}}).lean();
     if ( orders && orders.length ) {
       qualifiedForDeletion = orders.filter(o => ['PAID', 'DELIVERED', 'LOADED' ].includes(o.status) ).map(oo => oo._id);
     }
+    console.log(qualifiedForDeletion, 'qualifiedfordele')
 
     if (qualifiedForDeletion && qualifiedForDeletion.length) {
       const deleted = await FidoOrder.deleteMany( {_id: { $in: qualifiedForDeletion }} )
@@ -389,8 +392,9 @@ router.delete("/:id", checkAuth, async (req, res, next) => {
   } else {
     const order = await FidoOrder.findById(ids)
 
-    if(order && order.status !== 'PAID') {
-      return res
+    if(order && !['PAID', 'DELIVERED', 'LOADED' ].includes(order.status)  ) {
+      // if(order && order.status !== 'PAID') {
+        return res
       .status(401)
       .json({ message: "deletion failed ...Status already beyond PAID!" });
     }

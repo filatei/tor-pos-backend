@@ -184,7 +184,9 @@ router.get("", checkAuth, (req, res, next) => {
 
 
 router.get("/all", checkAuth, async (req, res, next) => {
-  // get all UNIQUE chats that this user sent  or received 
+
+  try {
+    // get all UNIQUE chats that this user sent  or received 
   const pageSize = +req.query.pagesize;
   // const receiverId = req.query.receiverId;
   // const creator = req.userData.userId;
@@ -208,7 +210,8 @@ router.get("/all", checkAuth, async (req, res, next) => {
   //  count = await chatQuery.countDocuments()
   chatQuery
     .then((documents) => {
-      // console.log('chats', documents);
+      console.log('chats', documents);
+
       
       const uniqueChats = makeUnique(documents, userId);
       // console.log(uniqueChats, 'unique chats main')
@@ -219,10 +222,19 @@ router.get("/all", checkAuth, async (req, res, next) => {
       });
     })
     .catch((error) => {
+      console.log(error)
       res.status(500).json({
         chat: "Fetching chats failed! " + error,
       });
     });
+  } catch (error) {
+
+    console.log(error)
+    res.status(500).json({
+      chat: "Try error -  chats failed! " + error,
+    });
+  }
+  
 });
 router.get("/:id", (req, res, next) => {
   Chat.findById(req.params.id)
@@ -253,7 +265,7 @@ function makeUnique(chatsArray, currentUserId) {
 
   Object.entries(chatsGrpByCreator).forEach(([key, value]) => {
     const lastChat = castArray(value).pop(); // pick the last chat which is more recent
-    if (lastChat.creator._id !== currentUserId) {
+    if ( lastChat && lastChat.creator &&  lastChat.creator?._id !== currentUserId) {
       creators.push({ creatorName:lastChat.creator.name, receiverName:lastChat.receiver.name, 
         timeStamp: lastChat.timeStamp, msg: lastChat.msg,
         creatorId:lastChat.creator._id, 
@@ -268,7 +280,8 @@ function makeUnique(chatsArray, currentUserId) {
 
   Object.entries(chatsGrpByReceiver).forEach(([key, value]) => {
     const lastChat = castArray(value).pop(); // pick the last chat which is more recent
-    if (lastChat.receiver._id !== currentUserId) {
+    if ( lastChat && lastChat.receiver && lastChat.receiver?._id !== currentUserId) {
+
       receivers.push({ creatorName:lastChat.creator.name, receiverName:lastChat.receiver.name, 
         timeStamp: lastChat.timeStamp, msg: lastChat.msg,
         creatorId:lastChat.creator._id, 

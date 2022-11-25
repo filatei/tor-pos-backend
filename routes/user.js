@@ -327,7 +327,9 @@ router.post("/signup", async (req, res, next) => {
 });
 
 router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
-  let userObj = req.body;
+
+  try {
+    let userObj = req.body;
   userObj._id = req.params.id;
   // userData  was added to checkAuth middleware and passed along
   // console.log('id params', req.params.id)
@@ -335,7 +337,7 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
   let path;
   if (!req.body.name || !req.body.email) {
     return res.status(500).json({
-      message: "Empty Update request. name or email cant be empty " + error,
+      message: "Empty Update request. name or email cant be empty "
     });
   }
   if (req.file) {
@@ -369,6 +371,14 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
         message: "Couldn't update user! " + error,
       });
     });
+    
+  } catch (error) {
+    return res.status(401).json({
+      message: "Error " + error
+    });
+    
+  }
+  
 });
 
 router.put("/updateRole/:id", checkAuth, async (req, res, next) => {

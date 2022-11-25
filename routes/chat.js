@@ -58,7 +58,6 @@ router.post("", checkAuth, upload.single("image"), async  (req, res, next) => {
   try {
     // const { msg, receiverId } = req.body;
     const obj = req.body;
-    // console.log(obj, 'chat obj');
     obj.creator = req.userData.userId;
 
     const creatorJwt = jwt.sign(
@@ -210,7 +209,7 @@ router.get("/all", checkAuth, async (req, res, next) => {
   //  count = await chatQuery.countDocuments()
   chatQuery
     .then((documents) => {
-      console.log('chats', documents);
+      // console.log('chats', documents);
 
       
       const uniqueChats = makeUnique(documents, userId);
@@ -313,7 +312,6 @@ function makeUnique(chatsArray, currentUserId) {
         name: lastVChat.name});
   });
 
-  // console.log(uniqueChats, 'unique Chats')
   return uniqueChats;
 }
 

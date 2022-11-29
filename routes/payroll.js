@@ -406,6 +406,7 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
 
           if (payee && payee?._id)  {
             row.payee = payee._id;
+            row.jobName = payee.jobName;
           } else {
             console.log('ID not in db');
             return res.status(500).json({

@@ -402,7 +402,6 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           if (!payee.status) {
             const payeeUpdateStatus = await People.updateOne({_id:payee._id},{ status: 'ACTIVE'})
           }
-         
 
           if (payee && payee?._id)  {
             row.payee = payee._id;
@@ -418,7 +417,6 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
           if (row['PAY START DATE']) {
             const dt = row['PAY START DATE'].split('/');
-            console.log(dt)
             row.payStartDate = new Date(dt[2], dt[1]-1, dt[0])
           } else {
             // 
@@ -426,7 +424,6 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
 
           if (row['PAY END DATE']) {
             const dt = row['PAY END DATE'].split('/');
-            console.log(dt)
             row.payEndDate = new Date(dt[2], dt[1]-1, dt[0])
 
             const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -515,17 +512,17 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
           if (row['BANK ACCOUNT']) {
             row.bankAccount = row['BANK ACCOUNT']?.trim();
             const bankUpdate = await People.updateOne({ name: row.name }, { bankAccount: row.bankAccount });
-            if (bankUpdate) {
-              console.log("updated bank account of", row.name, bankUpdate);
-            }
+            // if (bankUpdate) {
+            //   console.log("updated bank account of", row.name, bankUpdate);
+            // }
           }
 
           if (row['ACCOUNT NUMBER']) {
             row.bankAccount = row['ACCOUNT NUMBER']?.trim();
             const bankUpdate = await People.updateOne({ name: row.name }, { bankAccount: row.bankAccount });
-            if (bankUpdate) {
-              console.log("updated bank account of", row.name, bankUpdate);
-            }
+            // if (bankUpdate) {
+            //   // console.log("updated bank account of", row.name, bankUpdate);
+            // }
           }
 
           if (row['COMPANY']) {
@@ -629,14 +626,27 @@ router.post("/csv", checkAuth, csvUpload.any(), async function (req, res, next) 
                 // const { MongoError } = require('mongodb')
                 const payroll = new Payroll(p);
                 inserted = await payroll.save();
+                // console.log(inserted, 'inserted')
                 if(inserted) {
                   insertedIDs.push(inserted);
                 }
 
               } catch (error) {
-                console.log('message', error._message,'errors ', error.errors)
+                console.log('message', error._message,'errors ', error.errors, p.name)
+                // delete all inserted ids
+                insertedIDs.forEach(i => {
+                  console.log('deleting...', i._id, i.name);
+                 
+                  Payroll.deleteOne({ _id: i._id }).then(function(){
+                    console.log("Data deleted"); // Success
+                  }).catch(function(error){
+                      console.log(error); // Failure
+                  });
+                })
 
-                return res.status(500).json({ message: "Error adding Payroll " + error })
+
+
+                return res.status(500).json({ message: "Error adding Payroll " + error + ' '+ p.name })
               }
               
             }

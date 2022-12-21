@@ -167,7 +167,7 @@ async function sendExpense(expense, userId = null) {
 
   if (hostname.includes("torama")) {
     bcc = "expenses@torama.ng";
-    url = "https://posclaims.torama.ng";
+    url = "https://fido.torama.ng";
   } else {
     toEmail = null;
     userEmail = "filatei@gtsng.com";
@@ -578,7 +578,7 @@ async function sendQaNote(note, item) {
     toEmail = "qaqc@torama.ng";
     notesEmail = userEmail;
     creatorEmail = creatorEmail;
-    link = `https://posclaims.torama.ng/#/home/qaqc-detail/${item._id}`;
+    link = `https://fido.torama.ng/#/home/qaqc-detail/${item._id}`;
   } else {
     toEmail = "filatei@gtsng.com";
     notesEmail = "";
@@ -644,7 +644,7 @@ async function sendQaqc(item) {
       toEmail = "qaqc@torama.ng";
       notesEmail = userEmail;
       creatorEmail = itemCreator.email;
-      link = `https://posclaims.torama.ng/#/home/qaqc-detail/${item._id}`;
+      link = `https://fido.torama.ng/#/home/qaqc-detail/${item._id}`;
     } else {
       toEmail = null;
       notesEmail = user.Email;
@@ -746,7 +746,7 @@ async function sendImprest(item, user) {
     if (hostname.includes("torama")) {
       toEmail = "expenses@torama.ng";
       creatorEmail = userEmail;
-      link = `https://posclaims.torama.ng/#/home/qaqc-detail/${item._id}`;
+      link = `https://fido.torama.ng/#/home/qaqc-detail/${item._id}`;
     } else {
       toEmail = null;
       creatorEmail = null;
@@ -807,7 +807,7 @@ async function sendCashdeposit(item, user) {
     if (hostname.includes("torama")) {
       toEmail = "expenses@torama.ng";
 
-      link = `https://posclaims.torama.ng/#/home/qaqc-detail/${item._id}`;
+      link = `https://fido.torama.ng/#/home/qaqc-detail/${item._id}`;
     } else {
       toEmail = 'cash@torama.ng';
       creatorEmail = null;
@@ -894,7 +894,7 @@ async function verifyAuth(userId, verify,otp) {
       toEmail = user.email;
       subject = "Confirm Your Email";
 
-      url = `https://posclaims.torama.ng/#/confirm-email/?token=${verify}`;
+      url = `https://fido.torama.ng/#/confirm-email/?token=${verify}`;
     } else {
       url = `http://localhost:8100/#/confirm-email/?token=${verify}`;
 
@@ -1615,9 +1615,7 @@ async function forgotPassword(userId, otp) {
     if (hostname.includes("torama")) {
       toEmail = user.email;
       subject = "Reset Password";
-      // url = `https://posclaims.torama.ng/#/change-password/?token=${resetLink}&email=${user.email}`;
     } else {
-      // url = `http://localhost:8100/#/change-password/?token=${resetLink}&email=${user.email}`;
 
       toEmail = "auth@torama.ng";
       subject = "Just a test";

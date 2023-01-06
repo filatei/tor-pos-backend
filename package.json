@@ -29,6 +29,7 @@
     "express-validator": "^6.6.1",
     "fast-csv": "^4.3.6",
     "flutterwave-node-v3": "^1.0.9",
+    "google-auth-library": "^8.7.0",
     "googleapis": "^39.2.0",
     "js-sha256": "^0.9.0",
     "json2csv": "^4.5.4",

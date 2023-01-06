@@ -1,5 +1,5 @@
 
-const User = require("../models/user");
+const User = require("../models/fia_user");
 const express = require("express");
 const router = express.Router();
 // google oauth stuff
@@ -228,58 +228,7 @@ router.post("/changePassword", async (req, res, next) => {
   }
 });
 
-router.post("/login", async (req, res, next) => {
-  try {
-    // console.log(req.body, "users/login");
-    const vuser = await User.findOne({ email: req.body.email });
 
-    if (!vuser) {
-      return res.status(401).json({
-        message: "Authentication failed. invalid credentials",
-      });
-    }
-
-    // is email verified?
-    if (vuser && vuser.verify) {
-      return res
-        .status(500)
-        .json({ message: "Your Email not Verified. Check your inbox" });
-    }
-
-    // console.log("fetcheduser ", vuser);
-    const result = await bcrypt.compare(req.body.password, vuser.password);
-    // console.log(result, " compare passwd from users/login");
-    if (!result) {
-      return res.status(401).json({
-        message: "Authentication failed.",
-      });
-    }
-    const token = jwt.sign(
-      {
-        email: vuser.email,
-        userId: vuser._id,
-        name: vuser.name,
-        role: vuser.role ? vuser.role : null,
-        site: vuser.site ? vuser.site : null,
-      },
-      process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "1000h" }
-    );
-
-    return res.status(200).json({
-      token: token,
-      expiresIn: 360000,
-      userId: vuser._id,
-      email: vuser.email,
-      name: vuser.name,
-      site: vuser.site,
-      role: vuser.role,
-      image: vuser.image,
-    });
-  } catch (err) {
-    return res.status(500).json({ message: "Error in code block " + err });
-  }
-});
 
 router.post("/fiaLogin", async (req, res, next) => {
   try {
@@ -289,7 +238,6 @@ router.post("/fiaLogin", async (req, res, next) => {
     // console.log(idToken, 'idToken')
     // secret is google_secret
     const secret = FIA_GOOGLE_CLIENT_SECRET;
-    console.log(secret, 'secret')
     const ticket = await fia_client.verifyIdToken({
       idToken: idToken,
       audience: FIA_GOOGLE_CLIENT_ID,  // Specify the CLIENT_ID of the app that accesses the backend
@@ -312,12 +260,13 @@ router.post("/fiaLogin", async (req, res, next) => {
   // const domain = payload['hd'];
   
     // we need to store userId, email, name, 
-    const update = {userId,name,domain:hd, image:picture,email};
+    const update = {userId,name,family_name, given_name, domain:hd, image:picture,email};
     let doc = await User.findOneAndUpdate({email:email}, update, {
       new: true,
       upsert: true // Make this update into an upsert
     });
-    // const vuser = await User.findOne({ email: email });
+    // const vuser = await User.findOne({ userId: userId });
+    // if (!vuser) throw error;
     // console.log(vuser, 'vuser')
     
 
@@ -332,7 +281,7 @@ router.post("/fiaLogin", async (req, res, next) => {
     const token = jwt.sign(
       {
         email,
-        userId,
+        userId
       },
       process.env.ACCESS_TOKEN_SECRET,
       { expiresIn: "1000h" }

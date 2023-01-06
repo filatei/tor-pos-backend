@@ -15,11 +15,13 @@ const app = express();
 
 const paymethodsRoutes = require("./routes/paymethods");
 const productsRoutes = require("./routes/products");
+const fiaProductsRoutes = require("./routes/fia_products");
 const customersRoutes = require("./routes/customers");
 const ordersRoutes = require("./routes/orders");
 const fidoordersRoutes = require("./routes/fidoorders");
 
 const userRoutes = require("./routes/user");
+const userFiaRoutes = require("./routes/fia_user");
 const fileRoutes = require("./routes/file");
 const printRoutes = require("./routes/print");
 const receiptRoutes = require("./routes/receipts");
@@ -28,6 +30,7 @@ const claimRoutes = require("./routes/claims.route");
 const recUploadRoutes = require("./routes/recuploads");
 const recsummary = require("./routes/recsummary");
 const category = require("./routes/category");
+const fiacategory = require("./routes/fia_category");
 const card = require("./routes/card");
 const terminal = require("./routes/terminal");
 const fidositeRoutes = require("./routes/fidosites");
@@ -162,10 +165,12 @@ mongoose
 
 app.use("/api/paymethods", paymethodsRoutes);
 app.use("/api/products", productsRoutes);
+app.use("/api/fiaproducts", fiaProductsRoutes);
 app.use("/api/customers", customersRoutes);
 app.use("/api/orders", ordersRoutes);
 app.use("/api/fidoorders", fidoordersRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/fiausers", userFiaRoutes);
 app.use("/api/files", fileRoutes);
 app.use("/api/prints", printRoutes);
 app.use("/api/receipts", receiptRoutes);
@@ -174,6 +179,7 @@ app.use("/api/claims", claimRoutes);
 app.use("/api/recuploads", recUploadRoutes);
 app.use("/api/recsummary", recsummary);
 app.use("/api/productcategory", category);
+app.use("/api/fiaproductcategory", fiacategory);
 app.use("/api/cards", card);
 app.use("/api/terminals", terminal);
 app.use("/api/eod", eodRoutes);

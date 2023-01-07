@@ -255,7 +255,7 @@ router.post("/fiaLogin", async (req, res, next) => {
     name = payload['name'];
     const hd = payload['hd']; // domain
 
-  console.log(payload, userId, 'payload userId')
+  // console.log(payload, userId, 'payload userId')
   // If request specified a G Suite domain:
   // const domain = payload['hd'];
   
@@ -284,7 +284,7 @@ router.post("/fiaLogin", async (req, res, next) => {
         userId
       },
       process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "1000h" }
+      { expiresIn: "100h" }
     );
 
     return res.status(200).json({
@@ -502,10 +502,9 @@ router.get("/:id", checkAuth, async (req, res, next) => {
 
 router.delete("/:id", checkAuth, async (req, res, next) => {
   if (!req.params.id) return res.status(401).json({ error: "empty id" });
-  const alloweds = process.env.DIRECTORS;
+  const alloweds = ['ADMIN', 'GENERAL MANAGER'];
 
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to delete Receipts");
+  if (!alloweds.includes(req.userData.role)) {
     return res.status(500).json({ message: "Not allowed" });
   }
 

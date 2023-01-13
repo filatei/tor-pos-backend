@@ -3,8 +3,8 @@ const uniqueValidator = require('mongoose-unique-validator');
 
 const productSchema = mongoose.Schema({
     name: {type: String, required: true, unique: true, collation:{ locale: "en", strength: 3 }},
-    creator: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
-    updater: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
+    creator: {type: mongoose.Schema.Types.ObjectId, ref: 'FiaUser'},
+    updater: {type: mongoose.Schema.Types.ObjectId, ref: 'FiaUser'},
     description: {type: String},
     price: {type: Number, required: true},
     costprice: {type: Number},

@@ -12,7 +12,6 @@ module.exports = async (req, res, next) => {
     if (token === 'null' || token === '' || token === null || token === 'undefined') {
       return res.status(401).send('Unauthorized request');
     }
-    
 
     const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 

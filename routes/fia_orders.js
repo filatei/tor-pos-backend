@@ -215,52 +215,43 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
               shopObj.charged_amount = response.data.charged_amount;
               shopObj.amount_settled = response.data.amount_settled;
               shopObj.status = 'PAID'
-              const shoporder = new Order(shopObj);
-
-              shoporder
-                .save()
-                .then(async (result) => {
-                  console.log(result, 'result')
-                  res.status(201).json({
-                    message: "fiafia Order added successfully",
-                    shoporder:result,
-                    payStatus: shopObj.status
-                  });
-                  // sendMail(result);
-                })
-                .catch((error) => {
-                  res.status(500).json({
-                    message: "Creating a fiafia order failed! " + error,
-                    
-                  });
-                });
+              saveOrder();
+              
             // Success! Confirm the customer's payment
         } else {
             shopObj.status = 'NOT PAID';
-            const shoporder = new Order(shopObj);
-
-              shoporder
-                .save()
-                .then(async (result) => {
-                  console.log(result, 'result')
-                  res.status(201).json({
-                    message: "fiafia Order added successfully",
-                    shoporder:result,
-                    payStatus: shopObj.status
-                  });
-                  // sendMail(result);
-                })
-                .catch((error) => {
-                  res.status(500).json({
-                    message: "Creating a fiafia order failed! " + error,
-                    
-                  });
-                });
+            saveOrder()
             
             // Inform the customer their payment was unsuccessful
         }
     })
-    .catch(console.log);
+    .catch(err => {
+      res.status(500).json({
+        message: err
+      })
+    });
+
+    function saveOrder() {
+      const shoporder = new Order(shopObj);
+
+              shoporder
+                .save()
+                .then(async (result) => {
+                  console.log(result, 'result')
+                  res.status(201).json({
+                    message: "fiafia Order added successfully",
+                    shoporder:result,
+                    payStatus: shopObj.status
+                  });
+                  // sendMail(result);
+                })
+                .catch((error) => {
+                  res.status(500).json({
+                    message: "Creating a fiafia order failed! " + error,
+                    
+                  });
+                });
+    }
   
   
   // if (shopObj.action_taken === "PRODUCT RELEASED") {

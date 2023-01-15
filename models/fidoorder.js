@@ -8,6 +8,8 @@ const fidoorderSchema = mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Customer",
     },
+    response_frontend: {},
+    response_backend: {},
     contactPhone: { type: String },
     contactEmail: { type: String },
     pay_type: { type: String },

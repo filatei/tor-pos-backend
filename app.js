@@ -68,6 +68,7 @@ const casualRoutes = require("./routes/casual");
 const callRoutes = require("./routes/callmanager");
 const pgbyRoutes = require("./routes/payrollgrpbyyrmonthstatus");
 const chatRoutes = require("./routes/chat");
+const chatgptRoutes = require("./routes/chat-gpt");
 
 
 
@@ -216,6 +217,7 @@ app.use("/api/payroll", payRoutes);
 app.use("/api/callManager", callRoutes);
 app.use("/api/pgby", pgbyRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/chatgpt", chatgptRoutes);
 
 
 

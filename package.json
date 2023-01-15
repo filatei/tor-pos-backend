@@ -45,6 +45,7 @@
     "node-thermal-printer": "^4.1.2",
     "nodemailer": "^6.4.11",
     "nodemon": "^2.0.2",
+    "openai": "^3.1.0",
     "pdf-creator-node": "^2.3.4",
     "pdfkit": "^0.13.0",
     "q": "^1.5.1",

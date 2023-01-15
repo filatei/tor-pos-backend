@@ -29,6 +29,17 @@ let PRODUCTNAME = { "INCENTIVE": "INCENTIVE","Pure Water": "PUREWATER", "19L Dis
 
 const ObjectId = require('mongoose').Types.ObjectId;
 
+const Flutterwave = require('flutterwave-node-v3');
+let flw;
+if (hostname.includes('torama.ng')) {
+   flw = new Flutterwave(tokens.FLW_PUBLIC_KEY, tokens.FLW_SECRET_KEY);
+
+} else {
+   flw = new Flutterwave(tokens.FLW_PUBLIC_KEY_TEST, tokens.FLW_SECRET_KEY_TEST);
+}
+
+
+
 var multer = require("multer");
 const DIR = "/var/www/uploads/fidoorderimages/";
 const storage = multer.diskStorage({
@@ -110,38 +121,26 @@ const { setMinutes } = require("date-fns");
 
 router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
   try {
-
     if (!req.userData.role) {
       return res.status(401).json({ message: "Not allowed to create Orders" });
     }
 
     let url = "";
     let shopObj = req.body;
-
-    if (!shopObj.customer || shopObj.customer === undefined) {
-      return res
-        .status(204)
-        .json({ message: "check your data. empty customer?" });
-    }
-
-    if (req.file) {
-      if (hostname.includes("torama.ng")) {
-        url = "https://fido-api.torama.ng"  
-      } else {
-        url = req.protocol + "://" + req.get("host");
+    Object.entries(shopObj).forEach(([key, value]) => {
+      if (
+        !value ||
+        value === undefined ||
+        value === null ||
+        value === "null" ||
+        value === "undefined"
+      ) {
+        delete shopObj[key];
       }
-      const fPath = url + "/" + req.file.path;
-      shopObj.image = fPath.replace('/var/www/','');
-      console.log(shopObj.path, 'image Path')
-
-    }
+    });
 
     shopObj.creator = req.userData.userId;
-    if (shopObj.action_taken === "PRODUCT RELEASED") {
-      shopObj.status = "PAID";
-    } else {
-      shopObj.status = "NOT PAID";
-    }
+   
 
     if (shopObj.customer && typeof shopObj.customer === "object") {
       shopObj.customer = shopObj.customer._id;
@@ -157,20 +156,64 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
       latitude: geoLocation.latitude,
       longitude: geoLocation.longitude,
     };
-    
-    Object.entries(shopObj).forEach(([key, value]) => {
-      if (
-        !value ||
-        value === undefined ||
-        value === null ||
-        value === "null" ||
-        value === "undefined"
-      ) {
-        delete shopObj[key];
-      }
-    });
 
+  shopObj.response_frontend = JSON.parse(shopObj.response);
+  const transactionId = shopObj.response_frontend.transaction_id;
+  if (transactionId) {
+    flw.Transaction.verify({ id: transactionId })
+    .then((response) => {
+      shopObj.response_backend = response;
+      
+        if (
+            response.data.status === "successful"
+            && response.data.amount === shopObj.response_frontend.amount
+            && response.data.currency === shopObj.response_frontend.currency) {
+              console.log(response, 'backend response')
+              shopObj.charged_amount = response.data.charged_amount;
+              shopObj.amount_settled = response.data.amount_settled;
+              shopObj.status = 'PAID'
+              saveOrder(shopObj);
+              
+            // Success! Confirm the customer's payment
+        } else {
+            shopObj.status = 'NOT PAID';
+            saveOrder(shopObj)
+            // Inform the customer their payment was unsuccessful
+        }
+    })
+    .catch(err => {
+      console.log(err)
+      return res.status(500).json({
+        message: err
+      })
+    });
+  } else {
+    if (!shopObj.customer || shopObj.customer === undefined) {
+      return res
+        .status(204)
+        .json({ message: "check your data. empty customer?" });
+    }
+    if (shopObj.paymentMethod === 'FLUTTERWAVE') {
+      shopObj.status = 'NOT PAID'
+    } else if (shopObj.action_taken === "PRODUCT RELEASED") {
+      shopObj.status = "PAID";
+    } else { 
+      shopObj.status = "NOT PAID";
+    }
+
+
+    if (req.file) {
+      if (hostname.includes("torama.ng")) {
+        url = "https://fido-api.torama.ng"  
+      } else {
+        url = req.protocol + "://" + req.get("host");
+      }
+      const fPath = url + "/" + req.file.path;
+      shopObj.image = fPath.replace('/var/www/','');
+
+    }
     saveOrder(shopObj);
+  }
 
     function saveOrder(shopObj) {
       const fidoorder = new FidoOrder(shopObj);
@@ -201,6 +244,9 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
     }
     } catch (error) {
       console.log(error)
+      res.status(500).json({
+        message: "Creating a fidoorder failed! " + error,
+      });
     }
   
 });
@@ -509,14 +555,12 @@ router.post("/eodOrders", checkAuth, async (req, res, next) => {
 
   // end today
   var end = moment(start).endOf("day").toDate();
-
-    
-    const role = req.userData.role;
-    const userId = req.userData.userId
-    const site = req.userData.site
-    
-    let orders = req.body;
-    console.log(orders, 'orders')
+  const role = req.userData.role;
+  const userId = req.userData.userId
+  const site = req.userData.site
+  
+  let orders = req.body;
+  console.log(orders, 'orders')
 
     // orders = JSON.parse(orders)
 
@@ -547,21 +591,14 @@ router.post("/eodOrders", checkAuth, async (req, res, next) => {
     } else {
       return res.status(401).json({
         message: " Null Orders. Not Sent!",
-        
       });
     }
-    
-    
   } catch (error) {
     console.log(error)
     res.status(500).json({
       message: "Fetching fidoorders failed! " + error,
     });
   }
-  
- 
-
-  
 });
 
 router.get("/ordersbyuser", checkAuth, async (req, res, next) => {
@@ -967,9 +1004,6 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
       .status(500)
       .json({ message: "Server Error with fidoOrder summary try block" + err });
   }
-
-
-  
 });
 
 router.get('/todaySummary', checkAuth, async(req,res, next) => {
@@ -1101,7 +1135,8 @@ async function summarizeSiteOrders(orders, site) {
         }
 
         if( field === 'customer' ) {
-          orderRow = {...orderRow, CUSTOMER: row[field].name}
+          if ( row[field] && row[field].name)
+            orderRow = {...orderRow, CUSTOMER: row[field].name}
         }
 
         if( field === 'orderType' ) {
@@ -1117,7 +1152,8 @@ async function summarizeSiteOrders(orders, site) {
         }
 
         if( field === 'creator' ) {
-          orderRow = {...orderRow, USER: row[field].name}
+          if ( row[field] && row[field].name)
+            orderRow = {...orderRow, USER: row[field].name}
         }
 
 

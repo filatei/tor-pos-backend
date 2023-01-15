@@ -126,6 +126,7 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
     }
 
     let url = "";
+    let transactionId;
     let shopObj = req.body;
     Object.entries(shopObj).forEach(([key, value]) => {
       if (
@@ -157,8 +158,11 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
       longitude: geoLocation.longitude,
     };
 
-  shopObj.response_frontend = JSON.parse(shopObj.response);
-  const transactionId = shopObj.response_frontend.transaction_id;
+    if (shopObj.response) {
+      shopObj.response_frontend = JSON.parse(shopObj.response);
+      transactionId = shopObj.response_frontend.transaction_id;
+    }
+  
   if (transactionId) {
     flw.Transaction.verify({ id: transactionId })
     .then((response) => {

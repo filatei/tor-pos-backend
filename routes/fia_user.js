@@ -32,7 +32,6 @@ const storage = multer.diskStorage({
       "-" +
       file.originalname.toLowerCase().split(" ").join("-") +
       ".jpg";
-    console.log(fileName);
     cb(null, fileName);
   },
 });
@@ -228,15 +227,10 @@ router.post("/changePassword", async (req, res, next) => {
   }
 });
 
-
-
 router.post("/fiaLogin", async (req, res, next) => {
   try {
-    // console.log(req.body, "users/login");
     const {idToken } = req.body;
     let userId, email,name;
-    // console.log(idToken, 'idToken')
-    // secret is google_secret
     const secret = FIA_GOOGLE_CLIENT_SECRET;
     const ticket = await fia_client.verifyIdToken({
       idToken: idToken,
@@ -255,7 +249,6 @@ router.post("/fiaLogin", async (req, res, next) => {
     name = payload['name'];
     const hd = payload['hd']; // domain
 
-  // console.log(payload, userId, 'payload userId')
   // If request specified a G Suite domain:
   // const domain = payload['hd'];
   
@@ -265,10 +258,10 @@ router.post("/fiaLogin", async (req, res, next) => {
       new: true,
       upsert: true // Make this update into an upsert
     });
+    const role = doc.role;
+    const site = doc.site;
     // const vuser = await User.findOne({ userId: userId });
     // if (!vuser) throw error;
-    // console.log(vuser, 'vuser')
-    
 
     // is user in DB?
     // if user not in DB, store it and send new user (Welcome) signal to frontend
@@ -281,7 +274,8 @@ router.post("/fiaLogin", async (req, res, next) => {
     const token = jwt.sign(
       {
         email,
-        userId
+        userId,
+        name, role, site
       },
       process.env.ACCESS_TOKEN_SECRET,
       { expiresIn: "100h" }
@@ -292,7 +286,7 @@ router.post("/fiaLogin", async (req, res, next) => {
       expiresIn: 360000,
       userId,
       name, image:picture,
-      email,
+      email,role, site
     });
   } catch (err) {
     return res.status(500).json({ message: "Error in code block " + err });
@@ -320,7 +314,6 @@ router.post("/signup", async (req, res, next) => {
 
   const salt = await bcrypt.genSalt(10)
   const otpHash = await bcrypt.hash(otp,salt)
-    console.log (otp, 'otp', 'hash ', otpHash)
 
   bcrypt.hash(req.body.password, 10).then((hash) => {
     const user = new User({
@@ -336,7 +329,6 @@ router.post("/signup", async (req, res, next) => {
     user
       .save()
       .then(async (result) => {
-        // console.log(result);
         delete result.password;
         await MyMail.verifyAuth(result._id, result.verify, otp);
         delete result.password;
@@ -359,8 +351,6 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
   try {
     let userObj = req.body;
   userObj._id = req.params.id;
-  // userData  was added to checkAuth middleware and passed along
-  // console.log('id params', req.params.id)
   let url = "";
   let path;
   if (!req.body.name || !req.body.email) {
@@ -377,14 +367,12 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
     path = url + "/uploads/userimages/" + req.file.filename;
   }
 
-  console.log(path, "path");
 
   userObj.updater = req.userData.userId;
   if (path) {
     userObj.image = path;
   }
 
-  // console.log (userObj);
   const user = new User(userObj);
   User.updateOne({ _id: req.params.id }, user)
     .then((result) => {

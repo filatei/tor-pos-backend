@@ -1,5 +1,6 @@
 const express = require("express");
 const Product = require("../models/product");
+const User = require("../models/user");
 const router = express.Router();
 const path = require("path");
 const fs = require("fs");
@@ -67,35 +68,38 @@ function logIncident(email, description) {
     });
 }
 
-router.post("", checkAuth, upload.single("image"), function (req, res, next) {
+router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
   let myPath = "";
   let url = "";
+  let prodObj = req.body;
+  const role = req.userData.role;
+  const alloweds = ['ADMIN', 'MANAGER', 'GENERAL MANAGER', 'SNR ACCOUNTANT'];
+  if ( !alloweds.includes(role) ) {
+    return res.status(500).json({
+      message: "Creating a product failed! " + error,
+    });
+  }
+  
+  prodObj.price = parseFloat(prodObj.price);
+  prodObj.taxRate = parseFloat(prodObj.taxRate) || 0;
+  
+
   if (req.file) {
     if (hostname.includes("torama")) {
       url = "https://fido-api.torama.ng";
     } else {
       url = req.protocol + "://" + req.get("host");
     }
-    // url = 'https://fido-api.torama.ng'
-    // console.log(url)
+    
     myPath = url + "/" + req.file.path.split('/var/www/')[1];
+    prodObj.icon = myPath;
     console.log(myPath, 'myPath')
   }
 
-  let prodObj = req.body;
-  if (prodObj.price) {
-    prodObj.price = parseInt(prodObj.price);
-  }
-  if (prodObj.taxRate) {
-    prodObj.taxRate = parseInt(prodObj.taxRate);
-  }
-
-  prodObj.creator = req.userData.userId;
+  prodObj.creator = await User.findOne({userId:req.userData.userId})._id;
 
   const product = new Product(prodObj);
-  product.icon = myPath;
-  console.log (product);
-
+  
   product
     .save()
     .then((result) => {
@@ -178,7 +182,6 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
   }
   
 });
-
 
 
 router.delete("/:id", checkAuth, (req, res, next) => {

@@ -80,6 +80,7 @@ router.post("", checkAuth, upload.single("image"), function (req, res, next) {
 
   let contactObj = req.body;
   contactObj.name = contactObj.name.toUpperCase();
+  console.log(req.userData)
 
   contactObj.creator = req.userData.userId;
 
@@ -227,6 +228,51 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   }
 });
 
+router.get("/getByText", checkAuth, async (req, res, next) => {
+  try {
+    const alloweds = ['ADMIN', 'MANAGER', 'GENERAL MANAGER', 'SECRETARY','SNR ACCOUNTANT', 'ACCOUNTANT', 'SUPERVISOR', 'POS OFFICER']
+
+    if (!alloweds.includes(req.userData.role)) {
+      return res.status(500).json({ message: "Not allowed" });
+    }
+
+    const { searchTerm } = req.query;
+    console.log (searchTerm, 'searchTerm')
+
+    let records;
+    const result = await Contact.aggregate([
+      { $match: { $text: { $search: searchTerm } } },
+    ])
+      .sort({ createdAt: -1 })
+      .limit(200);
+    
+
+    if (result) return res.status(200).json({ contacts: result });
+
+    Contact.find({ $text: { $search: searchTerm } })
+      .sort({ updatedAt: -1 })
+      .populate("creator")
+      .limit(200)
+      .then((record) => {
+        if (record) {
+          res.status(200).json({ contacts: record });
+        } else {
+          res.status(404).json({ message: "Contact record not found!" });
+        }
+      })
+      .catch((error) => {
+        res.status(500).json({
+          message: "Fetching record failed!" + error,
+        });
+      });
+    
+  } catch (error) {
+    console.log(error)
+    res.status(404).json({ message: "server try Block Error! " + error });
+  }
+  
+});
+
 router.get("", (req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
@@ -263,5 +309,6 @@ router.get("/:id", (req, res, next) => {
       });
     });
 });
+
 
 module.exports = router;

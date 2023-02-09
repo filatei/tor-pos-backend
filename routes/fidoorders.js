@@ -158,10 +158,10 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
       longitude: geoLocation.longitude,
     };
 
-    if (shopObj.response) {
-      shopObj.response_frontend = JSON.parse(shopObj.response);
-      transactionId = shopObj.response_frontend.transaction_id;
-    }
+  if (shopObj.response) {
+    shopObj.response_frontend = JSON.parse(shopObj.response);
+    transactionId = shopObj.response_frontend.transaction_id;
+  }
   
   if (transactionId) {
     flw.Transaction.verify({ id: transactionId })
@@ -204,7 +204,6 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
     } else { 
       shopObj.status = "NOT PAID";
     }
-
 
     if (req.file) {
       if (hostname.includes("torama.ng")) {
@@ -462,9 +461,11 @@ router.delete("/:id", checkAuth, async (req, res, next) => {
 router.get("", checkAuth, async (req, res, next) => {
   // if you are an ordinary user, you only see orders created in your site or by you
   try {
+    console.log('here')
     let pageSize = +req.query.pagesize;
     if (!pageSize) pageSize = 100;
     const role = req.userData.role;
+    console.log(role, 'role')
     const userId = req.userData.userId
     const site = req.userData.site
     let currentPage = +req.query.page;
@@ -498,6 +499,7 @@ router.get("", checkAuth, async (req, res, next) => {
       fidoorders: orders,
     });
   } catch (error) {
+    console.log(error)
     res.status(500).json({
       message: "Fetching fidoorders failed! " + error,
     });
@@ -676,7 +678,7 @@ router.get("/summary", checkAuth, async (req, res, next) => {
     const alloweds = req.userData.role;
     const allowedStaff = ['ADMIN', 'GENEAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT', 'MANAGER', 'SECRETARY', 'POS OFFICER', 'SUPERVISOR'];
 
-    if (!allowedStaff.includes(req.userData.role)) {
+    if (!allowedStaff.includes(alloweds)) {
       return 
       // res.status(500).json({ message: "Not allowed to summarise " + req.userData.role});
     }

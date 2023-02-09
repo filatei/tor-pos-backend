@@ -37,8 +37,11 @@ const contactSchema = mongoose.Schema({
 });
 
 contactSchema.plugin(AutoIncrement, { inc_field: 'contact_id' });
+contactSchema.index({ "$**": "text" });
 
 contactSchema.set('autoIndex', process.env.Node_Env != 'production');
 contactSchema.plugin( uniqueValidator );
+const rc = mongoose.model('Contact', contactSchema)
+rc.createIndexes();
 
-module.exports = mongoose.model('Contact', contactSchema)
+module.exports = rc;

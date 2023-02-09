@@ -69,14 +69,8 @@ router.post("", checkAuth, upload.single("image"), function (req, res, next) {
     } else {
       url = req.protocol + "://" + req.get("host");
     }
-    // url = 'https://fido-api.torama.ng'
-    // console.log(url)
     path = url + "/uploads/expenseitemimages/" + req.file.filename;
-    // console.log(path)
   }
-
-  // console.log('path: ', path)
-  // console.log('req.body', req.body)
 
   let expenseObj = req.body;
   expenseObj.name = expenseObj.name.toUpperCase();
@@ -224,6 +218,55 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   }
 });
 
+router.get("/getByText", checkAuth, async (req, res, next) => {
+  try {
+    const alloweds = ['ADMIN', 'MANAGER', 'GENERAL MANAGER', 'SECRETARY','SNR ACCOUNTANT', 'ACCOUNTANT', 'SUPERVISOR', 'POS OFFICER']
+
+    if (!alloweds.includes(req.userData.role)) {
+      return res.status(500).json({ message: "Not allowed" });
+    }
+
+    const { searchTerm } = req.query;
+    console.log(searchTerm,'searcterm')
+    const f2 = await Expenseitem.find({}).limit(2)
+
+    const result = await Expenseitem.aggregate([
+      { $match: { $text: { $search: searchTerm } } },
+    ])
+      .sort({ createdAt: -1 })
+      .limit(200);
+
+      console.log(result,'resul')
+    
+
+    if (result.length) return res.status(200).json({ expenseitem: result });
+
+    // Expenseitem.find({ $text: { $search: searchTerm } })
+    Expenseitem.find({ $text: { $search: searchTerm } })
+      .sort({ updatedAt: -1 })
+      .populate("creator")
+      .limit(200)
+      .then((record) => {
+        console.log(record, 'record')
+        if (record) {
+          res.status(200).json({ expenseitem: record });
+        } else {
+          res.status(404).json({ message: "record not found!" });
+        }
+      })
+      .catch((error) => {
+        res.status(500).json({
+          message: "Fetching record failed!" + error,
+        });
+      });
+    
+  } catch (error) {
+    console.log(error)
+    res.status(404).json({ message: "server try Block Error! " + error });
+  }
+  
+});
+
 router.get("", (req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
@@ -244,6 +287,7 @@ router.get("", (req, res, next) => {
       });
     });
 });
+
 router.get("/:id", (req, res, next) => {
   Expenseitem.findById(req.params.id)
     .then((expenseitem) => {

@@ -20,4 +20,10 @@ expenseitemSchema.plugin(AutoIncrement, { inc_field: 'expitem_id' });
 
 expenseitemSchema.plugin( uniqueValidator );
 
-module.exports = mongoose.model('Expenseitem', expenseitemSchema)
+expenseitemSchema.index({ "$**": "text" });
+
+expenseitemSchema.set('autoIndex', process.env.Node_Env != 'production');
+const rc = mongoose.model('Expenseitem', expenseitemSchema)
+rc.createIndexes();
+
+module.exports = rc;

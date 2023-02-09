@@ -4,6 +4,7 @@ const User = require('../models/fia_user.js')
 
 module.exports = async (req, res, next) => {
   try {
+    console.log( ' token ')
 
     if (!req.headers.authorization) {
       return res.status(401).send('Unauthorized request - fia');

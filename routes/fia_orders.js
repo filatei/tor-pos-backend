@@ -172,6 +172,7 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
 
   let url = "";
   let shopObj = req.body;
+  let transactionId
   // console.log(shopObj, 'shopobj')
   shopObj.paidAmount = parseInt(shopObj.paidAmount);
   shopObj.txn_amount = parseInt(shopObj.txn_amount);
@@ -200,36 +201,67 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
 
   shopObj.creator = req.userData.userId;
 
-  const transactionId = shopObj.response_frontend.transaction_id;
-  flw.Transaction.verify({ id: transactionId })
+  if (shopObj.response) {
+    shopObj.response_frontend = JSON.parse(shopObj.response);
+    transactionId = shopObj.response_frontend.transaction_id;
+  }
+  
+  if (transactionId) {
+    flw.Transaction.verify({ id: transactionId })
     .then((response) => {
       shopObj.response_backend = response;
       
         if (
-          
             response.data.status === "successful"
-            && response.data.amount === shopObj.paidAmount
+            && response.data.amount === shopObj.response_frontend.amount
             && response.data.currency === shopObj.response_frontend.currency) {
               console.log(response, 'backend response')
-              
               shopObj.charged_amount = response.data.charged_amount;
               shopObj.amount_settled = response.data.amount_settled;
               shopObj.status = 'PAID'
-              saveOrder();
+              saveOrder(shopObj);
               
             // Success! Confirm the customer's payment
         } else {
             shopObj.status = 'NOT PAID';
-            saveOrder()
-            
+            saveOrder(shopObj)
             // Inform the customer their payment was unsuccessful
         }
     })
     .catch(err => {
-      res.status(500).json({
+      console.log(err)
+      return res.status(500).json({
         message: err
       })
     });
+  } else {
+    if (!shopObj.customer || shopObj.customer === undefined) {
+      return res
+        .status(204)
+        .json({ message: "check your data. empty customer?" });
+    }
+    if (shopObj.paymentMethod === 'FLUTTERWAVE') {
+      shopObj.status = 'NOT PAID'
+    } else if (shopObj.action_taken === "PRODUCT RELEASED") {
+      shopObj.status = "PAID";
+    } else { 
+      shopObj.status = "NOT PAID";
+    }
+
+
+    if (req.file) {
+      if (hostname.includes("torama.ng")) {
+        url = "https://fido-api.torama.ng"  
+      } else {
+        url = req.protocol + "://" + req.get("host");
+      }
+      const fPath = url + "/" + req.file.path;
+      shopObj.image = fPath.replace('/var/www/','');
+
+    }
+    saveOrder(shopObj);
+  }
+
 
     function saveOrder() {
       const shoporder = new Order(shopObj);

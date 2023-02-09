@@ -32,7 +32,6 @@ const storage = multer.diskStorage({
       "-" +
       file.originalname.toLowerCase().split(" ").join("-") +
       ".jpg";
-    console.log(fileName);
     cb(null, fileName);
   },
 });
@@ -230,7 +229,6 @@ router.post("/changePassword", async (req, res, next) => {
 
 router.post("/login", async (req, res, next) => {
   try {
-    // console.log(req.body, "users/login");
     const vuser = await User.findOne({ email: req.body.email });
 
     if (!vuser) {
@@ -246,9 +244,7 @@ router.post("/login", async (req, res, next) => {
         .json({ message: "Your Email not Verified. Check your inbox" });
     }
 
-    // console.log("fetcheduser ", vuser);
     const result = await bcrypt.compare(req.body.password, vuser.password);
-    // console.log(result, " compare passwd from users/login");
     if (!result) {
       return res.status(401).json({
         message: "Authentication failed.",
@@ -277,19 +273,19 @@ router.post("/login", async (req, res, next) => {
       image: vuser.image,
     });
   } catch (err) {
+    console.log(err)
     return res.status(500).json({ message: "Error in code block " + err });
   }
 });
 
-router.post("/fiaLogin", async (req, res, next) => {
+router.post("/fidoLogin", async (req, res, next) => {
   try {
     // console.log(req.body, "users/login");
     const {idToken } = req.body;
-    let userId, email,name;
+    let userId, email, name;
     // console.log(idToken, 'idToken')
     // secret is google_secret
-    const secret = FIA_GOOGLE_CLIENT_SECRET;
-    console.log(secret, 'secret')
+    const secret = process.env.ACCESS_TOKEN_SECRET;
     const ticket = await fia_client.verifyIdToken({
       idToken: idToken,
       audience: FIA_GOOGLE_CLIENT_ID,  // Specify the CLIENT_ID of the app that accesses the backend
@@ -307,7 +303,6 @@ router.post("/fiaLogin", async (req, res, next) => {
     name = payload['name'];
     const hd = payload['hd']; // domain
 
-  console.log(payload, userId, 'payload userId')
   // If request specified a G Suite domain:
   // const domain = payload['hd'];
   
@@ -317,6 +312,76 @@ router.post("/fiaLogin", async (req, res, next) => {
       new: true,
       upsert: true // Make this update into an upsert
     });
+    console.log(doc, 'doc fido')
+    // const vuser = await User.findOne({ email: email });
+    // console.log(vuser, 'vuser')
+
+    // is user in DB?
+    // if user not in DB, store it and send new user (Welcome) signal to frontend
+    // if user in DB, send 'Welcome Back' signal to frontend
+    //  in both cases, create token and send token to frontEnd
+    //  get email, name, givenName, familyName, imageUrl from idToken or DB and 
+    //  store them in DB and then use them below
+    //  new user wont have role or site  yet
+
+    const token = jwt.sign(
+      {
+        email,
+        userId: doc._id,
+        role: doc.role,
+        site: doc.site
+      },
+      secret,
+      { expiresIn: "1000h" }
+    );
+
+    return res.status(200).json({
+      token: token,
+      expiresIn: 360000,
+      userId: doc._id,
+      name, image:picture,
+      email, doc
+    });
+  } catch (err) {
+    return res.status(500).json({ message: "Error in code block " + err });
+  }
+});
+
+router.post("/fiaLogin", async (req, res, next) => {
+  try {
+    // console.log(req.body, "users/login");
+    const {idToken } = req.body;
+    let userId, email,name;
+    // console.log(idToken, 'idToken')
+    // secret is google_secret
+    const secret = FIA_GOOGLE_CLIENT_SECRET;
+    const ticket = await fia_client.verifyIdToken({
+      idToken: idToken,
+      audience: FIA_GOOGLE_CLIENT_ID,  // Specify the CLIENT_ID of the app that accesses the backend
+      // Or, if multiple clients access the backend:
+      //[CLIENT_ID_1, CLIENT_ID_2, CLIENT_ID_3]
+    });
+
+    const payload = ticket.getPayload();
+    userId = payload['sub'];
+    email = payload['email'];
+    const email_verified = payload['email_verified'];
+    const family_name = payload['family_name'];
+    const given_name = payload['given_name'];
+    const picture = payload['picture'];
+    name = payload['name'];
+    const hd = payload['hd']; // domain
+
+  // If request specified a G Suite domain:
+  // const domain = payload['hd'];
+  
+    // we need to store userId, email, name, 
+    const update = {userId,name,domain:hd, image:picture,email};
+    let doc = await User.findOneAndUpdate({email:email}, update, {
+      new: true,
+      upsert: true // Make this update into an upsert
+    });
+    console.log(doc, 'doc')
     // const vuser = await User.findOne({ email: email });
     // console.log(vuser, 'vuser')
     
@@ -332,7 +397,9 @@ router.post("/fiaLogin", async (req, res, next) => {
     const token = jwt.sign(
       {
         email,
-        userId,
+        userId:doc._id,
+        role: doc.role,
+        site: doc.site
       },
       process.env.ACCESS_TOKEN_SECRET,
       { expiresIn: "1000h" }
@@ -341,7 +408,7 @@ router.post("/fiaLogin", async (req, res, next) => {
     return res.status(200).json({
       token: token,
       expiresIn: 360000,
-      userId,
+      userId:doc._id,
       name, image:picture,
       email,
     });
@@ -575,9 +642,6 @@ router.delete("/:id", checkAuth, async (req, res, next) => {
       });
     });
 });
-
-
-
 
 
 module.exports = router;

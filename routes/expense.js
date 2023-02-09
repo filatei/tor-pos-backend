@@ -39,10 +39,9 @@ const checkAuth = require("../middleware/check-auth");
 const expense = require("../models/expense");
 
 router.post("", checkAuth, function (req, res, next) {
-  const alloweds = process.env.STOREALLOWEDS;
-
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to create Expense");
+  const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT'];
+  console.log(req.userData.role, 'role')
+  if (!alloweds.includes(req.userData.role)) {
     return res.status(500).json({ message: "Not allowed to create Expense" });
   }
 
@@ -102,10 +101,10 @@ router.put("/expenseAcct/:id", checkAuth, async (req, res, next) => {
 });
 
 router.put("/:id", checkAuth, async (req, res, next) => {
-  const alloweds = process.env.STOREALLOWEDS;
-  if (!alloweds.includes(req.userData.email)) {
+  const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT'];
+  if (!alloweds.includes(req.userData.role)) {
     logIncident(req.userData.email, "Not allowed to create Expense");
-    return res.status(500).json({ message: "Not allowed to create expense" });
+    return res.status(500).json({ message: "Not allowed to update expense" });
   }
 
   let expenseObj = req.body;
@@ -213,8 +212,15 @@ router.get("", checkAuth, async (req, res, next) => {
     const pageSize = +req.query.pagesize;
     const currentPage = +req.query.page;
     const imprest = req.query.imprest;
-    const userEmail = req.userData.email;
-    const user = await User.find({ email: userEmail });
+    let user, userEmail
+    let role =''
+
+    if (req.userData) {
+       userEmail = req.userData.email;
+       role = req.userData.role;
+       user = await User.find({ email: userEmail });
+    }
+    
     const directors = process.env.DIRECTORS;
     const generalManagers = process.env.GENERALMANAGERS;
     const managers = process.env.MANAGERS;
@@ -243,7 +249,7 @@ router.get("", checkAuth, async (req, res, next) => {
         .populate("vendor")
         .populate("creator")
         .limit(pageSize);
-    } else if (req.userData.role === "ADMIN") {
+    } else if (role === "ADMIN") {
       // console.log("in directors");
 
       expenseQuery = await Expense.find()
@@ -252,7 +258,7 @@ router.get("", checkAuth, async (req, res, next) => {
         .populate("creator")
         .limit(pageSize);
     } else if (
-      ["GENERAL MANAGER", "SNR ACCOUNTANT"].includes(req.userData.role)
+      ["GENERAL MANAGER", "SNR ACCOUNTANT"].includes(role)
     ) {
       console.log("general manager or snr accountant");
       // see all in designated field sites.
@@ -263,7 +269,7 @@ router.get("", checkAuth, async (req, res, next) => {
         .populate("vendor")
         .populate("creator")
         .limit(pageSize);
-    } else if (req.userData.role === "MANAGER") {
+    } else if (role === "MANAGER") {
       console.log("in managers");
 
       expenseQuery = await Expense.find({
@@ -341,7 +347,6 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
 
   if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to see Receipts");
     return res.status(500).json({ message: "Not allowed" });
   }
 
@@ -354,8 +359,6 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
   ])
     .sort({ createdAt: -1 })
     .limit(200);
-  
-  
 
   if (result) return res.status(200).json({ expense: result });
   console.log(result);

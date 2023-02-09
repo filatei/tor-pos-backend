@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require("express");
 const Customer = require("../models/customer");
 const router = express.Router();
-const checkAuth = require('../middleware/check-auth');
+const checkAuth = require('../middleware/fia-check-auth');
 
 router.get('',(req, res, next) => {
   const pageSize = +req.query.pagesize ;
@@ -47,13 +47,12 @@ router.get('',(req, res, next) => {
     });
 });
 
-
-
 router.get("/getByText", checkAuth, async (req, res, next) => {
   
   try {
     const alloweds = ['ADMIN', 'MANAGER', 'GENERAL MANAGER', 'SECRETARY','SNR ACCOUNTANT', 'ACCOUNTANT', 'SUPERVISOR', 'POS OFFICER']
 
+    console.log(req.userData, 'userdata')
     if (!alloweds.includes(req.userData.role)) {
       return res.status(500).json({ message: "Not allowed" });
     }
@@ -236,7 +235,5 @@ router.post("/import", checkAuth, (req, res, next) => {
 
 
 })
-
-
 
 module.exports = router;

@@ -20,4 +20,10 @@ stockitemSchema.plugin(AutoIncrement, { inc_field: 'sku' });
 
 stockitemSchema.plugin( uniqueValidator );
 
-module.exports = mongoose.model('Stockitem', stockitemSchema)
+
+stockitemSchema.index({ "$**": "text" });
+
+const rc = mongoose.model('Stockitem', stockitemSchema);
+rc.createIndexes();
+
+module.exports = rc;

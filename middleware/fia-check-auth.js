@@ -17,6 +17,7 @@ module.exports = async (req, res, next) => {
     const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
     const user = await User.findOne({userId:decodedToken.userId})
+    console.log(user, 'user', decodedToken, 'decodedToken')
 
     if (decodedToken) {
       req.userData = {

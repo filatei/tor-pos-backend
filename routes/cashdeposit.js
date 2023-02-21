@@ -42,10 +42,10 @@ router.post(
   checkAuth,
   Utils.upload4.single("image"),
   async (req, res, next) => {
-    const alloweds = process.env.MANAGERS;
+    const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'ACCOUNTANT', 'SNR ACCOUNTANT']
 
-    if (!alloweds.includes(req.userData.email)) {
-      logIncident(req.userData.email, "Not allowed to create cash deposit");
+    if (!alloweds.includes(req.userData.role)) {
+      // logIncident(req.userData.email, "Not allowed to create cash deposit");
       return res
         .status(500)
         .json({ message: "Not allowed to create cash deposit" });
@@ -96,7 +96,7 @@ router.post(
         .then(async (result) => {
           const mailStat = await Mail.sendCashdeposit(result, req.userData);
           res.status(201).json({
-            message: "Cashdeposit added successfully",
+            message: "Cash deposit added successfully",
             cashdeposit: { ...result, id: result._id },
           });
         })

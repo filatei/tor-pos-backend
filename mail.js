@@ -264,6 +264,7 @@ async function sendExpense(expense, userId = null) {
   }
 }
 function titleCase(str) {
+  if (!str) return ""
   if (str == "Akpodigha Filatei") return "MD";
   return str
     .toLowerCase()

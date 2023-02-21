@@ -2,7 +2,7 @@ require('dotenv').config();
 const express = require("express");
 const Customer = require("../models/customer");
 const router = express.Router();
-const checkAuth = require('../middleware/fia-check-auth');
+const checkAuth = require('../middleware/check-auth');
 
 router.get('',(req, res, next) => {
   const pageSize = +req.query.pagesize ;

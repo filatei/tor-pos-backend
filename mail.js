@@ -783,7 +783,7 @@ async function sendCashdeposit(item, user) {
     let userName = titleCase(user.name);
     let toEmail = user.email;
     const creator = await User.findById(item.creator);
-    let creatorEmail = creator.email;
+    let creatorEmail = creator?.email;
     // console.log(creatorEmail, "creatorEmail");
 
     let format1 = "DD-MM-YYYY hh:mm:ss";
@@ -795,7 +795,7 @@ async function sendCashdeposit(item, user) {
 
     let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
                 ${date}</p>
-                <p> Hi ${titleCase(creator.name)},</p>`;
+                <p> Hi ${titleCase(creator?.name)},</p>`;
     html += `<p>Amount: ${amount.toLocaleString()}  </p> <p>Status: <b style="color:red">${item.status} </b> </p>
             <p> Site: ${item.site}</p> 
             <p> Account: ${item.payeeAcct}</p> 

@@ -114,43 +114,53 @@ router.post(
 );
 
 router.put("/:id", checkAuth, async (req, res, next) => {
-  const alloweds = process.env.ALLOWEDS;
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to create Inventory");
-    return res.status(500).json({ message: "Not allowed to create inventory" });
-  }
 
-  let cashdepositObj = req.body;
-  const id = req.params.id;
-  cashdepositObj._id = id;
-  let user = req.userData;
-  const updater = req.userData.userId;
+  try {
+    const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'ACCOUNTANT', 'SNR ACCOUNTANT']
+  
+    if (!alloweds.includes(req.userData.role)) {
+      return res.status(500).json({ message: "Not allowed to update cash deposit" });
+    }
 
-  const { status, payeeAcct, amount, depositor, site } = req.body;
-  cashObj = { status, payeeAcct, amount, depositor, site, updater };
-  let mailStat;
+    console.log(req.body, 'reqbody')
+    const id = req.params.id;
+    let user = req.userData;
+    let cashObj = req.body;
+    cashObj._id = id;
+    cashObj.updater = req.userData.userId;
 
-  cashdepositObj.updater = req.userData.userId;
-  const cashdeposit = new Cashdeposit(cashdepositObj);
+    let mailStat;
 
-  Cashdeposit.updateOne({ _id: id }, cashObj)
-    .then(async (result) => {
-      if (result.n > 0) {
-        const updated = Cashdeposit.findById(id);
-        mailStat = await Mail.sendCashdeposit(updated, user);
+    const cashdeposit = new Cashdeposit(cashObj);
 
-        res
-          .status(200)
-          .json({ message: "Update successful!", cashdeposit: result });
-      } else {
-        res.status(401).json({ message: "Not authorized!" });
-      }
-    })
-    .catch((error) => {
-      res.status(500).json({
-        message: "Couldn't update cashdeposit! " + error,
+    Cashdeposit.updateOne({ _id: id }, cashdeposit)
+      .then(async (result) => {
+        if (result.n > 0) {
+          const updated = await Cashdeposit.findById(id);
+          console.log(updated, 'updated')
+          mailStat = await Mail.sendCashdeposit(updated, user);
+
+          res
+            .status(200)
+            .json({ message: "Update successful!", cashdeposit: result });
+        } else {
+          res.status(401).json({ message: "Not authorized!" });
+        }
+      })
+      .catch((error) => {
+        console.log(error)
+        res.status(500).json({
+          message: "Couldn't update cashdeposit! " + error,
+        });
       });
+    
+  } catch (error) {
+    res.status(500).json({
+      message: "Couldn't update cashdeposit! " + error,
     });
+    
+  }
+  
 });
 
 router.put("/status/:id", checkAuth, async (req, res, next) => {

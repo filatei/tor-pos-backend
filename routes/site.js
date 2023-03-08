@@ -39,10 +39,9 @@ router.post(
   checkAuth,
   Utils.upload4.single("image"),
   async (req, res, next) => {
-    const alloweds = process.env.MANAGERS;
+    const alloweds = ['ADMIN', 'GENERAL MANAGER'];
 
-    if (!alloweds.includes(req.userData.email)) {
-      logIncident(req.userData.email, "Not allowed to create cash deposit");
+    if (!alloweds.includes(req.userData.role)) {
       return res
         .status(500)
         .json({ message: "Not allowed to create cash deposit" });
@@ -59,28 +58,35 @@ router.post(
       let myPath = "";
       const file = req.file;
       let fileName;
-      if (file) {
-        fileName = "uploads/site/" + req.userData.userId + "/" + file.filename;
-        if (hostname.includes("torama.ng")) {
-          url = "https://fido-api.torama.ng";
-        } else {
-          url = req.protocol + "://" + req.get("host");
-        }
+      // if (file) {
+      //   fileName = "uploads/site/" + req.userData.userId + "/" + file.filename;
+      //   if (hostname.includes("torama.ng")) {
+      //     url = "https://fido-api.torama.ng";
+      //   } else {
+      //     url = req.protocol + "://" + req.get("host");
+      //   }
 
-        myPath = url + "/" + fileName;
-      }
+      //   myPath = url + "/" + fileName;
+      // }
       let taxR = 0;
-      const { name, address, taxRate, buildDate, phone, email } = req.body;
-      if (taxRate) {
-        taxR = taxRate;
+      let bDate = new Date();
+      console.log(req.body)
+      const { name, sitename, address, taxRate, buildDate, phone, email } = req.body;
+      if (taxRate && !isNaN(taxRate)) {
+        taxR = parseFloat(taxRate);
       }
+
+      if (buildDate) {
+        bDate = new Date(buildDate)
+      }
+     
       const creator = req.userData.userId;
       const siteObj = {
         name,
         address,
         taxRate: taxR,
         phone,
-        buildDate,
+        buildDate:bDate,
         email,
         creator,
         image: myPath,
@@ -103,6 +109,7 @@ router.post(
           });
         });
     } catch (err) {
+      console.log(err)
       res.status(500).json({
         message: "Creating a site failed! " + err,
       });

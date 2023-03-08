@@ -122,14 +122,12 @@ router.put("/:id", checkAuth, async (req, res, next) => {
       return res.status(500).json({ message: "Not allowed to update cash deposit" });
     }
 
-    console.log(req.body, 'reqbody')
     const id = req.params.id;
     let user = req.userData;
     let cashObj = req.body;
     cashObj._id = id;
     cashObj.updater = req.userData.userId;
 
-    let mailStat;
 
     const cashdeposit = new Cashdeposit(cashObj);
 
@@ -137,8 +135,10 @@ router.put("/:id", checkAuth, async (req, res, next) => {
       .then(async (result) => {
         if (result.n > 0) {
           const updated = await Cashdeposit.findById(id);
-          console.log(updated, 'updated')
-          mailStat = await Mail.sendCashdeposit(updated, user);
+          if (updated && user) {
+            const mailStat = await Mail.sendCashdeposit(updated, user);
+          }
+          
 
           res
             .status(200)

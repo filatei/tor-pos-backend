@@ -201,6 +201,7 @@ app.use("/api/qaqc", qaqcRoutes);
 app.use("/api/cashdeposit", cashdepositRoutes);
 app.use("/api/dailyreport", dailyreportRoutes);
 app.use("/api/sites", siteRoutes);
+app.use("/api/fidosites", fidositeRoutes);
 app.use("/api/liabilities", liabRoutes);
 app.use("/api/produce", produceRoutes);
 app.use("/api/produceexpense", produceexpenseRoutes);

@@ -47,20 +47,22 @@ router.get("/:id",  (req, res, next) => {
 });
 
 router.post("", checkAuth, (req, res, next) => {
-  const alloweds = process.env.ALLOWEDS;
+  const alloweds = ['ADMIN', 'GENERAL MANAGER'];
 
-  if ( !alloweds.includes(req.userData.email)) {
+  if ( !alloweds.includes(req.userData.role)) {
     return res.status(500).json({message: 'Not allowed'});
   }
   let siteObj = req.body;
-
-  if ( siteObj && siteObj.holder ) {
-    siteObj.holder = siteObj.holder.toUpperCase();
+  console.log(siteObj, 'site')
+  if (siteObj.sitename) {
+    siteObj.name = siteObj.sitename;
   }
+
+ 
   siteObj.creator = req.userData.userId;
 
   const site = new Site(siteObj);
-  //  console.log(site);
+   console.log(site);
   site.save().then ((result)=> {
     // console.log(result)
     res.status(201).json({
@@ -72,6 +74,7 @@ router.post("", checkAuth, (req, res, next) => {
     });
   })
   .catch(error => {
+    console.log(error)
     res.status(500).json({
       message: "creating sites failed! " + error
     });

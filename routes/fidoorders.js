@@ -349,7 +349,6 @@ router.put(
     let updater = req.userData.userId;
     const note = req.body;
 
-    console.log(note, 'note...')
     if (req.file && req.file.filename && req.file.filename.length > 0) {
       if (hostname.includes("torama.ng")) {
         path =

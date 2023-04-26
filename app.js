@@ -15,6 +15,7 @@ const app = express();
 
 const paymethodsRoutes = require("./routes/paymethods");
 const productsRoutes = require("./routes/products");
+const banksRoutes = require("./routes/banks");
 const fiaProductsRoutes = require("./routes/fia_products");
 const customersRoutes = require("./routes/customers");
 const ordersRoutes = require("./routes/orders");
@@ -167,6 +168,7 @@ mongoose
 
 app.use("/api/paymethods", paymethodsRoutes);
 app.use("/api/products", productsRoutes);
+app.use("/api/banks", banksRoutes);
 app.use("/api/fiaproducts", fiaProductsRoutes);
 app.use("/api/customers", customersRoutes);
 app.use("/api/orders", ordersRoutes);

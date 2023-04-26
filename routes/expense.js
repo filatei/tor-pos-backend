@@ -141,6 +141,7 @@ router.put("/:id", checkAuth, async (req, res, next) => {
       const mailStat = await Mail.sendExpense(expenseObj, updater);
     }
   }
+
   isOpen()
     .then((sm) => {
       console.log("mailstat sent");
@@ -154,12 +155,20 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   expenseObj._id = id;
   expenseObj.updater = req.userData.userId;
  
-  // console.log(expenseObj, 'expenseObj')
-
   const expense = new Expense(expenseObj);
   if (status !== 'PAID') {
     expense.balance =  expense.balance || expense.txn_amount;
   }
+  console.log(expense.balance)
+
+  if (expense.balance < 0) {
+    const message =  "balance be not negative "
+    console.log (message)
+    return res.status(500).json({
+      message 
+    });
+  }
+  
 
   expense.notes = oldExpense.notes;
 

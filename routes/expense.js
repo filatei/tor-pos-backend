@@ -39,8 +39,13 @@ const checkAuth = require("../middleware/check-auth");
 const expense = require("../models/expense");
 
 router.post("", checkAuth, function (req, res, next) {
-  const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT'];
-  console.log(req.userData.role, 'role')
+  const alloweds = [
+    "ADMIN",
+    "GENERAL MANAGER",
+    "MANAGER",
+    "SNR ACCOUNTANT",
+    "ACCOUNTANT",
+  ];
   if (!alloweds.includes(req.userData.role)) {
     return res.status(500).json({ message: "Not allowed to create Expense" });
   }
@@ -75,7 +80,6 @@ router.put("/expenseAcct/:id", checkAuth, async (req, res, next) => {
   }
 
   const { expenseAccount } = req.body;
-  console.log(expenseAccount, "expenseAcct");
 
   const id = req.params.id;
   const updater = req.userData.userId;
@@ -101,7 +105,13 @@ router.put("/expenseAcct/:id", checkAuth, async (req, res, next) => {
 });
 
 router.put("/:id", checkAuth, async (req, res, next) => {
-  const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT'];
+  const alloweds = [
+    "ADMIN",
+    "GENERAL MANAGER",
+    "MANAGER",
+    "SNR ACCOUNTANT",
+    "ACCOUNTANT",
+  ];
   if (!alloweds.includes(req.userData.role)) {
     logIncident(req.userData.email, "Not allowed to create Expense");
     return res.status(500).json({ message: "Not allowed to update expense" });
@@ -154,21 +164,20 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   const oldExpense = await Expense.findById(id);
   expenseObj._id = id;
   expenseObj.updater = req.userData.userId;
- 
+
   const expense = new Expense(expenseObj);
-  if (status !== 'PAID') {
-    expense.balance =  expense.balance || expense.txn_amount;
+  if (status !== "PAID") {
+    expense.balance = expense.balance || expense.txn_amount;
   }
-  console.log(expense.balance)
+  // console.log(expense.balance)
 
   if (expense.balance < 0) {
-    const message =  "balance be not negative "
-    console.log (message)
+    const message = "balance be not negative ";
+    // console.log (message)
     return res.status(500).json({
-      message 
+      message,
     });
   }
-  
 
   expense.notes = oldExpense.notes;
 
@@ -187,6 +196,108 @@ router.put("/:id", checkAuth, async (req, res, next) => {
         message: "Couldn't update expense! " + error,
       });
     });
+});
+router.get("/summary", checkAuth, async (req, res, next) => {
+  // summary of expenses for product Rolls per month
+  console.log("expense summary");
+  async function agg(productName) {
+    // productName can be Rolls
+    // Find the vendor
+    const vendor = await Contact.findOne({ name: "FLEXPLAST TECH & SERVICES" });
+    if (!vendor) {
+      console.log("Vendor not found");
+      return;
+    }
+    const vendorId = mongoose.Types.ObjectId(vendor._id); // Ensure it's an ObjectId
+
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - 11); // Subtract 11 months
+    startDate.setDate(1); // Set the day to the first of the month
+    startDate.setHours(0, 0, 0, 0); // Set the time to the start of the day
+
+    const result = await Expense.aggregate([
+      {
+        $match: {
+          status: "PAID",
+          createdAt: { $gte: startDate },
+          "products.name": "Rolls",
+          vendor: vendorId,
+        },
+      },
+      {
+        $unwind: "$products",
+      },
+      {
+        $match: {
+          "products.name": "Rolls",
+        },
+      },
+      {
+        $addFields: {
+          year: { $year: "$createdAt" },
+          month: { $month: "$createdAt" },
+        },
+      },
+      {
+        $group: {
+          _id: { Year: "$year", Month: "$month" },
+          TotalQuantity: { $sum: "$products.qty" },
+          TotalAmount: { $sum: "$txn_amount" },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          Year: "$_id.Year",
+          Month: "$_id.Month",
+          TotalQuantity: 1,
+          TotalAmount: 1,
+        },
+      },
+      {
+        $sort: {
+          Year: 1,
+          Month: 1,
+        },
+      },
+    ]);
+
+    // console.log(
+    //   "Total quantity and amount for 'Rolls' for each month:",
+    //   result
+    // );
+
+    
+    return result
+  }
+
+  try {
+    let user, userEmail;
+    let role = "";
+
+    if (req.userData) {
+      userEmail = req.userData.email;
+      role = req.userData.role;
+      user = await User.find({ email: userEmail });
+    }
+
+    const response = await agg("Rolls");
+
+    if (response) {
+      return res.status(200).json({
+        response: response,
+        message: "Expense Summarized  Successfully",
+      });
+    } else {
+      return res
+        .status(500)
+        .json({ message: "fetching Summary not successful" });
+    }
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ message: "fetching Summary not successful" + err });
+  }
 });
 
 router.delete("/:id", checkAuth, (req, res, next) => {
@@ -221,15 +332,15 @@ router.get("", checkAuth, async (req, res, next) => {
     const pageSize = +req.query.pagesize;
     const currentPage = +req.query.page;
     const imprest = req.query.imprest;
-    let user, userEmail
-    let role =''
+    let user, userEmail;
+    let role = "";
 
     if (req.userData) {
-       userEmail = req.userData.email;
-       role = req.userData.role;
-       user = await User.find({ email: userEmail });
+      userEmail = req.userData.email;
+      role = req.userData.role;
+      user = await User.find({ email: userEmail });
     }
-    
+
     const directors = process.env.DIRECTORS;
     const generalManagers = process.env.GENERALMANAGERS;
     const managers = process.env.MANAGERS;
@@ -240,14 +351,13 @@ router.get("", checkAuth, async (req, res, next) => {
       "YENEGWE",
       "OBUNNA",
       "KPANSIA E",
-      "AKENFA"
+      "AKENFA",
     ];
 
     const blockSites = ["OKUTUKUTU-BLOCKS", "AGADAGBA-BLOCKS"];
 
     let expenseQuery;
 
-    // console.log("todaystart", startOfDay(new Date()), new Date());
     if (imprest) {
       expenseQuery = await Expense.find({
         status: "APPROVED",
@@ -266,9 +376,7 @@ router.get("", checkAuth, async (req, res, next) => {
         .populate("vendor")
         .populate("creator")
         .limit(pageSize);
-    } else if (
-      ["GENERAL MANAGER", "SNR ACCOUNTANT"].includes(role)
-    ) {
+    } else if (["GENERAL MANAGER", "SNR ACCOUNTANT"].includes(role)) {
       console.log("general manager or snr accountant");
       // see all in designated field sites.
       expenseQuery = await Expense.find({
@@ -300,7 +408,6 @@ router.get("", checkAuth, async (req, res, next) => {
 
         .limit(pageSize);
     }
-    // console.log(expenseQuery);
 
     if (expenseQuery) {
       return res.status(200).json({
@@ -330,7 +437,6 @@ router.get("/mail/mailImprest", checkAuth, async (req, res, next) => {
   const userEmail = req.userData.email;
 
   const { searchTerm } = req.query;
-  console.log(req.query, " req-query");
   // get array
   let records;
   const now = new Date();
@@ -344,11 +450,11 @@ router.get("/mail/mailImprest", checkAuth, async (req, res, next) => {
     expenseAccount: "Daily Imprest",
   }).sort({ createdAt: -1 });
   // mail result
-  // console.log(result);
   await Mail.sendImprest(result, { name: userName, email: userEmail });
-  if (result) { return res.status(200).json({ expense: result }) }
-  else {
-    return res.status(500).json({message: 'Error Retrieving result'})
+  if (result) {
+    return res.status(200).json({ expense: result });
+  } else {
+    return res.status(500).json({ message: "Error Retrieving result" });
   }
 });
 
@@ -360,7 +466,6 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
   }
 
   const { searchTerm } = req.query;
-  console.log(req.query, " req-query");
   // get array
   let records;
   const result = await Expense.aggregate([
@@ -370,7 +475,6 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
     .limit(200);
 
   if (result) return res.status(200).json({ expense: result });
-  console.log(result);
 
   Expense.find({ $text: { $search: searchTerm } })
     .sort({ updatedAt: -1 })
@@ -380,7 +484,6 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
     .limit(200)
     .then((record) => {
       if (record) {
-        console.log(record);
         res.status(200).json({ expense: record });
       } else {
         res.status(404).json({ message: "record not found!" });
@@ -443,9 +546,7 @@ router.put(
     }
 
     let updater = req.userData.userId;
-    console.log(updater, "updater here ");
     let myPath;
-    // console.log(req.files, "files");
     if (req.files) {
       let fileName;
       req.files.forEach((file) => {
@@ -456,11 +557,11 @@ router.put(
         }
 
         // myPath = url + "/" + file.path;
-        console.log(file.path, 'file path')
 
-        myPath = url + '/expenseUploads/' + file.path.split('/var/www/uploads/expenses')[1]
-        console.log(myPath, 'myPath')
-
+        myPath =
+          url +
+          "/expenseUploads/" +
+          file.path.split("/var/www/uploads/expenses")[1];
       });
     }
     const note = req.body;
@@ -475,8 +576,8 @@ router.put(
 
         let expObj = await Expense.findById(recId);
         // send mail with Note image
-        
-        let notes
+
+        let notes;
         if (expObj) {
           notes = expObj.notes;
 
@@ -492,15 +593,15 @@ router.put(
           });
         } else {
           return res.status(500).json({
-            message: "No expense Object to update! " ,
+            message: "No expense Object to update! ",
           });
         }
-        
+
         Expense.findByIdAndUpdate(
           { _id: recId },
           { notes: notes, updater: updater, log: log }
         )
-          .then( async (result) => {
+          .then(async (result) => {
             let msent = await Mail.sendNote(note, expObj);
             return res.status(201).json({
               message: " note with image updated successfully",

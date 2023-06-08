@@ -127,7 +127,7 @@ async function sendExpense(expense, userId = null) {
   let remarks;
 
   expenseId = expenseId.toString().padStart(5, "0");
-  let subject = `Expense Activity for (# ${expenseId})`;
+  let subject = `${expense.status} Expense (# ${expenseId})`;
   let curr = process.env.naira;
   let total = expense.txn_amount;
   let status = expense.status;
@@ -298,7 +298,7 @@ async function sendProduceexpense(expense, userId = null) {
   let remarks;
 
   expenseId = expenseId?.toString().padStart(5, "0");
-  let subject = `Expense Activity for (# ${expenseId})`;
+  let subject = `${expense.status} Expense (# ${expenseId})`;
   let curr = process.env.naira;
   let total = expense.txn_amount;
   let status = expense.status;
@@ -412,7 +412,6 @@ async function sendProduceexpense(expense, userId = null) {
       cc = null;
     }
 
-    // const subject = subject;
     const body = html;
     let model = { sender, to, cc, subject, body };
 
@@ -593,7 +592,6 @@ async function sendQaNote(note, item) {
     const to = creatorEmail;
     const sender = process.env.tormail;
     const cc = toEmail;
-    // const subject = subject;
     const body = html;
     const image = note.image ? note.image : "";
     let model = { sender, to, cc, subject, body, link, image };
@@ -820,7 +818,6 @@ async function sendCashdeposit(item, user) {
     const to = creatorEmail;
     const sender = toEmail;
     const cc = "";
-    // const subject = subject;
     const body = html;
     let model = { sender, to, cc, subject, body };
 

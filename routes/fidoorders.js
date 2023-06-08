@@ -1218,6 +1218,7 @@ router.get("/summaryBySiteByProduct", checkAuth, async (req, res, next) => {
 });
 
 router.get("/summaryByProductMonthly", checkAuth, async (req, res, next) => {
+  // Total Qty of products sold for each month
   try {
     let user, userEmail;
     let role = "";
@@ -1226,7 +1227,6 @@ router.get("/summaryByProductMonthly", checkAuth, async (req, res, next) => {
       userEmail = req.userData.email;
       role = req.userData.role;
       if (role !== "ADMIN") return;
-      // user = await User.find({ email: userEmail });
     }
     const response = await agg();
 
@@ -1247,7 +1247,8 @@ router.get("/summaryByProductMonthly", checkAuth, async (req, res, next) => {
   }
   async function agg() {
     const startDate = new Date();
-    startDate.setMonth(startDate.getMonth() - 11);
+    const currMonth = startDate.getMonth() + 2;
+    startDate.setMonth(currMonth - 11);
     startDate.setDate(1);
     startDate.setHours(0, 0, 0, 0);
 

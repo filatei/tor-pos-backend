@@ -197,9 +197,9 @@ router.put("/:id", checkAuth, async (req, res, next) => {
       });
     });
 });
+
 router.get("/summary", checkAuth, async (req, res, next) => {
   // summary of expenses for product Rolls per month
-  console.log("expense summary");
   async function agg(productName) {
     // productName can be Rolls
     // Find the vendor
@@ -211,7 +211,8 @@ router.get("/summary", checkAuth, async (req, res, next) => {
     const vendorId = mongoose.Types.ObjectId(vendor._id); // Ensure it's an ObjectId
 
     const startDate = new Date();
-    startDate.setMonth(startDate.getMonth() - 11); // Subtract 11 months
+    const currMonth = startDate.getMonth() + 1; // Add 1 to month to get the next month
+    startDate.setMonth(startDate.getMonth() - 12); // Subtract 12 months
     startDate.setDate(1); // Set the day to the first of the month
     startDate.setHours(0, 0, 0, 0); // Set the time to the start of the day
 

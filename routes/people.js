@@ -454,7 +454,6 @@ router.post("/csvValidate", checkAuth, csvUpload.any(), async function (req, res
   let insertedIDs = [];
   let exceptions = [];
   const oldPeoples = await People.countDocuments();
-  console.log(oldPeoples, 'oldPeoples')
   try {
    
     let saveCounter = 0;
@@ -808,34 +807,48 @@ router.get("", (req, res, next) => {
 router.get("/getByText", checkAuth, async (req, res, next) => {
   
   try {
-    const alloweds = process.env.ALLOWEDS;
+    // const alloweds = process.env.ALLOWEDS;
 
-    if ( !alloweds.includes(req.userData.email) ) {
-      return res.status(500).json({ message: "Not allowed" });
+    // if ( !alloweds.includes(req.userData.email) ) {
+    //   return res.status(500).json({ message: "Not allowed" });
+    // }
+
+    const { role } = req.userData;
+
+    if (
+      ![
+        "ADMIN",
+        "GENERAL MANAGER",
+        "MANAGER",
+        "SECRETARY",
+        "ACCOUNTANT",
+        "SNR ACCOUNTANT",
+      ].includes(role)
+    ) {
+      return res.status(500).json({
+        message: "Fetching payrolls failed! Not Allowed ",
+      });
     }
 
     const { searchTerm } = req.query;
-    console.log(req.query, " req-query");
 
-    let records;
+    let result = [];
+    // result = await People.aggregate([
+    //   { $match: { $text: { $search: searchTerm } } },
+    // ])
+    //   .sort({ name: 1 })
+    //   .limit(50);
 
-    const result = await People.aggregate([
-      { $match: { $text: { $search: searchTerm} } },
-    ])
-    .sort({name:1})
-    .limit(200);
+    result = await People.find({
+      name: { $regex: searchTerm, $options: "i" },
+    })
+      .sort({ name: 1 })
+      .limit(50);
     
-    if (result) {
-      return res.status(200).json({ peoples: result });
-      
-    } else {
-      return res.status(404).json({ message: "Not Found"  });
-    }
-
-    
+    return res.status(200).json({ peoples: result });
   } catch (error) {
     console.log(error)
-    res.status(404).json({ message: "try Block Error! " + error });
+    res.status(404).json({ message: "Error! " + error });
   }
 
   

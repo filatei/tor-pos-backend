@@ -120,7 +120,6 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   let expenseObj = req.body;
   let status = expenseObj.status;
   let updater = req.userData.userId;
-  // console.log(updater);
   // update statusHistory
   let statusHist;
   const currExp = await Expense.findById(req.params.id);
@@ -169,11 +168,9 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   if (status !== "PAID") {
     expense.balance = expense.balance || expense.txn_amount;
   }
-  // console.log(expense.balance)
 
   if (expense.balance < 0) {
     const message = "balance be not negative ";
-    // console.log (message)
     return res.status(500).json({
       message,
     });
@@ -211,11 +208,10 @@ router.get("/summary", checkAuth, async (req, res, next) => {
     const vendorId = mongoose.Types.ObjectId(vendor._id); // Ensure it's an ObjectId
 
     const startDate = new Date();
-    const currMonth = startDate.getMonth() + 1; // Add 1 to month to get the next month
-    startDate.setMonth(startDate.getMonth() - 12); // Subtract 12 months
+    const currMonth = startDate.getMonth() - 12; //past 10 months from now
+    startDate.setMonth(currMonth); // Subtract 12 months
     startDate.setDate(1); // Set the day to the first of the month
     startDate.setHours(0, 0, 0, 0); // Set the time to the start of the day
-
     const result = await Expense.aggregate([
       {
         $match: {
@@ -263,13 +259,7 @@ router.get("/summary", checkAuth, async (req, res, next) => {
       },
     ]);
 
-    // console.log(
-    //   "Total quantity and amount for 'Rolls' for each month:",
-    //   result
-    // );
-
-    
-    return result
+    return result;
   }
 
   try {
@@ -298,6 +288,108 @@ router.get("/summary", checkAuth, async (req, res, next) => {
     return res
       .status(500)
       .json({ message: "fetching Summary not successful" + err });
+  }
+});
+
+router.get("/summaryAll", checkAuth, async (req, res, next) => {
+  // summary of expenses group by product and vendor  per month
+
+  try {
+    let role = "";
+
+    if (req.userData) {
+      role = req.userData.role;
+      if (role !== "ADMIN") {
+        return;
+      }
+    }
+
+    const response = await agg();
+
+    if (response) {
+      return res.status(200).json({
+        response: response,
+        message: "Expense Summarized  Successfully",
+      });
+    } else {
+      return res
+        .status(500)
+        .json({ message: "fetching Summary not successful" });
+    }
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ message: "fetching Summary not successful" + err });
+  }
+
+  async function agg() {
+    const startDate = new Date();
+    const n = 1
+    const currMonth = startDate.getMonth() - n; //past n months from now
+    startDate.setMonth(currMonth); // Subtract 12 months
+    startDate.setDate(1); // Set the day to the first of the month
+    startDate.setHours(0, 0, 0, 0); // Set the time to the start of the day
+
+    const result = await Expense.aggregate([
+      {
+        $match: {
+          status: "PAID",
+          createdAt: { $gte: startDate },
+        },
+      },
+      {
+        $unwind: "$products",
+      },
+      {
+        $lookup: {
+          from: "contacts", // replace with your actual Vendor collection name
+          localField: "vendor",
+          foreignField: "_id",
+          as: "vendorData",
+        },
+      },
+      {
+        $unwind: "$vendorData", // this will normalize the data, making sure vendorData is an object instead of an array
+      },
+      {
+        $addFields: {
+          year: { $year: "$createdAt" },
+          month: { $month: "$createdAt" },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            Year: "$year",
+            Month: "$month",
+            Product: "$products.name",
+            Vendor: "$vendorData.name", // assuming 'name' is the field in Vendor collection that you want to group by
+          },
+          TotalQuantity: { $sum: "$products.qty" },
+          TotalAmount: { $sum: "$txn_amount" },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          Year: "$_id.Year",
+          Month: "$_id.Month",
+          Product: "$_id.Product",
+          Vendor: "$_id.Vendor",
+          TotalQuantity: 1,
+          TotalAmount: 1,
+        },
+      },
+      {
+        $sort: {
+          Year: -1,
+          Month: -1,
+        },
+      },
+    ]);
+
+    
+    return result;
   }
 });
 
@@ -356,7 +448,6 @@ router.get("", checkAuth, async (req, res, next) => {
     ];
 
     const blockSites = ["OKUTUKUTU-BLOCKS", "AGADAGBA-BLOCKS"];
-
     let expenseQuery;
 
     if (imprest) {
@@ -370,8 +461,6 @@ router.get("", checkAuth, async (req, res, next) => {
         .populate("creator")
         .limit(pageSize);
     } else if (role === "ADMIN") {
-      // console.log("in directors");
-
       expenseQuery = await Expense.find()
         .sort({ createdAt: -1 })
         .populate("vendor")

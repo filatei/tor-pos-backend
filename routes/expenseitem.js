@@ -190,7 +190,6 @@ router.delete("/:id", checkAuth, (req, res, next) => {
           .status(401)
           .json({ message: "expenseitem not found in db!" + err });
       });
-    // console.log('params ', req.params)
     Expenseitem.deleteOne({ _id: req.params.id })
       .then((result) => {
         if (result.n > 0) {
@@ -227,7 +226,6 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
     }
 
     const { searchTerm } = req.query;
-    console.log(searchTerm,'searcterm')
     const f2 = await Expenseitem.find({}).limit(2)
 
     const result = await Expenseitem.aggregate([
@@ -236,8 +234,6 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
       .sort({ createdAt: -1 })
       .limit(200);
 
-      console.log(result,'resul')
-    
 
     if (result.length) return res.status(200).json({ expenseitem: result });
 
@@ -247,7 +243,6 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
       .populate("creator")
       .limit(200)
       .then((record) => {
-        console.log(record, 'record')
         if (record) {
           res.status(200).json({ expenseitem: record });
         } else {

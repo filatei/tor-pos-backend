@@ -1192,37 +1192,43 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
       });
     }
     const { searchTerm } = req.query;
-    console.log(req.query, " req-query");
 
-    let records;
-    const result = await Payroll.aggregate([
+    // let records;
+    let result = [];
+    result = await Payroll.aggregate([
       { $match: { $text: { $search: searchTerm} } },
-    ])
-    .sort({name:1})
-    .limit(200);
+    ]).sort({ name: 1 }).limit(200);
     
-    if (result.length) {
-      const payrolls = result.sort(function (a, b) {
-        var nameA = a?.payee?.name?.toUpperCase(); // ignore upper and lowercase
-        var nameB = b?.payee?.name?.toUpperCase(); // ignore upper and lowercase
-        if (nameA < nameB) {
-          return -1;
-        }
-        if (nameA > nameB) {
-          return 1;
-        }
+    // result = await Payroll.find({
+    //   name: { $regex: searchTerm, $options: "i" },
+    // })
+    //   .sort({ name: 1 })
+    //   .limit(50);
+    
+    return res.status(200).json({ message: "Payrolls Fetched Successfully", payrolls: result });
+    
+    // if (result.length) {
+    //   const payrolls = result.sort(function (a, b) {
+    //     var nameA = a?.payee?.name?.toUpperCase(); // ignore upper and lowercase
+    //     var nameB = b?.payee?.name?.toUpperCase(); // ignore upper and lowercase
+    //     if (nameA < nameB) {
+    //       return -1;
+    //     }
+    //     if (nameA > nameB) {
+    //       return 1;
+    //     }
   
-        // names must be equal
-        return 0;
-      });
-      return res.status(200).json({ message:"Payrolls Fetched Successfully", payrolls: payrolls });
-    } else {
-      return res.status(200).json({message: "No Data", payrolls: result });
-    }
+    //     // names must be equal
+    //     return 0;
+    //   });
+    //   return res.status(200).json({ message:"Payrolls Fetched Successfully", payrolls: payrolls });
+    // } else {
+    //   return res.status(200).json({message: "No Data", payrolls: result });
+    // }
     
   } catch (error) {
     console.log(error)
-    res.status(404).json({ message: "try Block Error! " + error });
+    res.status(404).json({ message: "Error! " + error });
   }
 
   

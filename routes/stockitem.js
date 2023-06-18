@@ -222,49 +222,90 @@ router.delete("/:id", checkAuth, (req, res, next) => {
 
  });
 
- router.get("/getByText", checkAuth, async (req, res, next) => {
-  try {
-    const alloweds = ['ADMIN', 'MANAGER', 'GENERAL MANAGER', 'SECRETARY','SNR ACCOUNTANT', 'ACCOUNTANT', 'SUPERVISOR', 'POS OFFICER']
+//  router.get("/getByText", checkAuth, async (req, res, next) => {
+//   try {
+//     const alloweds = ['ADMIN', 'MANAGER', 'GENERAL MANAGER', 'SECRETARY','SNR ACCOUNTANT', 'ACCOUNTANT', 'SUPERVISOR', 'POS OFFICER']
 
-    if (!alloweds.includes(req.userData.role)) {
-      return res.status(500).json({ message: "Not allowed" });
-    }
+//     if (!alloweds.includes(req.userData.role)) {
+//       return res.status(500).json({ message: "Not allowed" });
+//     }
 
-    const { searchTerm } = req.query;
-    const f2 = await Stockitem.find({}).limit(2)
+//     const { searchTerm } = req.query;
+//     const f2 = await Stockitem.find({}).limit(2)
 
-    const result = await Stockitem.aggregate([
-      { $match: { $text: { $search: searchTerm } } },
-    ])
-      .sort({ createdAt: -1 })
-      .limit(200);
+//     const result = await Stockitem.aggregate([
+//       { $match: { $text: { $search: searchTerm } } },
+//     ])
+//       .sort({ createdAt: -1 })
+//       .limit(200);
 
-    if (result.length) return res.status(200).json({ stockitems: result });
+//     if (result.length) return res.status(200).json({ stockitems: result });
 
-    Stockitem.find({ $text: { $search: searchTerm } })
-      .sort({ updatedAt: -1 })
-      .populate("creator")
-      .limit(200)
-      .then((record) => {
-        console.log(record, 'record')
-        if (record) {
-          res.status(200).json({ stockitems: record });
-        } else {
-          res.status(404).json({ message: "record not found!" });
-        }
-      })
-      .catch((error) => {
-        res.status(500).json({
-          message: "Fetching record failed!" + error,
-        });
-      });
+//     Stockitem.find({ $text: { $search: searchTerm } })
+//       .sort({ updatedAt: -1 })
+//       .populate("creator")
+//       .limit(200)
+//       .then((record) => {
+//         console.log(record, 'record')
+//         if (record) {
+//           res.status(200).json({ stockitems: record });
+//         } else {
+//           res.status(404).json({ message: "record not found!" });
+//         }
+//       })
+//       .catch((error) => {
+//         res.status(500).json({
+//           message: "Fetching record failed!" + error,
+//         });
+//       });
     
-  } catch (error) {
-    console.log(error)
-    res.status(404).json({ message: "server try Block Error! " + error });
-  }
+//   } catch (error) {
+//     console.log(error)
+//     res.status(404).json({ message: "server try Block Error! " + error });
+//   }
   
-});
+//  });
+
+
+ router.get("/getByText", checkAuth, async (req, res, next) => {
+   try {
+     const alloweds = [
+       "ADMIN",
+       "MANAGER",
+       "GENERAL MANAGER",
+       "SECRETARY",
+       "SNR ACCOUNTANT",
+       "ACCOUNTANT",
+       "SUPERVISOR",
+       "POS OFFICER",
+     ];
+
+     if (!alloweds.includes(req.userData.role)) {
+       return res.status(500).json({ message: "Not allowed" });
+     }
+
+     const { searchTerm } = req.query;
+
+     // const result = await Contact.aggregate([
+     //     { $match: { $text: { $search: searchTerm } } },
+     //   ])
+     //     .sort({ createdAt: -1 })
+     //   .limit(200);
+     let result = [];
+     result = await Stockitem.find({
+       name: { $regex: searchTerm, $options: "i" },
+     })
+       .sort({ name: 1 })
+       .limit(50);
+
+     console.log(result[0], "result");
+     return res.status(200).json({ stockItems: result });
+
+   } catch (error) {
+     console.log(error);
+     res.status(404).json({ message: "server  Error! " + error });
+   }
+ });
 
 router.get('',(req, res, next) => {
   const pageSize = +req.query.pagesize;

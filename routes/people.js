@@ -646,15 +646,23 @@ router.put("/:id", checkAuth, upload.any(), async (req, res, next) => {
 router.put(
   "/notes/:id", checkAuth, upload.any(), async function (req, res, next)  {
     try {
-      const alloweds = process.env.ALLOWEDS;
-      if (!alloweds.includes(req.userData.email)) {
+      const alloweds = [
+        "ADMIN",
+        "GENERAL MANAGER",
+        "SNR ACCOUNTANT",
+        "MANAGER",
+        "ACCOUNTANT",
+        "SECRETARY",
+      ];
+
+      if (!alloweds.includes(req.userData.role)) {
         return res.status(500).json({ message: "Not allowed" });
       }
       
       const text = req.body.text;
       const date = req.body.date;
 
-      console.log(text, date, 'text date')
+      // console.log(text, date, 'text date')
 
       if ( !text ) {
         return res.status(500).json({
@@ -697,7 +705,7 @@ router.put(
       oldPeople.updater = req.userData.userId;
       // people.notes = [...notes];
 
-      console.log(oldPeople)
+      // console.log(oldPeople)
       const updated = await People.updateOne({ _id: req.params.id }, oldPeople)
 
       // people.save();
@@ -783,7 +791,21 @@ router.delete("/:id", checkAuth, async (req, res, next) => {
 });
 
 
-router.get("", (req, res, next) => {
+router.get("", checkAuth, (req, res, next) => {
+
+  const alloweds = [
+    "ADMIN",
+    "GENERAL MANAGER",
+    "SNR ACCOUNTANT",
+    "MANAGER",
+    "ACCOUNTANT",
+    "SECRETARY"
+  ];
+
+  if (!alloweds.includes(req.userData.role)) {
+    return res.status(500).json({ message: "Not allowed" });
+  }
+  
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
   const peopleQuery = People.find().sort({fname:1}).populate('site').populate('manager').populate('creator')

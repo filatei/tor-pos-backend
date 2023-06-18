@@ -272,18 +272,13 @@ router.get("/summary", checkAuth, async (req, res, next) => {
       user = await User.find({ email: userEmail });
     }
 
-    const response = await agg("Rolls");
+    let response = [];
+    response = await agg("Rolls");
 
-    if (response) {
-      return res.status(200).json({
-        response: response,
-        message: "Expense Summarized  Successfully",
-      });
-    } else {
-      return res
-        .status(500)
-        .json({ message: "fetching Summary not successful" });
-    }
+    return res.status(200).json({
+      response: response,
+      message: "Expense Summarized  Successfully",
+    });
   } catch (err) {
     return res
       .status(500)
@@ -304,18 +299,13 @@ router.get("/summaryAll", checkAuth, async (req, res, next) => {
       }
     }
 
-    const response = await agg();
+    let response = [];
+    response = await agg();
 
-    if (response) {
-      return res.status(200).json({
-        response: response,
-        message: "Expense Summarized  Successfully",
-      });
-    } else {
-      return res
-        .status(500)
-        .json({ message: "fetching Summary not successful" });
-    }
+    return res.status(200).json({
+      response: response,
+      message: "Expense Summarized  Successfully",
+    });
   } catch (err) {
     return res
       .status(500)
@@ -324,7 +314,7 @@ router.get("/summaryAll", checkAuth, async (req, res, next) => {
 
   async function agg() {
     const startDate = new Date();
-    const n = 1
+    const n = 1;
     const currMonth = startDate.getMonth() - n; //past n months from now
     startDate.setMonth(currMonth); // Subtract 12 months
     startDate.setDate(1); // Set the day to the first of the month
@@ -388,7 +378,6 @@ router.get("/summaryAll", checkAuth, async (req, res, next) => {
       },
     ]);
 
-    
     return result;
   }
 });
@@ -477,8 +466,6 @@ router.get("", checkAuth, async (req, res, next) => {
         .populate("creator")
         .limit(pageSize);
     } else if (role === "MANAGER") {
-      console.log("in managers");
-
       expenseQuery = await Expense.find({
         // if i own it, good. or if site is my site, good.
         $or: [{ creator: user[0]._id }, { site: req.userData.site }],

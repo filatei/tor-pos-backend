@@ -1229,6 +1229,7 @@ router.get("/summaryByProductMonthly", checkAuth, async (req, res, next) => {
       if (role !== "ADMIN") return;
     }
     const response = await agg();
+    console.log(response[0], "agg");
 
     if (response) {
       return res.status(200).json({
@@ -1245,6 +1246,7 @@ router.get("/summaryByProductMonthly", checkAuth, async (req, res, next) => {
       .status(500)
       .json({ message: "fetching Summary not successful" + err });
   }
+
   async function agg() {
     const startDate = new Date();
     const currMonth = startDate.getMonth() + 2;
@@ -1264,11 +1266,15 @@ router.get("/summaryByProductMonthly", checkAuth, async (req, res, next) => {
           yearMonth: {
             $dateToString: { format: "%Y-%m", date: "$createdAt" },
           },
+          productName: "$products.name", // Add the product name field
         },
       },
       {
         $group: {
-          _id: "$yearMonth",
+          _id: {
+            yearMonth: "$yearMonth",
+            productName: "$productName", // Group by yearMonth and productName
+          },
           totalQty: { $sum: "$products.qty" },
           totalAmount: {
             $sum: { $multiply: ["$products.qty", "$products.price"] },
@@ -1278,21 +1284,22 @@ router.get("/summaryByProductMonthly", checkAuth, async (req, res, next) => {
       {
         $project: {
           _id: 0,
-          month: { $substr: ["$_id", 5, 2] },
-          year: { $substr: ["$_id", 0, 4] },
+          month: { $substr: ["$_id.yearMonth", 5, 2] },
+          year: { $substr: ["$_id.yearMonth", 0, 4] },
+          productName: "$_id.productName", // Rename _id.productName as productName
           totalQty: 1,
           totalAmount: 1,
         },
       },
       {
         $sort: {
+          productName: 1,
           year: 1,
           month: 1,
         },
       },
     ]);
 
-    // console.log("Total sales for each month:", result);
     return result;
   }
 });
@@ -1333,8 +1340,6 @@ router.get("/combinedProductsOrder", checkAuth, async (req, res, next) => {
     startDate.setMonth(currMonth - 5);
     startDate.setDate(1);
     startDate.setHours(0, 0, 0, 0);
-
-    
 
     // Aggregate fido orders
     const fidoOrderResults = await FidoOrder.aggregate([
@@ -1378,8 +1383,7 @@ router.get("/combinedProductsOrder", checkAuth, async (req, res, next) => {
       },
     ]);
 
-    console.log(fidoOrderResults, "fidoOrderResults");
-    
+    console.log(fidoOrderResults[0], "fidoOrderResults");
 
     return fidoOrderResults;
   }

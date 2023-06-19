@@ -52,42 +52,21 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
   try {
     const alloweds = ['ADMIN', 'MANAGER', 'GENERAL MANAGER', 'SECRETARY','SNR ACCOUNTANT', 'ACCOUNTANT', 'SUPERVISOR', 'POS OFFICER']
 
-    console.log(req.userData, 'userdata')
     if (!alloweds.includes(req.userData.role)) {
       return res.status(500).json({ message: "Not allowed" });
     }
 
     const { searchTerm } = req.query;
-    console.log(req.query, " req-query");
 
-    let records;
-    const result = await Customer.aggregate([
-      { $match: { $text: { $search: searchTerm } } },
-    ])
-      .sort({ createdAt: -1 })
-      .limit(200);
+    let result = [];
+    result = await Customer.find({
+      name: { $regex: searchTerm, $options: "i" },
+    })
+      .sort({ name: 1 })
+      .limit(50);
+
+   return res.status(200).json({ customers: result });
     
-      console.log(result.length)
-
-    if (result) return res.status(200).json({ customers: result });
-
-    Customer.find({ $text: { $search: searchTerm } })
-      .sort({ updatedAt: -1 })
-      .populate("creator")
-      .limit(200)
-      .then((record) => {
-        if (record) {
-          console.log(record);
-          res.status(200).json({ customers: record });
-        } else {
-          res.status(404).json({ message: "Customer record not found!" });
-        }
-      })
-      .catch((error) => {
-        res.status(500).json({
-          message: "Fetching record failed!" + error,
-        });
-      });
     
   } catch (error) {
     console.log(error)

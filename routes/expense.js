@@ -203,7 +203,7 @@ router.get("/summary", checkAuth, async (req, res, next) => {
     const vendor = await Contact.findOne({ name: "FLEXPLAST TECH & SERVICES" });
     if (!vendor) {
       console.log("Vendor not found");
-      return;
+      return [];
     }
     const vendorId = mongoose.Types.ObjectId(vendor._id); // Ensure it's an ObjectId
 
@@ -217,7 +217,7 @@ router.get("/summary", checkAuth, async (req, res, next) => {
         $match: {
           status: "PAID",
           createdAt: { $gte: startDate },
-          "products.name": "Rolls",
+          "products.name": productName,
           vendor: vendorId,
         },
       },
@@ -271,9 +271,9 @@ router.get("/summary", checkAuth, async (req, res, next) => {
       role = req.userData.role;
       user = await User.find({ email: userEmail });
     }
-
     let response = [];
     response = await agg("Rolls");
+    console.log(response, "rolls response");
 
     return res.status(200).json({
       response: response,

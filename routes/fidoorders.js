@@ -1250,7 +1250,7 @@ router.get("/summaryByProductMonthly", checkAuth, async (req, res, next) => {
   async function agg() {
     const startDate = new Date();
     const currMonth = startDate.getMonth() + 2;
-    startDate.setMonth(currMonth - 11);
+    startDate.setMonth(currMonth - 23);
     startDate.setDate(1);
     startDate.setHours(0, 0, 0, 0);
 

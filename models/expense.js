@@ -6,7 +6,7 @@ const expenseSchema = mongoose.Schema(
   {
     products: [
       {
-        name: { type: String },
+        name: { type: String, required: true },
         description: { type: String },
         category: { type: String },
         qty: { type: Number },

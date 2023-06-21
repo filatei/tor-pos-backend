@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const User = require("../models/user");
 
 const Expense = require("../models/expense");
+const Product = require("../models/product");
 const Stockitem = require("../models/stockitem");
 const Contact = require("../models/contact");
 const Inventory = require("../models/inventory");
@@ -45,12 +46,15 @@ router.post("", checkAuth, function (req, res, next) {
     "MANAGER",
     "SNR ACCOUNTANT",
     "ACCOUNTANT",
+    "SECRETARY",
   ];
   if (!alloweds.includes(req.userData.role)) {
     return res.status(500).json({ message: "Not allowed to create Expense" });
   }
 
   let expenseObj = req.body;
+  console.log("expense obj", expenseObj);
+
 
   expenseObj.creator = req.userData.userId;
   expenseObj.status = "DRAFT";
@@ -411,7 +415,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
 
 router.get("", checkAuth, async (req, res, next) => {
   try {
-    const pageSize = +req.query.pagesize;
+    let pageSize = +req.query.pagesize;
     const currentPage = +req.query.page;
     const imprest = req.query.imprest;
     let user, userEmail;
@@ -450,14 +454,14 @@ router.get("", checkAuth, async (req, res, next) => {
         .populate("creator")
         .limit(pageSize);
     } else if (role === "ADMIN") {
+      pageSize = 10;
       expenseQuery = await Expense.find()
         .sort({ createdAt: -1 })
         .populate("vendor")
         .populate("creator")
+        .populate("products")
         .limit(pageSize);
     } else if (["GENERAL MANAGER", "SNR ACCOUNTANT"].includes(role)) {
-      console.log("general manager or snr accountant");
-      // see all in designated field sites.
       expenseQuery = await Expense.find({
         site: { $in: sites },
       })
@@ -476,8 +480,6 @@ router.get("", checkAuth, async (req, res, next) => {
 
         .limit(pageSize);
     } else {
-      console.log("in other");
-
       expenseQuery = await Expense.find({ creator: user[0]._id })
         .sort({ createdAt: -1 })
         .populate("vendor")
@@ -485,6 +487,18 @@ router.get("", checkAuth, async (req, res, next) => {
 
         .limit(pageSize);
     }
+    expenseQuery.forEach(async (e) => {
+      if (e.vendor.name === "SWALI") {
+        console.log(e.products, "products");
+        e.products.forEach(async pp => {
+          const prod = await Stockitem.findById(pp._id);
+          console.log(pp._id, prod, "stock item");
+
+
+        })
+        
+      }
+    });
 
     if (expenseQuery) {
       return res.status(200).json({

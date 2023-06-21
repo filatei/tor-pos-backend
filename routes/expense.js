@@ -38,42 +38,55 @@ function logIncident(email, description) {
 
 const checkAuth = require("../middleware/check-auth");
 const expense = require("../models/expense");
+const { th } = require("date-fns/locale");
 
 router.post("", checkAuth, function (req, res, next) {
-  const alloweds = [
-    "ADMIN",
-    "GENERAL MANAGER",
-    "MANAGER",
-    "SNR ACCOUNTANT",
-    "ACCOUNTANT",
-    "SECRETARY",
-  ];
-  if (!alloweds.includes(req.userData.role)) {
-    return res.status(500).json({ message: "Not allowed to create Expense" });
-  }
 
-  let expenseObj = req.body;
-  console.log("expense obj", expenseObj);
+  try {
 
+    const alloweds = [
+      "ADMIN",
+      "GENERAL MANAGER",
+      "MANAGER",
+      "SNR ACCOUNTANT",
+      "ACCOUNTANT",
+      "SECRETARY",
+    ];
+    if (!alloweds.includes(req.userData.role)) {
+      return res.status(500).json({ message: "Not allowed to create Expense" });
+    }
 
-  expenseObj.creator = req.userData.userId;
-  expenseObj.status = "DRAFT";
+    let expenseObj = req.body;
 
-  const expense = new Expense(expenseObj);
+    expenseObj.creator = req.userData.userId;
+    expenseObj.status = "DRAFT";
 
-  expense
-    .save()
-    .then((result) => {
-      res.status(201).json({
-        message: "Expense added successfully",
-        expense: { ...result, id: result._id },
-      });
-    })
-    .catch((error) => {
-      res.status(500).json({
-        message: "Creating a expense failed! " + error,
-      });
+    const expense = new Expense(expenseObj);
+    expense.products.forEach((product) => { 
+      if (!product.name) throw new Error("Product name is required");
     });
+
+    expense
+      .save()
+      .then((result) => {
+        res.status(201).json({
+          message: "Expense added successfully",
+          expense: { ...result, id: result._id },
+        });
+      })
+      .catch((error) => {
+        res.status(500).json({
+          message: "Creating a expense failed! " + error,
+        });
+      });
+    
+  } catch (error) {
+    res.status(500).json({
+      message: "Creating a expense failed! " + error,
+    });
+    
+  }
+  
 });
 
 router.put("/expenseAcct/:id", checkAuth, async (req, res, next) => {
@@ -454,7 +467,6 @@ router.get("", checkAuth, async (req, res, next) => {
         .populate("creator")
         .limit(pageSize);
     } else if (role === "ADMIN") {
-      pageSize = 10;
       expenseQuery = await Expense.find()
         .sort({ createdAt: -1 })
         .populate("vendor")

@@ -1205,18 +1205,27 @@ router.get("/summaryBySiteByProduct", checkAuth, async (req, res, next) => {
   }
 });
 
-router.get("/summaryForAccordion", async (req, res, next) => {
+router.get("/summaryForAccordion",checkAuth, async (req, res, next) => {
   let user, userEmail;
   let role = "";
 
   try {
-    // if (req.userData) {
-    //   userEmail = req.userData.email;
-    //   role = req.userData.role;
-    //   if (role !== "ADMIN") return;
-    // }
+    const alloweds = req.userData.role;
+    const allowedStaff = [
+      "ADMIN",
+      "GENEAL MANAGER",
+      "SNR ACCOUNTANT",
+      "ACCOUNTANT",
+      "MANAGER",
+      "SECRETARY",
+      "POS OFFICER",
+      "SUPERVISOR",
+    ];
+
+    if (!allowedStaff.includes(alloweds)) {
+      return;
+    }
     const response = await agg();
-    console.log(response, "response");
 
     if (response) {
       return res.status(200).json({

@@ -502,28 +502,15 @@ router.delete("/:id", checkAuth, async (req, res, next) => {
 router.get("", checkAuth, async (req, res, next) => {
   // if you are an ordinary user, you only see orders created in your site or by you
   try {
-    console.log("here");
     let pageSize = +req.query.pagesize;
     if (!pageSize) pageSize = 100;
     const role = req.userData.role;
-    console.log(role, "role");
     const userId = req.userData.userId;
     const site = req.userData.site;
     let currentPage = +req.query.page;
     if (!currentPage) currentPage = 1;
     let orders;
 
-    // if (['ADMIN','GENERAL MANAGER'].includes(role)) {
-    //   orders = await FidoOrder.find()
-    //                       .lean()
-    //                       .sort({ createdAt: -1 })
-    //                       .populate("customer")
-    //                       .populate("creator")
-    //                       .populate("terminal_id")
-    //                       .skip(pageSize * (currentPage - 1))
-    //                       .limit(pageSize);
-
-    // } else {
     orders = await FidoOrder.find({
       $or: [{ site: site }, { creator: userId }],
     })
@@ -822,7 +809,7 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
       "50cl Crate": "50Cl Crate",
       "FIAFIA WATER": "FIAFIA WATER",
     };
-    const cutOffDate = new Date(2022, 06, 01);
+    const cutOffDate = new Date(2022, 6, 1);
     let aggData, aggObject2;
     // console.log(type, day, month, year, site,  new2OldProducts[product]);
 
@@ -1154,9 +1141,10 @@ router.get("/summaryBySiteByProduct", checkAuth, async (req, res, next) => {
       .status(500)
       .json({ message: "fetching Summary not successful" + err });
   }
+
   async function agg() {
     const startDate = new Date();
-    const currMonth = startDate.getMonth() + 2;
+    const currMonth = startDate.getMonth() + 1;
     startDate.setMonth(currMonth - 6);
     startDate.setDate(1);
     startDate.setHours(0, 0, 0, 0);
@@ -1213,6 +1201,99 @@ router.get("/summaryBySiteByProduct", checkAuth, async (req, res, next) => {
     //   "Total sales for each product and terminal location for each month:",
     //   result
     // );
+    return result;
+  }
+});
+
+router.get("/summaryForAccordion", async (req, res, next) => {
+  let user, userEmail;
+  let role = "";
+
+  try {
+    // if (req.userData) {
+    //   userEmail = req.userData.email;
+    //   role = req.userData.role;
+    //   if (role !== "ADMIN") return;
+    // }
+    const response = await agg();
+    console.log(response, "response");
+
+    if (response) {
+      return res.status(200).json({
+        response: response,
+        message: "Orders Summarized  Successfully",
+      });
+    } else {
+      return res
+        .status(500)
+        .json({ message: "fetching Summary not successful" });
+    }
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ message: "fetching Summary not successful" + err });
+  }
+
+  async function agg() {
+    let twoWeeksAgo = new Date();
+    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14); // subtract 14 days
+
+    const result = await FidoOrder.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: twoWeeksAgo },
+        }
+      },
+      { 
+        $unwind: "$products" 
+      },
+      {
+        $group: {
+          _id: {
+            date: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+            product: "$products.name",
+            site: "$site",
+          },
+          totalProductQuantity: { $sum: "$products.qty" },
+          totalProductSales: { $sum: "$products.amount" },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            date: "$_id.date",
+            product: "$_id.product",
+          },
+          totalQty: { $sum: "$totalProductQuantity" },
+          totalSalesAmount: { $sum: "$totalProductSales" },
+          sites: {
+            $push: {
+              site: "$_id.site",
+              totalQty: "$totalProductQuantity",
+              totalSalesAmount: "$totalProductSales",
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: "$_id.date",
+          totalSalesForTheDay: { $sum: "$totalSalesAmount" },
+          products: {
+            $push: {
+              name: "$_id.product",
+              totalQty: "$totalQty",
+              totalSalesAmount: "$totalSalesAmount",
+              sites: "$sites",
+            },
+          },
+        },
+      },
+      {
+        $sort: { _id: -1 },
+      },
+    ])
+
     return result;
   }
 });

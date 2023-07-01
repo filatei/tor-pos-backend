@@ -12,4 +12,5 @@ token.json
 pdf
 Dockerfile
 docker-compose.yml
+.env
 

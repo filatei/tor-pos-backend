@@ -137,7 +137,8 @@ if ( hostname.includes('local') ) {
   password = encodeURIComponent(`${dbInfo.ATLAS_DEV_PASS}`);
   cluster = `${dbInfo.ATLAS_DEV_CLUSTER}`;
   DB = `${dbInfo.ATLAS_DEV_DB}`;
-  connectStr='mongodb://localhost:27017/fido_db'
+  // connectStr='mongodb://localhost:27017/fido_db'
+  connectStr = process.env.CONNECT_STR; 
 }
 
 if ( hostname.includes('torama.ng') ) {

@@ -1225,18 +1225,15 @@ router.get("/summaryForAccordion",checkAuth, async (req, res, next) => {
     if (!allowedStaff.includes(alloweds)) {
       return;
     }
-    const response = await agg();
+    let response = []
+    response = await agg();
 
-    if (response) {
-      return res.status(200).json({
-        response: response,
-        message: "Orders Summarized  Successfully",
-      });
-    } else {
-      return res
-        .status(500)
-        .json({ message: "fetching Summary not successful" });
-    }
+   
+    return res.status(200).json({
+      response: response,
+      message: "Orders Summarized  Successfully",
+    });
+    
   } catch (err) {
     return res
       .status(500)
@@ -1259,7 +1256,7 @@ router.get("/summaryForAccordion",checkAuth, async (req, res, next) => {
       {
         $group: {
           _id: {
-            date: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+            date: { $dateToString: { format: "%d-%m-%Y", date: "$createdAt" } },
             product: "$products.name",
             site: "$site",
           },

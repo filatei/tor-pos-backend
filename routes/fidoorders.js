@@ -1256,7 +1256,7 @@ router.get("/summaryForAccordion",checkAuth, async (req, res, next) => {
       {
         $group: {
           _id: {
-            date: { $dateToString: { format: "%d-%m-%Y", date: "$createdAt" } },
+            date: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
             product: "$products.name",
             site: "$site",
           },

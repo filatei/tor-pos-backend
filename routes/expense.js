@@ -29,7 +29,7 @@ function logIncident(email, description) {
   logObj
     .save(logObj)
     .then((result) => {
-      console.log("access incident logged for user", result);
+      console.log("access incident logged for user");
     })
     .catch((err) => {
       console.log("access logging error for user ", err);
@@ -290,7 +290,6 @@ router.get("/summary", checkAuth, async (req, res, next) => {
     }
     let response = [];
     response = await agg("Rolls");
-    console.log(response, "rolls response");
 
     return res.status(200).json({
       response: response,
@@ -501,12 +500,8 @@ router.get("", checkAuth, async (req, res, next) => {
     }
     expenseQuery.forEach(async (e) => {
       if (e.vendor.name === "SWALI") {
-        console.log(e.products, "products");
         e.products.forEach(async pp => {
           const prod = await Stockitem.findById(pp._id);
-          console.log(pp._id, prod, "stock item");
-
-
         })
         
       }
@@ -685,7 +680,6 @@ router.put(
           notes = expObj.notes;
 
           notes.push(note);
-          // console.log(notes);
           log = expObj.log;
 
           log.push({

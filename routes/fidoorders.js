@@ -1,11 +1,12 @@
 const express = require("express");
 const FidoOrder = require("../models/fidoorder");
-const Expense = require("../models/expense");
+const OrderSummaries = require("../models/ordersummary");
+// const Expense = require("../models/expense");
 const moment = require("moment");
-const Customer = require("../models/customer");
-const PayMethod = require("../models/paymethod");
-const Terminal = require("../models/terminal");
-const User = require("../models/user");
+// const Customer = require("../models/customer");
+// const PayMethod = require("../models/paymethod");
+// const Terminal = require("../models/terminal");
+// const User = require("../models/user");
 const _ = require("lodash");
 const XLSX = require("xlsx");
 const Utils = require("../utils");
@@ -22,7 +23,7 @@ const nodemailer = require("nodemailer");
 const { google } = require("googleapis");
 const OAuth2 = google.auth.OAuth2;
 // const Utils = require("../utils");
-const Summary = require("../summary/recsummary");
+
 const mail = require("../mail");
 let PRODUCTNAME = {
   INCENTIVE: "INCENTIVE",
@@ -1205,36 +1206,80 @@ router.get("/summaryBySiteByProduct", checkAuth, async (req, res, next) => {
   }
 });
 
-router.get("/summaryForAccordion",checkAuth, async (req, res, next) => {
-  let user, userEmail;
-  let role = "";
+router.get("/summaryFromBackup", checkAuth, async (req, res, next) => {
+  const alloweds = req.userData.role;
+  const allowedStaff = [
+    "ADMIN",
+    "GENEAL MANAGER",
+    "SNR ACCOUNTANT",
+    "ACCOUNTANT",
+    "MANAGER",
+    "SECRETARY",
+    "POS OFFICER",
+    "SUPERVISOR",
+  ];
+
+  if (!allowedStaff.includes(alloweds)) {
+    return;
+  }
 
   try {
-    const alloweds = req.userData.role;
-    const allowedStaff = [
-      "ADMIN",
-      "GENEAL MANAGER",
-      "SNR ACCOUNTANT",
-      "ACCOUNTANT",
-      "MANAGER",
-      "SECRETARY",
-      "POS OFFICER",
-      "SUPERVISOR",
-    ];
-
-    if (!allowedStaff.includes(alloweds)) {
-      return;
+    // let response = [];
+    const response = await OrderSummaries.find();
+    console.log(response, "response");
+    if (response) {
+      return res.status(200).json({
+        response: response,
+        message: "Orders Summarized  Successfully",
+      });
+    } else {
+      return res
+        .status(500)
+        .json({ message: "fetching Summary not successful" });
     }
-    let response = []
+    // return res.status(200).json({
+    //   response: response,
+    //   message: "Orders Summarized  Successfully",
+    // });
+  } catch (err) {
+    console.log(err);
+
+    return res
+      .status(500)
+      .json({ message: "fetching Summary not successful" + err });
+  }
+});
+
+router.get("/summaryForAccordion", checkAuth, async (req, res, next) => {
+  let user, userEmail;
+  let role = "";
+  const alloweds = req.userData.role;
+  const allowedStaff = [
+    "ADMIN",
+    "GENEAL MANAGER",
+    "SNR ACCOUNTANT",
+    "ACCOUNTANT",
+    "MANAGER",
+    "SECRETARY",
+    "POS OFFICER",
+    "SUPERVISOR",
+  ];
+
+  if (!allowedStaff.includes(alloweds)) {
+    return;
+  }
+
+  try {
+    let response = [];
     response = await agg();
 
-   
     return res.status(200).json({
       response: response,
       message: "Orders Summarized  Successfully",
     });
-    
   } catch (err) {
+    console.log(err);
+
     return res
       .status(500)
       .json({ message: "fetching Summary not successful" + err });
@@ -1243,15 +1288,16 @@ router.get("/summaryForAccordion",checkAuth, async (req, res, next) => {
   async function agg() {
     let twoWeeksAgo = new Date();
     twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14); // subtract 14 days
+    let result = [];
 
-    const result = await FidoOrder.aggregate([
+    result = await FidoOrder.aggregate([
       {
         $match: {
           createdAt: { $gte: twoWeeksAgo },
-        }
+        },
       },
-      { 
-        $unwind: "$products" 
+      {
+        $unwind: "$products",
       },
       {
         $group: {
@@ -1298,7 +1344,24 @@ router.get("/summaryForAccordion",checkAuth, async (req, res, next) => {
       {
         $sort: { _id: -1 },
       },
-    ])
+      {
+        $project: {
+          _id: 0,
+          date: "$_id",
+          totalSalesForTheDay: 1,
+          products: 1,
+        },
+      },
+      // {
+      //   $merge: {
+      //     into: "OrderSummaries",
+      //     whenMatched: "merge", // or "keepExisting", "merge", "fail"
+      //     whenNotMatched: "insert", // or "discard", "fail"
+      //   },
+      // },
+    ]);
+
+    // console.log(result, "result");
 
     return result;
   }

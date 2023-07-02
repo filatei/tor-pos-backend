@@ -71,8 +71,6 @@ const pgbyRoutes = require("./routes/payrollgrpbyyrmonthstatus");
 const chatRoutes = require("./routes/chat");
 const chatgptRoutes = require("./routes/chat-gpt");
 
-
-
 // const DB = "torposedb";
 // if prod use this
 // connectStr ='mongodb+srv://user1:RwyT4Eyw799tQUKF@cluster0-j4gfg.gcp.mongodb.net/torposedb?retryWrites=true&w=majority'
@@ -81,17 +79,14 @@ app.use(require("express-status-monitor")());
 
 app.use("/data", express.static(path.join(__dirname, "data")));
 // app.use("/uploads", express.static(path.join(__dirname, "uploads")));
-app.use("/uploads", express.static('/var/www/uploads'));
-app.use("/expenseUploads", express.static('/var/www/uploads/expenses'));
-app.use("/recuploads", express.static('/var/www/uploads/torama/recuploads2'));
-app.use("/callManageruploads", express.static('/var/www/uploads/calls'));
-app.use("/public", express.static('/var/www/uploads/torama/public'));
-app.use("/varimages", express.static('/var/images'));
+app.use("/uploads", express.static("/var/www/uploads"));
+app.use("/expenseUploads", express.static("/var/www/uploads/expenses"));
+app.use("/recuploads", express.static("/var/www/uploads/torama/recuploads2"));
+app.use("/callManageruploads", express.static("/var/www/uploads/calls"));
+app.use("/public", express.static("/var/www/uploads/torama/public"));
+app.use("/varimages", express.static("/var/images"));
 
-app.use(
-  "/uploads/productimages",
-  express.static('/var/www/productimages')
-);
+app.use("/uploads/productimages", express.static("/var/www/productimages"));
 
 // app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
@@ -108,7 +103,6 @@ app.use(bodyParser.json({ limit: "1mb" }));
 app.use(cors());
 let connectStr;
 connectStr = process.env.CONNECT_STR; // mongodb://localhost:27017/torposdb
-
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -128,44 +122,41 @@ mongoose.set("useUnifiedTopology", true);
 mongoose.set("useCreateIndex", true);
 mongoose.set("useFindAndModify", false);
 
-let username, password, cluster
-let DB
+let username, password, cluster;
+let DB;
 
-if ( hostname.includes('local') ) {
-  
+if (hostname.includes("local")) {
   username = encodeURIComponent(`${dbInfo.ATLAS_DEV_USER}`);
   password = encodeURIComponent(`${dbInfo.ATLAS_DEV_PASS}`);
   cluster = `${dbInfo.ATLAS_DEV_CLUSTER}`;
   DB = `${dbInfo.ATLAS_DEV_DB}`;
   // connectStr='mongodb://localhost:27017/fido_db'
-  connectStr = process.env.CONNECT_STR; 
+  connectStr = process.env.CONNECT_STR;
 }
 
-if ( hostname.includes('torama.ng') ) {
-  
+if (hostname.includes("torama.ng")) {
   username = encodeURIComponent(`${dbInfo.ATLAS_PROD_USER}`);
   password = encodeURIComponent(`${dbInfo.ATLAS_PROD_PASS}`);
   cluster = `${dbInfo.ATLAS_PROD_CLUSTER}`;
   DB = `${dbInfo.ATLAS_PROD_DB}`;
   // connectStr = `mongodb+srv://${username}:${password}@${cluster}/${DB}?retryWrites=true&w=majority`;
-  connectStr='mongodb://localhost:27017/fido_db';
+  connectStr = "mongodb://localhost:27017/fido_db";
 }
 
-
 mongoose
-    .connect(connectStr, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      useFindAndModify: false,
-      autoIndex: true,
-      useCreateIndex: true
-    }).then(() => {
+  .connect(connectStr, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useFindAndModify: false,
+    autoIndex: true,
+    useCreateIndex: true,
+  })
+  .then(() => {
     console.log("Connected to DB");
   })
   .catch((err) => {
     console.log(err);
   });
-
 
 app.use("/api/paymethods", paymethodsRoutes);
 app.use("/api/products", productsRoutes);
@@ -222,7 +213,5 @@ app.use("/api/callManager", callRoutes);
 app.use("/api/pgby", pgbyRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/chatgpt", chatgptRoutes);
-
-
 
 module.exports = app;

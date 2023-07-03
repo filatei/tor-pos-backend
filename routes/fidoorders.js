@@ -837,17 +837,6 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
           };
 
           aggData = await Utils.yearRecAgg(aggObject2);
-
-          // if (year === 2022) {
-          //   // year the shopping system was introduced
-          //   let aggData2 = await Utils.yearOrderAgg(aggObject);
-          //   //  merge two array
-          //   console.log
-          //   aggData = sumArrayOfObjects(aggData, aggData2)
-
-          // } else {
-          //   aggData = await Utils.yearRecAgg(aggObject2);
-          // }
         } else {
           aggData = await Utils.yearOrderAgg(aggObject);
         }
@@ -1251,8 +1240,6 @@ router.get("/summaryFromBackup", checkAuth, async (req, res, next) => {
 });
 
 router.get("/summaryForAccordion", checkAuth, async (req, res, next) => {
-  let user, userEmail;
-  let role = "";
   const alloweds = req.userData.role;
   const allowedStaff = [
     "ADMIN",
@@ -1266,7 +1253,7 @@ router.get("/summaryForAccordion", checkAuth, async (req, res, next) => {
   ];
 
   if (!allowedStaff.includes(alloweds)) {
-    return;
+    return res.status(401).json({ message: "not allowed" });
   }
 
   try {
@@ -1362,6 +1349,173 @@ router.get("/summaryForAccordion", checkAuth, async (req, res, next) => {
     ]);
 
     // console.log(result, "result");
+
+    return result;
+  }
+});
+
+router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
+  const alloweds = req.userData.role;
+  const allowedStaff = [
+    "ADMIN",
+    "GENEAL MANAGER",
+    "SNR ACCOUNTANT",
+    "ACCOUNTANT",
+    "MANAGER",
+    "SECRETARY",
+    "POS OFFICER",
+    "SUPERVISOR",
+  ];
+
+  if (!allowedStaff.includes(alloweds)) {
+    return res.status(401).json({ message: "not allowed" });
+  }
+
+  try {
+    let response = null;
+    const props = {
+      startDate: req.query.startDate,
+      endDate: req.query.endDate,
+      productName: req.query.productName,
+      threshold: +req.query.threshold,
+    };
+
+    response = await agg(props);
+    // console.log(response[0],'response')
+
+    return res.status(200).json({
+      response: response[0],
+      message: "Orders Summarized  Successfully",
+    });
+  } catch (err) {
+    console.log(err);
+
+    return res
+      .status(500)
+      .json({ message: "fetching Summary not successful" + err });
+  }
+
+  async function agg(props) {
+    const startDate = props.startDate;
+    const endDate = props.endDate;
+    const productName = props.productName;
+    const threshold = props.threshold;
+
+    const result = await FidoOrder.aggregate([
+      {
+        $match: {
+          "products.name": productName,
+          createdAt: {
+            $gte: new Date(startDate),
+            $lte: new Date(endDate),
+          },
+        },
+      },
+      {
+        $unwind: "$products",
+      },
+      {
+        $match: {
+          "products.name": productName,
+        },
+      },
+      {
+        $lookup: {
+          from: "customers",
+          localField: "customer",
+          foreignField: "_id",
+          as: "customerData",
+        },
+      },
+      {
+        $unwind: "$customerData",
+      },
+      {
+        $group: {
+          _id: {
+            site: "$site",
+            customerName: "$customerData.name",
+            productName: "$products.name",
+          },
+          totalQty: {
+            $sum: "$products.qty",
+          },
+          totalSalesSum: {
+            $sum: {
+              $multiply: ["$products.qty", "$products.price"],
+            },
+          },
+        },
+      },
+      {
+        $addFields: {
+          specialSalesSum: {
+            $cond: [{ $gt: ["$totalQty", threshold] }, "$totalSalesSum", 0],
+          },
+        },
+      },
+      {
+        $sort: {
+          specialSalesSum: -1,
+        },
+      },
+      // Group by site
+      {
+        $group: {
+          _id: {
+            site: "$_id.site",
+          },
+          records: {
+            $push: {
+              customerName: "$_id.customerName",
+              productName: "$_id.productName",
+              totalQty: "$totalQty",
+              totalSalesSum: "$totalSalesSum",
+              specialSalesSum: "$specialSalesSum",
+            },
+          },
+          siteSpecialSalesSum: {
+            $sum: "$specialSalesSum",
+          },
+          countSpecialSalesCustomers: {
+            $sum: {
+              $cond: [{ $gt: ["$specialSalesSum", 0] }, 1, 0],
+            },
+          },
+        },
+      },
+      {
+        $sort: {
+          "_id.site": 1, // This will sort the documents by site in ascending order.
+        },
+      },
+      // Add totalSpecialSalesSum field
+      {
+        $group: {
+          _id: null,
+          sites: {
+            $push: {
+              site: "$_id.site",
+              records: "$records",
+              siteSpecialSalesSum: "$siteSpecialSalesSum",
+              countSpecialSalesCustomers: "$countSpecialSalesCustomers",
+            },
+          },
+          totalSpecialSalesSum: {
+            $sum: "$siteSpecialSalesSum",
+          },
+        },
+      },
+
+      // Optionally reformat the output
+      {
+        $project: {
+          _id: 0,
+          sites: 1,
+          totalSpecialSalesSum: 1,
+        },
+      },
+    ]);
 
     return result;
   }

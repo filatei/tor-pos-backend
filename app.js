@@ -70,6 +70,7 @@ const callRoutes = require("./routes/callmanager");
 const pgbyRoutes = require("./routes/payrollgrpbyyrmonthstatus");
 const chatRoutes = require("./routes/chat");
 const chatgptRoutes = require("./routes/chat-gpt");
+const cashbackRoutes = require("./routes/cashbacks");
 
 // const DB = "torposedb";
 // if prod use this
@@ -213,5 +214,6 @@ app.use("/api/callManager", callRoutes);
 app.use("/api/pgby", pgbyRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/chatgpt", chatgptRoutes);
+app.use("/api/cashback", cashbackRoutes);
 
 module.exports = app;

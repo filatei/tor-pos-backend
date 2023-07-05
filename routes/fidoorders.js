@@ -125,6 +125,7 @@ const Mail = require("nodemailer/lib/mailer");
 const { deleteModel } = require("mongoose");
 const { setMinutes } = require("date-fns");
 const { ObjectID } = require("mongodb");
+const { end } = require("pdfkit");
 
 router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
   try {
@@ -1324,14 +1325,24 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
 
   try {
     let response = null;
+    const startDate = new Date(req.query.startDate.trim());
+    const endDate = new Date(req.query.endDate.trim());
+
+    // Adjust for timezone offset
+    endDate.setMinutes(endDate.getMinutes() - endDate.getTimezoneOffset());
+
+    endDate.setHours(23);
+    endDate.setMinutes(59);
+    endDate.setSeconds(0);
 
     const props = {
-      startDate: req.query.startDate.trim(),
-      endDate: req.query.endDate.trim(),
+      startDate: startDate,
+      endDate: endDate,
       productName: req.query.productName,
       threshold: +req.query.threshold,
       userId: req.userData.userId,
     };
+    console.log(props, "props");
 
     if (!req.query.threshold && req.query.updatePay) {
       return res.status(400).json({ message: "Updating PAID" });
@@ -1341,15 +1352,6 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
     // find matching documents from cashback collection
     const sDate = new Date(props.startDate);
     const eDate = new Date(props.endDate);
-    // console.log(sDate, eDate, "sDate, eDate")
-    // const cashBack = await CashBack.find({
-    //   startDate: sDate,
-    //   endDate: eDate,
-    //   productName: props.productName,
-    // });
-    // if (cashBack.length > 0) {
-    //   console.log(cashBack, "cashBack");
-    // }
 
     response = await agg(props);
 
@@ -1359,8 +1361,6 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
       productName: props.productName,
       specialSalesSum: { $gt: 0 },
     })
-      .populate("userId", "name,_id")
-      .populate("customerId", "name,_id")
       .sort({ site: 1 })
       .sort({ specialSalesSum: -1 })
       .lean();
@@ -1419,8 +1419,8 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
             customerId: "$customerData._id",
             customerName: "$customerData.name",
             site: "$site",
-            startDate: new Date(startDate),
-            endDate: new Date(endDate),
+            startDate: startDate,
+            endDate: endDate,
           },
           totalQty: {
             $sum: "$products.qty",
@@ -1428,7 +1428,7 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
           totalSalesSum: {
             $sum: { $multiply: ["$products.qty", "$products.price"] },
           },
-          
+
           updatedBy: {
             $first: userId,
           },

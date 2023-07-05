@@ -277,7 +277,8 @@ const upload = multer({ storage: storage });
 
 // PUT Route
 router.put('/:id', upload.single('paymentProofImage'), async (req, res) => {
-  const { id } = req.params;
+    const { id } = req.params;
+    console.log(req.file.path, "req.file.path")
 
   try {
     const updatedCashback = await CashBack.findByIdAndUpdate(

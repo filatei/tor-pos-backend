@@ -4,8 +4,8 @@ const Recupload = require("../models/recupload");
 const Customer = require("../models/customer");
 const router = express.Router();
 const moment = require("moment");
-var startOfDay = require('date-fns/startOfDay')
-var endOfDay = require('date-fns/endOfDay')
+var startOfDay = require("date-fns/startOfDay");
+var endOfDay = require("date-fns/endOfDay");
 
 const fs = require("fs");
 const os = require("os");
@@ -41,7 +41,6 @@ function logIncident(email, description) {
     });
 }
 
-
 const checkAuth = require("../middleware/check-auth");
 const { deleteReceipt } = require("../controllers/receipt");
 const mail = require("../models/mail");
@@ -49,140 +48,143 @@ const { Console } = require("console");
 const { Compressor } = require("mongodb");
 
 router.post("", checkAuth, Utils.upload.any(), function (req, res, next) {
-
   try {
-    const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'ACCOUNTANT', 'SNR ACCOUNTANT', 'SECRETARY', 'POS OFFICER'];
+    const alloweds = [
+      "ADMIN",
+      "GENERAL MANAGER",
+      "MANAGER",
+      "ACCOUNTANT",
+      "SNR ACCOUNTANT",
+      "SECRETARY",
+      "POS OFFICER",
+    ];
 
-  if (!alloweds.includes(req.userData.role)) {
-    return;
-    return res.status(401).json({ message: "Not allowed" });
-  }
-
-  
-  let customerName;
-  let recObj = req.body;
-  recObj.products = JSON.parse(recObj.products);
-  recObj.products.map((p) => {
-    p.qty = parseInt(p.qty + "");
-    p.price = parseInt(p.price + "");
-  });
-  recObj.txn_amount = parseInt(recObj.txn_amount);
-
-  if (!recObj.customer || recObj.customer === undefined)
-    return res
-      .status(500)
-      .json({ message: "check your data. empty customer?" });
-
-  if (typeof recObj.customer != "object") {
-    recObj.customer = JSON.parse(recObj.customer);
-  }
-
-  customerName = recObj.customer.name;
-
-  recObj.creator = req.userData.userId;
-
-
-  if (req.files) {
-    console.log('here')
-    req.files.forEach((file) => {
-      if (hostname.includes("torama.ng")) {
-        url = "https://fido-api.torama.ng";
-      } else {
-        url = req.protocol + "://" + req.get("host");
-      }
-      const fPath = url + "/" + file.path;
-      recObj.image = fPath.replace('/var/www/','');
-      console.log(recObj.image, 'image')
-    });
-  }
-  Object.entries(recObj).forEach(([key, value]) => {
-    if (
-      !value ||
-      value === undefined ||
-      value === null ||
-      value === "null" ||
-      value === "undefined"
-    ) {
-      delete recObj[key];
+    if (!alloweds.includes(req.userData.role)) {
+      return;
+      return res.status(401).json({ message: "Not allowed" });
     }
-  });
 
-  try {
-    recObj.driver = JSON.parse(recObj.driver);
-    recObj.driver = recObj.driver.name;
-  } catch (exception) {
-    console.log(exception, 'exception')
-    recObj.driver = req.body.driver;
-  }
+    let customerName;
+    let recObj = req.body;
+    recObj.products = JSON.parse(recObj.products);
+    recObj.products.map((p) => {
+      p.qty = parseInt(p.qty + "");
+      p.price = parseInt(p.price + "");
+    });
+    recObj.txn_amount = parseInt(recObj.txn_amount);
 
-  if (recObj.customer._id) {
-    recObj.customer = recObj.customer._id;
-    saveReceipt(recObj);
-  } else {
-    saveCustomer(recObj.customer);
-  }
+    if (!recObj.customer || recObj.customer === undefined)
+      return res
+        .status(500)
+        .json({ message: "check your data. empty customer?" });
 
-  /**
-   * saves customer cust to customer collection if not exist already
-   * and sets claimObj.customer to savedcustomer._id
-   * @param {*} cust
-   */
-  function saveCustomer(cust) {
-    Customer.findOne({ name: new RegExp("^" + cust.name + "$", "i") })
-      .then((result) => {
-        if (result) {
-          recObj.customer = result._id;
-          saveReceipt(recObj);
+    if (typeof recObj.customer != "object") {
+      recObj.customer = JSON.parse(recObj.customer);
+    }
+
+    customerName = recObj.customer.name;
+
+    recObj.creator = req.userData.userId;
+
+    if (req.files) {
+      console.log("here");
+      req.files.forEach((file) => {
+        if (hostname.includes("torama.ng")) {
+          url = "https://fido-api.torama.ng";
         } else {
-          let custObj = new Customer(cust);
-          custObj
-            .save()
-            .then((sres) => {
-              recObj.customer = sres._id;
-              saveReceipt(recObj);
-            })
-            .catch((err) => {
-              console.log(err, " customer save err");
-              // throw err
-            });
+          url = req.protocol + "://" + req.get("host");
         }
-      })
-      .catch((err) => {
-        console.log(err, "customer find err");
-        // throw err
+        const fPath = url + "/" + file.path;
+        recObj.image = fPath.replace("/var/www/", "");
+        console.log(recObj.image, "image");
       });
-  }
+    }
+    Object.entries(recObj).forEach(([key, value]) => {
+      if (
+        !value ||
+        value === undefined ||
+        value === null ||
+        value === "null" ||
+        value === "undefined"
+      ) {
+        delete recObj[key];
+      }
+    });
 
-  function saveReceipt(recobj) {
-    receipt = new Recupload(recobj);
-    receipt
-      .save()
-      .then((result) => {
-        // mailobject = {...result, customerName: customerName};
-        res.status(201).json({
-          message: "Receipt  Uploaded successfully",
-          Recupload: {
-            ...result,
-            id: result._id,
-          },
+    try {
+      recObj.driver = JSON.parse(recObj.driver);
+      recObj.driver = recObj.driver.name;
+    } catch (exception) {
+      console.log(exception, "exception");
+      recObj.driver = req.body.driver;
+    }
+
+    if (recObj.customer._id) {
+      recObj.customer = recObj.customer._id;
+      saveReceipt(recObj);
+    } else {
+      saveCustomer(recObj.customer);
+    }
+
+    /**
+     * saves customer cust to customer collection if not exist already
+     * and sets claimObj.customer to savedcustomer._id
+     * @param {*} cust
+     */
+    function saveCustomer(cust) {
+      Customer.findOne({ name: new RegExp("^" + cust.name + "$", "i") })
+        .then((result) => {
+          if (result) {
+            recObj.customer = result._id;
+            saveReceipt(recObj);
+          } else {
+            let custObj = new Customer(cust);
+            custObj
+              .save()
+              .then((sres) => {
+                recObj.customer = sres._id;
+                saveReceipt(recObj);
+              })
+              .catch((err) => {
+                console.log(err, " customer save err");
+                // throw err
+              });
+          }
+        })
+        .catch((err) => {
+          console.log(err, "customer find err");
+          // throw err
         });
-        // sendMail( result );
-      })
-      .catch((error) => {
-        console.log(error)
-        res.status(500).json({
-          message: "Creating a Recupload failed! " + error,
+    }
+
+    function saveReceipt(recobj) {
+      receipt = new Recupload(recobj);
+      receipt
+        .save()
+        .then((result) => {
+          // mailobject = {...result, customerName: customerName};
+          res.status(201).json({
+            message: "Receipt  Uploaded successfully",
+            Recupload: {
+              ...result,
+              id: result._id,
+            },
+          });
+          // sendMail( result );
+        })
+        .catch((error) => {
+          console.log(error);
+          res.status(500).json({
+            message: "Creating a Recupload failed! " + error,
+          });
         });
-      });
-  }
+    }
   } catch (error) {
-    console.log(error)
+    console.log(error);
     res.status(500).json({
       message: "Creating a Recupload failed! catch " + error,
     });
-    
   }
-  
 });
 
 router.delete("/:id", checkAuth, async (req, res, next) => {
@@ -248,7 +250,15 @@ router.get("/summary", checkAuth, async (req, res, next) => {
   try {
     const { recSummary } = req.query;
     if (recSummary) {
-      if (!['ADMIN', 'MANAGER', 'GENERAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT'].includes(req.userData.role) ) {
+      if (
+        ![
+          "ADMIN",
+          "MANAGER",
+          "GENERAL MANAGER",
+          "SNR ACCOUNTANT",
+          "ACCOUNTANT",
+        ].includes(req.userData.role)
+      ) {
         return;
       }
       const aggData = await Summary.recAgg();
@@ -385,7 +395,15 @@ router.get("/salessummary", checkAuth, async (req, res, next) => {
   }
 
   try {
-    if (!['ADMIN', 'MANAGER', 'GENERAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT'].includes(req.userData.role) ) {
+    if (
+      ![
+        "ADMIN",
+        "MANAGER",
+        "GENERAL MANAGER",
+        "SNR ACCOUNTANT",
+        "ACCOUNTANT",
+      ].includes(req.userData.role)
+    ) {
       return;
     }
     const { salesSummary, month, year, company } = req.query;
@@ -414,14 +432,31 @@ router.get("/salessummary", checkAuth, async (req, res, next) => {
 });
 
 router.get("/cashsalessummary", checkAuth, async (req, res, next) => {
-  const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'ACCOUNTANT', 'SNR ACCOUNTANT', 'SECRETARY', "SUPERVISOR", 'POS OFFICER'];
+  const alloweds = [
+    "ADMIN",
+    "GENERAL MANAGER",
+    "MANAGER",
+    "ACCOUNTANT",
+    "SNR ACCOUNTANT",
+    "SECRETARY",
+    "SUPERVISOR",
+    "POS OFFICER",
+  ];
   const role = req.userData.role;
   if (!alloweds.includes(role)) {
     return res.status(401).json({ message: "Not allowed " + role });
   }
 
   try {
-    if (!['ADMIN', 'MANAGER', 'GENERAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT'].includes(req.userData.role) ) {
+    if (
+      ![
+        "ADMIN",
+        "MANAGER",
+        "GENERAL MANAGER",
+        "SNR ACCOUNTANT",
+        "ACCOUNTANT",
+      ].includes(req.userData.role)
+    ) {
       return;
     }
     const { salesSummary, month, year } = req.query;
@@ -466,7 +501,15 @@ router.get("/summary2", checkAuth, async (req, res, next) => {
     const { recSummary } = req.query;
 
     if (recSummary) {
-      if (!['ADMIN', 'MANAGER', 'GENERAL MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT'].includes(req.userData.role) ) {
+      if (
+        ![
+          "ADMIN",
+          "MANAGER",
+          "GENERAL MANAGER",
+          "SNR ACCOUNTANT",
+          "ACCOUNTANT",
+        ].includes(req.userData.role)
+      ) {
         return;
       }
 
@@ -484,7 +527,6 @@ router.get("/summary2", checkAuth, async (req, res, next) => {
       });
 
       return res.status(200).json({ records: aggData });
-     
     }
   } catch (err) {
     return res
@@ -508,14 +550,14 @@ router.get("/bydate", checkAuth, async (req, res, next) => {
     // let ddate = date.split("T")[0];
     // start of day
     // var start = moment(date).startOf("day").toDate();
-    
+
     const start = startOfDay(new Date(date));
 
     // end day
     const end = endOfDay(new Date(date));
     // var end = moment(date).endOf("day").toDate();
 
-    console.log(start, 'start', end, 'end')
+    console.log(start, "start", end, "end");
     let dayData = await Recupload.find({
       trans_date: { $gte: start, $lt: end },
     })
@@ -536,15 +578,13 @@ router.get("/bydate", checkAuth, async (req, res, next) => {
   }
 });
 
-router.get("", checkAuth,  (req, res, next) => {
+router.get("", checkAuth, (req, res, next) => {
   const role = req.userData.role;
 
   if (!role) {
-    
     return res.status(200).json({ message: "Not allowed" });
   }
 
-  
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
   const site = req.query.site;
@@ -596,72 +636,107 @@ router.get("/getByCustomer", checkAuth, async (req, res, next) => {
   }
 
   let customerId = req.query.customerId;
-  if (!customerId || customerId === 'undefined' || customerId === undefined) {
+  if (!customerId || customerId === "undefined" || customerId === undefined) {
     return res.status(404).json({ message: "customerId not defined!" });
   }
   // get array
   let records;
-  const rec = await Recupload.find({ customer: customerId, action_taken: 'PRODUCT RELEASED' }).sort({ createdAt: -1 })
+  const rec = await Recupload.find({
+    customer: customerId,
+    action_taken: "PRODUCT RELEASED",
+  })
+    .sort({ createdAt: -1 })
     .populate("customer")
     .populate("creator")
     .populate("updater")
-    .lean().limit(50)
-  
+    .lean()
+    .limit(50);
+
   if (rec) {
-    return res.status(200).json({records: rec});
+    return res.status(200).json({ records: rec });
   } else {
     res.status(404).json({ message: "record not found!" });
   }
-  
 });
 
-router.get("/getByText", checkAuth, (req, res, next) => {
+router.get("/getByText", checkAuth, async (req, res, next) => {
   const role = req.userData.role;
 
   if (!role) {
     return res.status(401).json({ message: "Not allowed" });
   }
 
-  let stan = req.query.stan;
-  console.log("stan ", stan);
-  // get array
-  let records;
-  Recupload.find()
-    .populate("customer")
-    .populate("creator")
-    .populate("updater")
-    .lean()
-    .then((rec) => {
-      records = rec.filter((r) =>
-        r.customer.name.toLowerCase().includes(stan.toLowerCase())
-      );
-      // console.log(records, "records");
+  let searchTerm = req.query.stan;
 
-      Recupload.find({ $text: { $search: stan } })
-        .lean()
-        .sort({ updatedAt: -1 })
+  // const searchQuery = async (searchTerm) => {
+    try {
+      const results = await Recupload.find({
+        $or: [
+          { "customer.name": { $regex: searchTerm, $options: "i" } },
+          { driver: { $regex: searchTerm, $options: "i" } },
+          { pay_type: { $regex: searchTerm, $options: "i" } },
+          { card_bank: { $regex: searchTerm, $options: "i" } },
+          { action_taken: { $regex: searchTerm, $options: "i" } },
+          { stan: { $regex: searchTerm, $options: "i" } },
+          { rrn: { $regex: searchTerm, $options: "i" } },
+          { trans_id: { $regex: searchTerm, $options: "i" } },
+
+          // Add more fields you want to search by
+        ],
+      })
         .populate("customer")
         .populate("creator")
-        .populate("updater")
-        .then((record) => {
-          // console.log(record, "record");
-          if (record) {
-            res.status(200).json([...record, ...records]);
-          } else {
-            res.status(404).json({ message: "record not found!" });
-          }
-        })
-        .catch((error) => {
-          res.status(500).json({
-            message: "Fetching record failed!" + error,
-          });
-        });
-    })
-    .catch((error) => {
+        .populate("updater");
+        console.log(results, "results");
+
+        return res.status(200).json(results);
+    } catch (err) {
+      console.log(err);
       res.status(500).json({
         message: "Fetching record failed!" + error,
       });
-    });
+    }
+  // };
+  
+
+  // get array
+  let records;
+  // Recupload.find()
+  //   .populate("customer")
+  //   .populate("creator")
+  //   .populate("updater")
+  //   .lean()
+  //   .then((rec) => {
+  //     records = rec.filter((r) =>
+  //       r?.customer?.name?.toLowerCase().includes(stan.toLowerCase())
+  //     );
+  //     // console.log(records, "records");
+
+  //     Recupload.find({ $text: { $search: stan } })
+  //       .lean()
+  //       .sort({ updatedAt: -1 })
+  //       .populate("customer")
+  //       .populate("creator")
+  //       .populate("updater")
+  //       .then((record) => {
+  //         // console.log(record, "record");
+  //         if (record) {
+  //           res.status(200).json([...record, ...records]);
+  //         } else {
+  //           res.status(404).json({ message: "record not found!" });
+  //         }
+  //       })
+  //       .catch((error) => {
+  //         res.status(500).json({
+  //           message: "Fetching record failed!" + error,
+  //         });
+  //       });
+  //   })
+  //   .catch((error) => {
+  //     res.status(500).json({
+  //       message: "Fetching record failed!" + error,
+  //     });
+  //   });
 });
 
 router.get("/:id", checkAuth, (req, res, next) => {
@@ -670,7 +745,7 @@ router.get("/:id", checkAuth, (req, res, next) => {
   if (!role) {
     return res.status(401).json({ message: "Not allowed" });
   }
-  
+
   Recupload.findById(req.params.id)
     .populate("customer")
     .populate("creator")
@@ -690,7 +765,15 @@ router.get("/:id", checkAuth, (req, res, next) => {
 });
 
 router.put("/:id", checkAuth, async (req, res, next) => {
-  const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'ACCOUNTANT', 'SNR ACCOUNTANT', 'SECRETARY', 'POS OFFICER'];
+  const alloweds = [
+    "ADMIN",
+    "GENERAL MANAGER",
+    "MANAGER",
+    "ACCOUNTANT",
+    "SNR ACCOUNTANT",
+    "SECRETARY",
+    "POS OFFICER",
+  ];
 
   if (!alloweds.includes(req.userData.role)) {
     return res.status(200).json({ message: "Not allowed" });
@@ -807,11 +890,19 @@ router.put(
   checkAuth,
   Utils.upload.any(),
   function (req, res, next) {
-    const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'ACCOUNTANT', 'SNR ACCOUNTANT', 'SECRETARY', 'POS OFFICER'];
+    const alloweds = [
+      "ADMIN",
+      "GENERAL MANAGER",
+      "MANAGER",
+      "ACCOUNTANT",
+      "SNR ACCOUNTANT",
+      "SECRETARY",
+      "POS OFFICER",
+    ];
 
-  if (!alloweds.includes(req.userData.role)) {
-    return res.status(401).json({ message: "Not allowed" });
-  }
+    if (!alloweds.includes(req.userData.role)) {
+      return res.status(401).json({ message: "Not allowed" });
+    }
 
     let updater = req.userData.userId;
 

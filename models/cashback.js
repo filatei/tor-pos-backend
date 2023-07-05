@@ -1,0 +1,34 @@
+const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
+
+const CashBackSchema = new mongoose.Schema({
+    customerName: { type: String, required: true },
+    productName: { type: String, required: true },
+    customerId: {type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true },
+   
+    site: { type: String, required: true },
+    totalQty: { type: Number, required: true },
+    totalSalesSum: { type: Number, required: true },
+    specialSalesSum: { type: Number, required: true },
+    startDate: { type: Date, required: true },
+    endDate: { type: Date, required: true },
+    paid: { type: Boolean, default: false },
+    status: { type: String, enum: ['PAID', 'UNPAID'], default: 'UNPAID' },
+    paymentProofImage: { type: String }, // Assuming this will be an URL to the image
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
+}, {
+    timestamps: true
+}); // This enables automatic timestamp generation
+
+CashBackSchema.index({
+    customerId: 'text', site: "text", startDate: "text",
+    endDate: "text",
+    productName: 'text',
+    totalQty: 'text',
+    totalSalesSum: 'text',
+    specialSalesSum: 'text'
+});
+
+
+module.exports = mongoose.model('CashBack', CashBackSchema);

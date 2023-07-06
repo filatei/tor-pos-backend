@@ -1342,7 +1342,6 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
       threshold: +req.query.threshold,
       userId: req.userData.userId,
     };
-    console.log(props, "props");
 
     if (!req.query.threshold && req.query.updatePay) {
       return res.status(400).json({ message: "Updating PAID" });

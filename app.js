@@ -82,14 +82,15 @@ app.use("/data", express.static(path.join(__dirname, "data")));
 // app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/uploads", express.static("/var/www/uploads"));
 app.use("/expenseUploads", express.static("/var/www/uploads/expenses"));
+app.use("/cashbackUploads", express.static("/var/www/uploads/cashbackimages"));
 app.use("/recuploads", express.static("/var/www/uploads/torama/recuploads2"));
 app.use("/callManageruploads", express.static("/var/www/uploads/calls"));
 app.use("/public", express.static("/var/www/uploads/torama/public"));
 app.use("/varimages", express.static("/var/images"));
 
+
 app.use("/uploads/productimages", express.static("/var/www/productimages"));
 
-// app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
   bodyParser.urlencoded({
     limit: "50mb",
@@ -97,7 +98,6 @@ app.use(
     parameterLimit: 50000,
   })
 );
-// app.use(express.json());
 
 app.use(bodyParser.json({ limit: "1mb" }));
 
@@ -140,7 +140,6 @@ if (hostname.includes("torama.ng")) {
   password = encodeURIComponent(`${dbInfo.ATLAS_PROD_PASS}`);
   cluster = `${dbInfo.ATLAS_PROD_CLUSTER}`;
   DB = `${dbInfo.ATLAS_PROD_DB}`;
-  // connectStr = `mongodb+srv://${username}:${password}@${cluster}/${DB}?retryWrites=true&w=majority`;
   connectStr = "mongodb://localhost:27017/fido_db";
 }
 

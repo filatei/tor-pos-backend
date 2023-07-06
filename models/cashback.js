@@ -12,7 +12,9 @@ const CashBackSchema = new mongoose.Schema({
     specialSalesSum: { type: Number, required: true },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
+
     status: { type: String, enum: ['PAID', 'UNPAID'], default: 'UNPAID' },
+    imageText: { type: String },
     paymentProofImage: { type: String }, // Assuming this will be an URL to the image
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }

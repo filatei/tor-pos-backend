@@ -82,7 +82,6 @@ const storage2 = multer.diskStorage({
     cb(null, myDir);
   },
   filename: (req, file, cb) => {
-    console.log(path.extname(file.originalname));
     let fileName;
     if (path.extname(file.originalname)) {
       fileName =
@@ -91,7 +90,6 @@ const storage2 = multer.diskStorage({
         new Date().getTime() +
         file.originalname.toLowerCase(file.originalname).split(" ").join("-") +
         path.extname(file.originalname);
-      console.log(fileName);
     } else {
       fileName =
         req.userData.userId +
@@ -141,7 +139,6 @@ const storage22 = multer.diskStorage({
     cb(null, myDir);
   },
   filename: (req, file, cb) => {
-    console.log(path.extname(file.originalname));
     let fileName =
       req.userData.userId +
       "-" +

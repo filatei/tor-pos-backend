@@ -37,8 +37,12 @@ function logIncident(email, description) {
 }
 
 const checkAuth = require("../middleware/check-auth");
-const expense = require("../models/expense");
-const { th } = require("date-fns/locale");
+// const expense = require("../models/expense");
+// const { th } = require("date-fns/locale");
+
+const multerConfig = require('../config/multer-config');
+const DIR = "/var/www/uploads/expenses/";
+const upload = multerConfig(DIR);
 
 router.post("", checkAuth, function (req, res, next) {
 
@@ -634,19 +638,17 @@ router.get("/:id", (req, res, next) => {
 router.put(
   "/notes/:id",
   checkAuth,
-  Utils.upload2.any(),
+  upload.any(),
   async function (req, res, next) {
     const alloweds = process.env.ALLOWEDS;
 
     if (!alloweds.includes(req.userData.email)) {
-      logIncident(req.userData.email, "Not allowed to create notes");
       return res.status(500).json({ message: "Not allowed" });
     }
 
     let updater = req.userData.userId;
     let myPath;
     if (req.files) {
-      let fileName;
       req.files.forEach((file) => {
         if (hostname.includes("torama.ng")) {
           url = "https://fido-api.torama.ng";
@@ -654,14 +656,13 @@ router.put(
           url = req.protocol + "://" + req.get("host");
         }
 
-        // myPath = url + "/" + file.path;
-
         myPath =
           url +
-          "/expenseUploads/" +
+          "/expenseUploads" +
           file.path.split("/var/www/uploads/expenses")[1];
       });
     }
+
     const note = req.body;
     let recId = req.params.id;
     await saveExpense();

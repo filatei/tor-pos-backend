@@ -49,53 +49,57 @@ if (hostname.includes("torama.ng")) {
   flw = new Flutterwave(tokens.FLW_PUBLIC_KEY_TEST, tokens.FLW_SECRET_KEY_TEST);
 }
 
-var multer = require("multer");
+const multerConfig = require('../config/multer-config');
 const DIR = "/var/www/uploads/fidoorderimages/";
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    try {
-      if (!fs.existsSync(DIR)) {
-        fs.mkdirSync(DIR, { recursive: true });
-      }
-    } catch (err) {
-      throw err;
-    }
-    cb(null, DIR);
-  },
-  filename: (req, file, cb) => {
-    let ext = Path.extname(file.originalname);
-    if (!ext) {
-      ext = ".png";
-    }
-    const fileName =
-      new Date().getTime() +
-      "-" +
-      file.originalname.toLowerCase().split(" ").join("-") +
-      ext;
-    cb(null, fileName);
-  },
-});
+const upload = multerConfig(DIR);
 
-// Multer Mime Type Validation
-var upload = multer({
-  storage: storage,
-  limits: {
-    fileSize: 1024 * 1024 * 1,
-  },
-  fileFilter: (req, file, cb) => {
-    if (
-      file.mimetype == "image/gif" ||
-      file.mimetype == "image/png" ||
-      file.mimetype == "image/jpg" ||
-      file.mimetype == "image/jpeg"
-    ) {
-      cb(null, true);
-    } else {
-      cb(null, false);
-      return cb(new Error("Only .gif, .png, .jpg and .jpeg format allowed!"));
-    }
-  },
-});
+// var multer = require("multer");
+// const DIR = "/var/www/uploads/fidoorderimages/";
+// const storage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     try {
+//       if (!fs.existsSync(DIR)) {
+//         fs.mkdirSync(DIR, { recursive: true });
+//       }
+//     } catch (err) {
+//       throw err;
+//     }
+//     cb(null, DIR);
+//   },
+//   filename: (req, file, cb) => {
+//     let ext = Path.extname(file.originalname);
+//     if (!ext) {
+//       ext = ".png";
+//     }
+//     const fileName =
+//       new Date().getTime() +
+//       "-" +
+//       file.originalname.toLowerCase().split(" ").join("-") +
+//       ext;
+//     cb(null, fileName);
+//   },
+// });
+
+// // Multer Mime Type Validation
+// var upload = multer({
+//   storage: storage,
+//   limits: {
+//     fileSize: 1024 * 1024 * 1,
+//   },
+//   fileFilter: (req, file, cb) => {
+//     if (
+//       file.mimetype == "image/gif" ||
+//       file.mimetype == "image/png" ||
+//       file.mimetype == "image/jpg" ||
+//       file.mimetype == "image/jpeg"
+//     ) {
+//       cb(null, true);
+//     } else {
+//       cb(null, false);
+//       return cb(new Error("Only .gif, .png, .jpg and .jpeg format allowed!"));
+//     }
+//   },
+// });
 
 const Accesslog = require("../models/accesslog");
 
@@ -395,6 +399,7 @@ router.put(
         path = url + "/uploads/fidoorderimages/" + req.file.filename;
       }
       note.image = path;
+      console.log("note with image", note.image);
     }
     let recId = req.params.id;
     try {
@@ -1655,7 +1660,6 @@ router.get("/combinedProductsOrder", checkAuth, async (req, res, next) => {
       },
     ]);
 
-    console.log(fidoOrderResults[0], "fidoOrderResults");
 
     return fidoOrderResults;
   }

@@ -20,7 +20,11 @@ const OAuth2 = google.auth.OAuth2;
 const Utils = require("../utils");
 
 var multer = require("multer");
+
 const DIR = "./uploads/shoporderimages/";
+// const multerConfig = require('../config/multer-config');
+// const DIR = "/var/www/uploads/shoporderimages/";
+// const upload = multerConfig(DIR);
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     try {
@@ -66,6 +70,7 @@ var upload = multer({
     }
   },
 });
+
 
 const Accesslog = require("../models/accesslog");
 
@@ -190,6 +195,12 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
       url = req.protocol + "://" + req.get("host");
     }
     shopObj.image = url + '/' + req.file.path;
+    console.log(shopObj.image);
+
+    // const paymentProofImage =
+    //       url +
+    //       "/shoporderimages/" +
+    //       req.file.path.split("/var/www/uploads/cashbackimages")[1];
   }
   const dirPath = Path.join(__dirname, "../uploads/printqueue/");
   let printQueue = dirPath + new Date().getTime() + ".json";

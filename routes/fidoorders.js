@@ -2,12 +2,10 @@ const express = require("express");
 const mongoose = require("mongoose");
 const FidoOrder = require("../models/fidoorder");
 const CashBack = require("../models/cashback");
-// const Expense = require("../models/expense");
+const CashBackAttach = require("../models/cashbackattach");
 const moment = require("moment");
 const Customer = require("../models/customer");
-// const PayMethod = require("../models/paymethod");
-// const Terminal = require("../models/terminal");
-// const User = require("../models/user");
+
 const _ = require("lodash");
 const XLSX = require("xlsx");
 const Utils = require("../utils");
@@ -23,7 +21,6 @@ const tokens = require(`${homedir}/.token.json`);
 const nodemailer = require("nodemailer");
 const { google } = require("googleapis");
 const OAuth2 = google.auth.OAuth2;
-// const Utils = require("../utils");
 
 const mail = require("../mail");
 let PRODUCTNAME = {
@@ -49,57 +46,9 @@ if (hostname.includes("torama.ng")) {
   flw = new Flutterwave(tokens.FLW_PUBLIC_KEY_TEST, tokens.FLW_SECRET_KEY_TEST);
 }
 
-const multerConfig = require('../config/multer-config');
+const multerConfig = require("../config/multer-config");
 const DIR = "/var/www/uploads/fidoorderimages/";
 const upload = multerConfig(DIR);
-
-// var multer = require("multer");
-// const DIR = "/var/www/uploads/fidoorderimages/";
-// const storage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     try {
-//       if (!fs.existsSync(DIR)) {
-//         fs.mkdirSync(DIR, { recursive: true });
-//       }
-//     } catch (err) {
-//       throw err;
-//     }
-//     cb(null, DIR);
-//   },
-//   filename: (req, file, cb) => {
-//     let ext = Path.extname(file.originalname);
-//     if (!ext) {
-//       ext = ".png";
-//     }
-//     const fileName =
-//       new Date().getTime() +
-//       "-" +
-//       file.originalname.toLowerCase().split(" ").join("-") +
-//       ext;
-//     cb(null, fileName);
-//   },
-// });
-
-// // Multer Mime Type Validation
-// var upload = multer({
-//   storage: storage,
-//   limits: {
-//     fileSize: 1024 * 1024 * 1,
-//   },
-//   fileFilter: (req, file, cb) => {
-//     if (
-//       file.mimetype == "image/gif" ||
-//       file.mimetype == "image/png" ||
-//       file.mimetype == "image/jpg" ||
-//       file.mimetype == "image/jpeg"
-//     ) {
-//       cb(null, true);
-//     } else {
-//       cb(null, false);
-//       return cb(new Error("Only .gif, .png, .jpg and .jpeg format allowed!"));
-//     }
-//   },
-// });
 
 const Accesslog = require("../models/accesslog");
 
@@ -110,18 +59,6 @@ function isValidObjectId(id) {
     return false;
   }
   return false;
-}
-
-function logIncident(email, description) {
-  const logObj = new Accesslog({ email: email, description: description });
-  logObj
-    .save(logObj)
-    .then((result) => {
-      console.log("access incident logged for user", result);
-    })
-    .catch((err) => {
-      console.log("access logging error for user ", err);
-    });
 }
 
 const checkAuth = require("../middleware/check-auth");
@@ -225,6 +162,7 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
         }
         const fPath = url + "/" + req.file.path;
         shopObj.image = fPath.replace("/var/www/", "");
+        console.log(shopObj.image, "shop image", fPath);
       }
       saveOrder(shopObj);
     }
@@ -381,7 +319,6 @@ router.put(
     ];
 
     if (!req.userData.role) {
-      // logIncident(req.userData.email, "Not allowed to create notes");
       return res.status(500).json({ message: "Not allowed" });
     }
 
@@ -1334,11 +1271,17 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
     const endDate = new Date(req.query.endDate.trim());
 
     // Adjust for timezone offset
-    endDate.setMinutes(endDate.getMinutes() - endDate.getTimezoneOffset());
+    
+    startDate.setUTCHours(1);
+    startDate.setUTCMinutes(0);
+    startDate.setUTCSeconds(0);
+    startDate.setUTCMilliseconds(0);
 
-    endDate.setHours(23);
-    endDate.setMinutes(59);
-    endDate.setSeconds(0);
+    endDate.setUTCHours(23);
+    endDate.setUTCMinutes(59);
+    endDate.setUTCSeconds(0);
+    endDate.setUTCMilliseconds(0);
+
 
     const props = {
       startDate: startDate,
@@ -1347,15 +1290,6 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
       threshold: +req.query.threshold,
       userId: req.userData.userId,
     };
-
-    if (!req.query.threshold && req.query.updatePay) {
-      return res.status(400).json({ message: "Updating PAID" });
-      //  update paid field in cashback collection
-    }
-
-    // find matching documents from cashback collection
-    const sDate = new Date(props.startDate);
-    const eDate = new Date(props.endDate);
 
     response = await agg(props);
 
@@ -1370,7 +1304,7 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
       .lean();
 
     response = cashBack.map((item) => {
-      return { ...item, createdBy: req.userData.userId };
+      return { ...item };
     });
 
     return res.status(200).json({
@@ -1387,14 +1321,13 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
 
   async function agg(props) {
     const { startDate, endDate, productName, threshold, userId } = props;
-
-    await FidoOrder.aggregate([
+    const results = await FidoOrder.aggregate([
       {
         $match: {
           "products.name": productName,
           createdAt: {
-            $gte: new Date(startDate),
-            $lte: new Date(endDate),
+            $gte: startDate,
+            $lte: endDate,
           },
         },
       },
@@ -1432,12 +1365,14 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
           totalSalesSum: {
             $sum: { $multiply: ["$products.qty", "$products.price"] },
           },
-
           updatedBy: {
             $first: userId,
           },
           productName: {
             $first: "$products.name",
+          },
+          createdAt: {
+            $first: "$createdAt",
           },
         },
       },
@@ -1466,6 +1401,7 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
           totalSalesSum: 1,
           specialSalesSum: 1,
           productName: { $literal: productName },
+          createdAt: 1,
         },
       },
       {
@@ -1659,7 +1595,6 @@ router.get("/combinedProductsOrder", checkAuth, async (req, res, next) => {
         },
       },
     ]);
-
 
     return fidoOrderResults;
   }

@@ -1,10 +1,11 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+// const Schema = mongoose.Schema;
 
 const CashBackSchema = new mongoose.Schema({
     customerName: { type: String, required: true },
     productName: { type: String, required: true },
     customerId: {type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true },
+    attachId: {type: mongoose.Schema.Types.ObjectId, ref: 'CashBackAttach',  },
    
     site: { type: String, required: true },
     totalQty: { type: Number, required: true },
@@ -14,6 +15,7 @@ const CashBackSchema = new mongoose.Schema({
     endDate: { type: Date, required: true },
 
     status: { type: String, enum: ['PAID', 'UNPAID'], default: 'UNPAID' },
+
     imageText: { type: String },
     paymentProofImage: { type: String }, // Assuming this will be an URL to the image
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },

@@ -1318,7 +1318,24 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
         itemDate >= targetDate
       );
     });
-    console.log(response, "response");
+
+    // group result by site and calculate totals
+    let totalsBySite = response.reduce((r, a) => {
+      r[a.site] = r[a.site] || { data: [], total: 0 };
+      r[a.site].data.push(a);
+      r[a.site].total += a.specialSalesSum;
+      return r;
+    }, {});
+
+    // make cash back an array and include totals
+    response = Object.keys(totalsBySite).map((key) => {
+      return {
+        site: key,
+        data: totalsBySite[key].data,
+        total: totalsBySite[key].total,
+      };
+    });
+    // console.log(response, "response");
 
     return res.status(200).json({
       response: response,

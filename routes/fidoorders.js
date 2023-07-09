@@ -1303,9 +1303,22 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
       .sort({ specialSalesSum: -1 })
       .lean();
 
-    response = cashBack.map((item) => {
-      return { ...item };
+    // response = cashBack.map((item) => {
+    //   return { ...item };
+    // });
+
+    //  from July 6 2023, dont include Obunna or Yenegwe
+    const targetDate = new Date("2023-07-06");
+    response = cashBack.filter((item) => {
+      const itemDate = new Date(item.startDate);
+      return (
+        itemDate < targetDate ||
+        item.site !== "YENEGWE" &&
+        item.site !== "OBUNNA" &&
+        itemDate >= targetDate
+      );
     });
+    console.log(response, "response");
 
     return res.status(200).json({
       response: response,

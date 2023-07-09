@@ -105,7 +105,7 @@ router.put(
       if (!updatedCashback) {
         return res.status(404).json({ message: "Cashback not found." });
       }
-      console.log(updatedCashback, "updatedCashback");
+      // console.log(updatedCashback, "updatedCashback");
 
       return res.status(200).json({
         record: updatedCashback,

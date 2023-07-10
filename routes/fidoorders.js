@@ -1448,9 +1448,7 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
             "startDate",
             "endDate",
             "productName",
-            "totalQty",
-            "totalSalesSum",
-            "specialSalesSum",
+            
           ],
           whenMatched: "merge",
           whenNotMatched: "insert",

@@ -39,12 +39,12 @@ const CashBackSchema = new mongoose.Schema(
   }
 ); // This enables automatic timestamp generation
 
-CashBackSchema.index({
-  customerId: "text",
-  site: "text",
-  startDate: "text",
-  endDate: "text",
-  productName: "text",
-});
+// CashBackSchema.index({
+//   customerId: "text",
+//   site: "text",
+//   startDate: "text",
+//   endDate: "text",
+//   productName: "text",
+// });
 
 module.exports = mongoose.model("CashBack", CashBackSchema);

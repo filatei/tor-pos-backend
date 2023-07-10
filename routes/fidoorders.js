@@ -67,6 +67,7 @@ const { deleteModel } = require("mongoose");
 const { setMinutes } = require("date-fns");
 const { ObjectID } = require("mongodb");
 const { end } = require("pdfkit");
+const { is } = require("date-fns/locale");
 
 router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
   try {
@@ -1269,6 +1270,16 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
     let response = null;
     const startDate = new Date(req.query.startDate.trim());
     const endDate = new Date(req.query.endDate.trim());
+    const sText = req.query.startDate.trim().split('T')[0];
+    const eText = req.query.endDate.trim().split('T')[0];
+    const dateRanges = generateDateRanges()
+    const isExist = dateRanges.filter((date) =>  { return (date.startDate === sText && date.endDate === eText ) });
+    
+    if (isExist.length === 0) { 
+      console.log("Invalid Date Range");
+      return res.status(400).json({ message: "Invalid Date Range" });
+    }
+   
 
     // Adjust for timezone offset
     
@@ -1455,6 +1466,34 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
         },
       },
     ]);
+  }
+
+  function generateDateRanges() {
+    const dateRanges = [];
+    const today = new Date();
+    let startDate = new Date('2023-06-29');
+    let endDate = new Date('2023-07-05');
+    
+    while (endDate <= today) {
+      dateRanges.push({
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0],
+      });
+  
+      // Increment startDate and endDate by 7 days
+      startDate = new Date(startDate.setDate(startDate.getDate() + 7));
+      endDate = new Date(endDate.setDate(endDate.getDate() + 7));
+    }
+  
+    // Add one more week range even if the endDate is in the future
+    if(endDate > today) {
+      dateRanges.push({
+        startDate: startDate.toISOString().split('T')[0],
+        endDate: endDate.toISOString().split('T')[0],
+      });
+    }
+  
+    return dateRanges;
   }
 });
 

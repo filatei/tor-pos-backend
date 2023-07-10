@@ -1362,24 +1362,19 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
 
   async function agg(props) {
     const { startDate, endDate, productName, threshold, userId } = props;
-    const results = await FidoOrder.aggregate([
+  
+    // first part of the pipeline
+    const pipeline1 = [
       {
         $match: {
-          "products.name": productName,
           createdAt: {
             $gte: startDate,
             $lte: endDate,
           },
         },
       },
-      {
-        $unwind: "$products",
-      },
-      {
-        $match: {
-          "products.name": productName,
-        },
-      },
+      { $unwind: "$products" },
+      { $match: { "products.name": productName } },
       {
         $lookup: {
           from: "customers",
@@ -1388,9 +1383,7 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
           as: "customerData",
         },
       },
-      {
-        $unwind: "$customerData",
-      },
+      { $unwind: "$customerData" },
       {
         $group: {
           _id: {
@@ -1400,36 +1393,19 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
             startDate: startDate,
             endDate: endDate,
           },
-          totalQty: {
-            $sum: "$products.qty",
-          },
-          totalSalesSum: {
-            $sum: { $multiply: ["$products.qty", "$products.price"] },
-          },
-          updatedBy: {
-            $first: userId,
-          },
-          productName: {
-            $first: "$products.name",
-          },
-          createdAt: {
-            $first: "$createdAt",
-          },
+          totalQty: { $sum: "$products.qty" },
+          totalSalesSum: { $sum: { $multiply: ["$products.qty", "$products.price"] } },
+          updatedBy: { $first: userId },
+          productName: { $first: "$products.name" },
+          createdAt: { $first: "$createdAt" },
         },
       },
       {
         $addFields: {
-          specialSalesSum: {
-            $cond: [{ $gte: ["$totalQty", 500] }, "$totalSalesSum", 0],
-          },
+          specialSalesSum: { $cond: [{ $gte: ["$totalQty", 500] }, "$totalSalesSum", 0] },
         },
       },
-      {
-        $sort: {
-          site: 1,
-          totalSalesSum: -1,
-        },
-      },
+      { $sort: { site: 1, totalSalesSum: -1 } },
       {
         $project: {
           _id: 0,
@@ -1445,28 +1421,28 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
           createdAt: 1,
         },
       },
-      {
-        $match: {
-          specialSalesSum: { $ne: 0 },
-        },
-      },
+      { $match: { specialSalesSum: { $ne: 0 } } },
+    ];
+  
+    const results = await FidoOrder.aggregate(pipeline1);
+    // console.log(results);
+  
+    // second part of the pipeline
+    const pipeline2 = [
       {
         $merge: {
           into: "cashbacks",
-          on: [
-            "customerId",
-            "site",
-            "startDate",
-            "endDate",
-            "productName",
-            
-          ],
+          on: ["customerId", "site", "startDate", "endDate", "productName"],
           whenMatched: "merge",
           whenNotMatched: "insert",
         },
       },
-    ]);
+    ];
+  
+    // merge results into cashbacks
+    await FidoOrder.aggregate([...pipeline1, ...pipeline2]);
   }
+  
 
   function generateDateRanges() {
     const dateRanges = [];

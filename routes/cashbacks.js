@@ -84,7 +84,6 @@ router.put(
         process.env.DOMAIN || req.protocol + "://" + req.get("host");
 
       const { id } = req.params;
-      const { imageText } = req.body;
       let toUpdate = { ...req.body, updatedBy: req.userData.userId };
 
       if (req.file?.path) {

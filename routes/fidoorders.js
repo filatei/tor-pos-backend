@@ -1409,7 +1409,7 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
       {
         $addFields: {
           specialSalesSum: {
-            $cond: [{ $gte: ["$totalQty", threshold] }, "$totalSalesSum", 0],
+            $cond: [{ $gte: ["$totalQty", 500] }, "$totalSalesSum", 0],
           },
         },
       },

@@ -18,6 +18,7 @@ const CashBackSchema = new mongoose.Schema(
     specialSalesSum: { type: Number, required: true },
     startDate: { type: Date, required: true },
     endDate: { type: Date, required: true },
+    paymentDate: { type: Date },
 
     status: { type: String, enum: ["PAID", "UNPAID"], default: "UNPAID" },
 

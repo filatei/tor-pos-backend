@@ -50,16 +50,11 @@ router.post("", checkAuth, upload.single("image"), async (req, res) => {
       image: imagePath,
      
     });
-    console.log(cashBackAttach, cashBackAttach);
 
     const saved = await cashBackAttach.save();
-    // console.log(saved, "saved");
 
     const cashBack = await CashBack.findById(saved.cashBackId);
-    // console.log(cashBack, "cashBack");
-    // cashBack.status = saved.status;
-    // cashBack.imageText = saved.imageText;
-    // cashBack.paymentProofImage = saved.image;
+   
 
     if (!saved) {
       return res.status(404).json({ message: "CashbackAttach save failed." });

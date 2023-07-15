@@ -87,6 +87,7 @@ app.use("/recuploads", express.static("/var/www/uploads/torama/recuploads2"));
 app.use("/callManageruploads", express.static("/var/www/uploads/calls"));
 app.use("/public", express.static("/var/www/uploads/torama/public"));
 app.use("/varimages", express.static("/var/images"));
+app.use("/payrollimages", express.static("/var/www/uploads/payrollimages"));
 
 
 app.use("/uploads/productimages", express.static("/var/www/productimages"));

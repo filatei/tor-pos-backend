@@ -32,11 +32,7 @@ if ( hostname.includes('local') ) {
     const uri = process.env.CONNECT_STR;
     client = new MongoClient(uri);
 
-    // username = encodeURIComponent(`${dbInfo.ATLAS_DEV_USER}`);
-    // password = encodeURIComponent(`${dbInfo.ATLAS_DEV_PASS}`);
-    // cluster = `${dbInfo.ATLAS_DEV_CLUSTER}`;
-    // DB = `${dbInfo.ATLAS_DEV_DB}`;
-    // connectStr='mongodb://localhost:27017/fido_db'
+    
  
  }
  
@@ -51,15 +47,10 @@ if ( hostname.includes('local') ) {
 }
  
 
-
 router.get("",  checkAuth, async (req, res, next) => {
-
-   
- 
     try {
         // Connect to the MongoDB cluster
         await client.connect();
- 
         // Make the appropriate DB calls
         const dbs = await  listDatabases(client);
         console.log(dbs, 'dbs')
@@ -69,37 +60,13 @@ router.get("",  checkAuth, async (req, res, next) => {
     } finally {
         await client.close();
     }
-
-    // try {
-    //     const { role } = req.userData;
-    //     if (!['ADMIN', 'GENERAL MANAGER', 'SNR ACCOUNTANT'].includes(role)) {
-    //       return res.status(500).json({
-    //         message: "Fetching payrolls failed! Not Allowed "
-    //       });
-    //     }
-    
-    //     const result = await Payrollgrpbyyrmonthstatus.find({});
-    //     console.log(result, 'paygrp')
-    //     return res.status(200).json({
-    //       message: "Payroll Aggregates Result ", payrolls: result
-    //     }); 
-    //   } catch (error) {
-    //     return res.status(500).json({
-    //       message: "Payroll Aggregates Error " + error
-    //     }); 
-    //   }
 });
 
 router.get("/getGroup1",  checkAuth, async (req, res, next) => {
-
-    
     try {
         const {monthYr, payType, payStatus} = req.query
-
         console.log(monthYr, payType, payStatus)
         let query = {}
-       
-       
         if (monthYr) {
             query =   {"_id.monthYr":monthYr}
         } 
@@ -114,9 +81,7 @@ router.get("/getGroup1",  checkAuth, async (req, res, next) => {
 
         // Connect to the MongoDB cluster
         await client.connect();
-        
-        // Make the appropriate DB calls
-        // const dbs = await  listDatabases(client);
+      
 
         const coll = client.db("fido_db")
                         .collection("payrollgrpbyyrmonthstatus");
@@ -144,25 +109,7 @@ router.get("/getGroup1",  checkAuth, async (req, res, next) => {
     } finally {
         // await client.close();
     }
-//   try {
-//     const { role } = req.userData;
 
-//     if (!['ADMIN', 'GENERAL MANAGER', 'SNR ACCOUNTANT'].includes(role)) {
-//       return res.status(500).json({
-//         message: "Fetching payrolls failed! Not Allowed "
-//       });
-//     }
-
-//     const result = await Payrollgrpbyyrmonthstatus.find({});
-//     console.log(result, 'paygrp')
-//     return res.status(200).json({
-//       message: "Payroll Aggregates Result ", payrolls: result
-//     }); 
-//   } catch (error) {
-//     return res.status(500).json({
-//       message: "Payroll Aggregates Error " + error
-//     }); 
-//   }
 })
 
 async function listDatabases(client){

@@ -13,8 +13,9 @@ const payrollSchema = mongoose.Schema({
     
     company: { type: String },
     jobName: { type: String },
-    payType: { type: String, enum: ["MONTH-END", "MID-MONTH", "OTHER"]},
     status: { type: String, enum: ["PAID", "UNPAID", "INVALID"]},
+
+    payType: { type: String, enum: ["MONTH-END", "MID-MONTH", "OTHER"]},
     month: {type: String, required:true, enum: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]},
     year: {type: Number, required:true},
     grossPay: {type: Number},

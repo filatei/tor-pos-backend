@@ -14,6 +14,7 @@ const csv = require("fast-csv");
 const moment = require("moment");
 const Mail = require("../mail");
 const Payrollgrpbyyrmonthstatus = require("../models/payrollgrpbyyrmonthstatus");
+const payrollAggregations = require("../utils/payroll-aggregations");
 
 const monthToNumber = {
   January: 1,
@@ -323,7 +324,6 @@ router.post("/updatePayStatus", checkAuth, async (req, res, next) => {
       { _id: { $in: ids } },
       { status: status, updater: userId }
     );
-
     if (!updateAll) {
       return res.status(500).json({
         message: " Updating payrolls failed! No Payroll with such IDs ",
@@ -414,20 +414,22 @@ router.post(
             }
 
             const payee = await People.findOne({ people_id: personId });
+            console.log(payee, "payee");
 
             // update payee with status ACTIVE if not active
-            if (!payee.status) {
+            if (payee && !payee?.status) {
               const payeeUpdateStatus = await People.updateOne(
                 { _id: payee._id },
                 { status: "ACTIVE" }
               );
             }
 
-            if (payee && payee?._id) {
+            if (payee && payee._id) {
               row.payee = payee._id;
               row.jobName = payee.jobName;
             } else {
               console.log("ID not in db");
+              throw Error("ID not in db");
               return res.status(500).json({
                 message: "ID not in People DB for ID " + personId,
               });
@@ -962,7 +964,7 @@ router.put(
   upload2.single("image"),
   async function (req, res, next) {
     try {
-      const roles = ["ADMIN","SNR ACCOUNTANT", "GENERAL MANAGER"];
+      const roles = ["ADMIN", "SNR ACCOUNTANT", "GENERAL MANAGER"];
       if (!roles.includes(req.userData.role)) {
         return res.status(500).json({ message: "Not allowed" });
       }
@@ -988,17 +990,15 @@ router.put(
         } else {
           url = req.protocol + "://" + req.get("host");
         }
-        myPath = url  + req.file.path;
+        myPath = url + req.file.path;
         myPath = myPath.replace(/\/var\/www\/uploads/, "");
       }
 
-  
       const note = { text: text, date: date, author: author };
 
       if (myPath) {
         note.image = myPath;
       }
-      console.log(note)
 
       const oldPayroll = await Payroll.findById(recId).lean();
       if (!oldPayroll) {
@@ -1013,7 +1013,6 @@ router.put(
       payroll.updater = req.userData.userId;
 
       const updated = await Payroll.updateOne({ _id: req.params.id }, payroll);
-      console.log(updated, "updated");
 
       if (updated) {
         return res.status(200).json({ message: "Update successful! " });
@@ -1040,6 +1039,7 @@ router.delete("/:id", checkAuth, async (req, res, next) => {
   const id = req.params.id;
   const payroll = await Payroll.findById(id);
   if (payroll.status === "PAID") {
+    console.log("cant delete paid payroll");
     return res.status(500).json({
       message: " Deleting PAID payroll not allowed! Reset status ",
     });
@@ -1134,6 +1134,28 @@ router.get("", checkAuth, async (req, res, next) => {
     });
 });
 
+router.get("/monthlyPayTypes", checkAuth, async (req, res, next) => {
+  const { role } = req.userData;
+
+  if (!["ADMIN", "GENERAL MANAGER", "SNR ACCOUNTANT"].includes(role)) {
+    return res.status(500).json({
+      message: "Fetching payrolls failed! Not Allowed ",
+    });
+  }
+
+  try {
+    const result = await payrollAggregations.getMonthlyPayTypes();
+    res.status(200).json(result);
+  } catch (err) {
+    console.error(err); // Log the error for your own debugging
+    res
+      .status(500)
+      .json({
+        message: "Server error occurred while fetching monthly pay types",
+      });
+  }
+});
+
 router.get("/getYearKeys", checkAuth, async (req, res, next) => {
   try {
     const { role } = req.userData;
@@ -1214,109 +1236,55 @@ router.get("/years", checkAuth, async (req, res) => {
     ]);
     return res.status(200).json(years.map((year) => year._id));
   } catch (err) {
+    console.log(err);
     res.status(500).json({ message: err.message });
   }
 });
 
-router.get("/getYearMonthSeason/:year/:month/:payType", checkAuth, async (req, res) => {
-  try {
-    const { role } = req.userData;
-    if (!["ADMIN", "GENERAL MANAGER", "SNR ACCOUNTANT"].includes(role)) {
-      return res.status(500).json({
-        message: "Fetching payrolls failed! Not Allowed ",
-      });
-    }
-    const { year, month, payType } = req.params
-    console.log(year, month, payType, 'year, month, payType')
-    const payrolls = await Payroll.find({ year: year, month:month, payType: payType }).limit(2)
-    console.log(payrolls, 'payrolls')
-      let results = []
-    results = await getPayrollData(parseInt(year), month, payType)
-   
-    if (results) {
-      console.log(results[0], 'results')
-      return res.status(200).json(results);
-    } else {
-      throw new Error("No Payrolls Data");
-    }
-   
-
-    async function getPayrollData(year, month, payType) {
-      try {
-
-        let result = await Payroll.aggregate([
-          {
-            $match: {
-              year: year,
-              month: month,
-              payType: payType,
-            },
-          },
-          {
-            $lookup: {
-              from: "users",
-              localField: "creator",
-              foreignField: "_id",
-              as: "creator",
-            },
-          },
-          {
-            $lookup: {
-              from: "users",
-              localField: "updater",
-              foreignField: "_id",
-              as: "updater",
-            },
-          },
-          {
-            $lookup: {
-              from: "peoples",
-              localField: "payee",
-              foreignField: "_id",
-              as: "payee",
-            },
-          },
-          {
-            $lookup: {
-              from: "sites",
-              localField: "site",
-              foreignField: "_id",
-              as: "site",
-            },
-          },
-          {
-            $unwind: "$creator",
-          },
-          {
-            $unwind: "$updater",
-          },
-          {
-            $unwind: "$payee",
-          },
-          {
-            $unwind: "$site",
-          },
-          {
-            $project: {
-              "creator._id": 0,
-              "updater._id": 0,
-              "payee._id": 0,
-              "site._id": 0,
-            },
-          },
-        ]);
-        
-
-        return result;
-      } catch (error) {
-        console.log(error);
-        return null;
+router.get(
+  "/getYearMonthSeason/:year/:month/:payType",
+  checkAuth,
+  async (req, res) => {
+    try {
+      const { role } = req.userData;
+      if (!["ADMIN", "GENERAL MANAGER", "SNR ACCOUNTANT"].includes(role)) {
+        return res.status(500).json({
+          message: "Fetching payrolls failed! Not Allowed ",
+        });
       }
-    };
-  } catch (err) {
-    res.status(500).json({ message: err.message });
+      const { year, month, payType } = req.params;
+      // console.log(year, month, payType, "year month paytype");
+      if (isNaN(parseInt(year)) || !year || !month || !payType || year === undefined || month === undefined || payType === undefined) {
+        throw new Error("No Payrolls Data");
+      }
+
+      
+      
+      let payrolls = [];
+      // payrolls = await Payroll.find({
+      //   month: month,
+      //   year: parseInt(year),
+      //   payType: payType,
+      // })
+      //   .populate("payee", ["name", "bankAccount", "bankName"])
+      //   .populate("site", "name")
+      //   .populate("creator", ["name", "email", "role"])
+      //   .sort({ createdAt: -1 });
+      // console.log(payrolls[0], "payrolls", payType);
+      let results = [];
+      results = await payrollAggregations.getPayrollData(parseInt(year), month, payType);
+      // const res2 = await getPayrollData(2023, "july", "MID-MONTH");
+      // console.log(results[0]?.payee?.name, "results season name");
+
+      return res.status(200).json(results);
+
+      
+    } catch (err) {
+      console.log(err, "yearmonthseason ");
+      res.status(500).json({ message: err.message });
+    }
   }
-});
+);
 
 router.get("/months/:year", checkAuth, async (req, res) => {
   const { role } = req.userData;
@@ -1364,6 +1332,7 @@ router.get("/months/:year", checkAuth, async (req, res) => {
     ]);
     return res.status(200).json(months.map((month) => month._id));
   } catch (err) {
+    console.log(err, "monthyear");
     res.status(500).json({ message: err.message });
   }
 });
@@ -1408,7 +1377,6 @@ router.get("/getByName", checkAuth, async (req, res, next) => {
       name: 1,
     });
 
-    console.log(matchedPeople, "matched");
     let records = [];
     matchedPeople.forEach(async (m) => {
       let mPay = await Payroll.find({ payee: m._id })

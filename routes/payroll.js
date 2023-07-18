@@ -1144,15 +1144,19 @@ router.get("/monthlyPayTypes", checkAuth, async (req, res, next) => {
   }
 
   try {
-    const result = await payrollAggregations.getMonthlyPayTypes();
-    res.status(200).json(result);
+    const results = await payrollAggregations.getMonthlyPayTypes();
+    // Sort the month names in alphabetical order for each year
+    // console.log(results[0], "results[0");
+    // for (let result of results) {
+    //   result.months.sort((a, b) => a.month.localeCompare(b.month));
+    // }
+
+    res.status(200).json(results);
   } catch (err) {
     console.error(err); // Log the error for your own debugging
-    res
-      .status(500)
-      .json({
-        message: "Server error occurred while fetching monthly pay types",
-      });
+    res.status(500).json({
+      message: "Server error occurred while fetching monthly pay types",
+    });
   }
 });
 
@@ -1214,7 +1218,6 @@ router.get("/getYearKeys", checkAuth, async (req, res, next) => {
         payType: a._id.payType,
       };
     });
-    console.log(monthKeys[0]);
     return res.status(200).json({ message: "Success", yearKeys: monthKeys });
   } catch (error) {
     console.log(error, "yearkeys error");
@@ -1254,12 +1257,18 @@ router.get(
       }
       const { year, month, payType } = req.params;
       // console.log(year, month, payType, "year month paytype");
-      if (isNaN(parseInt(year)) || !year || !month || !payType || year === undefined || month === undefined || payType === undefined) {
+      if (
+        isNaN(parseInt(year)) ||
+        !year ||
+        !month ||
+        !payType ||
+        year === undefined ||
+        month === undefined ||
+        payType === undefined
+      ) {
         throw new Error("No Payrolls Data");
       }
 
-      
-      
       let payrolls = [];
       // payrolls = await Payroll.find({
       //   month: month,
@@ -1272,13 +1281,16 @@ router.get(
       //   .sort({ createdAt: -1 });
       // console.log(payrolls[0], "payrolls", payType);
       let results = [];
-      results = await payrollAggregations.getPayrollData(parseInt(year), month, payType);
+      results = await payrollAggregations.getPayrollData(
+        parseInt(year),
+        month,
+        payType
+      );
+      
       // const res2 = await getPayrollData(2023, "july", "MID-MONTH");
       // console.log(results[0]?.payee?.name, "results season name");
 
       return res.status(200).json(results);
-
-      
     } catch (err) {
       console.log(err, "yearmonthseason ");
       res.status(500).json({ message: err.message });

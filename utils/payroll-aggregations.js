@@ -125,14 +125,7 @@ exports.getPayrollData = async (year, month, payType) => {
             as: "creator",
           },
         },
-        // {
-        //   $lookup: {
-        //     from: "users",
-        //     localField: "updater",
-        //     foreignField: "_id",
-        //     as: "updater",
-        //   },
-        // },
+        
         {
           $lookup: {
             from: "peoples",
@@ -152,9 +145,7 @@ exports.getPayrollData = async (year, month, payType) => {
         {
           $unwind: "$creator",
         },
-        // {
-        //   $unwind: "$updater",
-        // },
+        
         {
           $unwind: "$payee",
         },
@@ -175,6 +166,7 @@ exports.getPayrollData = async (year, month, payType) => {
         currentValue.sn = index + 1;
         return currentValue;
       });
+        console.log(results[0].payType)
 
       return results;
     } catch (error) {

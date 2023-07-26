@@ -21,6 +21,9 @@ const tokens = require(`${homedir}/.token.json`);
 const nodemailer = require("nodemailer");
 const { google } = require("googleapis");
 const OAuth2 = google.auth.OAuth2;
+const CashBackCustomer = require("../models/cashback-customer");
+
+const CashBackAggregations = require("../utils/cashback-aggregations");
 
 const mail = require("../mail");
 let PRODUCTNAME = {
@@ -1270,19 +1273,20 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
     let response = null;
     const startDate = new Date(req.query.startDate.trim());
     const endDate = new Date(req.query.endDate.trim());
-    const sText = req.query.startDate.trim().split('T')[0];
-    const eText = req.query.endDate.trim().split('T')[0];
-    const dateRanges = generateDateRanges()
-    const isExist = dateRanges.filter((date) =>  { return (date.startDate === sText && date.endDate === eText ) });
-    
-    if (isExist.length === 0) { 
+    const sText = req.query.startDate.trim().split("T")[0];
+    const eText = req.query.endDate.trim().split("T")[0];
+    const dateRanges = generateDateRanges();
+    const isExist = dateRanges.filter((date) => {
+      return date.startDate === sText && date.endDate === eText;
+    });
+
+    if (isExist.length === 0) {
       console.log("Invalid Date Range");
       return res.status(400).json({ message: "Invalid Date Range" });
     }
-   
 
     // Adjust for timezone offset
-    
+
     startDate.setUTCHours(1);
     startDate.setUTCMinutes(0);
     startDate.setUTCSeconds(0);
@@ -1292,7 +1296,6 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
     endDate.setUTCMinutes(59);
     endDate.setUTCSeconds(0);
     endDate.setUTCMilliseconds(0);
-
 
     const props = {
       startDate: startDate,
@@ -1324,9 +1327,9 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
       const itemDate = new Date(item.startDate);
       return (
         itemDate < targetDate ||
-        item.site !== "YENEGWE" &&
-        item.site !== "OBUNNA" &&
-        itemDate >= targetDate
+        (item.site !== "YENEGWE" &&
+          item.site !== "OBUNNA" &&
+          itemDate >= targetDate)
       );
     });
 
@@ -1362,7 +1365,7 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
 
   async function agg(props) {
     const { startDate, endDate, productName, threshold, userId } = props;
-  
+
     // first part of the pipeline
     const pipeline1 = [
       {
@@ -1394,7 +1397,9 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
             endDate: endDate,
           },
           totalQty: { $sum: "$products.qty" },
-          totalSalesSum: { $sum: { $multiply: ["$products.qty", "$products.price"] } },
+          totalSalesSum: {
+            $sum: { $multiply: ["$products.qty", "$products.price"] },
+          },
           updatedBy: { $first: userId },
           productName: { $first: "$products.name" },
           createdAt: { $first: "$createdAt" },
@@ -1402,7 +1407,9 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
       },
       {
         $addFields: {
-          specialSalesSum: { $cond: [{ $gte: ["$totalQty", 500] }, "$totalSalesSum", 0] },
+          specialSalesSum: {
+            $cond: [{ $gte: ["$totalQty", 500] }, "$totalSalesSum", 0],
+          },
         },
       },
       { $sort: { site: 1, totalSalesSum: -1 } },
@@ -1423,10 +1430,10 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
       },
       { $match: { specialSalesSum: { $ne: 0 } } },
     ];
-  
+
     const results = await FidoOrder.aggregate(pipeline1);
     // console.log(results);
-  
+
     // second part of the pipeline
     const pipeline2 = [
       {
@@ -1438,37 +1445,279 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
         },
       },
     ];
-  
+
     // merge results into cashbacks
     await FidoOrder.aggregate([...pipeline1, ...pipeline2]);
   }
-  
 
   function generateDateRanges() {
     const dateRanges = [];
     const today = new Date();
-    let startDate = new Date('2023-06-29');
-    let endDate = new Date('2023-07-05');
-    
+    let startDate = new Date("2023-06-29");
+    let endDate = new Date("2023-07-05");
+
     while (endDate <= today) {
       dateRanges.push({
-        startDate: startDate.toISOString().split('T')[0],
-        endDate: endDate.toISOString().split('T')[0],
+        startDate: startDate.toISOString().split("T")[0],
+        endDate: endDate.toISOString().split("T")[0],
       });
-  
+
       // Increment startDate and endDate by 7 days
       startDate = new Date(startDate.setDate(startDate.getDate() + 7));
       endDate = new Date(endDate.setDate(endDate.getDate() + 7));
     }
-  
+
     // Add one more week range even if the endDate is in the future
-    if(endDate > today) {
+    if (endDate > today) {
       dateRanges.push({
-        startDate: startDate.toISOString().split('T')[0],
-        endDate: endDate.toISOString().split('T')[0],
+        startDate: startDate.toISOString().split("T")[0],
+        endDate: endDate.toISOString().split("T")[0],
       });
     }
-  
+
+    return dateRanges;
+  }
+});
+
+router.get("/cashBackAcrossSites", checkAuth, async (req, res, next) => {
+  const alloweds = req.userData.role;
+  const allowedStaff = [
+    "ADMIN",
+    "GENEAL MANAGER",
+    "SNR ACCOUNTANT",
+    "ACCOUNTANT",
+    "MANAGER",
+    "SECRETARY",
+    "POS OFFICER",
+    "SUPERVISOR",
+  ];
+
+  if (!allowedStaff.includes(alloweds)) {
+    return res.status(401).json({ message: "not allowed" });
+  }
+
+  try {
+    const startDate = new Date(req.query.startDate.trim());
+    const endDate = new Date(req.query.endDate.trim());
+    const sText = req.query.startDate.trim().split("T")[0];
+    const eText = req.query.endDate.trim().split("T")[0];
+    const dateRanges = generateDateRanges();
+    const isExist = dateRanges.filter((date) => {
+      return date.startDate === sText && date.endDate === eText;
+    });
+
+    if (isExist.length === 0) {
+      console.log("Invalid Date Range");
+      return res.status(400).json({ message: "Invalid Date Range" });
+    }
+
+    // Adjust for timezone offset
+
+    startDate.setUTCHours(1);
+    startDate.setUTCMinutes(0);
+    startDate.setUTCSeconds(0);
+    startDate.setUTCMilliseconds(0);
+
+    endDate.setUTCHours(23);
+    endDate.setUTCMinutes(59);
+    endDate.setUTCSeconds(0);
+    endDate.setUTCMilliseconds(0);
+
+    const props = {
+      startDate: startDate,
+      endDate: endDate,
+      productName: req.query.productName,
+      threshold: +req.query.threshold,
+      userId: req.userData.userId,
+    };
+
+    let response = [];
+    let result = [];
+
+    response = await CashBackAggregations.customerAggAcrossSites(props);
+    result = await CashBackCustomer.find({
+      startDate: props.startDate,
+      endDate: props.endDate,
+      productName: props.productName,
+    })
+      .lean()
+      .sort({ totalQty: -1 });
+
+    console.log(result[0].sites, result[0]);
+
+    return res.status(200).json({
+      response: result,
+      message: "Orders Summarized  Successfully across sites",
+    });
+
+    const cashBack = await CashBack.find({
+      startDate: props.startDate,
+      endDate: props.endDate,
+      productName: props.productName,
+      specialSalesSum: { $gt: 0 },
+    })
+      .sort({ site: 1 })
+      .sort({ specialSalesSum: -1 })
+      .lean();
+
+    // response = cashBack.map((item) => {
+    //   return { ...item };
+    // });
+
+    //  from July 6 2023, dont include Obunna or Yenegwe
+    const targetDate = new Date("2023-07-06");
+    response = cashBack.filter((item) => {
+      const itemDate = new Date(item.startDate);
+      return (
+        itemDate < targetDate ||
+        (item.site !== "YENEGWE" &&
+          item.site !== "OBUNNA" &&
+          itemDate >= targetDate)
+      );
+    });
+
+    // group result by site and calculate totals
+    let totalsBySite = response.reduce((r, a) => {
+      r[a.site] = r[a.site] || { data: [], total: 0 };
+      r[a.site].data.push(a);
+      r[a.site].total += a.specialSalesSum;
+      return r;
+    }, {});
+
+    // make cash back an array and include totals
+    response = Object.keys(totalsBySite).map((key) => {
+      return {
+        site: key,
+        data: totalsBySite[key].data,
+        total: totalsBySite[key].total,
+      };
+    });
+    // console.log(response, "response");
+
+    return res.status(200).json({
+      response: response,
+      message: "Orders Summarized  Successfully",
+    });
+  } catch (err) {
+    console.log(err);
+
+    return res
+      .status(500)
+      .json({ message: "fetching Summary not successful" + err });
+  }
+
+  async function agg(props) {
+    const { startDate, endDate, productName, threshold, userId } = props;
+
+    // first part of the pipeline
+    const pipeline1 = [
+      {
+        $match: {
+          createdAt: {
+            $gte: startDate,
+            $lte: endDate,
+          },
+        },
+      },
+      { $unwind: "$products" },
+      { $match: { "products.name": productName } },
+      {
+        $lookup: {
+          from: "customers",
+          localField: "customer",
+          foreignField: "_id",
+          as: "customerData",
+        },
+      },
+      { $unwind: "$customerData" },
+      {
+        $group: {
+          _id: {
+            customerId: "$customerData._id",
+            customerName: "$customerData.name",
+            site: "$site",
+            startDate: startDate,
+            endDate: endDate,
+          },
+          totalQty: { $sum: "$products.qty" },
+          totalSalesSum: {
+            $sum: { $multiply: ["$products.qty", "$products.price"] },
+          },
+          updatedBy: { $first: userId },
+          productName: { $first: "$products.name" },
+          createdAt: { $first: "$createdAt" },
+        },
+      },
+      {
+        $addFields: {
+          specialSalesSum: {
+            $cond: [{ $gte: ["$totalQty", 500] }, "$totalSalesSum", 0],
+          },
+        },
+      },
+      { $sort: { site: 1, totalSalesSum: -1 } },
+      {
+        $project: {
+          _id: 0,
+          customerId: "$_id.customerId",
+          customerName: "$_id.customerName",
+          site: "$_id.site",
+          startDate: "$_id.startDate",
+          endDate: "$_id.endDate",
+          totalQty: 1,
+          totalSalesSum: 1,
+          specialSalesSum: 1,
+          productName: { $literal: productName },
+          createdAt: 1,
+        },
+      },
+      { $match: { specialSalesSum: { $ne: 0 } } },
+    ];
+
+    const results = await FidoOrder.aggregate(pipeline1);
+    // console.log(results);
+
+    // second part of the pipeline
+    const pipeline2 = [
+      {
+        $merge: {
+          into: "cashbacks",
+          on: ["customerId", "site", "startDate", "endDate", "productName"],
+          whenMatched: "merge",
+          whenNotMatched: "insert",
+        },
+      },
+    ];
+
+    // merge results into cashbacks
+    await FidoOrder.aggregate([...pipeline1, ...pipeline2]);
+  }
+
+  function generateDateRanges() {
+    const dateRanges = [];
+    const today = new Date();
+    let startDate = new Date("2023-06-29");
+    let endDate = new Date("2023-07-05");
+
+    while (endDate <= today) {
+      dateRanges.push({
+        startDate: startDate.toISOString().split("T")[0],
+        endDate: endDate.toISOString().split("T")[0],
+      });
+
+      // Increment startDate and endDate by 7 days
+      startDate = new Date(startDate.setDate(startDate.getDate() + 7));
+      endDate = new Date(endDate.setDate(endDate.getDate() + 7));
+    }
+
+    // Add one more week range even if the endDate is in the future
+    if (endDate > today) {
+      dateRanges.push({
+        startDate: startDate.toISOString().split("T")[0],
+        endDate: endDate.toISOString().split("T")[0],
+      });
+    }
+
     return dateRanges;
   }
 });
@@ -1485,7 +1734,7 @@ router.get("/summaryByProductMonthly", checkAuth, async (req, res, next) => {
       if (role !== "ADMIN") return;
     }
     const response = await agg();
-    console.log(response[0], "agg");
+    // console.log(response[0], "agg");
 
     if (response) {
       return res.status(200).json({

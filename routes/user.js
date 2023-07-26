@@ -565,6 +565,34 @@ router.put("/updateRole/:id", checkAuth, async (req, res, next) => {
   }
 });
 
+router.put("/resetUserPassword/:id", checkAuth, async (req, res, next) => {
+  if (req.userData.role !== "ADMIN") {
+    return res.status("401").json({ message: "not Allowed" });
+  }
+
+  try {
+    console.log(req.body);
+    
+
+    const id = req.params.id;
+    const updater = req.userData.userId;
+
+    const updatedUser = await User.findByIdAndUpdate(id, { password:"4878734hgejh8778874djhhfhgfhjf" });
+    if (updatedUser) {
+      res
+        .status(200)
+        .json({ message: "Update successful!" });
+    } else {
+      res.status(401).json({ message: "Not updated!" });
+    }
+  } catch (err) {
+    res.status(500).json({
+      message: "Couldn't update user password! " + err,
+    });
+  }
+});
+
+
 router.post("/getuser", checkAuth, (req, res, next) => {
   res.json({
     email: req.userData.email,

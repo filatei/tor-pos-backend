@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const multer = require("multer");
 const CashBack = require("../models/cashback"); // your cashback model
+const CashBackCustomer = require("../models/cashback-customer"); 
 const CashBackAttach = require("../models/cashbackattach"); // your cashback model
 const os = require("os");
 // const { ca } = require("date-fns/locale");
@@ -97,13 +98,17 @@ router.put(
         new: true,
       });
 
-      if (!updatedCashback) {
+      const updatedCashback2 = await CashBackCustomer.findByIdAndUpdate(id, toUpdate, {
+        new: true,
+      });
+
+      if (!updatedCashback2) {
         return res.status(404).json({ message: "Cashback not found." });
       }
       // console.log(updatedCashback, "updatedCashback");
 
       return res.status(200).json({
-        record: updatedCashback,
+        record: updatedCashback2,
         message: "Cashback updated successfully.",
       });
     } catch (error) {

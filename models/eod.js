@@ -6,7 +6,9 @@ const eodSchema = mongoose.Schema({
     creator: {type: mongoose.Schema.Types.ObjectId, ref: 'User'},
     date: {type: Date},
     declineTotal: {type: Number},
-    cardTotal: {type: Number}
+    cardTotal: { type: Number },
+    image: { type: String },
+    imageText: { type: String },
 
 },
 {

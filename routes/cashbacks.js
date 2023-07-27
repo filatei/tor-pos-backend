@@ -5,6 +5,7 @@ const CashBack = require("../models/cashback"); // your cashback model
 const CashBackCustomer = require("../models/cashback-customer"); 
 const CashBackAttach = require("../models/cashbackattach"); // your cashback model
 const os = require("os");
+const HOSTNAME = os.hostname();
 // const { ca } = require("date-fns/locale");
 
 const multerConfig = require("../config/multer-config");
@@ -12,7 +13,7 @@ const DIR = "/var/www/uploads/cashbackimages/";
 const upload = multerConfig(DIR);
 
 const checkAuth = require("../middleware/check-auth");
-const HOSTNAME = os.hostname();
+
 
 // POST Route
 router.post("", checkAuth, upload.single("image"), async (req, res) => {
@@ -25,6 +26,7 @@ router.post("", checkAuth, upload.single("image"), async (req, res) => {
       "SNR ACCOUNTANT",
       "ACCOUNTANT",
     ];
+
     if (!allowed.includes(req?.userData?.role)) {
       return res.status(401).json({ message: "Not authorized" });
     }

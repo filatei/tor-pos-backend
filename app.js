@@ -88,6 +88,7 @@ app.use("/callManageruploads", express.static("/var/www/uploads/calls"));
 app.use("/public", express.static("/var/www/uploads/torama/public"));
 app.use("/varimages", express.static("/var/images"));
 app.use("/payrollimages", express.static("/var/www/uploads/payrollimages"));
+app.use("/eoduploads", express.static("/var/www/uploads/eodimages"));
 
 
 app.use("/uploads/productimages", express.static("/var/www/productimages"));

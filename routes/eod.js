@@ -6,17 +6,12 @@ const checkAuth = require("../middleware/check-auth");
 const e = require("express");
 const Accesslog = require("../models/accesslog");
 
-function logIncident(email, description) {
-  const logObj = new Accesslog({ email: email, description: description });
-  logObj
-    .save(logObj)
-    .then((result) => {
-      console.log("access incident logged for user", result);
-    })
-    .catch((err) => {
-      console.log("access logging error for user ", err);
-    });
-}
+const os = require("os");
+const HOSTNAME = os.hostname();
+
+const multerConfig = require("../config/multer-config");
+const DIR = "/var/www/uploads/eodimages/";
+const upload = multerConfig(DIR);
 
 router.get("", checkAuth, (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
@@ -50,17 +45,35 @@ router.get("", checkAuth, (req, res, next) => {
     });
 });
 
-router.post("", checkAuth, (req, res, next) => {
-  const alloweds = process.env.ALLOWEDS;
+router.post("", checkAuth, upload.single("image"), (req, res, next) => {
+  const alloweds = ["ADMIN", "SECRETARY", "GENERAL MANAGER", "MANAGER", "SNR ACCOUNTANT", "ACCOUNTANT"]
 
-  if (!alloweds.includes(req.userData.email)) {
+  if (!alloweds.includes(req.userData.role)) {
     return res.status(500).json({ message: "Not allowed" });
   }
-  let eodObj = req.body;
-  console.log(eodObj, "eodobj");
 
+  const DOMAIN = process.env.DOMAIN || req.protocol + "://" + req.get("host");
+  let eodObj = req.body;
+  console.log(eodObj, "eodobjj");
+  
+
+  let imagePath = "";
+
+  if (req.file?.path) {
+      console.log(req.file.path, "req.file.path")
+      const url = HOSTNAME.includes("torama.ng")
+        ? "https://fido-api.torama.ng"
+        : DOMAIN;
+      imagePath =
+        url +
+        "/eoduploads/" +
+        req.file.path.split("/var/www/uploads/eodimages")[1];
+    }
+  
   eodObj.creator = req.userData.userId;
-  eodObj.terminal_id = eodObj.terminal_id._id;
+  // eodObj.terminal_id = eodObj.terminal_id._id;
+  eodObj.image = imagePath;
+  console.log(eodObj, "eodobj");
 
   const eod = new Eod(eodObj);
   //  console.log(eod);

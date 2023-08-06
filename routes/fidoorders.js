@@ -1533,7 +1533,10 @@ router.get("/cashBackAcrossSites", checkAuth, async (req, res, next) => {
 
     let response = [];
     let result = [];
-    const uc = await updateCustomerIds();
+    const id1 = await Customer.findOne({customer_id:1});
+    if (!id1) {
+      const uc = await updateCustomerIds();
+    }
 
     response = await CashBackAggregations.customerAggAcrossSites(props);
     result = await CashBackCustomer.find({
@@ -1563,6 +1566,7 @@ router.get("/cashBackAcrossSites", checkAuth, async (req, res, next) => {
   async function updateCustomerIds() {
     const lastCustomer = await Customer.findOne().sort({customer_id: -1});
     const maxId = lastCustomer ? lastCustomer.customer_id : 0;
+    console.log(maxId, "maxId")
 
     const customers = await Customer.find({}).sort({createdAt: 1});  // fetch all customers and sort them by creation date
     for(let i = 0; i < customers.length; i++){

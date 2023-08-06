@@ -54,8 +54,6 @@ router.post("", checkAuth, upload.single("image"), (req, res, next) => {
 
   const DOMAIN = process.env.DOMAIN || req.protocol + "://" + req.get("host");
   let eodObj = req.body;
-  console.log(eodObj, "eodobjj");
-  
 
   let imagePath = "";
 
@@ -71,16 +69,12 @@ router.post("", checkAuth, upload.single("image"), (req, res, next) => {
     }
   
   eodObj.creator = req.userData.userId;
-  // eodObj.terminal_id = eodObj.terminal_id._id;
   eodObj.image = imagePath;
-  console.log(eodObj, "eodobj");
 
   const eod = new Eod(eodObj);
-  //  console.log(eod);
   eod
     .save()
     .then((result) => {
-      // console.log(result)
       res.status(201).json({
         message: "Eod added successfully",
         eod: {

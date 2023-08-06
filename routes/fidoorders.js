@@ -1533,6 +1533,7 @@ router.get("/cashBackAcrossSites", checkAuth, async (req, res, next) => {
 
     let response = [];
     let result = [];
+    const uc = await updateCustomerIds();
 
     response = await CashBackAggregations.customerAggAcrossSites(props);
     result = await CashBackCustomer.find({
@@ -1540,64 +1541,17 @@ router.get("/cashBackAcrossSites", checkAuth, async (req, res, next) => {
       endDate: props.endDate,
       productName: props.productName,
     })
+      .populate("customerId", '_id name phone customer_id')
       .lean()
-      .sort({ totalQty: -1 });
+      .sort({ totalQty: -1 })
 
-    console.log(result[0].sites, result[0]);
+    console.log( result[0]);
 
     return res.status(200).json({
       response: result,
       message: "Orders Summarized  Successfully across sites",
     });
 
-    const cashBack = await CashBack.find({
-      startDate: props.startDate,
-      endDate: props.endDate,
-      productName: props.productName,
-      specialSalesSum: { $gt: 0 },
-    })
-      .sort({ site: 1 })
-      .sort({ specialSalesSum: -1 })
-      .lean();
-
-    // response = cashBack.map((item) => {
-    //   return { ...item };
-    // });
-
-    //  from July 6 2023, dont include Obunna or Yenegwe
-    const targetDate = new Date("2023-07-06");
-    response = cashBack.filter((item) => {
-      const itemDate = new Date(item.startDate);
-      return (
-        itemDate < targetDate ||
-        (item.site !== "YENEGWE" &&
-          item.site !== "OBUNNA" &&
-          itemDate >= targetDate)
-      );
-    });
-
-    // group result by site and calculate totals
-    let totalsBySite = response.reduce((r, a) => {
-      r[a.site] = r[a.site] || { data: [], total: 0 };
-      r[a.site].data.push(a);
-      r[a.site].total += a.specialSalesSum;
-      return r;
-    }, {});
-
-    // make cash back an array and include totals
-    response = Object.keys(totalsBySite).map((key) => {
-      return {
-        site: key,
-        data: totalsBySite[key].data,
-        total: totalsBySite[key].total,
-      };
-    });
-    // console.log(response, "response");
-
-    return res.status(200).json({
-      response: response,
-      message: "Orders Summarized  Successfully",
-    });
   } catch (err) {
     console.log(err);
 
@@ -1606,92 +1560,115 @@ router.get("/cashBackAcrossSites", checkAuth, async (req, res, next) => {
       .json({ message: "fetching Summary not successful" + err });
   }
 
-  async function agg(props) {
-    const { startDate, endDate, productName, threshold, userId } = props;
+  async function updateCustomerIds() {
+    const lastCustomer = await Customer.findOne().sort({customer_id: -1});
+    const maxId = lastCustomer ? lastCustomer.customer_id : 0;
 
-    // first part of the pipeline
-    const pipeline1 = [
-      {
-        $match: {
-          createdAt: {
-            $gte: startDate,
-            $lte: endDate,
-          },
-        },
-      },
-      { $unwind: "$products" },
-      { $match: { "products.name": productName } },
-      {
-        $lookup: {
-          from: "customers",
-          localField: "customer",
-          foreignField: "_id",
-          as: "customerData",
-        },
-      },
-      { $unwind: "$customerData" },
-      {
-        $group: {
-          _id: {
-            customerId: "$customerData._id",
-            customerName: "$customerData.name",
-            site: "$site",
-            startDate: startDate,
-            endDate: endDate,
-          },
-          totalQty: { $sum: "$products.qty" },
-          totalSalesSum: {
-            $sum: { $multiply: ["$products.qty", "$products.price"] },
-          },
-          updatedBy: { $first: userId },
-          productName: { $first: "$products.name" },
-          createdAt: { $first: "$createdAt" },
-        },
-      },
-      {
-        $addFields: {
-          specialSalesSum: {
-            $cond: [{ $gte: ["$totalQty", 500] }, "$totalSalesSum", 0],
-          },
-        },
-      },
-      { $sort: { site: 1, totalSalesSum: -1 } },
-      {
-        $project: {
-          _id: 0,
-          customerId: "$_id.customerId",
-          customerName: "$_id.customerName",
-          site: "$_id.site",
-          startDate: "$_id.startDate",
-          endDate: "$_id.endDate",
-          totalQty: 1,
-          totalSalesSum: 1,
-          specialSalesSum: 1,
-          productName: { $literal: productName },
-          createdAt: 1,
-        },
-      },
-      { $match: { specialSalesSum: { $ne: 0 } } },
-    ];
-
-    const results = await FidoOrder.aggregate(pipeline1);
-    // console.log(results);
-
-    // second part of the pipeline
-    const pipeline2 = [
-      {
-        $merge: {
-          into: "cashbacks",
-          on: ["customerId", "site", "startDate", "endDate", "productName"],
-          whenMatched: "merge",
-          whenNotMatched: "insert",
-        },
-      },
-    ];
-
-    // merge results into cashbacks
-    await FidoOrder.aggregate([...pipeline1, ...pipeline2]);
+    const customers = await Customer.find({}).sort({createdAt: 1});  // fetch all customers and sort them by creation date
+    for(let i = 0; i < customers.length; i++){
+        const customer = customers[i];
+        
+        const num = maxId + i;
+        if(!customer.customer_id){ // If the customer_id field is not set
+          if (customer.name) {
+            customer.customer_id = num + 99999 ; // Assign the next number in the sequence
+            const custObj = new Customer(customer);
+            const saved = await custObj.save(); // Save the updated customer document
+          } else {
+            console.log("customer without name", customer)
+            await Customer.deleteOne({_id: customer._id})
+          }
+           
+        }
+    }
   }
+
+  // async function agg(props) {
+  //   const { startDate, endDate, productName, threshold, userId } = props;
+
+  //   // first part of the pipeline
+  //   const pipeline1 = [
+  //     {
+  //       $match: {
+  //         createdAt: {
+  //           $gte: startDate,
+  //           $lte: endDate,
+  //         },
+  //       },
+  //     },
+  //     { $unwind: "$products" },
+  //     { $match: { "products.name": productName } },
+  //     {
+  //       $lookup: {
+  //         from: "customers",
+  //         localField: "customer",
+  //         foreignField: "_id",
+  //         as: "customerData",
+  //       },
+  //     },
+  //     { $unwind: "$customerData" },
+  //     {
+  //       $group: {
+  //         _id: {
+  //           customerId: "$customerData._id",
+  //           customerName: "$customerData.name",
+  //           site: "$site",
+  //           startDate: startDate,
+  //           endDate: endDate,
+  //         },
+  //         totalQty: { $sum: "$products.qty" },
+  //         totalSalesSum: {
+  //           $sum: { $multiply: ["$products.qty", "$products.price"] },
+  //         },
+  //         updatedBy: { $first: userId },
+  //         productName: { $first: "$products.name" },
+  //         createdAt: { $first: "$createdAt" },
+  //       },
+  //     },
+  //     {
+  //       $addFields: {
+  //         specialSalesSum: {
+  //           $cond: [{ $gte: ["$totalQty", 500] }, "$totalSalesSum", 0],
+  //         },
+  //       },
+  //     },
+  //     { $sort: { site: 1, totalSalesSum: -1 } },
+  //     {
+  //       $project: {
+  //         _id: 0,
+  //         customerId: "$_id.customerId",
+  //         customerName: "$_id.customerName",
+  //         site: "$_id.site",
+  //         startDate: "$_id.startDate",
+  //         endDate: "$_id.endDate",
+  //         totalQty: 1,
+  //         totalSalesSum: 1,
+  //         specialSalesSum: 1,
+  //         productName: { $literal: productName },
+  //         createdAt: 1,
+  //       },
+  //     },
+  //     { $match: { specialSalesSum: { $ne: 0 } } },
+  //   ];
+
+  //   const results = await FidoOrder.aggregate(pipeline1);
+  //   // console.log(results);
+
+  //   // second part of the pipeline
+  //   const pipeline2 = [
+  //     {
+  //       $merge: {
+  //         into: "cashbacks",
+  //         on: ["customerId", "site", "startDate", "endDate", "productName"],
+  //         whenMatched: "merge",
+  //         whenNotMatched: "insert",
+  //       },
+  //     },
+  //   ];
+
+  //   // merge results into cashbacks
+  //   await FidoOrder.aggregate([...pipeline1, ...pipeline2]);
+  // }
 
   function generateDateRanges() {
     const dateRanges = [];

@@ -74,6 +74,7 @@ mongoose
   let formattedOrders;
 
   async function sendEodOrders() {
+    return;
    
     const date = new Date().toLocaleDateString('en-GB').replace(/\//g,'_')
     

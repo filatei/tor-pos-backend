@@ -155,9 +155,9 @@ server.listen(port, () => {
 });
 
 //  run the scheduled task at 5:10pm every day Lagos time
-const task = cron.schedule("20 17 * * *", () => {
-  require('./generate-order-reports.js').main()
-}, {
-  scheduled: true,
-  timezone: "Africa/Lagos"
-})
+// const task = cron.schedule("20 17 * * *", () => {
+//   require('./generate-order-reports.js').main()
+// }, {
+//   scheduled: true,
+//   timezone: "Africa/Lagos"
+// })

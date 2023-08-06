@@ -1648,6 +1648,7 @@ async function forgotPassword(userId, otp) {
 }
 
 async function sendEodOrders(orders, userData) {
+  return;
   const site = userData.site;
   const userEmail = userData.email;
   const date = new Date().toLocaleDateString('en-GB').replace(/\//g,'_')

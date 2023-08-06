@@ -4,15 +4,15 @@ const Customer = require("../models/customer");
 const router = express.Router();
 const checkAuth = require('../middleware/check-auth');
 
-router.get('',(req, res, next) => {
+router.get('', async (req, res, next) => {
   const pageSize = +req.query.pagesize ;
   const currentPage = +req.query.currentpage;
   const sort = req.query.sort;
 
-  let custQuery = Customer.find();
-  if (pageSize && currentPage) {
-    custQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
-  }
+  let custQuery = Customer.find().sort({customer_id:-1})
+  // if (pageSize && currentPage) {
+  //   custQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
+  // }
 
   // console.log(sort, 'sort')
   const byname = req.query.byname;

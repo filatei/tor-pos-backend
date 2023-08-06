@@ -29,8 +29,7 @@ const customerSchema = mongoose.Schema({
         state: String,
         zipcode: String
     },
-    // createdAt: {type: Date, Default: Date.now},
-    // updatedAt: {type: Date, Default: Date.now},
+   
 },
 {
     timestamps: true,
@@ -46,4 +45,3 @@ customerSchema.plugin( uniqueValidator );
 const rc = mongoose.model("Customer", customerSchema);
 rc.createIndexes();
 module.exports = rc
-// module.exports = mongoose.model('Customer', customerSchema)

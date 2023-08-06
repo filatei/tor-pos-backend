@@ -39,6 +39,7 @@ exports.customerAggAcrossSites = async (props) => {
           },
           updatedBy: { $first: userId },
           productName: { $first: "$products.name" },
+          
           startDate: { $first: "$_id.startDate" },
           endDate: { $first: "$_id.endDate" },
         },

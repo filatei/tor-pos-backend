@@ -944,6 +944,7 @@ async function weekOrderAgg(obj) {
             year: { $year: "$createdAt" },
             week: { $week: "$createdAt" },
             customer: "$customer.name",
+            customer_id: "$customer.customer_id",
             site: "$site",
             product: "$products.name",
             orderType: "$orderType",
@@ -997,8 +998,6 @@ async function weekRecAgg(obj) {
 
     const dayEndInt = new Date(ddate).getDate() + 6;
     const monthInt = new Date(ddate).getMonth() + 1;
-    console.log(date, ddate, dayEndInt, monthInt, ' indate wkdate rec')
-
     
     const tdate2 = new Date(yearInt + '-' + monthInt + '-' + dayEndInt);
 
@@ -1050,6 +1049,7 @@ async function weekRecAgg(obj) {
             year: { $year: "$createdAt" },
             week: { $week: "$createdAt" },
             customer: "$customer.name",
+            customer_id: "$customer.customer_id",
             site: "$terminal_location",
             product: "$products.name",
             action: "$action_taken",

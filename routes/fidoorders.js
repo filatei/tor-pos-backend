@@ -875,7 +875,6 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
           };
 
           aggData = await Utils.weekRecAgg(aggObject2);
-          // console.log('in weekly agg2', aggData)
         } else {
           aggData = await Utils.weekOrderAgg(aggObject);
         }

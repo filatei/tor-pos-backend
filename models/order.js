@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 uniqueValidator = require('mongoose-unique-validator');
 const AutoIncrement = require("mongoose-sequence")(mongoose);
 
+
 const orderSchema = mongoose.Schema({
     cartItems: [{}],
     customer: {type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true},

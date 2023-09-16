@@ -1252,7 +1252,8 @@ router.get("/summaryForAccordion", checkAuth, async (req, res, next) => {
 });
 
 router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
-  const alloweds = req.userData.role;
+  const role = req.userData.role;
+  console.log(role, "role");
   const allowedStaff = [
     "ADMIN",
     "GENEAL MANAGER",
@@ -1264,7 +1265,7 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
     "SUPERVISOR",
   ];
 
-  if (!allowedStaff.includes(alloweds)) {
+  if (!allowedStaff.includes(role)) {
     return res.status(401).json({ message: "not allowed" });
   }
 
@@ -1532,7 +1533,7 @@ router.get("/cashBackAcrossSites", checkAuth, async (req, res, next) => {
 
     let response = [];
     let result = [];
-    const id1 = await Customer.findOne({customer_id:1});
+    const id1 = await Customer.findOne({ customer_id: 1 });
     if (!id1) {
       const uc = await updateCustomerIds();
     }
@@ -1547,7 +1548,7 @@ router.get("/cashBackAcrossSites", checkAuth, async (req, res, next) => {
       .lean()
       .sort({ totalQty: -1 })
 
-    console.log( result[0]);
+    console.log(result[0]);
 
     return res.status(200).json({
       response: result,
@@ -1563,26 +1564,26 @@ router.get("/cashBackAcrossSites", checkAuth, async (req, res, next) => {
   }
 
   async function updateCustomerIds() {
-    const lastCustomer = await Customer.findOne().sort({customer_id: -1});
+    const lastCustomer = await Customer.findOne().sort({ customer_id: -1 });
     const maxId = lastCustomer ? lastCustomer.customer_id : 0;
     console.log(maxId, "maxId")
 
-    const customers = await Customer.find({}).sort({createdAt: 1});  // fetch all customers and sort them by creation date
-    for(let i = 0; i < customers.length; i++){
-        const customer = customers[i];
-        
-        const num = maxId + i;
-        if(!customer.customer_id){ // If the customer_id field is not set
-          if (customer.name) {
-            customer.customer_id = num + 99999 ; // Assign the next number in the sequence
-            const custObj = new Customer(customer);
-            const saved = await custObj.save(); // Save the updated customer document
-          } else {
-            console.log("customer without name", customer)
-            await Customer.deleteOne({_id: customer._id})
-          }
-           
+    const customers = await Customer.find({}).sort({ createdAt: 1 });  // fetch all customers and sort them by creation date
+    for (let i = 0; i < customers.length; i++) {
+      const customer = customers[i];
+
+      const num = maxId + i;
+      if (!customer.customer_id) { // If the customer_id field is not set
+        if (customer.name) {
+          customer.customer_id = num + 99999; // Assign the next number in the sequence
+          const custObj = new Customer(customer);
+          const saved = await custObj.save(); // Save the updated customer document
+        } else {
+          console.log("customer without name", customer)
+          await Customer.deleteOne({ _id: customer._id })
         }
+
+      }
     }
   }
 
@@ -1870,6 +1871,63 @@ router.get("/combinedProductsOrder", checkAuth, async (req, res, next) => {
 
     return fidoOrderResults;
   }
+});
+
+router.get("/initialDaySummary", checkAuth, async (req, res, next) => {
+  console.log("initialDaySummary");
+  console.log(req.userData, "req.userData");
+
+  if (req.userData) {
+    const role = req.userData.role;
+    if (role !== "ADMIN") return;
+  }
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const pipeline = [
+    {
+      $match: {
+        trans_date: { $gte: today, $lt: tomorrow },
+      }
+    },
+    {
+      $unwind: "$products"
+    },
+    {
+      $group: {
+        _id: { site: "$site", productName: "$products.name" },
+        totalQty: { $sum: "$products.qty" },
+        totalAmount: { $sum: "$products.amount" },
+      }
+    },
+    {
+      $group: {
+        _id: "$_id.site",
+        products: {
+          $push: {
+            productName: "$_id.productName",
+            totalQty: "$totalQty",
+            totalAmount: "$totalAmount",
+          },
+        },
+      }
+    },
+    
+  ];
+
+  try {
+    const initialData = await FidoOrder.aggregate(pipeline);
+    console.log(initialData, "initialData");
+    res.status(200).json({ initialData:initialData });
+  } catch (error) {
+    console.log(error, "error")
+    res.status(500).send(error);
+  }
+    
 });
 
 router.get("/:id", async (req, res, next) => {

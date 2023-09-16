@@ -122,44 +122,49 @@ app.use((req, res, next) => {
   next();
 });
 
-mongoose.set("useUnifiedTopology", true);
-mongoose.set("useCreateIndex", true);
-mongoose.set("useFindAndModify", false);
 
-let username, password, cluster;
-let DB;
+require('./mongoconnection');  // Initialize MongoDB connection
+require('./websocketserver');  // Initialize WebSocket server
 
-if (hostname.includes("local")) {
-  username = encodeURIComponent(`${dbInfo.ATLAS_DEV_USER}`);
-  password = encodeURIComponent(`${dbInfo.ATLAS_DEV_PASS}`);
-  cluster = `${dbInfo.ATLAS_DEV_CLUSTER}`;
-  DB = `${dbInfo.ATLAS_DEV_DB}`;
-  // connectStr='mongodb://localhost:27017/fido_db'
-  connectStr = process.env.CONNECT_STR;
-}
+// mongoose.set("useUnifiedTopology", true);
+// mongoose.set("useCreateIndex", true);
+// mongoose.set("useFindAndModify", false);
 
-if (hostname.includes("torama.ng")) {
-  username = encodeURIComponent(`${dbInfo.ATLAS_PROD_USER}`);
-  password = encodeURIComponent(`${dbInfo.ATLAS_PROD_PASS}`);
-  cluster = `${dbInfo.ATLAS_PROD_CLUSTER}`;
-  DB = `${dbInfo.ATLAS_PROD_DB}`;
-  connectStr = "mongodb://localhost:27017/fido_db";
-}
+// let username, password, cluster;
+// let DB;
 
-mongoose
-  .connect(connectStr, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-    useFindAndModify: false,
-    autoIndex: true,
-    useCreateIndex: true,
-  })
-  .then(() => {
-    console.log("Connected to DB");
-  })
-  .catch((err) => {
-    console.log(err);
-  });
+// if (hostname.includes("local")) {
+//   username = encodeURIComponent(`${dbInfo.ATLAS_DEV_USER}`);
+//   password = encodeURIComponent(`${dbInfo.ATLAS_DEV_PASS}`);
+//   cluster = `${dbInfo.ATLAS_DEV_CLUSTER}`;
+//   DB = `${dbInfo.ATLAS_DEV_DB}`;
+//   // connectStr='mongodb://localhost:27017/fido_db'
+//   connectStr = process.env.CONNECT_STR;
+// }
+
+// if (hostname.includes("torama.ng")) {
+//   username = encodeURIComponent(`${dbInfo.ATLAS_PROD_USER}`);
+//   password = encodeURIComponent(`${dbInfo.ATLAS_PROD_PASS}`);
+//   cluster = `${dbInfo.ATLAS_PROD_CLUSTER}`;
+//   DB = `${dbInfo.ATLAS_PROD_DB}`;
+//   connectStr = "mongodb://localhost:27017/fido_db";
+// }
+
+// mongoose
+//   .connect(connectStr, {
+//     useNewUrlParser: true,
+//     useUnifiedTopology: true,
+//     useFindAndModify: false,
+//     autoIndex: true,
+//     useCreateIndex: true,
+//   })
+//   .then(() => {
+//     console.log("Connected to DB");
+    
+//   })
+//   .catch((err) => {
+//     console.log(err);
+//   });
 
 app.use("/api/paymethods", paymethodsRoutes);
 app.use("/api/products", productsRoutes);

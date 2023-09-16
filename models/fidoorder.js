@@ -42,7 +42,6 @@ const fidoorderSchema = mongoose.Schema(
         status: { type: String, enum: ["DRAFT", "LOADED", "SEEN-OUT"] },
         qty: { type: Number },
         actorId: {
-          // supervisor or security person at final gate
           type: mongoose.Schema.Types.ObjectId,
           ref: "User",
           required: true,

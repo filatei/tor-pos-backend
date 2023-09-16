@@ -1879,7 +1879,7 @@ router.get("/initialDaySummary", checkAuth, async (req, res, next) => {
 
   if (req.userData) {
     const role = req.userData.role;
-    if (role !== "ADMIN") return;
+    if (role !== "ADMIN") return res.status(401).json({ message: "not allowed" });
   }
   
   const today = new Date();

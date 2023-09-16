@@ -13,6 +13,7 @@ mongoEmitter.on('mongoConnected', (db) => {
 
     changeStream.on('change', async (change) => {
         const fullDocument = change.fullDocument;
+        console.log(' inside changestream')
         if (!fullDocument) return;
 
         const transDate = new Date(fullDocument.trans_date);
@@ -57,19 +58,6 @@ mongoEmitter.on('mongoConnected', (db) => {
                     }
                 },
             ]).toArray();
-
-            // Prepare summary data
-            // const summaryData = {};
-            // aggregationResults.forEach(result => {
-            //     if (!summaryData[result._id.site]) {
-            //         summaryData[result._id.site] = [];
-            //     }
-            //     summaryData[result._id.site].push({
-            //         productName: result._id.productName,
-            //         totalQty: result.totalQty,
-            //         totalAmount: result.totalAmount
-            //     });
-            // });
 
             // Broadcast the summary data to all WebSocket clients
             console.log(aggregationResults, ' aggregationResults')

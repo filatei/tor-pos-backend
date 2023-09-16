@@ -1880,7 +1880,7 @@ router.get("/initialDaySummary", checkAuth, async (req, res, next) => {
   //   const role = req.userData.role;
   //   if (role !== "ADMIN") return res.status(401).json({ message: "not allowed" });
   // }
-  
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -1915,18 +1915,24 @@ router.get("/initialDaySummary", checkAuth, async (req, res, next) => {
         },
       }
     },
-    
+    // sort by site name, then by product name
+    {
+      $sort: {
+        _id: 1,
+        "products.productName": 1,
+      }
+    },
   ];
 
   try {
     const initialData = await FidoOrder.aggregate(pipeline);
     // console.log(initialData, "initialData");
-    res.status(200).json({ initialData:initialData });
+    res.status(200).json({ initialData: initialData });
   } catch (error) {
     console.log(error, "error")
     res.status(500).send(error);
   }
-    
+
 });
 
 router.get("/:id", async (req, res, next) => {

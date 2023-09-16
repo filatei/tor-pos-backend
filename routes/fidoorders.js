@@ -1875,12 +1875,11 @@ router.get("/combinedProductsOrder", checkAuth, async (req, res, next) => {
 
 router.get("/initialDaySummary", checkAuth, async (req, res, next) => {
   console.log("initialDaySummary");
-  console.log(req.userData, "req.userData");
 
-  if (req.userData) {
-    const role = req.userData.role;
-    if (role !== "ADMIN") return res.status(401).json({ message: "not allowed" });
-  }
+  // if (req.userData) {
+  //   const role = req.userData.role;
+  //   if (role !== "ADMIN") return res.status(401).json({ message: "not allowed" });
+  // }
   
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -1921,7 +1920,7 @@ router.get("/initialDaySummary", checkAuth, async (req, res, next) => {
 
   try {
     const initialData = await FidoOrder.aggregate(pipeline);
-    console.log(initialData, "initialData");
+    // console.log(initialData, "initialData");
     res.status(200).json({ initialData:initialData });
   } catch (error) {
     console.log(error, "error")

@@ -9,7 +9,6 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const mongoose = require("mongoose");
-// var SocketService = require('./SocketService');
 
 const app = express();
 
@@ -71,16 +70,9 @@ const pgbyRoutes = require("./routes/payrollgrpbyyrmonthstatus");
 const chatRoutes = require("./routes/chat");
 const chatgptRoutes = require("./routes/chat-gpt");
 const cashbackRoutes = require("./routes/cashbacks");
-// const toramaPayRoutes = require("./routes/toramapay");
 
-// const DB = "torposedb";
-// if prod use this
-// connectStr ='mongodb+srv://user1:RwyT4Eyw799tQUKF@cluster0-j4gfg.gcp.mongodb.net/torposedb?retryWrites=true&w=majority'
-// app.use('/', express.static(path.join(__dirname, 'www')));
 app.use(require("express-status-monitor")());
-
 app.use("/data", express.static(path.join(__dirname, "data")));
-// app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/uploads", express.static("/var/www/uploads"));
 app.use("/expenseUploads", express.static("/var/www/uploads/expenses"));
 app.use("/cashbackUploads", express.static("/var/www/uploads/cashbackimages"));
@@ -123,48 +115,9 @@ app.use((req, res, next) => {
 });
 
 
-require('./mongoconnection');  // Initialize MongoDB connection
-require('./websocketserver');  // Initialize WebSocket server
+// require('./mongoconnection');  // Initialize MongoDB connection
+// require('./websocketserver');  // Initialize WebSocket server
 
-// mongoose.set("useUnifiedTopology", true);
-// mongoose.set("useCreateIndex", true);
-// mongoose.set("useFindAndModify", false);
-
-// let username, password, cluster;
-// let DB;
-
-// if (hostname.includes("local")) {
-//   username = encodeURIComponent(`${dbInfo.ATLAS_DEV_USER}`);
-//   password = encodeURIComponent(`${dbInfo.ATLAS_DEV_PASS}`);
-//   cluster = `${dbInfo.ATLAS_DEV_CLUSTER}`;
-//   DB = `${dbInfo.ATLAS_DEV_DB}`;
-//   // connectStr='mongodb://localhost:27017/fido_db'
-//   connectStr = process.env.CONNECT_STR;
-// }
-
-// if (hostname.includes("torama.ng")) {
-//   username = encodeURIComponent(`${dbInfo.ATLAS_PROD_USER}`);
-//   password = encodeURIComponent(`${dbInfo.ATLAS_PROD_PASS}`);
-//   cluster = `${dbInfo.ATLAS_PROD_CLUSTER}`;
-//   DB = `${dbInfo.ATLAS_PROD_DB}`;
-//   connectStr = "mongodb://localhost:27017/fido_db";
-// }
-
-// mongoose
-//   .connect(connectStr, {
-//     useNewUrlParser: true,
-//     useUnifiedTopology: true,
-//     useFindAndModify: false,
-//     autoIndex: true,
-//     useCreateIndex: true,
-//   })
-//   .then(() => {
-//     console.log("Connected to DB");
-    
-//   })
-//   .catch((err) => {
-//     console.log(err);
-//   });
 
 app.use("/api/paymethods", paymethodsRoutes);
 app.use("/api/products", productsRoutes);
@@ -222,6 +175,5 @@ app.use("/api/pgby", pgbyRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/chatgpt", chatgptRoutes);
 app.use("/api/cashback", cashbackRoutes);
-// app.use("/api/toramapay", toramaPayRoutes);
 
 module.exports = app;

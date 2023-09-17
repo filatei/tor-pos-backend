@@ -66,7 +66,7 @@ router.post("", checkAuth, function (req, res, next) {
     expenseObj.status = "DRAFT";
 
     const expense = new Expense(expenseObj);
-    expense.products.forEach((product) => { 
+    expense.products.forEach((product) => {
       if (!product.name) throw new Error("Product name is required");
     });
 
@@ -83,14 +83,14 @@ router.post("", checkAuth, function (req, res, next) {
           message: "Creating a expense failed! " + error,
         });
       });
-    
+
   } catch (error) {
     res.status(500).json({
       message: "Creating a expense failed! " + error,
     });
-    
+
   }
-  
+
 });
 
 router.put("/expenseAcct/:id", checkAuth, async (req, res, next) => {
@@ -507,7 +507,7 @@ router.get("", checkAuth, async (req, res, next) => {
         e.products.forEach(async pp => {
           const prod = await Stockitem.findById(pp._id);
         })
-        
+
       }
     });
 
@@ -566,21 +566,43 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
   if (!alloweds.includes(req.userData.role)) {
     return res.status(500).json({ message: "Not allowed" });
   }
-  const limit = parseInt(req.query.limit) || 30; // number of records per page
+  const limit = parseInt(req.query.limit) || 15; // number of records per page
   const offset = parseInt(req.query.offset) || 0; // offset
-
+ 
 
   try {
     const { searchTerm } = req.query;
-    const results = await searchExpenses(searchTerm,limit, offset)
-    return res.status(200).json({ expenses: results });
-    
+    const payHist = await payHistory(searchTerm)
+    const totalCount = await countExpenses(searchTerm); // Step 1: Count total records
+    const results = await searchExpenses(searchTerm, limit, offset); // Step 2: Fetch paged data
+
+    return res.status(200).json({ results, totalCount, payHist }); // Step 3: Return both
+
   } catch (error) {
     console.error("An error occurred:", error);
     return res.status(500).json({ message: "Error Retrieving Search result" });
   }
-  
+
 });
+
+const countExpenses = async (searchTerm) => {
+  // Same query logic as in searchExpenses, but we just count the records
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+  const contacts = await Contact.find({
+    "name": { "$regex": searchTerm, "$options": "i" }
+  }).exec();
+  const vendorIds = contacts.map(contact => contact._id);
+
+  return await Expense.countDocuments({
+    "$or": [
+      { "products": { "$elemMatch": { "name": { "$regex": searchTerm, "$options": "i" } } } },
+      { "vendor": { "$in": vendorIds } }
+    ],
+    "createdAt": { "$gte": oneYearAgo }
+  });
+};
 
 const searchExpenses = async (searchTerm, limit, offset) => {
   try {
@@ -606,13 +628,72 @@ const searchExpenses = async (searchTerm, limit, offset) => {
       .limit(limit)
       .populate('vendor')
       .exec();
-
     return expenses;
 
   } catch (error) {
     console.error("An error occurred:", error);
   }
 };
+
+async function payHistory(vendor) {
+  const twoMonthsAgo = new Date();
+  twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+
+  const aggregatePipeline = [
+    {
+      $lookup: {
+        from: 'contacts', // Assuming 'contacts' is the name of the collection where vendor data is stored
+        localField: 'vendor',
+        foreignField: '_id',
+        as: 'vendorData'
+      }
+    },
+    {
+      $unwind: '$vendorData' // Flatten the array 
+    },
+    {
+      $match: {
+        'vendorData.name': {
+          $regex: vendor,
+          $options: 'i'
+        },
+        'createdAt': { '$gte': twoMonthsAgo }
+      }
+    },
+    {
+      $unwind: '$payHistory'
+    },
+    {
+      $match: {
+        'payHistory.date': { '$gte': twoMonthsAgo }
+      }
+    },
+    {
+      $project: {
+        payDate: '$payHistory.date',
+        paidAmount: '$payHistory.paidAmount',
+        memo: '$payHistory.memo',
+      }
+    },
+    // sort by payDate
+    {
+      $sort: {
+        payDate: -1
+      }
+    }
+  ];
+
+  try {
+    const results = await Expense.aggregate(aggregatePipeline)
+    return results
+    
+  } catch (error) {
+    console.error("An error occurred:", error);
+    return []
+    
+  }
+  
+}
 
 router.get("/expense/:id", (req, res, next) => {
   const expId = req.params.id;

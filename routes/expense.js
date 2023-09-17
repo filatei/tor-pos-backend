@@ -566,10 +566,13 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
   if (!alloweds.includes(req.userData.role)) {
     return res.status(500).json({ message: "Not allowed" });
   }
+  const limit = parseInt(req.query.limit) || 30; // number of records per page
+  const offset = parseInt(req.query.offset) || 0; // offset
+
 
   try {
     const { searchTerm } = req.query;
-    const results = await searchExpenses(searchTerm)
+    const results = await searchExpenses(searchTerm,limit, offset)
     return res.status(200).json({ expenses: results });
     
   } catch (error) {
@@ -579,7 +582,7 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
   
 });
 
-const searchExpenses = async (searchTerm) => {
+const searchExpenses = async (searchTerm, limit, offset) => {
   try {
     // Calculate date one year ago
     const oneYearAgo = new Date();
@@ -598,12 +601,12 @@ const searchExpenses = async (searchTerm) => {
         { "vendor": { "$in": vendorIds } }
       ],
       "createdAt": { "$gte": oneYearAgo }
-    })
-      .populate('vendor').sort({ createdAt: -1 })
+    }).sort({ createdAt: -1 })
+      .skip(offset)
+      .limit(limit)
+      .populate('vendor')
       .exec();
 
-    // Do something with the found expenses
-    console.log(expenses[0]);
     return expenses;
 
   } catch (error) {

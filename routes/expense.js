@@ -561,42 +561,55 @@ router.get("/mail/mailImprest", checkAuth, async (req, res, next) => {
 });
 
 router.get("/getByText", checkAuth, async (req, res, next) => {
-  const alloweds = process.env.ALLOWEDS;
+  const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT', 'SECRETARY']
 
-  if (!alloweds.includes(req.userData.email)) {
+  if (!alloweds.includes(req.userData.role)) {
     return res.status(500).json({ message: "Not allowed" });
   }
 
-  const { searchTerm } = req.query;
-  // get array
-  let records;
-  const result = await Expense.aggregate([
-    { $match: { $text: { $search: searchTerm } } },
-  ])
-    .sort({ createdAt: -1 })
-    .limit(200);
-
-  if (result) return res.status(200).json({ expense: result });
-
-  Expense.find({ $text: { $search: searchTerm } })
-    .sort({ updatedAt: -1 })
-    .populate("vendor")
-    .populate("creator")
-    .populate("updater")
-    .limit(200)
-    .then((record) => {
-      if (record) {
-        res.status(200).json({ expense: record });
-      } else {
-        res.status(404).json({ message: "record not found!" });
-      }
-    })
-    .catch((error) => {
-      res.status(500).json({
-        message: "Fetching record failed!" + error,
-      });
-    });
+  try {
+    const { searchTerm } = req.query;
+    const results = await searchExpenses(searchTerm)
+    return res.status(200).json({ expenses: results });
+    
+  } catch (error) {
+    console.error("An error occurred:", error);
+    return res.status(500).json({ message: "Error Retrieving Search result" });
+  }
+  
 });
+
+const searchExpenses = async (searchTerm) => {
+  try {
+    // Calculate date one year ago
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+    // Search for vendor IDs whose name matches the vendorSearchTerm
+    const contacts = await Contact.find({
+      "name": { "$regex": searchTerm, "$options": "i" }
+    }).exec();
+    const vendorIds = contacts.map(contact => contact._id);
+
+    // Search for expenses that match either the product name or vendor ID, and are less than a year old
+    const expenses = await Expense.find({
+      "$or": [
+        { "products": { "$elemMatch": { "name": { "$regex": searchTerm, "$options": "i" } } } },
+        { "vendor": { "$in": vendorIds } }
+      ],
+      "createdAt": { "$gte": oneYearAgo }
+    })
+      .populate('vendor').sort({ createdAt: -1 })
+      .exec();
+
+    // Do something with the found expenses
+    console.log(expenses[0]);
+    return expenses;
+
+  } catch (error) {
+    console.error("An error occurred:", error);
+  }
+};
 
 router.get("/expense/:id", (req, res, next) => {
   const expId = req.params.id;

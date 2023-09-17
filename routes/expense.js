@@ -572,7 +572,10 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
 
   try {
     const { searchTerm } = req.query;
-    const payHist = await payHistory(searchTerm)
+    let payHist = []
+    // if (req.userData.role === 'ADMIN') {
+    //    payHist = await payHistory(searchTerm)
+    // }
     const totalCount = await countExpenses(searchTerm); // Step 1: Count total records
     const results = await searchExpenses(searchTerm, limit, offset); // Step 2: Fetch paged data
 
@@ -637,7 +640,7 @@ const searchExpenses = async (searchTerm, limit, offset) => {
 
 async function payHistory(vendor) {
   const twoMonthsAgo = new Date();
-  twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 2);
+  twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 1);
 
   const aggregatePipeline = [
     {

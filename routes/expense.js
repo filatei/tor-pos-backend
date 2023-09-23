@@ -200,11 +200,13 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   expense.notes = oldExpense.notes;
 
   Expense.updateOne({ _id: req.params.id }, expense)
-    .then((result) => {
+    .then(async (result) => {
       if (result.n > 0) {
+        const expense = await Expense.findById(req.params.id).populate(
+          "vendor").populate("creator")
         res
           .status(200)
-          .json({ message: "Update successful!", expense: result });
+          .json({ message: "Update successful!", expense: expense });
       } else {
         res.status(401).json({ message: "Not authorized!" });
       }
@@ -801,11 +803,12 @@ router.put(
         )
           .then(async (result) => {
             let msent = await Mail.sendNote(note, expObj);
+            const expense = await Expense.findById(recId).populate("vendor").populate("creator")
             return res.status(201).json({
               message: " note with image updated successfully",
               expense: {
-                ...result,
-                id: result._id,
+                ...expense,
+                id: expense._id,
               },
             });
           })

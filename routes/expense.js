@@ -109,13 +109,16 @@ router.put("/expenseAcct/:id", checkAuth, async (req, res, next) => {
     { _id: req.params.id },
     { expenseAccount: expenseAccount, updater }
   )
-    .then((result) => {
+    .then(async (result) => {
       if (result.n > 0) {
+        const expense = await Expense.findById(req.params.id).populate(
+          "vendor", "name remarks phone email"
+        ).populate("creator", "name email role site image")
         res
           .status(200)
-          .json({ message: "Update successful!", expense: result });
+          .json({ message: "Update successful!", expense: expense });
       } else {
-        res.status(401).json({ message: "Not authorized!" });
+        res.status(401).json({ message: "Update Not successful!" });
       }
     })
     .catch((error) => {
@@ -203,7 +206,7 @@ router.put("/:id", checkAuth, async (req, res, next) => {
     .then(async (result) => {
       if (result.n > 0) {
         const expense = await Expense.findById(req.params.id).populate(
-          "vendor").populate("creator")
+          "vendor").populate("creator", "name email role site image")
         res
           .status(200)
           .json({ message: "Update successful!", expense: expense });
@@ -464,54 +467,55 @@ router.get("", checkAuth, async (req, res, next) => {
     if (imprest) {
       expenseQuery = await Expense.find({
         status: "APPROVED",
-        expenseAccount: "Daily Imprest",
-        updatedAt: { $gte: startOfDay(new Date()) },
-      })
+        expenseAccount: "Daily Imprest", 
+      }, { log: 0, statusHistory: 0 })
         .sort({ createdAt: -1 })
-        .populate("vendor")
-        .populate("creator")
+        .populate("vendor", "name remarks phone email")
+        .populate("creator", "name email role site image")
         .limit(pageSize);
     } else if (role === "ADMIN") {
-      expenseQuery = await Expense.find()
+      expenseQuery = await Expense.find({}, { log: 0, statusHistory: 0 })
         .sort({ createdAt: -1 })
-        .populate("vendor")
-        .populate("creator")
+        .populate("vendor", "name remarks phone email")
+        .populate("creator", "name email role site image")
         .populate("products")
         .limit(pageSize);
     } else if (["GENERAL MANAGER", "SNR ACCOUNTANT"].includes(role)) {
       expenseQuery = await Expense.find({
-        site: { $in: sites },
-      })
+        site: { $in: sites }
+      }, { log: 0, statusHistory: 0 })
         .sort({ createdAt: -1 })
-        .populate("vendor")
-        .populate("creator")
+        .populate("vendor", "name remarks phone email")
+        .populate("creator", "name email role site image")
         .limit(pageSize);
     } else if (role === "MANAGER") {
       expenseQuery = await Expense.find({
         // if i own it, good. or if site is my site, good.
         $or: [{ creator: user[0]._id }, { site: req.userData.site }],
-      })
+
+      }, { log: 0, statusHistory: 0 })
         .sort({ createdAt: -1 })
-        .populate("vendor")
-        .populate("creator")
+        .populate("vendor", "name remarks phone email")
+        .populate("creator", "name email role site image")
 
         .limit(pageSize);
     } else {
-      expenseQuery = await Expense.find({ creator: user[0]._id })
+      expenseQuery = await Expense.find({ creator: user[0]._id },
+        { log: 0, statusHistory: 0 })
         .sort({ createdAt: -1 })
-        .populate("vendor")
-        .populate("creator")
+        .populate("vendor", "name remarks phone email")
+        .populate("creator", "name email role site image")
 
         .limit(pageSize);
     }
-    expenseQuery.forEach(async (e) => {
-      if (e.vendor.name === "SWALI") {
-        e.products.forEach(async pp => {
-          const prod = await Stockitem.findById(pp._id);
-        })
+    // expenseQuery.forEach(async (e) => {
+    //   if (e.vendor.name === "SWALI") {
+    //     e.products.forEach(async pp => {
+    //       const prod = await Stockitem.findById(pp._id);
+    //     })
 
-      }
-    });
+    //   }
+    // });
 
     if (expenseQuery) {
       return res.status(200).json({
@@ -570,7 +574,7 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
   }
   const limit = parseInt(req.query.limit) || 15; // number of records per page
   const offset = parseInt(req.query.offset) || 0; // offset
- 
+
 
   try {
     const { searchTerm } = req.query;
@@ -631,7 +635,8 @@ const searchExpenses = async (searchTerm, limit, offset) => {
     }).sort({ createdAt: -1 })
       .skip(offset)
       .limit(limit)
-      .populate('vendor')
+      .populate('vendor', 'name remarks phone email')
+      .populate('creator', 'name email role site image')
       .exec();
     return expenses;
 
@@ -691,19 +696,20 @@ async function payHistory(vendor) {
   try {
     const results = await Expense.aggregate(aggregatePipeline)
     return results
-    
+
   } catch (error) {
     console.error("An error occurred:", error);
     return []
-    
+
   }
-  
+
 }
 
 router.get("/expense/:id", (req, res, next) => {
   const expId = req.params.id;
-  Expense.find({ expense_id: expId })
-    .populate("creator")
+  Expense.find(expId )
+    .populate("creator", "name email role site image")
+    .populate("vendor", "name remarks phone email")
     .then((expense) => {
       if (expense) {
         res.status(200).json({ expense });
@@ -720,9 +726,16 @@ router.get("/expense/:id", (req, res, next) => {
 });
 
 router.get("/:id", (req, res, next) => {
-  Expense.findById(req.params.id)
+  console.log(req.params.id, "id")
+  const id = req.params.id;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    console.log('Invalid ObjectId');
+    // Handle error as needed
+    return res.status(404).json({ message: "invalid object id " });
+  }
+  Expense.findById(id)
     .populate("vendor")
-    .populate("creator")
+    .populate("creator", "name email role site image")
     .then((expense) => {
       if (expense) {
         res.status(200).json({ expense });
@@ -731,6 +744,7 @@ router.get("/:id", (req, res, next) => {
       }
     })
     .catch((error) => {
+      console.log(error);
       res.status(500).json({
         message: "Fetching expense failed! " + error,
       });
@@ -803,7 +817,7 @@ router.put(
         )
           .then(async (result) => {
             let msent = await Mail.sendNote(note, expObj);
-            const expense = await Expense.findById(recId).populate("vendor").populate("creator")
+            const expense = await Expense.findById(recId).populate("vendor").populate("creator", "name email role site image")
             return res.status(201).json({
               message: " note with image updated successfully",
               expense: {

@@ -706,10 +706,10 @@ async function payHistory(vendor) {
 }
 
 router.get("/expense/:id", (req, res, next) => {
+  // this is used for expense_id, not _id
   const expId = req.params.id;
-  Expense.find(expId )
-    .populate("creator", "name email role site image")
-    .populate("vendor", "name remarks phone email")
+  Expense.find({ expense_id: expId })
+    .populate("creator")
     .then((expense) => {
       if (expense) {
         res.status(200).json({ expense });
@@ -723,6 +723,7 @@ router.get("/expense/:id", (req, res, next) => {
         message: "Fetching expense failed! " + error,
       });
     });
+
 });
 
 router.get("/:id", (req, res, next) => {

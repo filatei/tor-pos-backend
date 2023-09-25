@@ -496,7 +496,6 @@ router.get("", checkAuth, async (req, res, next) => {
         };
        
       });
-      console.log(expenseQuery, 'imprest')
     } else if (role === "ADMIN") {
       expenseQuery = await Expense.find({}, { log: 0, statusHistory: 0 })
         .sort({ createdAt: -1 })

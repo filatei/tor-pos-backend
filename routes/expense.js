@@ -447,6 +447,14 @@ router.get("", checkAuth, async (req, res, next) => {
       role = req.userData.role;
       user = await User.find({ email: userEmail });
     }
+    // get start of today
+
+
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
 
     const directors = process.env.DIRECTORS;
     const generalManagers = process.env.GENERALMANAGERS;
@@ -465,9 +473,15 @@ router.get("", checkAuth, async (req, res, next) => {
     let expenseQuery;
 
     if (imprest) {
+      console.log(start, end, 'today')
       expenseQuery = await Expense.find({
         status: "APPROVED",
-        expenseAccount: "Daily Imprest", 
+        expenseAccount: "Daily Imprest",
+        createdAt: {
+          $gte: start,
+          $lte: end,
+        },
+
       }, { log: 0, statusHistory: 0 })
         .sort({ createdAt: -1 })
         .populate("vendor", "name remarks phone email")
@@ -528,6 +542,7 @@ router.get("", checkAuth, async (req, res, next) => {
         .json({ message: "fetching expenses not successful" });
     }
   } catch (err) {
+    console.log(err, 'error')
     return res
       .status(500)
       .json({ message: "fetching expenses not successful" + err });

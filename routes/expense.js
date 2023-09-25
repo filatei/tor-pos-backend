@@ -487,6 +487,16 @@ router.get("", checkAuth, async (req, res, next) => {
         .populate("vendor", "name remarks phone email")
         .populate("creator", "name email role site image")
         .limit(pageSize);
+      // add dateStr: new Date(createdAt) to expenseQuery
+      expenseQuery = expenseQuery.map((e) => {
+        //  add DateStr to each expense
+        return {
+          ...e._doc,
+          dateStr: moment(e.createdAt).format("DD/MM/YYYY"),
+        };
+       
+      });
+      console.log(expenseQuery, 'imprest')
     } else if (role === "ADMIN") {
       expenseQuery = await Expense.find({}, { log: 0, statusHistory: 0 })
         .sort({ createdAt: -1 })

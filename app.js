@@ -70,6 +70,7 @@ const pgbyRoutes = require("./routes/payrollgrpbyyrmonthstatus");
 const chatRoutes = require("./routes/chat");
 const chatgptRoutes = require("./routes/chat-gpt");
 const cashbackRoutes = require("./routes/cashbacks");
+const monnifyRoutes = require("./routes/monnify");
 
 app.use(require("express-status-monitor")());
 app.use("/data", express.static(path.join(__dirname, "data")));
@@ -175,5 +176,6 @@ app.use("/api/pgby", pgbyRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/chatgpt", chatgptRoutes);
 app.use("/api/cashback", cashbackRoutes);
+app.use("/api/monnify", monnifyRoutes);
 
 module.exports = app;

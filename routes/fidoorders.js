@@ -449,6 +449,8 @@ router.delete("/:id", checkAuth, async (req, res, next) => {
   }
 });
 
+
+
 router.get("", checkAuth, async (req, res, next) => {
   // if you are an ordinary user, you only see orders created in your site or by you
   try {
@@ -463,6 +465,7 @@ router.get("", checkAuth, async (req, res, next) => {
 
     orders = await FidoOrder.find({
       $or: [{ site: site }, { creator: userId }],
+      status: { $ne: 'AWAITING_PAYMENT' }  // Exclude orders with 'AWAITING_PAYMENT' status
     })
       .lean()
       .sort({ createdAt: -1 })
@@ -514,6 +517,34 @@ router.get("/getByOrderId", checkAuth, async (req, res, next) => {
   } catch (error) {
     res.status(500).json({
       message: "Fetching fidoorder by id failed! " + error,
+    });
+  }
+});
+
+router.get("/getOrderByPaymentRef", checkAuth, async (req, res, next) => {
+  // if you are an ordinary user, you only see orders created in your site or by you
+  try {
+    const { ref } = req.query;
+    console.log(ref, "ref");
+    const role = req.userData.role;
+    const userId = req.userData.userId;
+    const site = req.userData.site;
+    let order;
+    // to be completed
+    order = await FidoOrder.findOne({ tx_ref:ref })
+      .lean()
+      .populate("customer")
+      .populate("creator")
+      .populate("updater")
+
+    return res.status(200).json({
+      message: "Order by ref fetched successfully!",
+      order: order,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      message: "Fetching fidoorder by ref failed! " + error,
     });
   }
 });

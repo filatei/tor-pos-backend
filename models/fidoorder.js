@@ -35,7 +35,7 @@ const fidoorderSchema = mongoose.Schema(
     rrn: { type: String },
     trans_id: { type: String },
     tx_ref: { type: String },
-    status: { type: String, enum: ["NOT PAID", "PAID", "LOADED", "COMPLETED", "DELIVERED"] },
+    status: { type: String, enum: ["NOT PAID", "PAID", "LOADED", "COMPLETED", "DELIVERED", "CANCELLED", "AWAITING_PAYMENT"] },
     
     delivery: [
       {
@@ -100,6 +100,7 @@ const fidoorderSchema = mongoose.Schema(
         date: { type: String },
       },
     ],
+    platform_data: {},
 
     clientTime: { type: Date },
   },

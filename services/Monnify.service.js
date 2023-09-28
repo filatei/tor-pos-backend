@@ -3,12 +3,16 @@
 const axios = require("axios");
 // const cacheService = require('./Cache.service');
 
-const apiKey = process.env.MONNIFY_API_KEY_PROD;
-const apiSecret = process.env.MONNIFY_SECRET_KEY_PROD;
-const baseUrl = process.env.MONNIFY_BASE_URL_PROD;
-const monnifyCardPaymentMethod = process.env.MONNIFY_CARD_PAYMENT_METHOD;
-const monnifyAccountTransferPaymentMethod = process.env.MONNIFY_ACCOUNT_TRANSFER_PAYMENT_METHOD;
-const monnifyContractCode = process.env.MONNIFY_CONTRACT_CODE_PROD;
+const os = require("os");
+const HOSTNAME = os.hostname();
+const homedir = os.homedir();
+const tokens = require(`${homedir}/.token.json`)
+
+
+const apiKey = tokens.MONNIFY_API_KEY_PROD;
+const apiSecret = tokens.MONNIFY_SECRET_KEY_PROD;
+const baseUrl = tokens.MONNIFY_BASE_URL_PROD;
+const monnifyContractCode = tokens.MONNIFY_CONTRACT_CODE_PROD;
 // const Ticket = require('../Models/Ticket.model');
 // const User = require('../model/User.model');
 const User = require('../models/user')
@@ -65,9 +69,9 @@ async function initialiseTransaction(totalAmount, paymentReference, paymentDescr
             // "paymentMethods": [monnifyCardPaymentMethod, monnifyAccountTransferPaymentMethod]
         }
 
-        console.log(dataToSend, "dataToSend")
+        // console.log(dataToSend, "dataToSend")
         const accessToken = await authenticate();
-        console.log(accessToken, "accessToken")
+        // console.log(accessToken, "accessToken")
 
         const headers = {
             Authorization: 'Bearer ' + accessToken
@@ -75,7 +79,7 @@ async function initialiseTransaction(totalAmount, paymentReference, paymentDescr
         const response = await axios.post(baseUrl + '/api/v1/merchant/transactions/init-transaction', dataToSend, { headers });
         const { responseBody } = response.data;
 
-        console.log(responseBody, "responseBody")
+        // console.log(responseBody, "responseBody")
 
         return responseBody;
 
@@ -86,7 +90,7 @@ async function initialiseTransaction(totalAmount, paymentReference, paymentDescr
 }
 
 async function handleWebhook(webhookData) {
-    console.log(webhookData, 'webhookData');
+    // console.log(webhookData, 'webhookData');
     const { eventData } = webhookData;
     const { paymentReference, amountPaid, paymentStatus,
         customer, totalPayable,
@@ -95,7 +99,7 @@ async function handleWebhook(webhookData) {
     console.log(eventData, 'eventData');
     const user = await User.findOne({ email: customer.email });
     const order = await FidoOrder.findOne({ tx_ref: paymentReference })
-    console.log(order, 'order in db');
+    // console.log(order, 'order in db');
 
     if (eventData.paymentStatus === 'PAID') {
         order.status = 'PAID';
@@ -107,7 +111,7 @@ async function handleWebhook(webhookData) {
 
     order.platform_data = eventData;
     const saveOrder = await order.save();
-    console.log(saveOrder, 'saveOrder');
+    // console.log(saveOrder, 'saveOrder');
     // send websocket notification to client
 
 

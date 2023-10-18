@@ -137,11 +137,6 @@ const onListening = () => {
 const port = normalizePort("3500");
 app.set("port", port);
 
-
-
-
-
-
 server.on("error", onError);
 server.on("listening", onListening);
 server.listen(port, () => {

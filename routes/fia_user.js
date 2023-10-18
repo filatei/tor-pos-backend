@@ -240,6 +240,7 @@ router.post("/fiaLogin", async (req, res, next) => {
     });
 
     const payload = ticket.getPayload();
+    console.log(payload, "payload");
     userId = payload['sub'];
     email = payload['email'];
     const email_verified = payload['email_verified'];

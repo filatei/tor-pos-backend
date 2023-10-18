@@ -17,7 +17,7 @@ router.get("", checkAuth, (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
 
   if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to see eod");
+    // logIncident(req.userData.email, "Not allowed to see eod");
     return res.status(500).json({ message: "Not allowed" });
   }
   const pageSize = +req.query.pagesize;
@@ -58,16 +58,16 @@ router.post("", checkAuth, upload.single("image"), (req, res, next) => {
   let imagePath = "";
 
   if (req.file?.path) {
-      console.log(req.file.path, "req.file.path")
-      const url = HOSTNAME.includes("torama.ng")
-        ? "https://fido-api.torama.ng"
-        : DOMAIN;
-      imagePath =
-        url +
-        "/eoduploads/" +
-        req.file.path.split("/var/www/uploads/eodimages")[1];
-    }
-  
+    console.log(req.file.path, "req.file.path")
+    const url = HOSTNAME.includes("torama.ng")
+      ? "https://fido-api.torama.ng"
+      : DOMAIN;
+    imagePath =
+      url +
+      "/eoduploads/" +
+      req.file.path.split("/var/www/uploads/eodimages")[1];
+  }
+
   eodObj.creator = req.userData.userId;
   eodObj.image = imagePath;
 
@@ -142,7 +142,7 @@ router.get("/summary", checkAuth, async (req, res, next) => {
   const alloweds = req.userData.role === "ADMIN";
 
   if (!alloweds) {
-    logIncident(req.userData.email, "Not allowed to see eod summary");
+    // logIncident(req.userData.email, "Not allowed to see eod summary");
     return res.status(500).json({ message: "Not allowed to see eod summary" });
   }
 
@@ -214,7 +214,7 @@ router.get("/:id", checkAuth, (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
 
   if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to see eod");
+    // logIncident(req.userData.email, "Not allowed to see eod");
     return res.status(500).json({ message: "Not allowed" });
   }
   Eod.findById(req.params.id)

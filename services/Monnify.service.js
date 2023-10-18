@@ -13,6 +13,11 @@ const apiKey = tokens.MONNIFY_API_KEY_PROD;
 const apiSecret = tokens.MONNIFY_SECRET_KEY_PROD;
 const baseUrl = tokens.MONNIFY_BASE_URL_PROD;
 const monnifyContractCode = tokens.MONNIFY_CONTRACT_CODE_PROD;
+
+// const apiKey = tokens.MONNIFY_API_KEY_DEV;
+// const apiSecret = tokens.MONNIFY_SECRET_KEY_DEV;
+// const baseUrl = tokens.MONNIFY_BASE_URL_DEV;
+// const monnifyContractCode = tokens.MONNIFY_CONTRACT_CODE_DEV;
 // const Ticket = require('../Models/Ticket.model');
 // const User = require('../model/User.model');
 const User = require('../models/user')
@@ -23,11 +28,14 @@ let redirectUrl;
 console.log(process.env.NODE_ENV, "process.env.NODE_ENV")
 
 if (process.env.NODE_ENV === 'production') {
-    redirectUrl = process.env.REDIRECT_URL_PROD;
+    // redirectUrl = tokens.REDIRECT_URL_PROD;
+    redirectUrl = "";
 } else {
-    redirectUrl = process.env.REDIRECT_URL_DEV;
+    redirectUrl = "";
+    // redirectUrl = tokens.REDIRECT_URL_DEV;
 }
-redirectUrl = process.env.REDIRECT_URL_PROD;
+// redirectUrl = tokens.REDIRECT_URL_PROD;
+// console.log(redirectUrl, "redirectUrl")
 
 async function authenticate() {
     try {

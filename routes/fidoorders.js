@@ -1284,7 +1284,6 @@ router.get("/summaryForAccordion", checkAuth, async (req, res, next) => {
 
 router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
   const role = req.userData.role;
-  console.log(role, "role");
   const allowedStaff = [
     "ADMIN",
     "GENEAL MANAGER",

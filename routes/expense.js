@@ -653,9 +653,12 @@ const searchExpenses = async (searchTerm, limit, offset) => {
     const expenses = await Expense.find({
       "$or": [
         { "products": { "$elemMatch": { "name": { "$regex": searchTerm, "$options": "i" } } } },
-        { "vendor": { "$in": vendorIds } }
+        { "vendor": { "$in": vendorIds } },
+        { "title": { "$regex": searchTerm, "$options": "i" } },
+        { "site": { "$regex": searchTerm, "$options": "i" } },
       ],
-      "createdAt": { "$gte": oneYearAgo }
+      "createdAt": { "$gte": oneYearAgo },
+      
     }).sort({ createdAt: -1 })
       .skip(offset)
       .limit(limit)

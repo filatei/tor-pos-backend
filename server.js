@@ -85,7 +85,7 @@ mongoEmitter.on('mongoConnected', (db) => {
     ]).toArray();
 
     // Broadcast the summary data to all WebSocket clients
-    console.log(aggregationResults, ' aggregationResults')
+    // console.log(aggregationResults, ' aggregationResults')
     wss.clients.forEach(client => {
       client.send(JSON.stringify(aggregationResults));
     });

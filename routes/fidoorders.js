@@ -125,7 +125,6 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
             response.data.amount === shopObj.response_frontend.amount &&
             response.data.currency === shopObj.response_frontend.currency
           ) {
-            console.log(response, "backend response");
             shopObj.charged_amount = response.data.charged_amount;
             shopObj.amount_settled = response.data.amount_settled;
             shopObj.status = "PAID";
@@ -139,7 +138,6 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
           }
         })
         .catch((err) => {
-          console.log(err);
           return res.status(500).json({
             message: err,
           });
@@ -166,7 +164,6 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
         }
         const fPath = url + "/" + req.file.path;
         shopObj.image = fPath.replace("/var/www/", "");
-        console.log(shopObj.image, "shop image", fPath);
       }
       saveOrder(shopObj);
     }
@@ -340,7 +337,6 @@ router.put(
         path = url + "/uploads/fidoorderimages/" + req.file.filename;
       }
       note.image = path;
-      console.log("note with image", note.image);
     }
     let recId = req.params.id;
     try {
@@ -420,7 +416,6 @@ router.delete("/:id", checkAuth, async (req, res, next) => {
       const deleted = await FidoOrder.deleteMany({
         _id: { $in: qualifiedForDeletion },
       });
-      console.log("deleted", deleted);
       if (deleted.n) {
         return res
           .status(200)
@@ -493,7 +488,6 @@ router.get("/getByOrderId", checkAuth, async (req, res, next) => {
   // if you are an ordinary user, you only see orders created in your site or by you
   try {
     const { searchTerm } = req.query;
-    console.log(searchTerm, "searchTerm");
     let pageSize = +req.query.pagesize;
     if (!pageSize) pageSize = 100;
     const role = req.userData.role;
@@ -525,7 +519,6 @@ router.get("/getOrderByPaymentRef", checkAuth, async (req, res, next) => {
   // if you are an ordinary user, you only see orders created in your site or by you
   try {
     const { ref } = req.query;
-    console.log(ref, "ref");
     const role = req.userData.role;
     const userId = req.userData.userId;
     const site = req.userData.site;
@@ -581,7 +574,6 @@ router.post("/eodOrders", checkAuth, async (req, res, next) => {
     const site = req.userData.site;
 
     let orders = req.body;
-    console.log(orders, "orders");
 
     // orders = JSON.parse(orders)
 
@@ -651,9 +643,7 @@ router.get("/ordersbyuser", checkAuth, async (req, res, next) => {
       }
       return o;
     });
-    // const products = orders.map(o=>o.products );
-    // const sites = orders.map(o=>o.site );
-    // console.log(orders[0], products[0], sites[0])
+
 
     res
       .status(200)
@@ -792,7 +782,6 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
     };
     const cutOffDate = new Date(2022, 6, 1);
     let aggData, aggObject2;
-    // console.log(type, day, month, year, site,  new2OldProducts[product]);
 
     if (new Date(date) < new Date(cutOffDate)) {
       //  format products and then use RecUploads
@@ -858,12 +847,10 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
           };
 
           aggData = await Utils.monthRecAgg(aggObject2);
-          // console.log('in monthly agg2', aggData)
         } else {
           aggData = await Utils.monthOrderAgg(aggObject);
         }
 
-        // console.log(aggData)
         // aggData = aggData.filter(a => a._id.product === product);
         aggData = aggData.map((a) => {
           return {
@@ -909,8 +896,6 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
         } else {
           aggData = await Utils.weekOrderAgg(aggObject);
         }
-        // console.log(aggData)
-        // aggData = aggData.filter(a => a._id.product === product);
         aggData = aggData.map((a) => {
           return {
             ...a._id,
@@ -955,11 +940,9 @@ router.get("/summaryByCustomer", checkAuth, async (req, res, next) => {
           };
 
           aggData = await Utils.dayRecAgg(aggObject2);
-          console.log("in day agg2", aggData[0]);
         } else {
           // aggData = await PipelineCustomer(start, end, site,product);
           aggData = await Utils.dayOrderAgg(aggObject);
-          console.log("in day agg", aggData[0]);
         }
 
         // let aggData = await PipelineCustomer(start, end, site,product);
@@ -1042,7 +1025,6 @@ router.get("/todaySummary", checkAuth, async (req, res, next) => {
           .populate("updater")
           .populate("customer")
           .populate("terminal_id");
-        // console.log(orders, 'orders')
         if (orders && orders.length) {
           summary = await summarizeSiteOrders(orders, site);
           summ = [...summ, summary];
@@ -1078,7 +1060,6 @@ router.get("/todaySummary", checkAuth, async (req, res, next) => {
       .status(500)
       .json({ message: "Error summarizing today orders - " + error });
   } finally {
-    // console.log(summ, 'SUMMARIES 3')
   }
 });
 
@@ -1166,10 +1147,7 @@ router.get("/summaryBySiteByProduct", checkAuth, async (req, res, next) => {
       },
     ]);
 
-    // console.log(
-    //   "Total sales for each product and terminal location for each month:",
-    //   result
-    // );
+ 
     return result;
   }
 });
@@ -1276,7 +1254,6 @@ router.get("/summaryForAccordion", checkAuth, async (req, res, next) => {
       },
     ]);
 
-    // console.log(result, "result");
 
     return result;
   }
@@ -1379,7 +1356,6 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
         total: totalsBySite[key].total,
       };
     });
-    // console.log(response, "response");
 
     return res.status(200).json({
       response: response,
@@ -1462,7 +1438,6 @@ router.get("/cashBackSummary", checkAuth, async (req, res, next) => {
     ];
 
     const results = await FidoOrder.aggregate(pipeline1);
-    // console.log(results);
 
     // second part of the pipeline
     const pipeline2 = [
@@ -1578,7 +1553,6 @@ router.get("/cashBackAcrossSites", checkAuth, async (req, res, next) => {
       .lean()
       .sort({ totalQty: -1 })
 
-    console.log(result[0]);
 
     return res.status(200).json({
       response: result,
@@ -1596,7 +1570,6 @@ router.get("/cashBackAcrossSites", checkAuth, async (req, res, next) => {
   async function updateCustomerIds() {
     const lastCustomer = await Customer.findOne().sort({ customer_id: -1 });
     const maxId = lastCustomer ? lastCustomer.customer_id : 0;
-    console.log(maxId, "maxId")
 
     const customers = await Customer.find({}).sort({ createdAt: 1 });  // fetch all customers and sort them by creation date
     for (let i = 0; i < customers.length; i++) {
@@ -1609,7 +1582,6 @@ router.get("/cashBackAcrossSites", checkAuth, async (req, res, next) => {
           const custObj = new Customer(customer);
           const saved = await custObj.save(); // Save the updated customer document
         } else {
-          console.log("customer without name", customer)
           await Customer.deleteOne({ _id: customer._id })
         }
 
@@ -1617,92 +1589,6 @@ router.get("/cashBackAcrossSites", checkAuth, async (req, res, next) => {
     }
   }
 
-  // async function agg(props) {
-  //   const { startDate, endDate, productName, threshold, userId } = props;
-
-  //   // first part of the pipeline
-  //   const pipeline1 = [
-  //     {
-  //       $match: {
-  //         createdAt: {
-  //           $gte: startDate,
-  //           $lte: endDate,
-  //         },
-  //       },
-  //     },
-  //     { $unwind: "$products" },
-  //     { $match: { "products.name": productName } },
-  //     {
-  //       $lookup: {
-  //         from: "customers",
-  //         localField: "customer",
-  //         foreignField: "_id",
-  //         as: "customerData",
-  //       },
-  //     },
-  //     { $unwind: "$customerData" },
-  //     {
-  //       $group: {
-  //         _id: {
-  //           customerId: "$customerData._id",
-  //           customerName: "$customerData.name",
-  //           site: "$site",
-  //           startDate: startDate,
-  //           endDate: endDate,
-  //         },
-  //         totalQty: { $sum: "$products.qty" },
-  //         totalSalesSum: {
-  //           $sum: { $multiply: ["$products.qty", "$products.price"] },
-  //         },
-  //         updatedBy: { $first: userId },
-  //         productName: { $first: "$products.name" },
-  //         createdAt: { $first: "$createdAt" },
-  //       },
-  //     },
-  //     {
-  //       $addFields: {
-  //         specialSalesSum: {
-  //           $cond: [{ $gte: ["$totalQty", 500] }, "$totalSalesSum", 0],
-  //         },
-  //       },
-  //     },
-  //     { $sort: { site: 1, totalSalesSum: -1 } },
-  //     {
-  //       $project: {
-  //         _id: 0,
-  //         customerId: "$_id.customerId",
-  //         customerName: "$_id.customerName",
-  //         site: "$_id.site",
-  //         startDate: "$_id.startDate",
-  //         endDate: "$_id.endDate",
-  //         totalQty: 1,
-  //         totalSalesSum: 1,
-  //         specialSalesSum: 1,
-  //         productName: { $literal: productName },
-  //         createdAt: 1,
-  //       },
-  //     },
-  //     { $match: { specialSalesSum: { $ne: 0 } } },
-  //   ];
-
-  //   const results = await FidoOrder.aggregate(pipeline1);
-  //   // console.log(results);
-
-  //   // second part of the pipeline
-  //   const pipeline2 = [
-  //     {
-  //       $merge: {
-  //         into: "cashbacks",
-  //         on: ["customerId", "site", "startDate", "endDate", "productName"],
-  //         whenMatched: "merge",
-  //         whenNotMatched: "insert",
-  //       },
-  //     },
-  //   ];
-
-  //   // merge results into cashbacks
-  //   await FidoOrder.aggregate([...pipeline1, ...pipeline2]);
-  // }
 
   function generateDateRanges() {
     const dateRanges = [];
@@ -1745,7 +1631,6 @@ router.get("/summaryByProductMonthly", checkAuth, async (req, res, next) => {
       if (role !== "ADMIN") return;
     }
     const response = await agg();
-    // console.log(response[0], "agg");
 
     if (response) {
       return res.status(200).json({
@@ -1830,10 +1715,8 @@ router.get("/combinedProductsOrder", checkAuth, async (req, res, next) => {
       userEmail = req.userData.email;
       role = req.userData.role;
       if (role !== "ADMIN") return;
-      // user = await User.find({ email: userEmail });
     }
     const response = await agg();
-    // console.log(response);
 
     if (response) {
       return res.status(200).json({
@@ -1967,7 +1850,6 @@ router.get("/:id", async (req, res, next) => {
 
     //  return blank object if id is wrong
     if (!isValidObjectId(id)) {
-      console.log("invalid id");
       return res.status(200).json({});
     } else {
       console.log("valid id... proceeding");
@@ -1984,9 +1866,7 @@ router.get("/:id", async (req, res, next) => {
     }
   } catch (error) {
     console.log(error, "catch error");
-    // res.status(400).json({
-    //   message: "CatchError: Fetching fidoorder failed! " + error,
-    // });
+    
   }
 });
 
@@ -1998,7 +1878,6 @@ async function summarizeSiteOrders(orders, site) {
     let orderArr = [];
     let sn = 1;
     let bankVal;
-    //  combine acquirer and payment method
 
     orders.forEach((row) => {
       let products = [];
@@ -2132,11 +2011,9 @@ async function summarizeSiteOrders(orders, site) {
         return { ...o, "PAYMENT METHOD": o["BANK"] };
       }
     });
-    // console.log(orderArr, 'orderArr')
 
     const productSummary = summarize(orderArr, "PRODUCT");
     const paymentSummary = summarize(orderArr, "PAYMENT METHOD");
-    // const bankSummary = summarize(orderArr,'BANK');
     summary = { productSummary, paymentSummary, site };
   } else {
     summary = {};
@@ -2190,7 +2067,6 @@ async function Pipeline(start, end, site) {
 
   // return pipeline;
   const summary = await FidoOrder.aggregate(pipeline);
-  // console.log(summary, "summary ");
   return summary;
 }
 
@@ -2281,7 +2157,6 @@ async function PipelineCustomer(start, end, site, product) {
 
   // return pipeline;
   const summary = await FidoOrder.aggregate(pipeline);
-  // console.log(summary, "summary ");
   return summary;
 }
 

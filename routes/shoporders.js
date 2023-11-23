@@ -79,7 +79,7 @@ function logIncident(email, description) {
   logObj
     .save(logObj)
     .then((result) => {
-      console.log("access incident logged for user", result);
+      // console.log("access incident logged for user", result);
     })
     .catch((err) => {
       console.log("access logging error for user ", err);
@@ -195,7 +195,6 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
       url = req.protocol + "://" + req.get("host");
     }
     shopObj.image = url + '/' + req.file.path;
-    console.log(shopObj.image);
 
     // const paymentProofImage =
     //       url +

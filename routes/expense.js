@@ -228,7 +228,6 @@ router.get("/summary", checkAuth, async (req, res, next) => {
     // Find the vendor
     const vendor = await Contact.findOne({ name: "FLEXPLAST TECH & SERVICES" });
     if (!vendor) {
-      console.log("Vendor not found");
       return [];
     }
     const vendorId = mongoose.Types.ObjectId(vendor._id); // Ensure it's an ObjectId
@@ -473,7 +472,6 @@ router.get("", checkAuth, async (req, res, next) => {
     let expenseQuery;
 
     if (imprest) {
-      console.log(start, end, 'today')
       expenseQuery = await Expense.find({
         status: "APPROVED",
         expenseAccount: "Daily Imprest",
@@ -754,10 +752,8 @@ router.get("/expense/:id", (req, res, next) => {
 });
 
 router.get("/:id", (req, res, next) => {
-  console.log(req.params.id, "id")
   const id = req.params.id;
   if (!mongoose.Types.ObjectId.isValid(id)) {
-    console.log('Invalid ObjectId');
     // Handle error as needed
     return res.status(404).json({ message: "invalid object id " });
   }

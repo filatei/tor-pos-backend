@@ -616,6 +616,42 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
 
 });
 
+router.get("/siteSummary", checkAuth, async (req, res, next) => {
+  const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT', 'SECRETARY']
+
+  if (!alloweds.includes(req.userData.role)) {
+    return res.status(500).json({ message: "Not allowed" });
+  }
+ 
+
+  try {
+    const totalExpenses = await Expense.aggregate([
+      {
+        $unwind: "$products"
+      },
+      {
+        $group: {
+          _id: "$site",
+          totalAmount: { $sum: "$products.amount" }
+        }
+      },
+      // Optional: Sort by site name
+      { $sort: { _id: 1 } }
+    ]);
+
+    console.log(totalExpenses, 'totalExpenses')
+
+    return res.status(200).json({ totalExpenses }); // Step 3: Return both
+    
+
+  } catch (error) {
+    console.error("An error occurred:", error);
+    return res.status(500).json({ message: "Error Retrieving Search result" });
+  }
+
+});
+
+
 const countExpenses = async (searchTerm) => {
   // Same query logic as in searchExpenses, but we just count the records
   const oneYearAgo = new Date();

@@ -626,13 +626,11 @@ router.get("/siteSummary", checkAuth, async (req, res, next) => {
 
   try {
     const totalExpenses = await Expense.aggregate([
-      {
-        $unwind: "$products"
-      },
+    
       {
         $group: {
           _id: "$site",
-          totalAmount: { $sum: "$products.amount" }
+          totalAmount: { $sum: "$txn_amount" }
         }
       },
       // Optional: Sort by site name

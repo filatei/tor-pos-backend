@@ -626,6 +626,11 @@ router.get("/siteSummary", checkAuth, async (req, res, next) => {
 
   try {
     const totalExpenses = await Expense.aggregate([
+      {
+        $match: {
+          status: { $nin: ["DRAFT", "DECLINED", 'VALIDATED', "REVIEWED"] } // Exclude expenses with status 'DRAFT' or 'DECLINED'
+        }
+      },
     
       {
         $group: {
@@ -634,7 +639,7 @@ router.get("/siteSummary", checkAuth, async (req, res, next) => {
         }
       },
       // Optional: Sort by site name
-      { $sort: { _id: 1 } }
+      { $sort: { totalAmount: -1 } }
     ]);
 
     console.log(totalExpenses, 'totalExpenses')

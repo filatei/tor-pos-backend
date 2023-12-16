@@ -298,6 +298,43 @@ router.get("/summary", checkAuth, async (req, res, next) => {
     }
     let response = [];
     response = await agg("Rolls");
+    // console.log(response, 'rolls pay hist')
+
+    return res.status(200).json({
+      response: response,
+      message: "Expense Summarized  Successfully",
+    });
+  } catch (err) {
+    return res
+      .status(500)
+      .json({ message: "fetching Summary not successful" + err });
+  }
+});
+
+router.get("/payHistSummary", checkAuth, async (req, res, next) => {
+  // summary of expenses for product Rolls per month
+console.log('payHistSummary')
+
+  try {
+    let user, userEmail;
+    let role = "";
+
+    if (req.userData) {
+      userEmail = req.userData.email;
+      role = req.userData.role;
+      user = await User.find({ email: userEmail });
+    }
+    let response = [];
+
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - 21); // Set to 3 weeks ago
+
+    response = await getPayHistoryForVendorInRange('FLEXPLAST TECH & SERVICES', startDate, endDate)
+    // console.log(response, 'response')
+
+    // response = await agg("Rolls");
+    // console.log(response, 'rolls pay hist')
 
     return res.status(200).json({
       response: response,
@@ -492,7 +529,7 @@ router.get("", checkAuth, async (req, res, next) => {
           ...e._doc,
           dateStr: moment(e.createdAt).format("DD/MM/YYYY"),
         };
-       
+
       });
     } else if (role === "ADMIN") {
       expenseQuery = await Expense.find({}, { log: 0, statusHistory: 0 })
@@ -622,7 +659,7 @@ router.get("/siteSummary", checkAuth, async (req, res, next) => {
   if (!alloweds.includes(req.userData.role)) {
     return res.status(500).json({ message: "Not allowed" });
   }
- 
+
 
   try {
     const totalExpenses = await Expense.aggregate([
@@ -631,7 +668,7 @@ router.get("/siteSummary", checkAuth, async (req, res, next) => {
           status: { $nin: ["DRAFT", "DECLINED", 'VALIDATED', "REVIEWED"] } // Exclude expenses with status 'DRAFT' or 'DECLINED'
         }
       },
-    
+
       {
         $group: {
           _id: "$site",
@@ -642,10 +679,10 @@ router.get("/siteSummary", checkAuth, async (req, res, next) => {
       { $sort: { totalAmount: -1 } }
     ]);
 
-    console.log(totalExpenses, 'totalExpenses')
+    // console.log(totalExpenses, 'totalExpenses')
 
     return res.status(200).json({ totalExpenses }); // Step 3: Return both
-    
+
 
   } catch (error) {
     console.error("An error occurred:", error);
@@ -695,7 +732,7 @@ const searchExpenses = async (searchTerm, limit, offset) => {
         { "site": { "$regex": searchTerm, "$options": "i" } },
       ],
       "createdAt": { "$gte": oneYearAgo },
-      
+
     }).sort({ createdAt: -1 })
       .skip(offset)
       .limit(limit)
@@ -709,9 +746,38 @@ const searchExpenses = async (searchTerm, limit, offset) => {
   }
 };
 
+async function getPayHistoryForVendorInRange(vendorName, startDate, endDate) {
+  try {
+    const pipeline = [
+      {
+        $lookup: {
+          from: 'contacts',
+          localField: 'vendor',
+          foreignField: '_id',
+          as: 'vendorInfo'
+        }
+      },
+      { $unwind: "$vendorInfo" },
+      { $match: { "vendorInfo.name": vendorName } },
+      { $unwind: "$payHistory" },
+      { $match: { "payHistory.paymentDate": { $gte: startDate, $lte: endDate } } },
+      { $sort: { "payHistory.paymentDate": 1 } },
+      { $project: { payHistory: 1, _id: 0 } }
+    ];
+
+    const result = await Expense.aggregate(pipeline).exec();
+    return result.map(item => item.payHistory);
+  } catch (error) {
+    console.error('Error occurred:', error);
+  }
+}
+
+
 async function payHistory(vendor) {
   const twoMonthsAgo = new Date();
   twoMonthsAgo.setMonth(twoMonthsAgo.getMonth() - 1);
+
+
 
   const aggregatePipeline = [
     {

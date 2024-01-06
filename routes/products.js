@@ -74,15 +74,15 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
   let prodObj = req.body;
   const role = req.userData.role;
   const alloweds = ['ADMIN', 'MANAGER', 'GENERAL MANAGER', 'SNR ACCOUNTANT'];
-  if ( !alloweds.includes(role) ) {
+  if (!alloweds.includes(role)) {
     return res.status(500).json({
       message: "Creating a product failed! " + error,
     });
   }
-  
+
   prodObj.price = parseFloat(prodObj.price);
   prodObj.taxRate = parseFloat(prodObj.taxRate) || 0;
-  
+
 
   if (req.file) {
     if (hostname.includes("torama")) {
@@ -90,16 +90,16 @@ router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
     } else {
       url = req.protocol + "://" + req.get("host");
     }
-    
+
     myPath = url + "/" + req.file.path.split('/var/www/')[1];
     prodObj.icon = myPath;
     console.log(myPath, 'myPath')
   }
 
-  prodObj.creator = await User.findOne({userId:req.userData.userId})._id;
+  prodObj.creator = await User.findOne({ userId: req.userData.userId })._id;
 
   const product = new Product(prodObj);
-  
+
   product
     .save()
     .then((result) => {
@@ -119,68 +119,68 @@ router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
 
   try {
     let myPath = "";
-  let url = "";
-  let prodObj = req.body;
-  console.log(prodObj)
-  const price = req.body.price;
-  const taxRate = req.body.taxRate;
-  const description = req.body.description;
-  const name = req.body.name;
-  const group = req.body.group;
-  const category = req.body.category;
-  // const updatedAt = req.body.updatedAt;
-  const updater = req.userData.userId;
-  const id = req.params.id;
-  prodObj._id = req.params.id;
-  prodObj.updater = req.userData.userId;
-  const product = new Product(prodObj);
-  if (req.file ) {
-    if (hostname.includes("torama")) {
-      url = "https://fido-api.torama.ng";
-    } else {
-      url = req.protocol + "://" + req.get("host");
-    }
+    let url = "";
+    let prodObj = req.body;
+    console.log(prodObj)
+    const price = req.body.price;
+    const taxRate = req.body.taxRate;
+    const description = req.body.description;
+    const name = req.body.name;
+    const group = req.body.group;
+    const category = req.body.category;
+    // const updatedAt = req.body.updatedAt;
+    const updater = req.userData.userId;
+    const id = req.params.id;
+    prodObj._id = req.params.id;
+    prodObj.updater = req.userData.userId;
+    const product = new Product(prodObj);
+    if (req.file) {
+      if (hostname.includes("torama")) {
+        url = "https://fido-api.torama.ng";
+      } else {
+        url = req.protocol + "://" + req.get("host");
+      }
 
-    myPath = url + "/" + req.file.path.split('/var/www/')[1];
-    product.icon = myPath;
-    console.log(product, 'product1')
-    Product.updateOne({ _id: req.params.id }, product)
-      .then((result) => {
-        if (result.n > 0) {
-          res.status(200).json({ message: "Update successful!" });
-        } else {
-          res.status(401).json({ message: "Not authorized!" });
-        }
-      })
-      .catch((error) => {
-        res.status(500).json({
-          message: "Couldn't udpate product! " + error,
+      myPath = url + "/" + req.file.path.split('/var/www/')[1];
+      product.icon = myPath;
+      console.log(product, 'product1')
+      Product.updateOne({ _id: req.params.id }, product)
+        .then((result) => {
+          if (result.n > 0) {
+            res.status(200).json({ message: "Update successful!" });
+          } else {
+            res.status(401).json({ message: "Not authorized!" });
+          }
+        })
+        .catch((error) => {
+          res.status(500).json({
+            message: "Couldn't udpate product! " + error,
+          });
         });
-      });
-  } else {
-    console.log(product, 'product2')
-    Product.updateOne(
-      { _id: req.params.id },
-      product
-    )
-      .then((result) => {
-        if (result.n > 0) {
-          res.status(200).json({ message: "Update successful!" });
-        } else {
-          res.status(401).json({ message: "Not authorized!" });
-        }
-      })
-      .catch((error) => {
-        res.status(500).json({
-          message: "Couldn't update product! " + error,
+    } else {
+      console.log(product, 'product2')
+      Product.updateOne(
+        { _id: req.params.id },
+        product
+      )
+        .then((result) => {
+          if (result.n > 0) {
+            res.status(200).json({ message: "Update successful!" });
+          } else {
+            res.status(401).json({ message: "Not authorized!" });
+          }
+        })
+        .catch((error) => {
+          res.status(500).json({
+            message: "Couldn't update product! " + error,
+          });
         });
-      });
+    }
   }
-  }
-  catch(err) {
+  catch (err) {
     console.log(err)
   }
-  
+
 });
 
 
@@ -232,17 +232,30 @@ router.delete("/:id", checkAuth, (req, res, next) => {
     });
 });
 
-router.get("", (req, res, next) => {
+router.get("", checkAuth, (req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
   const productQuery = Product.find().populate("categoryId");
+  console.log(req.userData, 'user')
+  const user = req.userData;
+
   let fetchedProducts;
   if (pageSize && currentPage) {
     productQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
   }
   productQuery
     .then((documents) => {
+      // change price for products whose site is 'YENEGWE'
+      documents.map((product) => {
+        if ((user.site === 'YENEGWE') && product.name === 'Pure Water') {
+          product.price = 160;
+        }
+        if ((user.site === 'AKENFA') && product.name === 'FIAFIA WATER') {
+          product.price = 160;
+        }
+      })
       // console.log(documents, 'products')
+
       res.status(200).json({
         message: "Products fetched successfully!",
         products: documents,

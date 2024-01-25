@@ -84,9 +84,14 @@ mongoEmitter.on('mongoConnected', (db) => {
       },
     ]).toArray();
 
+    // const pagg = await productAgg(orderCollection)
+    // console.log(JSON.stringify(pagg), ' pagg')
+    // console.log(aggregationResults, ' aggregationResults')
+
     // Broadcast the summary data to all WebSocket clients
     // console.log(aggregationResults, ' aggregationResults')
     wss.clients.forEach(client => {
+      // const toClientObj = {today: aggregationResults, volume:pagg}
       client.send(JSON.stringify(aggregationResults));
     });
     // }
@@ -143,4 +148,47 @@ server.listen(port, () => {
   console.log(`listening on port ${port}`);
 
 });
+
+async function productAgg(orderCollection) {
+  const fourteenDaysAgo = new Date();
+  fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+
+  const aggregationResults = await orderCollection.aggregate([
+    {
+      $match: {
+        trans_date: { $gte: fourteenDaysAgo, $lt: new Date() }
+      }
+    },
+    {
+      $unwind: '$products'
+    },
+    {
+      $group: {
+        _id: {
+          day: { $dateToString: { format: "%Y-%m-%d", date: "$trans_date" } },
+          productName: '$products.name'
+        },
+        totalQty: { $sum: '$products.qty' },
+        totalAmount: { $sum: '$products.amount' }
+      }
+    },
+    {
+      $group: {
+        _id: "$_id.day",
+        products: {
+          $push: {
+            productName: "$_id.productName",
+            totalQty: "$totalQty",
+            totalAmount: "$totalAmount"
+          }
+        }
+      }
+    },
+    {
+      $sort: { "_id": 1 }  // Sort by date in ascending order
+    }
+  ]).toArray();
+  return aggregationResults;
+
+}
 

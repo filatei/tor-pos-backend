@@ -1835,8 +1835,9 @@ router.get("/initialDaySummary", checkAuth, async (req, res, next) => {
 
   try {
     const initialData = await FidoOrder.aggregate(pipeline);
-    // console.log(JSON.stringify(initialData), "initialData");
-    res.status(200).json({ initialData: initialData });
+    const volData = await productAgg()
+    console.log(JSON.stringify(volData), "voldata");
+    res.status(200).json({ initialData: initialData,volumeData:volData });
   } catch (error) {
     console.log(error, "error")
     res.status(500).send(error);
@@ -2252,6 +2253,50 @@ function todayAggregate() {
       },
     },
   ]);
+}
+
+async function productAgg() {
+  const fourteenDaysAgo = new Date();
+  fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+
+  const aggregationResults = await FidoOrder.aggregate([
+    {
+      $match: {
+        trans_date: { $gte: fourteenDaysAgo, $lt: new Date() }
+      }
+    },
+    {
+      $unwind: '$products'
+    },
+    {
+      $group: {
+        _id: {
+          day: { $dateToString: { format: "%Y-%m-%d", date: "$trans_date" } },
+          productName: '$products.name'
+        },
+        totalQty: { $sum: '$products.qty' },
+        totalAmount: { $sum: '$products.amount' }
+      }
+    },
+    {
+      $group: {
+        _id: "$_id.day",
+        products: {
+          $push: {
+            productName: "$_id.productName",
+            totalQty: "$totalQty",
+            totalAmount: "$totalAmount"
+          }
+        }
+      }
+    },
+    {
+      $sort: { "_id": -1 }  // Sort by date in ascending order
+    }
+  ]);
+  console.log(JSON.stringify(aggregationResults), "aggregationResults")
+  return aggregationResults;
+
 }
 
 module.exports = router;

@@ -248,10 +248,10 @@ router.get("", checkAuth, (req, res, next) => {
       // change price for products whose site is 'YENEGWE'
       documents.map((product) => {
         if ((user.site === 'YENEGWE') && product.name === 'Pure Water') {
-          product.price = 180;
+          product.price = 280;
         }
         if ((user.site === 'AKENFA') && product.name === 'FIAFIA WATER') {
-          product.price = 180;
+          product.price = 280;
         }
       })
       // console.log(documents, 'products')

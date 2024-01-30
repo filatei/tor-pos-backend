@@ -604,7 +604,7 @@ router.post(
               // bagger
               row.bagsBagged = parseFloat(row["BAGS BAGGED"].replace(/,/g, ""));
               if (row.payType == "MONTH-END")
-                row.grossPay = row.bagsBagged * 3.5;
+                row.grossPay = row.bagsBagged * 3;
               if (row.payType == "MID-MONTH")
                 row.grossPay += row.bagsBagged * 0.5;
             }
@@ -613,7 +613,7 @@ router.post(
               // bagger
               row.bagsBagged = parseFloat(row["QTY"].replace(/,/g, ""));
               if (row.payType == "MONTH-END")
-                row.grossPay += row.bagsBagged * 3.5;
+                row.grossPay += row.bagsBagged * 3;
               if (row.payType == "MID-MONTH")
                 row.grossPay += row.bagsBagged * 0.5;
             }
@@ -622,7 +622,7 @@ router.post(
               row.bagsLoaded = parseFloat(row["BAGS LOADED"].replace(/,/g, ""));
 
               if (row.payType === "MONTH-END") {
-                row.grossPay += row.bagsLoaded * 3.5;
+                row.grossPay += row.bagsLoaded * 3;
               } else if (row.payType === "MID-MONTH") {
                 row.grossPay += row.bagsLoaded * 0.5;
               }

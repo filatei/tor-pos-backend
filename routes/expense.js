@@ -313,7 +313,7 @@ router.get("/summary", checkAuth, async (req, res, next) => {
 
 router.get("/payHistSummary", checkAuth, async (req, res, next) => {
   // summary of expenses for product Rolls per month
-console.log('payHistSummary')
+  console.log('payHistSummary')
 
   try {
     let user, userEmail;
@@ -328,7 +328,7 @@ console.log('payHistSummary')
 
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setDate(endDate.getDate() - 21); // Set to 3 weeks ago
+    startDate.setDate(endDate.getDate() - 60); // Set to 3 weeks ago
 
     response = await getPayHistoryForVendorInRange('FLEXPLAST TECH & SERVICES', startDate, endDate)
     // console.log(response, 'response')

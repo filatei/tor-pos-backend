@@ -746,6 +746,34 @@ const searchExpenses = async (searchTerm, limit, offset) => {
   }
 };
 
+// async function getPayHistoryForVendorInRange(vendorName, startDate, endDate) {
+//   try {
+//     const pipeline = [
+//       {
+//         $lookup: {
+//           from: 'contacts',
+//           localField: 'vendor',
+//           foreignField: '_id',
+//           as: 'vendorInfo'
+//         }
+//       },
+//       { $unwind: "$vendorInfo" },
+//       { $match: { "vendorInfo.name": vendorName } },
+//       { $unwind: "$payHistory" },
+//       { $match: { "payHistory.paymentDate": { $gte: startDate, $lte: endDate } } },
+//       { $sort: { "payHistory.paymentDate": 1 } },
+//       { $project: { payHistory: 1, txn_amount:1, _id: 0 } }
+//     ];
+
+//     const result = await Expense.aggregate(pipeline).exec();
+//     console.log(result, 'result')
+//     return result;
+//     // return result.map(item => item.payHistory);
+//   } catch (error) {
+//     console.error('Error occurred:', error);
+//   }
+// }
+
 async function getPayHistoryForVendorInRange(vendorName, startDate, endDate) {
   try {
     const pipeline = [
@@ -760,17 +788,38 @@ async function getPayHistoryForVendorInRange(vendorName, startDate, endDate) {
       { $unwind: "$vendorInfo" },
       { $match: { "vendorInfo.name": vendorName } },
       { $unwind: "$payHistory" },
-      { $match: { "payHistory.paymentDate": { $gte: startDate, $lte: endDate } } },
-      { $sort: { "payHistory.paymentDate": 1 } },
-      { $project: { payHistory: 1, _id: 0 } }
+      { $match: { "payHistory.paymentDate": { $gte: new Date(startDate), $lte: new Date(endDate) } } },
+      {
+        $group: {
+          _id: "$_id", // Group by document's unique _id
+          txnAmount: { $first: "$txn_amount" }, // Take the first txn_amount for the group (since all will be the same for a given document)
+          payHistory: { $push: "$payHistory" }, // Collect all payHistory entries into an array
+          totalPaid: { $sum: "$payHistory.paidAmount" }, // Sum of paidAmount in the grouped payHistory
+          // Include any other fields you need in the result, for example:
+          expenseDate: { $first: "$date" }
+        }
+      },
+      { $sort: { "expenseDate": 1 } },
+      {
+        $project: {
+          _id: 0,
+          invoiceId: "$_id",
+          txnAmount: 1,
+          payHistory: 1,
+          totalPaid: 1,
+          expenseDate: 1
+        }
+      }
     ];
 
     const result = await Expense.aggregate(pipeline).exec();
-    return result.map(item => item.payHistory);
+    // console.log(result, 'result');
+    return result;
   } catch (error) {
     console.error('Error occurred:', error);
   }
 }
+
 
 
 async function payHistory(vendor) {

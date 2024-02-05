@@ -23,6 +23,8 @@ const Mail = require("../mail");
 const Utils = require("../utils");
 const HttpError = require("../utils/http-error");
 const startOfDay = require("date-fns/startOfToday");
+const puppeteer = require('puppeteer');
+
 
 function logIncident(email, description) {
   const logObj = new Accesslog({ email: email, description: description });
@@ -690,6 +692,25 @@ router.get("/siteSummary", checkAuth, async (req, res, next) => {
 
 });
 
+router.get("/generatePayHistoryPDF",  async (req, res, next) => {
+  try {
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - 40); // Set to 3 weeks ago
+    const vendorName = 'FLEXPLAST TECH & SERVICES'
+
+    const data = await getPayHistoryForVendorInRange(vendorName, startDate, endDate); // Adjust with actual function call
+    const html = generateHTML(data);
+    const pdfBuffer = await generatePDF(html);
+
+    res.type('application/pdf');
+    res.send(pdfBuffer);
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    res.status(500).send('Server error generating PDF');
+  }
+});
+
 
 const countExpenses = async (searchTerm) => {
   // Same query logic as in searchExpenses, but we just count the records
@@ -900,6 +921,109 @@ async function payHistory(vendor) {
   }
 
 }
+
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-GB'); // 'en-GB' uses day/month/year format
+}
+
+function formatNumber(number) {
+  return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(number);
+}
+
+function generateHTML(data) {
+  let totalInvoiceAmount = 0;
+  let totalPaidAmount = 0;
+  let totalBalance = 0;
+
+  data.forEach(invoice => {
+    totalInvoiceAmount += invoice.txnAmount;
+    totalPaidAmount += invoice.totalPaid;
+    totalBalance += invoice.txnAmount - invoice.totalPaid;
+  });
+
+  let html = `
+    <html>
+    <head>
+      <style>
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid black; padding: 5px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        tfoot { font-weight: bold; }
+      </style>
+    </head>
+    <body>
+      <table>
+        <thead>
+          <tr>
+            <th>Invoice Date</th>
+            <th>Invoice Amount</th>
+            <th>Total Paid</th>
+            <th>Payment Date</th>
+            <th>Payment Amount</th>
+            <th>Balance</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+  // Generate table rows
+  data.forEach(invoice => {
+    const balance = formatNumber(invoice.txnAmount - invoice.totalPaid);
+    const hasPayments = invoice.payHistory && invoice.payHistory.length > 0;
+    if (!hasPayments) {
+      html += `
+        <tr>
+          <td>${formatDate(invoice.expenseDate)}</td>
+          <td>${formatNumber(invoice.txnAmount)}</td>
+          <td>${formatNumber(invoice.totalPaid)}</td>
+          <td>-</td>
+          <td>-</td>
+          <td>${balance}</td>
+        </tr>`;
+    } else {
+      invoice.payHistory.forEach((payment, index) => {
+        html += `
+          <tr>
+            <td>${index === 0 ? formatDate(invoice.expenseDate) : ''}</td>
+            <td>${index === 0 ? formatNumber(invoice.txnAmount) : ''}</td>
+            <td>${index === 0 ? formatNumber(invoice.totalPaid) : ''}</td>
+            <td>${payment.paymentDate ? formatDate(payment.paymentDate) : ''}</td>
+            <td>${formatNumber(payment.paidAmount)}</td>
+            <td>${index === 0 ? balance : ''}</td>
+          </tr>`;
+      });
+    }
+  });
+
+  // Add footer with totals
+  html += `</tbody>
+      <tfoot>
+        <tr>
+          <td>Totals</td>
+          <td>${formatNumber(totalInvoiceAmount)}</td>
+          <td>${formatNumber(totalPaidAmount)}</td>
+          <td></td>
+          <td></td>
+          <td>${formatNumber(totalBalance)}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </body>
+  </html>`;
+
+  return html;
+}
+async function generatePDF(html) {
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.setContent(html, { waitUntil: 'networkidle0' });
+  const pdf = await page.pdf({ format: 'A3', printBackground: true });
+
+  await browser.close();
+  return pdf;
+}
+
+
 
 router.get("/expense/:id", (req, res, next) => {
   // this is used for expense_id, not _id

@@ -1013,8 +1013,11 @@ function generateHTML(data) {
 
   return html;
 }
+
 async function generatePDF(html) {
-  const browser = await puppeteer.launch();
+  // const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({ headless: true });
+
   const page = await browser.newPage();
   await page.setContent(html, { waitUntil: 'networkidle0' });
   const pdf = await page.pdf({ format: 'A3', printBackground: true });

@@ -785,16 +785,30 @@ async function getPayHistoryForVendorInRange(vendorName, startDate, endDate) {
         }
       },
       { $unwind: "$vendorInfo" },
-      { $match: { "vendorInfo.name": vendorName } },
-      { $unwind: "$payHistory" },
-      { $match: { "payHistory.paymentDate": { $gte: new Date(startDate), $lte: new Date(endDate) } } },
+      { $match: { "vendorInfo.name": vendorName, "date": { $gte: new Date(startDate), $lte: new Date(endDate) } } },
+      // Allow for documents without payHistory or with an empty payHistory array
+      {
+        $addFields: {
+          payHistory: {
+            $ifNull: ["$payHistory", []] // If payHistory is null, replace it with an empty array
+          }
+        }
+      },
+      { $unwind: { path: "$payHistory", preserveNullAndEmptyArrays: true } },
       {
         $group: {
-          _id: "$_id", // Group by document's unique _id
-          txnAmount: { $first: "$txn_amount" }, // Take the first txn_amount for the group (since all will be the same for a given document)
-          payHistory: { $push: "$payHistory" }, // Collect all payHistory entries into an array
-          totalPaid: { $sum: "$payHistory.paidAmount" }, // Sum of paidAmount in the grouped payHistory
-          // Include any other fields you need in the result, for example:
+          _id: "$_id",
+          txnAmount: { $first: "$txn_amount" },
+          payHistory: {
+            $push: {
+              $cond: [
+                { $eq: ["$payHistory", null] }, // If payHistory is null (for docs without payHistory)
+                "$$REMOVE", // Do not include it in the array
+                "$payHistory" // Otherwise, include payHistory in the array
+              ]
+            }
+          },
+          totalPaid: { $sum: "$payHistory.paidAmount" },
           expenseDate: { $first: "$date" }
         }
       },
@@ -804,7 +818,13 @@ async function getPayHistoryForVendorInRange(vendorName, startDate, endDate) {
           _id: 0,
           invoiceId: "$_id",
           txnAmount: 1,
-          payHistory: 1,
+          payHistory: {
+            $filter: { // Filter the payHistory array to remove any $$REMOVE entries added by the $group stage
+              input: "$payHistory",
+              as: "pay",
+              cond: { $ne: ["$$pay", "$$REMOVE"] }
+            }
+          },
           totalPaid: 1,
           expenseDate: 1
         }

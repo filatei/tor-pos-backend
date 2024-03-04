@@ -1836,7 +1836,7 @@ router.get("/initialDaySummary", checkAuth, async (req, res, next) => {
   try {
     const initialData = await FidoOrder.aggregate(pipeline);
     const volData = await productAgg()
-    console.log(JSON.stringify(volData), "voldata");
+    // console.log(JSON.stringify(volData), "voldata");
     res.status(200).json({ initialData: initialData,volumeData:volData });
   } catch (error) {
     console.log(error, "error")

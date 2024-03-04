@@ -503,7 +503,8 @@ router.get("", checkAuth, async (req, res, next) => {
       "YENEGWE",
       "OBUNNA",
       "KPANSIA E",
-      "AKENFA",
+      "AKENFA", 
+      "MBIAMA",
     ];
 
     const blockSites = ["OKUTUKUTU-BLOCKS", "AGADAGBA-BLOCKS"];
@@ -859,8 +860,6 @@ async function getPayHistoryForVendorInRange(vendorName, startDate, endDate) {
     console.error('Error occurred:', error);
   }
 }
-
-
 
 async function payHistory(vendor) {
   const twoMonthsAgo = new Date();

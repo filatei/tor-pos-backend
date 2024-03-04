@@ -2294,7 +2294,7 @@ async function productAgg() {
       $sort: { "_id": -1 }  // Sort by date in ascending order
     }
   ]);
-  console.log(JSON.stringify(aggregationResults), "aggregationResults")
+  // console.log(JSON.stringify(aggregationResults), "aggregationResults")
   return aggregationResults;
 
 }

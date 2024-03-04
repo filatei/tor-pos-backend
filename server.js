@@ -34,7 +34,7 @@ mongoEmitter.on('mongoConnected', (db) => {
 
     if (operationType === 'delete') {
       // Handle delete operation
-      console.log('A document was deleted', change);
+      // console.log('A document was deleted', change);
       // Your code for handling deletes
     }
     // const fullDocument = change.fullDocument;

@@ -329,13 +329,9 @@ router.get("/payHistSummary", checkAuth, async (req, res, next) => {
 
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setDate(endDate.getDate() - 40); // Set to 3 weeks ago
+    startDate.setDate(endDate.getDate() - 30); // Set to 3 weeks ago
 
     response = await getPayHistoryForVendorInRange('FLEXPLAST TECH & SERVICES', startDate, endDate)
-    // console.log(response, 'response')
-
-    // response = await agg("Rolls");
-    // console.log(response, 'rolls pay hist')
 
     return res.status(200).json({
       response: response,

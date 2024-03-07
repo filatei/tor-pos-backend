@@ -503,7 +503,7 @@ router.get("", checkAuth, async (req, res, next) => {
       "YENEGWE",
       "OBUNNA",
       "KPANSIA E",
-      "AKENFA", 
+      "AKENFA",
       "MBIAMA",
     ];
 
@@ -693,11 +693,11 @@ router.get("/siteSummary", checkAuth, async (req, res, next) => {
 
 });
 
-router.get("/generatePayHistoryPDF",  async (req, res, next) => {
+router.get("/generatePayHistoryPDF", async (req, res, next) => {
   try {
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setDate(endDate.getDate() - 40); // Set to 3 weeks ago
+    startDate.setDate(endDate.getDate() - 30); // Set to 3 weeks ago
     const vendorName = 'FLEXPLAST TECH & SERVICES'
 
     const data = await getPayHistoryForVendorInRange(vendorName, startDate, endDate); // Adjust with actual function call

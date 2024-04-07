@@ -510,7 +510,7 @@ router.get("", checkAuth, async (req, res, next) => {
       expenseQuery = await Expense.find({
         status: "APPROVED",
         expenseAccount: "Daily Imprest",
-        createdAt: {
+        updatedAt: {
           $gte: start,
           $lte: end,
         },

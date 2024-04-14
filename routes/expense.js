@@ -329,7 +329,7 @@ router.get("/payHistSummary", checkAuth, async (req, res, next) => {
 
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setDate(endDate.getDate() - 30); // Set to 3 weeks ago
+    startDate.setDate(endDate.getDate() - 14); // Set to 2 weeks ago
 
     response = await getPayHistoryForVendorInRange('FLEXPLAST TECH & SERVICES', startDate, endDate)
 
@@ -763,33 +763,6 @@ const searchExpenses = async (searchTerm, limit, offset) => {
   }
 };
 
-// async function getPayHistoryForVendorInRange(vendorName, startDate, endDate) {
-//   try {
-//     const pipeline = [
-//       {
-//         $lookup: {
-//           from: 'contacts',
-//           localField: 'vendor',
-//           foreignField: '_id',
-//           as: 'vendorInfo'
-//         }
-//       },
-//       { $unwind: "$vendorInfo" },
-//       { $match: { "vendorInfo.name": vendorName } },
-//       { $unwind: "$payHistory" },
-//       { $match: { "payHistory.paymentDate": { $gte: startDate, $lte: endDate } } },
-//       { $sort: { "payHistory.paymentDate": 1 } },
-//       { $project: { payHistory: 1, txn_amount:1, _id: 0 } }
-//     ];
-
-//     const result = await Expense.aggregate(pipeline).exec();
-//     console.log(result, 'result')
-//     return result;
-//     // return result.map(item => item.payHistory);
-//   } catch (error) {
-//     console.error('Error occurred:', error);
-//   }
-// }
 
 async function getPayHistoryForVendorInRange(vendorName, startDate, endDate) {
   try {

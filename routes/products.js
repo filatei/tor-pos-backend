@@ -254,7 +254,7 @@ router.get("", checkAuth, (req, res, next) => {
           product.price = 230;
         }
         if ((user.site === 'MBIAMA') && (product.name === 'FIAFIA WATER')) {
-          product.price = 210;
+          product.price = 200;
         }
       })
       // console.log(documents, 'products')

@@ -4,17 +4,26 @@ const mongoose = require("mongoose");
 const Payroll = require("../models/payroll");
 const Site = require("../models/site");
 const People = require("../models/people");
-const Accesslog = require("../models/accesslog");
 const router = express.Router();
-const Path = require("path");
 const fs = require("fs");
+const path = require('path');
 const os = require("os");
 const hostname = os.hostname();
 const csv = require("fast-csv");
-const moment = require("moment");
 const Mail = require("../mail");
 const Payrollgrpbyyrmonthstatus = require("../models/payrollgrpbyyrmonthstatus");
 const payrollAggregations = require("../utils/payroll-aggregations");
+const xlsx = require('xlsx');
+
+const ALLOWED_SHEET_NAMES = ['LOADERS', 'BAGGERS', 'REGULAR'];
+const UPLOAD_DIR = '/var/www/uploads'; // Ensure this directory exists and is writable
+
+// const ALLOWED_PAY_TYPES = ['MONTH-END', 'MID-MONTH', 'OTHER'];
+const monthOrder = [
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December"
+];
+
 
 const monthToNumber = {
   January: 1,
@@ -33,11 +42,11 @@ const monthToNumber = {
 
 var multer = require("multer");
 
+const allowedExtensions = ["xls", "xlsx"];
 const MIME_TYPE_MAP = {
-  "image/png": "png",
-  "image/jpeg": "jpeg",
-  "image/jpg": "jpg",
-  "text/csv": "csv",
+  'application/vnd.ms-excel': 'xls',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+
 };
 
 const multerConfig = require("../config/multer-config");
@@ -104,16 +113,11 @@ var upload = multer({
   },
   fileFilter: (req, file, cb) => {
     // console.log(file.mimetype)
-    if (
-      file.mimetype == "image/png" ||
-      file.mimetype == "image/jpeg" ||
-      file.mimetype == "image/jpg" ||
-      file.mimetype == "text/csv"
-    ) {
+    if (file.mimetype in MIME_TYPE_MAP) {
       cb(null, true);
     } else {
       cb(null, false);
-      return cb(new Error("Only .png or .jpg or csv format allowed!"));
+      return cb(new Error(`Only ${allowedExtensions} format allowed!`));
     }
   },
 });
@@ -129,7 +133,11 @@ var csvUpload = multer({
       file.mimetype == "image/png" ||
       file.mimetype == "image/jpeg" ||
       file.mimetype == "image/jpg" ||
-      file.mimetype == "text/csv"
+      file.mimetype == "text/csv" ||
+      file.mimetype == "application/xls" ||
+      file.mimetype == "application/vnd.ms-excel" ||
+      file.mimetype == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
     ) {
       cb(null, true);
     } else {
@@ -661,9 +669,7 @@ router.post(
                   req.userData.userId
                 );
 
-                // return res.status(500).json({
-                //   message: `Payee must be active `
-                // });
+
               }
             }
           })
@@ -906,6 +912,68 @@ router.post(
   }
 );
 
+
+router.post('/delete', checkAuth, async (req, res) => {
+  try {
+    const { role } = req.userData;
+    if (role !== "ADMIN") {
+      return res.status(500).json({ message: "Only Admin Allowed to Delete" });
+    }
+
+    const { ids } = req.body;
+    //  if status is PAID, dont delete
+    const payrolls = await Payroll.find({ _id: { $in: ids } });
+    const allowedIds = payrolls
+      .filter((p) => p.status !== "PAID")
+      .map((pp) => pp._id);
+
+
+    const deleted = await Payroll.deleteMany({ _id: { $in: allowedIds } });
+    console.log(deleted, 'deleted')
+    res.status(200).json({ message: 'Payroll records deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting payroll records', error });
+  }
+});
+
+router.put('/update', checkAuth, async (req, res) => {
+
+  try {
+    const { role } = req.userData;
+    if (role !== "ADMIN") {
+      return res.status(500).json({ message: "Only Admin Allowed to Update" });
+    }
+    
+    const payroll = req.body;
+    const updatedPayroll = await Payroll.findByIdAndUpdate(payroll._id, payroll, { new: true });
+    res.status(200).json(updatedPayroll);
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating payroll record', error });
+  }
+});
+
+router.put('/update-status', checkAuth,  async (req, res) => {
+  try {
+    const { role } = req.userData;
+    if (role !== "ADMIN") {
+      return res.status(500).json({ message: "Only Admin Allowed to Update" });
+    }
+
+    const { ids, status } = req.body;
+    const objectIds = ids.map(id => mongoose.Types.ObjectId(id));
+    const result = await Payroll.updateMany({ _id: { $in: objectIds } }, { status: status });
+    if (result.nModified === 0) {
+      console.log('No matching payroll records found to update.')
+      return res.status(404).json({ message: 'No matching payroll records found to update.' });
+    }
+    console.log('Payroll status updated successfully ', result);
+    res.status(200).json({ message: 'Payroll status updated successfully', result });
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating payroll status', error });
+  }
+});
+
+
 router.put("/:id", checkAuth, upload.any(), async (req, res, next) => {
   const { role, userId } = req.userData;
 
@@ -1145,11 +1213,6 @@ router.get("/monthlyPayTypes", checkAuth, async (req, res, next) => {
 
   try {
     const results = await payrollAggregations.getMonthlyPayTypes();
-    // Sort the month names in alphabetical order for each year
-    // console.log(results[0], "results[0");
-    // for (let result of results) {
-    //   result.months.sort((a, b) => a.month.localeCompare(b.month));
-    // }
 
     res.status(200).json(results);
   } catch (err) {
@@ -1244,6 +1307,241 @@ router.get("/years", checkAuth, async (req, res) => {
   }
 });
 
+router.post(
+  "/xlsUpload",
+  checkAuth,
+  upload.single('file'),
+  async (req, res) => {
+    let insertedCount = 0;
+    let skippedCount = 0;
+    const errorRows = [];
+
+    try {
+      const { role, userId } = req.userData;
+
+      if (!["ADMIN", "GENERAL MANAGER", "SNR ACCOUNTANT"].includes(role)) {
+        return res.status(403).json({
+          message: "Fetching payrolls failed! Not Allowed",
+        });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({
+          message: "No file uploaded",
+        });
+      }
+
+      const filePath = req.file.path;
+      const workbook = xlsx.readFile(filePath);
+
+      for (const sheetName of workbook.SheetNames) {
+        if (!ALLOWED_SHEET_NAMES.includes(sheetName.toUpperCase())) {
+          continue;
+        }
+
+        const worksheet = workbook.Sheets[sheetName];
+        const data = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
+
+        const headers = data[0];
+        const rows = data.slice(1);
+
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i];
+          const rowData = {};
+
+          headers.forEach((header, index) => {
+            rowData[header] = row[index];
+          });
+
+          const personId = rowData['ID'];
+          if (!personId) {
+            console.log(`Stopping process at row ${i + 2} due to missing ID.`);
+            break;
+          }
+
+          try {
+            const processedRow = await processRow(rowData, req.userData.userId, i + 2, sheetName); // row number is i + 2 (accounting for headers)
+            if (processedRow) {
+              const exists = await Payroll.findOne({ payeeMonthYrType: processedRow.payeeMonthYrType });
+              if (!exists) {
+                await Payroll.create(processedRow);
+                insertedCount++;
+              } else {
+                console.log(`Duplicate record found for ${processedRow.payeeMonthYrType}, skipping insertion.`);
+                errorRows.push({ ...rowData, rowNumber: i + 2, error: 'Duplicate record' });
+                skippedCount++;
+              }
+            }
+          } catch (error) {
+            errorRows.push({ ...rowData, rowNumber: i + 2, error: error.message });
+            skippedCount++;
+          }
+        }
+      }
+
+      fs.unlink(filePath, (err) => {
+        if (err) console.error('Error removing file:', err);
+      });
+
+      // Ensure the uploads directory exists
+      if (!fs.existsSync(UPLOAD_DIR)) {
+        fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+      }
+
+      // Generate XLS file for skipped records
+      const skippedWorkbook = xlsx.utils.book_new();
+      const skippedWorksheet = xlsx.utils.json_to_sheet(errorRows);
+      xlsx.utils.book_append_sheet(skippedWorkbook, skippedWorksheet, 'Skipped Records');
+      const skippedFilePath = path.join(UPLOAD_DIR, `skipped-records-${Date.now()}.xlsx`);
+      xlsx.writeFile(skippedWorkbook, skippedFilePath);
+
+      console.log(`Inserted records: ${insertedCount}`);
+      console.log(`Skipped records: ${skippedCount}`);
+
+      return res.status(200).json({
+        message: `${insertedCount} records uploaded successfully, ${skippedCount} records skipped.`,
+        insertedCount,
+        skippedCount,
+        skippedFilePath,
+        errorRows,  // Include errorRows in the response
+      });
+
+    } catch (error) {
+      console.error("Error processing request:", error);
+      return res.status(500).json({ message: "Error processing request: " + error.message });
+    }
+  }
+);
+
+function excelDateToJSDate(excelDate) {
+  const date = new Date((excelDate - (25567 + 2)) * 86400 * 1000);
+  const utcDate = new Date(date.getTime() + (date.getTimezoneOffset() * 60 * 1000));
+  return utcDate;
+}
+
+function parseNumber(value) {
+  const parsed = parseFloat(value);
+  return isNaN(parsed) ? 0 : parsed;
+}
+
+async function processRow(row, userId, rowNumber, sheetName) {
+  try {
+    const payType = row["PAY TYPE"]?.trim();
+    if (!payType) throw new Error(`Pay Type (MONTH-END or MID-MONTH) Required`);
+
+    const personId = String(row["ID"]).trim();  // Ensure personId is a string and then trim
+    if (!personId) throw new Error("Person ID is required");
+
+    const payee = await People.findOne({ people_id: personId });
+    if (!payee) throw new Error("ID not in People DB for ID " + personId);
+
+    if (!payee.status) {
+      await People.updateOne({ _id: payee._id }, { status: "ACTIVE" });
+    }
+
+    const today = new Date();
+    const months = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+
+    let payStartDate, payEndDate, month, year;
+
+    if (row["PAY START DATE"]) {
+      payStartDate = excelDateToJSDate(row["PAY START DATE"]);
+    }
+
+    if (row["PAY END DATE"]) {
+      payEndDate = excelDateToJSDate(row["PAY END DATE"]);
+      month = months[payEndDate.getMonth()];
+      year = payEndDate.getFullYear();
+    }
+
+    if (!month) throw new Error(`Pay Month Required include field 'PAY START DATE' and 'PAY END DATE'`);
+    if (!year) throw new Error(`Pay YEAR Required include field 'PAY START DATE' and 'PAY END DATE'`);
+
+    const name = [row["FIRST NAME"], row["MIDDLE NAME"], row["LAST NAME"]]
+      .filter(Boolean)
+      .map(name => name.trim())
+      .join(" ");
+
+    const empType = row["EMPLOYEE TYPE"]?.trim();
+    const baseSalary = parseNumber(row["BASE SALARY"]);
+    const payeeTax = parseNumber(row["PAYEE TAX"]);
+    const salaryAdvance = parseNumber(row["SALARY ADV"]);
+    const deductions = parseNumber(row["DEDUCTION"]) + payeeTax + salaryAdvance;
+
+    let daysAbsent = 0;
+    let daysWorked = 0;
+    let totalWorkDaysInMonth = 0;
+
+    let grossPay = baseSalary;
+    if (sheetName.toUpperCase() === 'ATT') {
+      daysAbsent = parseNumber(row["DAYS ABS"]);
+      daysWorked = parseNumber(row["DAYS WORKED"]);
+      totalWorkDaysInMonth = daysAbsent + daysWorked;
+
+      if (totalWorkDaysInMonth > 0) {
+        grossPay = baseSalary - (daysAbsent / totalWorkDaysInMonth) * baseSalary;
+      }
+    }
+    const netPay = grossPay - deductions;
+
+    const bankAccount = row["BANK ACCOUNT"]?.trim() || row["ACCOUNT NUMBER"]?.trim();
+
+    if (bankAccount) {
+      await People.updateOne({ name }, { bankAccount });
+    }
+
+    const siteName = row["LOCATION"]?.trim();
+    const site = siteName && await Site.findOne({ name: siteName });
+    if (siteName && !site) throw new Error("SITE not Valid");
+
+    const bagsBagged = parseNumber(String(row["QTY"])?.replace(/,/g, "")) || 0
+    const bagsLoaded = parseNumber(String(row["BAGS LOADED"])?.replace(/,/g, "")) || 0
+
+    // console.log(bagsBagged, bagsLoaded, "bagsBagged, bagsLoaded")
+    const calcGrossPay = (payType === "MONTH-END")
+      ? (bagsBagged + bagsLoaded) * 3.5
+      : (bagsBagged + bagsLoaded) * 0.5;
+    // console.log(calcGrossPay, "calcGrossPay", grossPay, "grossPay");
+
+    const payrollRecord = {
+      payee: payee._id,
+      payeeMonthYrType: personId + month + year + payType,
+      site: site?._id,
+      empType,
+      payeeTax,
+      company: row["COMPANY"],
+      jobName: payee.jobName,
+      status: "UNPAID",
+      payType,
+      month,
+      year,
+      grossPay: calcGrossPay || grossPay,
+      netPay: calcGrossPay ? calcGrossPay - deductions : netPay,
+      bagsBagged,
+      bagsLoaded,
+      deductions,
+      daysAbsent,
+      daysWorked,
+      totalWorkDaysInMonth,
+      salaryAdvance,
+      payDate: today,
+      payStartDate,
+      payEndDate,
+      payItems: [],
+      remarks: "via XLS Upload - " + personId + month + year + payType,
+      creator: userId,
+    };
+
+    return payrollRecord;
+  } catch (error) {
+    throw new Error(`Row ${rowNumber} processing error: ${error.message}`);
+  }
+}
+
+
 router.get(
   "/getYearMonthSeason/:year/:month/:payType",
   checkAuth,
@@ -1286,7 +1584,7 @@ router.get(
         month,
         payType
       );
-      
+
       // const res2 = await getPayrollData(2023, "july", "MID-MONTH");
       // console.log(results[0]?.payee?.name, "results season name");
 
@@ -1297,6 +1595,7 @@ router.get(
     }
   }
 );
+
 
 router.get("/months/:year", checkAuth, async (req, res) => {
   const { role } = req.userData;
@@ -1482,6 +1781,217 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
   }
 });
 
+// router.get('/grouped-payrolls', async (req, res) => {
+//   try {
+//     const payrolls = await Payroll.aggregate([
+//       {
+//         $group: {
+//           _id: {
+//             year: { $year: '$payDate' },
+//             month: { $month: '$payDate' },
+//             payType: '$payType'
+//           },
+//           payrolls: {
+//             $push: {
+//               _id: '$_id', // Include _id in the grouped data
+//               payeeName: '$payeeName',
+//               grossPay: '$grossPay',
+//               netPay: '$netPay',
+//               payType: '$payType',
+//               status: '$status',
+//               company: '$company',
+//               jobName: '$jobName',
+//               location: '$location',
+//               bankAccount: '$bankAccount',
+//               payDate: '$payDate',
+//               remarks: '$remarks',
+//               salaryAdvance: '$salaryAdvance',
+//               deductions: '$deductions',
+//               daysAbsent: '$daysAbsent',
+//               daysWorked: '$daysWorked',
+//               totalWorkDaysInMonth: '$totalWorkDaysInMonth'
+//             }
+//           }
+//         }
+//       },
+//       {
+//         $sort: {
+//           '_id.year': 1,
+//           '_id.month': 1
+//         }
+//       }
+//     ]);
+//     console.log(JSON.stringify(payrolls), 'grouped payrolls');
+//     res.status(200).json(payrolls);
+//   } catch (error) {
+//     res.status(500).json({ message: 'Error fetching payrolls', error });
+//   }
+// });
+// Fetch payroll data for a specific year
+router.get('/grouped-payrolls/:year', async (req, res) => {
+  const year = parseInt(req.params.year);
+  console.log(year, 'year')
+  try {
+    const payrolls = await Payroll.aggregate([
+      {
+        $match: {
+          createdAt: { $exists: true, $ne: null },
+          $expr: { $eq: [{ $year: '$createdAt' }, year] }
+        }
+      },
+      {
+        $project: {
+          year: { $year: '$createdAt' },
+          month: { $month: '$createdAt' },
+          payType: 1,
+          payee: 1,
+          payeeName: 1,
+          grossPay: 1,
+          netPay: 1,
+          status: 1,
+          company: 1,
+          jobName: 1,
+          location: 1,
+          bankAccount: 1,
+          createdAt: 1,
+          remarks: 1,
+          salaryAdvance: 1,
+          deductions: 1,
+          daysAbsent: 1,
+          daysWorked: 1,
+          totalWorkDaysInMonth: 1
+        }
+      },
+      {
+        $lookup: {
+          from: 'peoples',
+          localField: 'payee',
+          foreignField: '_id',
+          as: 'payeeDetails'
+        }
+      },
+      {
+        $unwind: {
+          path: '$payeeDetails',
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $addFields: {
+          payeeName: {
+            $concat: [
+              { $ifNull: ['$payeeDetails.fname', ''] },
+              ' ',
+              { $ifNull: ['$payeeDetails.mname', ''] },
+              ' ',
+              { $ifNull: ['$payeeDetails.lname', ''] }
+            ]
+          }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            year: '$year',
+            month: '$month',
+            payType: '$payType'
+          },
+          payrolls: {
+            $push: {
+              _id: '$_id',
+              payeeName: '$payeeName',
+              grossPay: '$grossPay',
+              netPay: '$netPay',
+              status: '$status',
+              company: '$company',
+              jobName: '$jobName',
+              location: '$location',
+              bankAccount: '$bankAccount',
+              createdAt: '$createdAt',
+              remarks: '$remarks',
+              salaryAdvance: '$salaryAdvance',
+              deductions: '$deductions',
+              daysAbsent: '$daysAbsent',
+              daysWorked: '$daysWorked',
+              totalWorkDaysInMonth: '$totalWorkDaysInMonth'
+            }
+          }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            year: '$_id.year',
+            month: '$_id.month'
+          },
+          payTypes: {
+            $push: {
+              payType: '$_id.payType',
+              payrolls: '$payrolls'
+            }
+          }
+        }
+      },
+      {
+        $group: {
+          _id: '$_id.year',
+          months: {
+            $push: {
+              month: '$_id.month',
+              payTypes: '$payTypes'
+            }
+          }
+        }
+      },
+      {
+        $sort: {
+          '_id': 1
+        }
+      }
+    ]);
+
+    res.status(200).json({ payrolls });
+  } catch (error) {
+    console.error('Error fetching payrolls:', error);
+    res.status(500).json({ message: 'Error fetching payrolls', error });
+  }
+});
+
+// Fetch available years
+router.get('/payroll-years', async (req, res) => {
+  try {
+    const years = await Payroll.aggregate([
+      {
+        $match: {
+          createdAt: { $exists: true, $ne: null }
+        }
+      },
+      {
+        $project: {
+          year: { $year: '$createdAt' }
+        }
+      },
+      {
+        $group: {
+          _id: '$year'
+        }
+      },
+      {
+        $sort: {
+          _id: 1
+        }
+      }
+    ]);
+
+    res.status(200).json(years.map(y => y._id));
+  } catch (error) {
+    console.error('Error fetching years:', error);
+    res.status(500).json({ message: 'Error fetching years', error });
+  }
+});
+
+
+
 router.get("/:id", checkAuth, (req, res, next) => {
   const { role } = req.userData;
 
@@ -1489,6 +1999,9 @@ router.get("/:id", checkAuth, (req, res, next) => {
     return res.status(500).json({
       message: "Fetching payrolls failed! Not Allowed ",
     });
+  }
+  if (!req.params.id) {
+    return res.status(500).json({ message: "No Payroll ID" });
   }
 
   Payroll.findById(req.params.id)
@@ -1510,5 +2023,6 @@ router.get("/:id", checkAuth, (req, res, next) => {
       });
     });
 });
+
 
 module.exports = router;

@@ -7,9 +7,9 @@ const EventEmitter = require('events');
 class MongoEmitter extends EventEmitter { }
 const mongoEmitter = new MongoEmitter();
 
-mongoose.set("useUnifiedTopology", true);
-mongoose.set("useCreateIndex", true);
-mongoose.set("useFindAndModify", false);
+// mongoose.set("useUnifiedTopology", true);
+// mongoose.set("useCreateIndex", true);
+// mongoose.set("useFindAndModify", false);
 
 let username, password, cluster;
 
@@ -24,8 +24,6 @@ if (hostname.includes("torama.ng")) {
 
 mongoose
     .connect(connectStr, {
-        useNewUrlParser: true,
-        useUnifiedTopology: true,
     })
     .then(() => {
         console.log("Connected to DB");

@@ -1801,29 +1801,6 @@ router.get('/grouped-payrolls/:year', checkAuth, async (req, res) => {
         }
       },
       {
-        $project: {
-          year: { $year: '$createdAt' },
-          month: { $month: '$createdAt' },
-          payType: 1,
-          payee: 1,
-          payeeName: 1,
-          grossPay: 1,
-          netPay: 1,
-          status: 1,
-          company: 1,
-          jobName: 1,
-          location: 1,
-          bankAccount: 1,
-          createdAt: 1,
-          remarks: 1,
-          salaryAdvance: 1,
-          deductions: 1,
-          daysAbsent: 1,
-          daysWorked: 1,
-          totalWorkDaysInMonth: 1
-        }
-      },
-      {
         $lookup: {
           from: 'peoples',
           localField: 'payee',
@@ -1832,20 +1809,25 @@ router.get('/grouped-payrolls/:year', checkAuth, async (req, res) => {
         }
       },
       {
-        $lookup: {
-          from: "sites",
-          localField: "site",
-          foreignField: "_id",
-          as: "site",
-        },
-      },
-      {
         $unwind: {
           path: '$payeeDetails',
           preserveNullAndEmptyArrays: true
         }
       },
-      
+      {
+        $lookup: {
+          from: 'sites',
+          localField: 'site',
+          foreignField: '_id',
+          as: 'siteDetails'
+        }
+      },
+      {
+        $unwind: {
+          path: '$siteDetails',
+          preserveNullAndEmptyArrays: true
+        }
+      },
       {
         $addFields: {
           payeeName: {
@@ -1857,9 +1839,31 @@ router.get('/grouped-payrolls/:year', checkAuth, async (req, res) => {
               { $ifNull: ['$payeeDetails.lname', ''] }
             ]
           },
-          name: '$payeeDetails.name',
           bankAccount: '$payeeDetails.bankAccount',
-          jobName: '$payeeDetails.jobName'
+          jobName: '$payeeDetails.jobName',
+          siteName: '$siteDetails.name'
+        }
+      },
+      {
+        $project: {
+          year: { $year: '$createdAt' },
+          month: { $month: '$createdAt' },
+          payType: 1,
+          payee: 1,
+          payeeName: 1,
+          grossPay: 1,
+          netPay: 1,
+          status: 1,
+          company: 1,
+          jobName: 1,
+          siteName: 1,
+          bankAccount: 1,
+          createdAt: 1,
+          salaryAdvance: 1,
+          deductions: 1,
+          daysAbsent: 1,
+          daysWorked: 1,
+          totalWorkDaysInMonth: 1
         }
       },
       {
@@ -1872,18 +1876,13 @@ router.get('/grouped-payrolls/:year', checkAuth, async (req, res) => {
           payrolls: {
             $push: {
               _id: '$_id',
-              payeeName: '$name',
-             
+              payeeName: '$payeeName',
               bankAccount: '$bankAccount',
-             
               jobName: '$jobName',
               grossPay: '$grossPay',
               netPay: '$netPay',
               status: '$status',
-              company: '$company',
-              jobName: '$jobName',
-              location: '$location',
-              bankAccount: '$bankAccount',
+              siteName: '$siteName',
               createdAt: '$createdAt',
               payType: '$payType',
               salaryAdvance: '$salaryAdvance',
@@ -1926,6 +1925,7 @@ router.get('/grouped-payrolls/:year', checkAuth, async (req, res) => {
         }
       }
     ]);
+    // console.log(JSON.stringify(payrolls[0]), 'payrolls')
 
     res.status(200).json({ payrolls });
   } catch (error) {

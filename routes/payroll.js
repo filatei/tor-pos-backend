@@ -1828,7 +1828,14 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
 //   }
 // });
 // Fetch payroll data for a specific year
-router.get('/grouped-payrolls/:year', async (req, res) => {
+router.get('/grouped-payrolls/:year', checkAuth, async (req, res) => {
+  const { role } = req.userData;
+
+  if (!["ADMIN", "GENERAL MANAGER", "SNR ACCOUNTANT"].includes(role)) {
+    return res.status(500).json({
+      message: "Fetching payrolls failed! Not Allowed ",
+    });
+  }
   const year = parseInt(req.params.year);
   console.log(year, 'year')
   try {
@@ -1886,7 +1893,10 @@ router.get('/grouped-payrolls/:year', async (req, res) => {
               ' ',
               { $ifNull: ['$payeeDetails.lname', ''] }
             ]
-          }
+          },
+          name: '$payeeDetails.name',
+          bankAccount: '$payeeDetails.bankAccount',
+          jobName: '$payeeDetails.jobName'
         }
       },
       {
@@ -1899,7 +1909,11 @@ router.get('/grouped-payrolls/:year', async (req, res) => {
           payrolls: {
             $push: {
               _id: '$_id',
-              payeeName: '$payeeName',
+              payeeName: '$name',
+             
+              bankAccount: '$bankAccount',
+             
+              jobName: '$jobName',
               grossPay: '$grossPay',
               netPay: '$netPay',
               status: '$status',
@@ -1908,7 +1922,7 @@ router.get('/grouped-payrolls/:year', async (req, res) => {
               location: '$location',
               bankAccount: '$bankAccount',
               createdAt: '$createdAt',
-              remarks: '$remarks',
+              
               salaryAdvance: '$salaryAdvance',
               deductions: '$deductions',
               daysAbsent: '$daysAbsent',

@@ -1840,7 +1840,9 @@ router.get('/grouped-payrolls/:year', checkAuth, async (req, res) => {
             ]
           },
           bankAccount: '$payeeDetails.bankAccount',
+          bankAccountSplit: { $split: ['$payeeDetails.bankAccount', '-'] },
           jobName: '$payeeDetails.jobName',
+          payee_id: '$payeeDetails.people_id',
           siteName: '$siteDetails.name'
         }
       },
@@ -1850,6 +1852,7 @@ router.get('/grouped-payrolls/:year', checkAuth, async (req, res) => {
           month: { $month: '$createdAt' },
           payType: 1,
           payee: 1,
+          payee_id: 1,
           payeeName: 1,
           grossPay: 1,
           netPay: 1,
@@ -1858,6 +1861,8 @@ router.get('/grouped-payrolls/:year', checkAuth, async (req, res) => {
           jobName: 1,
           siteName: 1,
           bankAccount: 1,
+          bankName: { $arrayElemAt: ['$bankAccountSplit', 0] },
+          accountNo: { $arrayElemAt: ['$bankAccountSplit', 1] },
           createdAt: 1,
           salaryAdvance: 1,
           deductions: 1,
@@ -1877,7 +1882,10 @@ router.get('/grouped-payrolls/:year', checkAuth, async (req, res) => {
             $push: {
               _id: '$_id',
               payeeName: '$payeeName',
+              payee_id: '$payee_id',
               bankAccount: '$bankAccount',
+              bankName: '$bankName',
+              accountNo: '$accountNo',
               jobName: '$jobName',
               grossPay: '$grossPay',
               netPay: '$netPay',

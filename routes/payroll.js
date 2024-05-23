@@ -1781,53 +1781,7 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
   }
 });
 
-// router.get('/grouped-payrolls', async (req, res) => {
-//   try {
-//     const payrolls = await Payroll.aggregate([
-//       {
-//         $group: {
-//           _id: {
-//             year: { $year: '$payDate' },
-//             month: { $month: '$payDate' },
-//             payType: '$payType'
-//           },
-//           payrolls: {
-//             $push: {
-//               _id: '$_id', // Include _id in the grouped data
-//               payeeName: '$payeeName',
-//               grossPay: '$grossPay',
-//               netPay: '$netPay',
-//               payType: '$payType',
-//               status: '$status',
-//               company: '$company',
-//               jobName: '$jobName',
-//               location: '$location',
-//               bankAccount: '$bankAccount',
-//               payDate: '$payDate',
-//               remarks: '$remarks',
-//               salaryAdvance: '$salaryAdvance',
-//               deductions: '$deductions',
-//               daysAbsent: '$daysAbsent',
-//               daysWorked: '$daysWorked',
-//               totalWorkDaysInMonth: '$totalWorkDaysInMonth'
-//             }
-//           }
-//         }
-//       },
-//       {
-//         $sort: {
-//           '_id.year': 1,
-//           '_id.month': 1
-//         }
-//       }
-//     ]);
-//     console.log(JSON.stringify(payrolls), 'grouped payrolls');
-//     res.status(200).json(payrolls);
-//   } catch (error) {
-//     res.status(500).json({ message: 'Error fetching payrolls', error });
-//   }
-// });
-// Fetch payroll data for a specific year
+
 router.get('/grouped-payrolls/:year', checkAuth, async (req, res) => {
   const { role } = req.userData;
 
@@ -1878,11 +1832,20 @@ router.get('/grouped-payrolls/:year', checkAuth, async (req, res) => {
         }
       },
       {
+        $lookup: {
+          from: "sites",
+          localField: "site",
+          foreignField: "_id",
+          as: "site",
+        },
+      },
+      {
         $unwind: {
           path: '$payeeDetails',
           preserveNullAndEmptyArrays: true
         }
       },
+      
       {
         $addFields: {
           payeeName: {
@@ -1922,7 +1885,7 @@ router.get('/grouped-payrolls/:year', checkAuth, async (req, res) => {
               location: '$location',
               bankAccount: '$bankAccount',
               createdAt: '$createdAt',
-              
+              payType: '$payType',
               salaryAdvance: '$salaryAdvance',
               deductions: '$deductions',
               daysAbsent: '$daysAbsent',

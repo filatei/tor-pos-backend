@@ -1476,7 +1476,7 @@ async function processRow(row, userId, rowNumber, sheetName) {
     let totalWorkDaysInMonth = 0;
 
     let grossPay = baseSalary;
-    if (sheetName.toUpperCase() === 'ATT') {
+    if (sheetName.toUpperCase() === 'REGULAR') {
       daysAbsent = parseNumber(row["DAYS ABS"]);
       daysWorked = parseNumber(row["DAYS WORKED"]);
       totalWorkDaysInMonth = daysAbsent + daysWorked;

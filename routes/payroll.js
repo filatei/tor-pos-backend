@@ -201,6 +201,7 @@ router.post("", checkAuth, async (req, res, next) => {
       );
       payObj.totalWorkDaysInMonth = totalDays;
       payObj.deductions += (payObj.daysAbsent / totalDays) * payObj.baseSalary;
+
     }
 
     if (payObj.bagsBagged && payObj.payType === "MONTH-END") {
@@ -220,7 +221,8 @@ router.post("", checkAuth, async (req, res, next) => {
     }
 
     if (payObj.baseSalary) {
-      payObj.grossPay += +payObj.baseSalary;
+      payObj.grossPay = +payObj.baseSalary;
+      console.log("baseSalary", payObj.baseSalary, 'grossPay: ', payObj.grossPay);
     }
 
     payObj.netPay =
@@ -943,7 +945,7 @@ router.put('/update', checkAuth, async (req, res) => {
     if (role !== "ADMIN") {
       return res.status(500).json({ message: "Only Admin Allowed to Update" });
     }
-    
+
     const payroll = req.body;
     const updatedPayroll = await Payroll.findByIdAndUpdate(payroll._id, payroll, { new: true });
     res.status(200).json(updatedPayroll);
@@ -952,7 +954,7 @@ router.put('/update', checkAuth, async (req, res) => {
   }
 });
 
-router.put('/update-status', checkAuth,  async (req, res) => {
+router.put('/update-status', checkAuth, async (req, res) => {
   try {
     const { role } = req.userData;
     if (role !== "ADMIN") {
@@ -1469,7 +1471,7 @@ async function processRow(row, userId, rowNumber, sheetName) {
     const baseSalary = parseNumber(row["BASE SALARY"]);
     const payeeTax = parseNumber(row["PAYEE TAX"]);
     const salaryAdvance = parseNumber(row["SALARY ADV"]);
-    const deductions = parseNumber(row["DEDUCTION"]) + payeeTax + salaryAdvance;
+    let deductions = parseNumber(row["DEDUCTION"]) + payeeTax + salaryAdvance;
 
     let daysAbsent = 0;
     let daysWorked = 0;
@@ -1482,9 +1484,10 @@ async function processRow(row, userId, rowNumber, sheetName) {
       totalWorkDaysInMonth = daysAbsent + daysWorked;
 
       if (totalWorkDaysInMonth > 0) {
-        grossPay = baseSalary - (daysAbsent / totalWorkDaysInMonth) * baseSalary;
+        deductions += (daysAbsent / totalWorkDaysInMonth) * baseSalary;
       }
     }
+
     const netPay = grossPay - deductions;
 
     const bankAccount = row["BANK ACCOUNT"]?.trim() || row["ACCOUNT NUMBER"]?.trim();

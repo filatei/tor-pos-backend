@@ -54,142 +54,117 @@ var upload = multer({
 });
 
 const checkAuth = require("../middleware/check-auth");
-const Accesslog = require("../models/accesslog");
+let isDataUploaded = false; // In-memory flag
 
-function logIncident(email, description) {
-  const logObj = new Accesslog({ email: email, description: description });
-  logObj
-    .save(logObj)
-    .then((result) => {
-      console.log("access incident logged for user", result);
-    })
-    .catch((err) => {
-      console.log("access logging error for user ", err);
-    });
-}
+// Function to upload JSON data to MongoDB
+const uploadBanksData = async () => {
+  if (isDataUploaded) return;
 
-router.post("", checkAuth, upload.single("image"), async (req, res, next) => {
-  let myPath = "";
-  let url = "";
-  let prodObj = req.body;
-  const role = req.userData.role;
-  const alloweds = ['ADMIN', 'MANAGER', 'GENERAL MANAGER', 'SNR ACCOUNTANT'];
-  if ( !alloweds.includes(role) ) {
-    return res.status(500).json({
-      message: "Creating a bank failed! " + error,
-    });
+  const filePath = path.join(__dirname, '../banks.json');
+  const processedFilePath = path.join(__dirname, '../banks.processed.json');
+
+  if (!fs.existsSync(filePath)) {
+    console.log('No new banks data to upload.');
+    return;
   }
-  
-  prodObj.price = parseFloat(prodObj.price);
-  prodObj.taxRate = parseFloat(prodObj.taxRate) || 0;
-  
-
-  if (req.file) {
-    if (hostname.includes("torama")) {
-      url = "https://fido-api.torama.ng";
-    } else {
-      url = req.protocol + "://" + req.get("host");
-    }
-    
-    myPath = url + "/" + req.file.path.split('/var/www/')[1];
-    prodObj.icon = myPath;
-    console.log(myPath, 'myPath')
-  }
-
-  prodObj.creator = await User.findOne({userId:req.userData.userId})._id;
-
-  const bank = new Bank(prodObj);
-  
-  bank
-    .save()
-    .then((result) => {
-      res.status(201).json({
-        message: "Bank added successfully",
-        bank: { ...result, id: result._id },
-      });
-    })
-    .catch((error) => {
-      res.status(500).json({
-        message: "Creating a bank failed! " + error,
-      });
-    });
-});
-
-router.put("/:id", checkAuth, upload.single("image"), (req, res, next) => {
 
   try {
-    let myPath = "";
-  let url = "";
-  let prodObj = req.body;
-  console.log(prodObj)
-  const price = req.body.price;
-  const taxRate = req.body.taxRate;
-  const description = req.body.description;
-  const name = req.body.name;
-  const group = req.body.group;
-  const category = req.body.category;
-  // const updatedAt = req.body.updatedAt;
-  const updater = req.userData.userId;
-  const id = req.params.id;
-  prodObj._id = req.params.id;
-  prodObj.updater = req.userData.userId;
-  const bank = new Bank(prodObj);
-  if (req.file ) {
-    if (hostname.includes("torama")) {
-      url = "https://fido-api.torama.ng";
-    } else {
-      url = req.protocol + "://" + req.get("host");
+    console.log(filePath, 'filePath');
+    const data = fs.readFileSync(filePath, 'utf8');
+    const banks = JSON.parse(data);
+    const bankEntries = Object.entries(banks).map(([name, code]) => ({ name, code }));
+
+    const banksUploaded = await Bank.insertMany(bankEntries, { ordered: false });
+    console.log('Banks data uploaded successfully');
+
+    // Rename the file to indicate it has been processed
+    // fs.renameSync(filePath, processedFilePath);
+    isDataUploaded = true; // Set flag to true after upload
+    return banksUploaded;
+  } catch (error) {
+    console.error('Error uploading banks:', error);
+  }
+};
+
+// Endpoint to trigger upload on first access
+router.get('/init-upload', async (req, res) => {
+  console.log('Checking initialization');
+  try {
+    let banks = await Bank.find().limit(5)
+
+    if (banks.length) {
+      console.log('Data already initialized');
+      return res.status(200).send('Data already initialized');
     }
 
-    myPath = url + "/" + req.file.path.split('/var/www/')[1];
-    bank.icon = myPath;
-    console.log(bank, 'bank1')
-    Bank.updateOne({ _id: req.params.id }, bank)
-      .then((result) => {
-        if (result.n > 0) {
-          res.status(200).json({ message: "Update successful!" });
-        } else {
-          res.status(401).json({ message: "Not authorized!" });
-        }
-      })
-      .catch((error) => {
-        res.status(500).json({
-          message: "Couldn't udpate bank! " + error,
-        });
-      });
-  } else {
-    console.log(bank, 'bank2')
-    Bank.updateOne(
-      { _id: req.params.id },
-      bank
-    )
-      .then((result) => {
-        if (result.n > 0) {
-          res.status(200).json({ message: "Update successful!" });
-        } else {
-          res.status(401).json({ message: "Not authorized!" });
-        }
-      })
-      .catch((error) => {
-        res.status(500).json({
-          message: "Couldn't update bank! " + error,
-        });
-      });
+    await uploadBanksData();
+    banks = await Bank.find()
+    res.status(200).send({ message: 'Initialization Done', banks: banks });
+
+  } catch (error) {
+    console.error('Error initializing upload:', error);
   }
+
+});
+
+
+
+router.post('/add-bank', checkAuth, async (req, res) => {
+  const alloweds = ['ADMIN', "GENERAL MANAGER"]
+
+  if (!alloweds.includes(req.userData.role)) {
+    return res.status(500).json({
+      message: "not allowed! " + error,
+    });
   }
-  catch(err) {
-    console.log(err)
+  const { name, code } = req.body;
+
+  if (!name || !code) {
+    return res.status(400).send('Name and code are required');
   }
-  
+
+  try {
+    const newBank = new Bank({ name, code });
+    await newBank.save();
+    res.status(201).send('Bank added successfully');
+  } catch (error) {
+    console.error('Error adding bank:', error);
+    res.status(500).send('Error adding bank');
+  }
+});
+
+router.put('/update-bank/:name', async (req, res) => {
+  const alloweds = ['ADMIN', "GENERAL MANAGER", 'SNR ACCOUNTANT', 'ACCOUNTANT']
+
+  if (!alloweds.includes(req.userData.role)) {
+    return res.status(500).json({
+      message: "not allowed! " + error,
+    });
+  }
+  const { name } = req.params;
+  const { code } = req.body;
+
+  if (!code) {
+    return res.status(400).send('Code is required');
+  }
+
+  try {
+    const updatedBank = await Bank.findOneAndUpdate({ name }, { code }, { new: true, upsert: true });
+    res.status(200).send(`Bank ${name} updated successfully`);
+  } catch (error) {
+    console.error('Error updating bank:', error);
+    res.status(500).send('Error updating bank');
+  }
 });
 
 
 router.delete("/:id", checkAuth, (req, res, next) => {
-  const alloweds = process.env.DELALLOWEDS;
+  const alloweds = ['ADMIN']
 
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to delete ");
-    return res.status(500).json({ message: "Not allowed" });
+  if (!alloweds.includes(req.userData.role)) {
+    return res.status(500).json({
+      message: "Deleting a bank failed! " + error,
+    });
   }
 
   let filePath;
@@ -205,7 +180,6 @@ router.delete("/:id", checkAuth, (req, res, next) => {
         .status(401)
         .json({ message: "bank not found in db!" + err });
     });
-  console.log('params ', req.params)
   Bank.deleteOne({ _id: req.params.id })
     .then((result) => {
       if (result.n > 0) {
@@ -232,28 +206,16 @@ router.delete("/:id", checkAuth, (req, res, next) => {
     });
 });
 
-router.get("", (req, res, next) => {
-  const pageSize = +req.query.pagesize;
-  const currentPage = +req.query.page;
-  const bankQuery = Bank.find().populate("categoryId");
-  let fetchedBanks;
-  if (pageSize && currentPage) {
-    bankQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
+router.get('/banks', async (req, res) => {
+  try {
+    const banks = await Bank.find();
+    res.status(200).json(banks);
+  } catch (error) {
+    console.error('Error fetching banks:', error);
+    res.status(500).send('Error fetching banks');
   }
-  bankQuery
-    .then((documents) => {
-      // console.log(documents, 'banks')
-      res.status(200).json({
-        message: "Banks fetched successfully!",
-        banks: documents,
-      });
-    })
-    .catch((error) => {
-      res.status(500).json({
-        message: "Fetching banks failed! " + error,
-      });
-    });
 });
+
 
 router.get("/:id", (req, res, next) => {
   Bank.findById(req.params.id)

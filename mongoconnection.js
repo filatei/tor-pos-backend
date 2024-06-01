@@ -6,6 +6,8 @@ const EventEmitter = require('events');
 
 class MongoEmitter extends EventEmitter { }
 const mongoEmitter = new MongoEmitter();
+const sendErrorEmail = require('./emailService');
+
 
 // mongoose.set("useUnifiedTopology", true);
 // mongoose.set("useCreateIndex", true);
@@ -41,13 +43,25 @@ const options = {
 mongoose
     .connect(connectStr, options)
     .then(() => {
-        console.log("Connected to DB");
+        console.log(`Connected to DB: ${dbName}`);
         mongoEmitter.emit('mongoConnected', mongoose.connection);
 
     })
     .catch((err) => {
         console.log('Failed to connect to MongoDB', err);
+        sendErrorEmail(err);
     });
+
+mongoose.connection.on('error', err => {
+    console.error('MongoDB error:', err);
+    sendErrorEmail(err);
+});
+
+mongoose.connection.on('disconnected', () => {
+    console.error('MongoDB disconnected');
+    sendErrorEmail('MongoDB connection was disconnected');
+});
+
 
 
 

@@ -1395,7 +1395,9 @@ router.post(
       const skippedWorksheet = xlsx.utils.json_to_sheet(errorRows);
       xlsx.utils.book_append_sheet(skippedWorkbook, skippedWorksheet, 'Skipped Records');
       const skippedFilePath = path.join(UPLOAD_DIR, `skipped-records-${Date.now()}.xlsx`);
+
       xlsx.writeFile(skippedWorkbook, skippedFilePath);
+
 
       console.log(`Inserted records: ${insertedCount}`);
       console.log(`Skipped records: ${skippedCount}`);

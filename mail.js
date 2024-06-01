@@ -75,7 +75,7 @@ async function sendInventory(inventory) {
   let format1 = "DD-MM-YYYY hh:mm:ss";
   let date;
   date = moment(inventory.createdAt).format(format1);
-  
+
   let derived_total = 0;
   let fullDate = new Date().getFullYear();
 
@@ -181,7 +181,7 @@ async function sendExpense(expense, userId = null) {
   let date;
   date = moment(expense.createdAt).format(format1);
   let logo;
-  
+
   let products = expense.products;
   if (products[0]?.name.includes("Block")) {
     logo = "https://fido-api.torama.ng/uploads/productimages/producer.png";
@@ -207,11 +207,10 @@ async function sendExpense(expense, userId = null) {
       if (ph.payer.includes("Akpodigha")) {
         payer = "MD";
       }
-      payHist += `<tr style="text-align:left;"><td>${i + 1}.</td>  <td>${
-        ph.bankAcct
-      }  </td> <td>${ph?.paidAmount?.toLocaleString()}</td><td>${payer}</td><td>${moment(
-        new Date(ph?.paymentDate)
-      ).format("DD-MM-YYYY HH:mm:ss")}</td> </tr>`;
+      payHist += `<tr style="text-align:left;"><td>${i + 1}.</td>  <td>${ph.bankAcct
+        }  </td> <td>${ph?.paidAmount?.toLocaleString()}</td><td>${payer}</td><td>${moment(
+          new Date(ph?.paymentDate)
+        ).format("DD-MM-YYYY HH:mm:ss")}</td> </tr>`;
     }
   });
 
@@ -263,6 +262,7 @@ async function sendExpense(expense, userId = null) {
     console.log(err);
   }
 }
+
 function titleCase(str) {
   if (!str) return ""
   if (str == "Akpodigha Filatei") return "MD";
@@ -373,11 +373,10 @@ async function sendProduceexpense(expense, userId = null) {
       if (ph.payer.includes("Akpodigha")) {
         payer = "MD";
       }
-      payHist += `<tr style="text-align:left;"><td>${i + 1}.</td>  <td>${
-        ph.bankAcct
-      }  </td> <td>${ph.paidAmount.toLocaleString()}</td><td>${payer}</td><td>${moment(
-        new Date(ph.paymentDate)
-      ).format("DD-MM-YYYY HH:mm:ss")}</td> </tr>`;
+      payHist += `<tr style="text-align:left;"><td>${i + 1}.</td>  <td>${ph.bankAcct
+        }  </td> <td>${ph.paidAmount.toLocaleString()}</td><td>${payer}</td><td>${moment(
+          new Date(ph.paymentDate)
+        ).format("DD-MM-YYYY HH:mm:ss")}</td> </tr>`;
     }
   });
 
@@ -722,9 +721,8 @@ async function sendImprest(item, user) {
     item.forEach((exp) => {
       if (exp) {
         imprest += `<tr> <td>${exp.site}</td>
-          <td>${exp.txn_amount.toLocaleString()}</td><td>${
-          exp.status
-        }</td><td>${exp.createdAt}</td> </tr>`;
+          <td>${exp.txn_amount.toLocaleString()}</td><td>${exp.status
+          }</td><td>${exp.createdAt}</td> </tr>`;
         if (exp.status === "APPROVED") amountApproved += +exp.txn_amount;
         if (exp.status !== "APPROVED") amountUnApproved += +exp.txn_amount;
       }
@@ -802,7 +800,7 @@ async function sendCashdeposit(item, user) {
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${fullDate}</p> </body></html>`;
 
-    
+
     if (hostname.includes("torama")) {
       toEmail = "expenses@torama.ng";
 
@@ -877,7 +875,7 @@ const recUpdateAlert = async (user, rec_id) => {
   }
 };
 
-async function verifyAuth(userId, verify,otp) {
+async function verifyAuth(userId, verify, otp) {
   try {
     const user = await User.findById(userId);
     console.log(user, "in mailer");
@@ -970,9 +968,8 @@ async function sendDailyReport(report, user) {
                 <p> Incidents <p><hr> <p>${report?.incidents}</p>
                 <p>People Issues</p><hr><p> ${report?.people}</p>
 
-                <p>  <a href="${
-                  report?.image
-                }" target="_blank">Attachment </a></p>
+                <p>  <a href="${report?.image
+      }" target="_blank">Attachment </a></p>
                 `;
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${fullDate}</p> </body></html>`;
@@ -1002,7 +999,7 @@ async function sendGenActivity(report, user) {
   try {
     let format1 = "DD-MM-YYYY hh:mm:ss";
     let date;
-    const genName = report.name ||"no name";
+    const genName = report.name || "no name";
     date = moment(new Date()).format(format1);
     const fromText = `${report?.name} Activity from ${report.site?.name}`;
     let toEmail, body;
@@ -1019,10 +1016,10 @@ async function sendGenActivity(report, user) {
 
     if (report.current_maintenance && report.current_maintenance.maintenance_hour) {
       body = `<div>Hour: ${report.current_maintenance.maintenance_hour} </div>
-      <div>OIL: ${report.current_maintenance.oil?'Changed':'Not Changed' }</div>
-      <div>Oil Filter Changed?: ${report.current_maintenance.oilfilters? 'Changed': 'Not Changed'}</div>
-      <div>Fuel Filter Changed?: ${report.current_maintenance.fuelfilters? 'Changed': 'Not Changed'}</div>
-      <div>Radiator Cleaned?: ${report.current_maintenance.radiator? 'Cleaned': 'Not Cleaned' }</div> <hr>
+      <div>OIL: ${report.current_maintenance.oil ? 'Changed' : 'Not Changed'}</div>
+      <div>Oil Filter Changed?: ${report.current_maintenance.oilfilters ? 'Changed' : 'Not Changed'}</div>
+      <div>Fuel Filter Changed?: ${report.current_maintenance.fuelfilters ? 'Changed' : 'Not Changed'}</div>
+      <div>Radiator Cleaned?: ${report.current_maintenance.radiator ? 'Cleaned' : 'Not Cleaned'}</div> <hr>
       <div> <p> Remarks: ${report.current_maintenance.remarks} </p></div>
       `;
       image = report.current_maintenance?.image || 'None'
@@ -1055,11 +1052,11 @@ async function sendGenActivity(report, user) {
                 <p> Site</p> <p>${report?.site?.name}</p><hr>
                 <p> Report</p> <p>${body}</p>`;
 
-                if (image !== 'None') {
-                  html += `<p>  <a href="${image}" target="_blank">Attachment </a></p>`;
-                } else {
-                  html += `<p>   No Attachment </p>`;
-                }
+    if (image !== 'None') {
+      html += `<p>  <a href="${image}" target="_blank">Attachment </a></p>`;
+    } else {
+      html += `<p>   No Attachment </p>`;
+    }
 
     html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama &#174; - All rights reserved.&#169; ${fullDate}</p> </body></html>`;
 
@@ -1087,15 +1084,15 @@ async function sendCallActivity(report, user) {
   try {
     let format1 = "DD-MM-YYYY hh:mm:ss";
     let date;
-    const caller = report.name ;
-    const callerPhone = report.phone ;
-    const receiverPhone = report.calledPhone ;
-    const receiverName = report.responder ;
-    const response = report.response ;
-    const message = report.message ;
-    const site = report.site ;
+    const caller = report.name;
+    const callerPhone = report.phone;
+    const receiverPhone = report.calledPhone;
+    const receiverName = report.responder;
+    const response = report.response;
+    const message = report.message;
+    const site = report.site;
     const fullDate = new Date().getFullYear()
-    
+
     date = moment(new Date()).format(format1);
     const fromText = `Call-Manager ${caller} - ${callerPhone}`;
     let toEmail;
@@ -1106,7 +1103,7 @@ async function sendCallActivity(report, user) {
     if (hostname.includes("torama")) {
       toEmail = user.email;
       subject;
-       bcc = "odia.gabriel@gtsng.com";
+      bcc = "odia.gabriel@gtsng.com";
     } else {
       toEmail = "calls@torama.ng";
       subject = "Just a test Call  ";
@@ -1129,7 +1126,7 @@ async function sendCallActivity(report, user) {
     // save in Message schema
     const to = user.email;
     const sender = process.env.tormail;
-    
+
 
     model = {
       fromText: fromText,
@@ -1150,69 +1147,69 @@ async function sendPeopleMail(record) {
   try {
     let creatorId;
     const table = createMailRecordTable(record)
-    if (record ) {
-      
-        creatorId = record?.creator || record.updater;
-        const creator = await User.findById(creatorId);
-        const userEmail = creator?.email
-        const creatorName = creator.name==='Akpodigha Filatei'?'MD':creator.name;
-        const personId = record.people_id;
-        const name =  `<p>Name: ${record?.name}</p> `;
-        const fname = record?.fname;
-        const lname = record?.lname;
-        const phone = record?.phone;
-        let mname = '';
-        if (record.mname) {
-          mname =  `<p>Middle Name: ${record.mname}</p> `
-        } 
-        const siteObj = await Site.findById(record.site);
-        const site = siteObj?.name;
-        const job = record?.jobName;
-        let subject = `New Staff Added (# ${personId})`;
+    if (record) {
 
-        let format1 = "DD-MM-YYYY hh:mm:ss";
-        let date;
-        date = moment(record.createdAt).format(format1);
-        const fullDate = new Date().getFullYear();
-        // const oldStuff = `<p>Phone: ${phone}</p> <p>Site: ${site}</p> <p>Job: ${job}</p> <p>Department: ${record.department}</p> 
-        //             <p>Bank Account: ${record.bankAccount}</p> <p>hireDate: ${record.hireDate}</p>  <p>Exit Date: ${record.exitDate}</p>  <p>Status: ${record.status}</p> `;
-        const oldStuff =``
-        let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
+      creatorId = record?.creator || record.updater;
+      const creator = await User.findById(creatorId);
+      const userEmail = creator?.email
+      const creatorName = creator.name === 'Akpodigha Filatei' ? 'MD' : creator.name;
+      const personId = record.people_id;
+      const name = `<p>Name: ${record?.name}</p> `;
+      const fname = record?.fname;
+      const lname = record?.lname;
+      const phone = record?.phone;
+      let mname = '';
+      if (record.mname) {
+        mname = `<p>Middle Name: ${record.mname}</p> `
+      }
+      const siteObj = await Site.findById(record.site);
+      const site = siteObj?.name;
+      const job = record?.jobName;
+      let subject = `New Staff Added (# ${personId})`;
+
+      let format1 = "DD-MM-YYYY hh:mm:ss";
+      let date;
+      date = moment(record.createdAt).format(format1);
+      const fullDate = new Date().getFullYear();
+      // const oldStuff = `<p>Phone: ${phone}</p> <p>Site: ${site}</p> <p>Job: ${job}</p> <p>Department: ${record.department}</p> 
+      //             <p>Bank Account: ${record.bankAccount}</p> <p>hireDate: ${record.hireDate}</p>  <p>Exit Date: ${record.exitDate}</p>  <p>Status: ${record.status}</p> `;
+      const oldStuff = ``
+      let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
                   ${date}</p><h2>New Staff  ID: ${personId}</h2><p> Hi ${creatorName}, A new staff created as follows:</p>${table}`;
-        html += `<p>Creator: ${creatorName}</p> <p>New Staff  ID: ${personId}</p>
+      html += `<p>Creator: ${creatorName}</p> <p>New Staff  ID: ${personId}</p>
             ${name} <p>First Name: ${fname}</p> ${mname} <p>Last Name: ${lname}</p> ${oldStuff}  `;
-        html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
+      html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
 
-        console.log(html)
-        if (hostname.includes("torama")) {
-          toEmail = "people@gtsng.com";
-          creatorEmail = userEmail;
-          bccMail = null
-        } else {
-          toEmail = null;
-          toEmail = "people@torama.ng";
+      console.log(html)
+      if (hostname.includes("torama")) {
+        toEmail = "people@gtsng.com";
+        creatorEmail = userEmail;
+        bccMail = null
+      } else {
+        toEmail = null;
+        toEmail = "people@torama.ng";
 
-          creatorEmail = null;
-          bccMail = null;
-          // return;
-        }
+        creatorEmail = null;
+        bccMail = null;
+        // return;
+      }
 
-        const to = creatorEmail;
-        const sender = process.env.tormail;
-        const cc = toEmail;
-        const bcc = bccMail;
-        const body = html;
-        let model;
+      const to = creatorEmail;
+      const sender = process.env.tormail;
+      const cc = toEmail;
+      const bcc = bccMail;
+      const body = html;
+      let model;
 
-        model = {
-          fromText: "Human Manager",
-          subject,
-          to: creatorEmail,
-          cc: toEmail,
-          bcc: bcc,
-          html,
-        };
-        mailer(model);
+      model = {
+        fromText: "Human Manager",
+        subject,
+        to: creatorEmail,
+        cc: toEmail,
+        bcc: bcc,
+        html,
+      };
+      mailer(model);
     }
   } catch (error) {
     throw error;
@@ -1221,55 +1218,55 @@ async function sendPeopleMail(record) {
 }
 
 function createMailRecordTable(record) {
-  let table ='<table>'
-    Object.entries(record).forEach( async ([key, value]) => {
-      if (
-        !value ||
-        value === undefined ||
-        value === null ||
-        value === "null" ||
-        value === "undefined"
-      ) {
-        delete record[key];
-      } else {
-        if (key == 'site') {
-          // const site = await Site.findById(value);
-          table += `<tr><td>${key}</td><td>${value.name}</td></tr>`
-        } else if (key ==='_id'){
+  let table = '<table>'
+  Object.entries(record).forEach(async ([key, value]) => {
+    if (
+      !value ||
+      value === undefined ||
+      value === null ||
+      value === "null" ||
+      value === "undefined"
+    ) {
+      delete record[key];
+    } else {
+      if (key == 'site') {
+        // const site = await Site.findById(value);
+        table += `<tr><td>${key}</td><td>${value.name}</td></tr>`
+      } else if (key === '_id') {
 
-        } else if (key === 'creator') {
+      } else if (key === 'creator') {
 
-        } else if (key === 'updater') {
+      } else if (key === 'updater') {
 
-        }
-        else if (key === 'payrolls') {
+      }
+      else if (key === 'payrolls') {
 
-        }
-        else if (key === 'email') {
+      }
+      else if (key === 'email') {
 
-        }
-        else if (key === 'createdAt') {
-          table += `<tr><td>${key}</td><td>${value.toLocaleString()}</td></tr>`
-        }
-        else if (key === 'updatedAt') {
-          table += `<tr><td>${key}</td><td>${value.toLocaleString()}</td></tr>`
-        }
-        else if (key === 'hireDate') {
-          table += `<tr><td>${key}</td><td>${value.toLocaleString()}</td></tr>`
-        }
-        else if (key === 'exitDate') {
-          table += `<tr><td>${key}</td><td>${value.toLocaleString()}</td></tr>`
-        }
-        
-        else {
-          table += `<tr><td>${key}</td><td>${value}</td></tr>`
-        }
-       
+      }
+      else if (key === 'createdAt') {
+        table += `<tr><td>${key}</td><td>${value.toLocaleString()}</td></tr>`
+      }
+      else if (key === 'updatedAt') {
+        table += `<tr><td>${key}</td><td>${value.toLocaleString()}</td></tr>`
+      }
+      else if (key === 'hireDate') {
+        table += `<tr><td>${key}</td><td>${value.toLocaleString()}</td></tr>`
+      }
+      else if (key === 'exitDate') {
+        table += `<tr><td>${key}</td><td>${value.toLocaleString()}</td></tr>`
       }
 
-    });
-    table +='</table>';
-    return table;
+      else {
+        table += `<tr><td>${key}</td><td>${value}</td></tr>`
+      }
+
+    }
+
+  });
+  table += '</table>';
+  return table;
 }
 
 async function sendPeopleMailUpdated(record) {
@@ -1278,74 +1275,74 @@ async function sendPeopleMailUpdated(record) {
     let updaterId;
     const table = createMailRecordTable(record)
 
-    if (record ) {
-      
-        updaterId =  record.updater;
-        const updater = await User.findById(updaterId);
-        const userEmail = updater?.email
-        const updaterName = updater.name==='Akpodigha Filatei'?'MD':updater.name;
-        const personId = record.people_id;
-        const name =  `<p>Name: ${record?.name}</p> `;
-        const fname = record?.fname;
-        const lname = record?.lname;
-        const phone = record?.phone;
-        let mname = '';
-        if (record.mname) {
-          mname =  `<p>Middle Name: ${record.mname}</p> `
-        } 
-        const siteObj = await Site.findById(record.site);
-        const site = siteObj?.name;
-        console.log('siteobj', siteObj, 'site', site, 'recordsite', record.site, )
-        const job = record?.jobName;
-        let subject = ` Staff Updated (# ${personId})`;
-        let notes = '';
-        let  notesLength = record?.notes.length
-        if (notesLength) {
-          notes = `<p>Latest Note: ${record?.notes[notesLength-1].text} by: ${record?.notes[notesLength-1].author}</p>`
-        }
-        
-        let format1 = "DD-MM-YYYY hh:mm:ss";
-        let date;
-        date = moment(record.createdAt).format(format1);
-        const fullDate = new Date().getFullYear();
-        // const oldStuff=`<p>First Name: ${fname}</p> ${mname} <p>Last Name: ${lname}</p><p>Phone: ${phone}</p><p>Bank Account: ${record.bankAccount}</p><p>Status: ${record.status}</p><p>Exit Date: ${record.exitDate}</p><p>Hire Date: ${record.hireDate}</p>`;
-        const oldStuff=``;
-        let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
+    if (record) {
+
+      updaterId = record.updater;
+      const updater = await User.findById(updaterId);
+      const userEmail = updater?.email
+      const updaterName = updater.name === 'Akpodigha Filatei' ? 'MD' : updater.name;
+      const personId = record.people_id;
+      const name = `<p>Name: ${record?.name}</p> `;
+      const fname = record?.fname;
+      const lname = record?.lname;
+      const phone = record?.phone;
+      let mname = '';
+      if (record.mname) {
+        mname = `<p>Middle Name: ${record.mname}</p> `
+      }
+      const siteObj = await Site.findById(record.site);
+      const site = siteObj?.name;
+      console.log('siteobj', siteObj, 'site', site, 'recordsite', record.site,)
+      const job = record?.jobName;
+      let subject = ` Staff Updated (# ${personId})`;
+      let notes = '';
+      let notesLength = record?.notes.length
+      if (notesLength) {
+        notes = `<p>Latest Note: ${record?.notes[notesLength - 1].text} by: ${record?.notes[notesLength - 1].author}</p>`
+      }
+
+      let format1 = "DD-MM-YYYY hh:mm:ss";
+      let date;
+      date = moment(record.createdAt).format(format1);
+      const fullDate = new Date().getFullYear();
+      // const oldStuff=`<p>First Name: ${fname}</p> ${mname} <p>Last Name: ${lname}</p><p>Phone: ${phone}</p><p>Bank Account: ${record.bankAccount}</p><p>Status: ${record.status}</p><p>Exit Date: ${record.exitDate}</p><p>Hire Date: ${record.hireDate}</p>`;
+      const oldStuff = ``;
+      let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
                   ${date}</p><h2> Staff  ID: ${personId}</h2><p> Hi ${updaterName}, A Staff Updated as follows:</p>  ${table}`;
-        html += `<p style="text-decoration:underline;">SUMMARY</p><p>Updater: ${updaterName}</p> <p> Staff  ID: ${personId}</p>
+      html += `<p style="text-decoration:underline;">SUMMARY</p><p>Updater: ${updaterName}</p> <p> Staff  ID: ${personId}</p>
             ${name} ${oldStuff}
              <p>Site: ${site}</p> <p>Job: ${job}</p> ${notes} `;
-        html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
+      html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
 
-        console.log(html, 'html')
-        if (hostname.includes("torama")) {
-          toEmail = "people@gtsng.com";
-          creatorEmail = userEmail;
-          bccMail = null
-        } else {
-          toEmail = null;
-          toEmail = "people@torama.ng";
+      console.log(html, 'html')
+      if (hostname.includes("torama")) {
+        toEmail = "people@gtsng.com";
+        creatorEmail = userEmail;
+        bccMail = null
+      } else {
+        toEmail = null;
+        toEmail = "people@torama.ng";
 
-          creatorEmail = null;
-          bccMail = null;
-        }
+        creatorEmail = null;
+        bccMail = null;
+      }
 
-        const to = creatorEmail;
-        const sender = process.env.tormail;
-        const cc = toEmail;
-        const bcc = bccMail;
-        const body = html;
-        let model;
+      const to = creatorEmail;
+      const sender = process.env.tormail;
+      const cc = toEmail;
+      const bcc = bccMail;
+      const body = html;
+      let model;
 
-        model = {
-          fromText: "Human Manager",
-          subject,
-          to: creatorEmail,
-          cc: toEmail,
-          bcc: bcc,
-          html,
-        };
-        mailer(model);
+      model = {
+        fromText: "Human Manager",
+        subject,
+        to: creatorEmail,
+        cc: toEmail,
+        bcc: bcc,
+        html,
+      };
+      mailer(model);
     }
   } catch (error) {
     throw error;
@@ -1357,68 +1354,68 @@ async function deletePeopleMail(record, deleterId) {
 
   try {
     let creatorId;
-    if (record ) {
-      
-        creatorId = record?.creator;
-        const creator = await User.findById(creatorId);
-        const deleter = await User.findById(deleterId);
-        const userEmail = creator.email
-        const creatorName = creator.name==='Akpodigha Filatei'?'MD':creator.name;
-        const deleterName = creator.name==='Akpodigha Filatei'?'MD':deleter.name;
-        const personId = record.people_id;
-        const name =  `<p>Name: ${record.name}</p> `;
-        const fname = record.fname;
-        const lname = record.lname;
-        let mname = '';
-        if (record.mname) {
-          mname =  `<p>Middle Name: ${record.mname}</p> `
-        } 
-        const siteObj = await Site.findById(record.site);
-        const site = siteObj.name;
-        console.log('siteobj', siteObj, 'site', site, 'recordsite', record.site, )
-        const job = record.jobName;
-        let subject = `Staff Deleted(# ${personId})`;
+    if (record) {
 
-        let format1 = "DD-MM-YYYY hh:mm:ss";
-        let date;
-        date = moment(record.createdAt).format(format1);
-        const fullDate = new Date().getFullYear();
-        let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
+      creatorId = record?.creator;
+      const creator = await User.findById(creatorId);
+      const deleter = await User.findById(deleterId);
+      const userEmail = creator.email
+      const creatorName = creator.name === 'Akpodigha Filatei' ? 'MD' : creator.name;
+      const deleterName = creator.name === 'Akpodigha Filatei' ? 'MD' : deleter.name;
+      const personId = record.people_id;
+      const name = `<p>Name: ${record.name}</p> `;
+      const fname = record.fname;
+      const lname = record.lname;
+      let mname = '';
+      if (record.mname) {
+        mname = `<p>Middle Name: ${record.mname}</p> `
+      }
+      const siteObj = await Site.findById(record.site);
+      const site = siteObj.name;
+      console.log('siteobj', siteObj, 'site', site, 'recordsite', record.site,)
+      const job = record.jobName;
+      let subject = `Staff Deleted(# ${personId})`;
+
+      let format1 = "DD-MM-YYYY hh:mm:ss";
+      let date;
+      date = moment(record.createdAt).format(format1);
+      const fullDate = new Date().getFullYear();
+      let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
                   ${date}</p><h2>DELETED Staff  ID: ${personId}</h2><p> Hi ${deleterName}, A staff deleted as follows:</p>`;
-        html += `<p>Creator: ${creatorName}</p> <p>Deleter: ${deleterName}</p>
+      html += `<p>Creator: ${creatorName}</p> <p>Deleter: ${deleterName}</p>
             ${name} <p>First Name: ${fname}</p> ${mname} <p>Last Name: ${lname}</p> <p>Site: ${site}</p> <p>Job: ${job}</p> <p>Department: ${record.department}</p> `;
-        html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
+      html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
 
-        console.log(hostname, 'hostname')
-        if (hostname.includes("torama")) {
-          toEmail = "people@gtsng.com";
-          creatorEmail = userEmail;
-          bccMail = null
-        } else {
-          toEmail = null;
-          toEmail = "people@torama.ng";
+      console.log(hostname, 'hostname')
+      if (hostname.includes("torama")) {
+        toEmail = "people@gtsng.com";
+        creatorEmail = userEmail;
+        bccMail = null
+      } else {
+        toEmail = null;
+        toEmail = "people@torama.ng";
 
-          creatorEmail = null;
-          bccMail = null;
-          // return;
-        }
+        creatorEmail = null;
+        bccMail = null;
+        // return;
+      }
 
-        const to = creatorEmail;
-        const sender = process.env.tormail;
-        const cc = toEmail;
-        const bcc = bccMail;
-        const body = html;
-        let model;
+      const to = creatorEmail;
+      const sender = process.env.tormail;
+      const cc = toEmail;
+      const bcc = bccMail;
+      const body = html;
+      let model;
 
-        model = {
-          fromText: "Human Manager",
-          subject,
-          to: creatorEmail,
-          cc: toEmail,
-          bcc: bcc,
-          html,
-        };
-        mailer(model);
+      model = {
+        fromText: "Human Manager",
+        subject,
+        to: creatorEmail,
+        cc: toEmail,
+        bcc: bcc,
+        html,
+      };
+      mailer(model);
     }
   } catch (error) {
     throw error;
@@ -1429,67 +1426,67 @@ async function deletePeopleMail(record, deleterId) {
 async function sendPayrollMail(record) {
   try {
     let creatorId;
-    if (record ) {
-      
-        creatorId = record?.creator;
-        let deductions = `<p>Deductions: 0 </p>`;
-        if (record.deductions) {
-          deductions = `<p>Deductions: ${record.deductions} </p>`;
-        }
-        const creator = await User.findById(creatorId);
-        const userEmail = creator.email
-        const creatorName = creator.name==='Akpodigha Filatei'?'MD':creator.name;
-        const payId = record.payroll_id;
-        const payee = await People.findById(record.payee)
-        const name =  `<p>Name: ${payee.name}</p> `;
-        
-        const siteObj = await Site.findById(record.site);
-        const site = siteObj.name;
-        console.log('siteobj', siteObj, 'site', site, 'recordsite', record.site, )
-        const job = payee.jobName;
-        let subject = `New Payroll Added (# ${payId})`;
+    if (record) {
 
-        let format1 = "DD-MM-YYYY hh:mm:ss";
-        let date;
-        date = moment(record.createdAt).format(format1);
-        const fullDate = new Date().getFullYear();
-        let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
+      creatorId = record?.creator;
+      let deductions = `<p>Deductions: 0 </p>`;
+      if (record.deductions) {
+        deductions = `<p>Deductions: ${record.deductions} </p>`;
+      }
+      const creator = await User.findById(creatorId);
+      const userEmail = creator.email
+      const creatorName = creator.name === 'Akpodigha Filatei' ? 'MD' : creator.name;
+      const payId = record.payroll_id;
+      const payee = await People.findById(record.payee)
+      const name = `<p>Name: ${payee.name}</p> `;
+
+      const siteObj = await Site.findById(record.site);
+      const site = siteObj.name;
+      console.log('siteobj', siteObj, 'site', site, 'recordsite', record.site,)
+      const job = payee.jobName;
+      let subject = `New Payroll Added (# ${payId})`;
+
+      let format1 = "DD-MM-YYYY hh:mm:ss";
+      let date;
+      date = moment(record.createdAt).format(format1);
+      const fullDate = new Date().getFullYear();
+      let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
                   ${date}</p><h2>New Payroll  ID: ${record.payroll_id}</h2><p> Hi ${creatorName}, A new Payroll created as follows:</p>`;
-        html += `<p>Creator: ${creatorName}</p> <p>New Payroll  ID: ${record.payroll_id}</p>
+      html += `<p>Creator: ${creatorName}</p> <p>New Payroll  ID: ${record.payroll_id}</p>
             ${name}  <p>Site: ${site}</p> <p>Job: ${job}</p>  <p>Pay Type : ${record.payType}</p> 
             <p>Pay Month : ${record.month}</p>   <p>Pay Year : ${record.year}</p> 
             <p>Gross Pay: ${record.grossPay}</p> ${deductions}
               <p>Net Pay: ${record.netPay}</p>  `;
-        html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
+      html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
 
-        if (hostname.includes("torama")) {
-          toEmail = "people@torama.ng";
-          creatorEmail = userEmail;
-          bccMail = 'odia.gabriel@gtsng.com'
-        } else {
-          toEmail = null;
-          toEmail = "people@torama.ng";
+      if (hostname.includes("torama")) {
+        toEmail = "people@torama.ng";
+        creatorEmail = userEmail;
+        bccMail = 'odia.gabriel@gtsng.com'
+      } else {
+        toEmail = null;
+        toEmail = "people@torama.ng";
 
-          creatorEmail = null;
-          bccMail = null;
-        }
+        creatorEmail = null;
+        bccMail = null;
+      }
 
-        const to = creatorEmail;
-        const sender = process.env.tormail;
-        const cc = toEmail;
-        const bcc = bccMail;
-        const body = html;
-        let model;
+      const to = creatorEmail;
+      const sender = process.env.tormail;
+      const cc = toEmail;
+      const bcc = bccMail;
+      const body = html;
+      let model;
 
-        model = {
-          fromText: "Payroll ",
-          subject,
-          to: creatorEmail,
-          cc: toEmail,
-          bcc: bcc,
-          html,
-        };
-        mailer(model);
+      model = {
+        fromText: "Payroll ",
+        subject,
+        to: creatorEmail,
+        cc: toEmail,
+        bcc: bcc,
+        html,
+      };
+      mailer(model);
     }
   } catch (error) {
     throw error;
@@ -1499,40 +1496,40 @@ async function sendPayrollMail(record) {
 
 async function sendPayrollNotActive(payRoll, creatorId) {
   try {
-    if (payRoll ) {
-        const creator = await User.findById(creatorId);
-        const userEmail = creator.email
-        const creatorName = creator.name==='Akpodigha Filatei'?'MD':creator.name;
-        let creatorEmail;
-        let toEmail;
-        let subject = `Payroll Exception`;
+    if (payRoll) {
+      const creator = await User.findById(creatorId);
+      const userEmail = creator.email
+      const creatorName = creator.name === 'Akpodigha Filatei' ? 'MD' : creator.name;
+      let creatorEmail;
+      let toEmail;
+      let subject = `Payroll Exception`;
 
-        let format1 = "DD-MM-YYYY hh:mm:ss";
-        let date;
-        date = moment(new Date()).format(format1);
-        const fullDate = new Date().getFullYear();
-        let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
+      let format1 = "DD-MM-YYYY hh:mm:ss";
+      let date;
+      date = moment(new Date()).format(format1);
+      const fullDate = new Date().getFullYear();
+      let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
                   ${date}</p><h2>Bulk Payroll Exception</h2><p> Hi ${creatorName},  Payroll Exception cited  as follows:</p>`;
-        html += `<p>Creator: ${creatorName}</p> ${payRoll.name} is ${payRoll.status} `;
-        html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
+      html += `<p>Creator: ${creatorName}</p> ${payRoll.name} is ${payRoll.status} `;
+      html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
 
-        if (hostname.includes("torama")) {
-          toEmail = "filatei@gtsng.com";
-          creatorEmail = userEmail;
-        } else {
-          toEmail = "filatei@gtsng.com";
-          creatorEmail = null;
-        }
-        let model;
+      if (hostname.includes("torama")) {
+        toEmail = "filatei@gtsng.com";
+        creatorEmail = userEmail;
+      } else {
+        toEmail = "filatei@gtsng.com";
+        creatorEmail = null;
+      }
+      let model;
 
-        model = {
-          fromText: "Payroll ",
-          subject,
-          to: creatorEmail,
-          cc: toEmail,
-          html,
-        };
-        mailer(model);
+      model = {
+        fromText: "Payroll ",
+        subject,
+        to: creatorEmail,
+        cc: toEmail,
+        html,
+      };
+      mailer(model);
     }
   } catch (error) {
     throw error;
@@ -1540,58 +1537,58 @@ async function sendPayrollNotActive(payRoll, creatorId) {
 }
 
 
-async function sendPayrollCsvMail(payRolls,creatorId) {
+async function sendPayrollCsvMail(payRolls, creatorId) {
   try {
-    if (payRolls.length ) {
+    if (payRolls.length) {
       let sum = 0;
       let table = `<table><tr><th>SN</th><th>ID</th><th>Name</th><th>Type</th><th>Month</th><th>Year</th><th>Gross Pay</th><th>Deductions</th><th>NetPay</th></tr>`
-      payRolls.forEach((p,index,arr) => {
-        table += `<tr><td>${index+1}</td><td>${p.personId}</td><td>${p.name}</td><td>${p.payType}</td><td>${p.month}</td><td>${p.year}</td><td>${p.grossPay}</td><td>${p.deductions}</td><td>${p.netPay}</td</tr>`;
-        sum += parseInt(p.netPay) ;
+      payRolls.forEach((p, index, arr) => {
+        table += `<tr><td>${index + 1}</td><td>${p.personId}</td><td>${p.name}</td><td>${p.payType}</td><td>${p.month}</td><td>${p.year}</td><td>${p.grossPay}</td><td>${p.deductions}</td><td>${p.netPay}</td</tr>`;
+        sum += parseInt(p.netPay);
       })
       table += `<tr><td colspan="5">Total: ${sum}</td></tr></table>`
-        const creator = await User.findById(creatorId);
-        const userEmail = creator.email
-        const creatorName = creator.name==='Akpodigha Filatei'?'MD':creator.name;
-        let subject = `Bulk New Payroll Add from CSV`;
+      const creator = await User.findById(creatorId);
+      const userEmail = creator.email
+      const creatorName = creator.name === 'Akpodigha Filatei' ? 'MD' : creator.name;
+      let subject = `Bulk New Payroll Add from CSV`;
 
-        let format1 = "DD-MM-YYYY hh:mm:ss";
-        let date;
-        date = moment(new Date()).format(format1);
-        const fullDate = new Date().getFullYear();
-        let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
+      let format1 = "DD-MM-YYYY hh:mm:ss";
+      let date;
+      date = moment(new Date()).format(format1);
+      const fullDate = new Date().getFullYear();
+      let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50"><p style="background:rgba(0, 128, 0,0.051); text-align:center;">
                   ${date}</p><h2>Bulk Payroll Add</h2><p> Hi ${creatorName}, Bulk Payroll created as follows:</p>`;
-        html += `<p>Creator: ${creatorName}</p> ${table} `;
-        html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
+      html += `<p>Creator: ${creatorName}</p> ${table} `;
+      html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
 
-        if (hostname.includes("torama")) {
-          toEmail = "people@torama.ng";
-          creatorEmail = userEmail;
-          bccMail = 'odia.gabriel@gtsng.com'
-        } else {
-          toEmail = null;
-          toEmail = "people@torama.ng";
+      if (hostname.includes("torama")) {
+        toEmail = "people@torama.ng";
+        creatorEmail = userEmail;
+        bccMail = 'odia.gabriel@gtsng.com'
+      } else {
+        toEmail = null;
+        toEmail = "people@torama.ng";
 
-          creatorEmail = null;
-          bccMail = null;
-        }
+        creatorEmail = null;
+        bccMail = null;
+      }
 
-        const to = creatorEmail;
-        const sender = process.env.tormail;
-        const cc = toEmail;
-        const bcc = bccMail;
-        const body = html;
-        let model;
+      const to = creatorEmail;
+      const sender = process.env.tormail;
+      const cc = toEmail;
+      const bcc = bccMail;
+      const body = html;
+      let model;
 
-        model = {
-          fromText: "Payroll ",
-          subject,
-          to: creatorEmail,
-          cc: toEmail,
-          bcc: bcc,
-          html,
-        };
-        mailer(model);
+      model = {
+        fromText: "Payroll ",
+        subject,
+        to: creatorEmail,
+        cc: toEmail,
+        bcc: bcc,
+        html,
+      };
+      mailer(model);
     }
   } catch (error) {
     throw error;
@@ -1651,7 +1648,7 @@ async function sendEodOrders(orders, userData) {
   return;
   const site = userData.site;
   const userEmail = userData.email;
-  const date = new Date().toLocaleDateString('en-GB').replace(/\//g,'_')
+  const date = new Date().toLocaleDateString('en-GB').replace(/\//g, '_')
   const fileName = `${site}-order-${date}.xlsx`;
   const filePath = `/tmp/${fileName}`;
   let bodyA = '';
@@ -1663,75 +1660,75 @@ async function sendEodOrders(orders, userData) {
   })
   tableHeader += '</tr>';
   orders.map(o => {
-    
+
     bodyA += '<tr>'
     header.map(h => {
       if ((h === 'creator') || (h === 'customer')) {
         bodyA += `<td>${o[h].name}</td>`
 
       }
-      else if (h ==='geoLocation') {
+      else if (h === 'geoLocation') {
         bodyA += `<td></td>`
-      } 
+      }
       else if (h === '_id') {
         bodyA += `<td></td>`
-      } 
-      else if (h === 'trans_date' || h === 'createdAt' || h === 'updatedAt'  ) {
+      }
+      else if (h === 'trans_date' || h === 'createdAt' || h === 'updatedAt') {
         bodyA += `<td>${o[h].toLocaleDateString('en-GB')}</td>`
-      } 
+      }
       else {
         bodyA += `<td>${o[h]}</td>`
       }
     })
     bodyA += '</tr>'
-   
+
   })
   const finalTable = `<table>${tableHeader}${bodyA}</table>`
   const fullDate = new Date().toLocaleDateString('en-GB');
   const subject = `EOD Order Report for ${site} ${fullDate}`;
-  
+
   let html = `<!DOCTYPE html><html><body style="text-align:center;"><img src="${logo}" alt="logoimg" width="50">
         <p style="background:rgba(0, 128, 0,0.051); text-align:center;">${fullDate}</p><h2> End of Day Report for ${site}</h2><p> Hi, Here is EOD Report:</p>  ${finalTable}`;
-        
-        html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
 
-        // console.log(html, 'html')
-        if (hostname.includes("torama")) {
-          toEmail = userEmail;
-          creatorEmail = userEmail;
-          bccMail = 'dailyreports@gtsng.com'
-        } else {
-          toEmail = null;
-          toEmail = "orderManagers@torama.ng";
+  html += `<h4 style="background:rgba(0, 128, 0,0.033);text-align:center"> Powered by Torama<sup>&#174;</sup> - All rights reserved. &#169; ${fullDate}</p> </body></html>`;
 
-          creatorEmail = null;
-          bccMail = null;
-        }
+  // console.log(html, 'html')
+  if (hostname.includes("torama")) {
+    toEmail = userEmail;
+    creatorEmail = userEmail;
+    bccMail = 'dailyreports@gtsng.com'
+  } else {
+    toEmail = null;
+    toEmail = "orderManagers@torama.ng";
 
-        const to = creatorEmail;
-        const sender = process.env.tormail;
-        const cc = toEmail;
-        const bcc = bccMail;
-        const body = html;
-        let model;
+    creatorEmail = null;
+    bccMail = null;
+  }
 
-        model = {
-          fromText: "EOD Order Report",
-          subject,
-          to: creatorEmail,
-          cc: toEmail,
-          bcc: bcc,
-          html,
-          attachments: [
-      
-            {   // file on disk as an attachment
-                filename: fileName,
-                path: filePath // stream this file
-            },
-            
-          ]
-        };
-        mailer(model);
+  const to = creatorEmail;
+  const sender = process.env.tormail;
+  const cc = toEmail;
+  const bcc = bccMail;
+  const body = html;
+  let model;
+
+  model = {
+    fromText: "EOD Order Report",
+    subject,
+    to: creatorEmail,
+    cc: toEmail,
+    bcc: bcc,
+    html,
+    attachments: [
+
+      {   // file on disk as an attachment
+        filename: fileName,
+        path: filePath // stream this file
+      },
+
+    ]
+  };
+  mailer(model);
 
 }
 
@@ -1768,7 +1765,7 @@ async function mailer(model) {
     subject: model.subject,
     generateTextFromHTML: true,
     html: model.html,
-    attachments: model.attachments?model.attachments:null
+    attachments: model.attachments ? model.attachments : null
   };
 
   // send mail

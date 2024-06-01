@@ -11,10 +11,17 @@ const mongoEmitter = new MongoEmitter();
 // mongoose.set("useCreateIndex", true);
 // mongoose.set("useFindAndModify", false);
 
-let username, password, cluster;
+const username = 'user1'
+const password = encodeURIComponent('Passw0rd'); // Use encodeURIComponent if your password has special characters
+let cluster;
+const replicaSet = 'rs0';
+const authSource = 'admin';
+const dbName = 'fido_db';
 
 if (hostname.includes("local")) {
-    connectStr = process.env.CONNECT_STR;
+    // connectStr = process.env.CONNECT_STR;
+    connectStr = `mongodb://${username}:${password}@localhost:27017/${dbName}?replicaSet=${replicaSet}&authSource=${authSource}`;
+
 }
 
 if (hostname.includes("torama.ng")) {
@@ -22,27 +29,26 @@ if (hostname.includes("torama.ng")) {
     connectStr = "mongodb://localhost:27017/fido_db?replicaSet=rs0";
 }
 
+// Mongoose connection options
+const options = {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useFindAndModify: false,
+    useCreateIndex: true,
+    serverSelectionTimeoutMS: 30000, // Increase timeout to 30 seconds
+    socketTimeoutMS: 45000 // Increase socket timeout
+};
 mongoose
-    .connect(connectStr, {
-    })
+    .connect(connectStr, options)
     .then(() => {
         console.log("Connected to DB");
         mongoEmitter.emit('mongoConnected', mongoose.connection);
-        // const db = mongoose.connection;
 
-        // const orderCollection = db.collection('fidoorders');
-        // const changeStream = orderCollection.watch();
-        // changeStream.on('change', (change) => {
-        //     console.log(change);
-        //     if (change.operationType === 'insert') {
-        //         const message = change.fullDocument;
-        //         // broadcast({ exchange: 'MongoDB', message });
-        //     }
-        // });
     })
     .catch((err) => {
         console.log('Failed to connect to MongoDB', err);
     });
+
 
 
 

@@ -98,8 +98,8 @@ app.use(
 app.use(bodyParser.json({ limit: "1mb" }));
 
 app.use(cors());
-let connectStr;
-connectStr = process.env.CONNECT_STR; // mongodb://localhost:27017/torposdb
+// let connectStr;
+// connectStr = process.env.CONNECT_STR; // mongodb://localhost:27017/torposdb
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");

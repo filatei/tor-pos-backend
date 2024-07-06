@@ -54,6 +54,7 @@ async function mailer(model) {
 }
 
 async function sendErrorEmail(error) {
+    if (hostname.includes("local")) return console.log("Localhost, no email sent");
     try {
         const model = {
             fromText: "Error",
@@ -71,7 +72,5 @@ async function sendErrorEmail(error) {
     }
 
 }
-
-
 
 module.exports = sendErrorEmail;

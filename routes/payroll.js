@@ -1,5 +1,20 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const os = require("os");
+const homedir = os.homedir();
+const tokens = require(`${homedir}/.token.json`);
+const nodemailer = require("nodemailer");
+const { google } = require("googleapis");
+
+const oauth2Client = new google.auth.OAuth2(
+  tokens.clientID,
+  tokens.clientSecret,
+  tokens.redirectURL
+);
+
+oauth2Client.setCredentials({
+  refresh_token: tokens.refresh_token,
+});
 
 const Payroll = require("../models/payroll");
 const Site = require("../models/site");
@@ -7,7 +22,6 @@ const People = require("../models/people");
 const router = express.Router();
 const fs = require("fs");
 const path = require('path');
-const os = require("os");
 const hostname = os.hostname();
 const csv = require("fast-csv");
 const Mail = require("../mail");
@@ -39,6 +53,12 @@ const monthToNumber = {
   November: 11,
   December: 12,
 };
+
+if (hostname.includes("torama")) {
+  baseUrl = "https://fido-api.torama.ng";
+} else {
+  baseUrl = "http://localhost:3000";
+}
 
 var multer = require("multer");
 
@@ -165,6 +185,7 @@ function getBusinessDatesCount(startDate, endDate) {
 const checkAuth = require("../middleware/check-auth");
 const e = require("express");
 const { get } = require("lodash");
+const { sk } = require("date-fns/locale");
 
 router.post("", checkAuth, async (req, res, next) => {
   try {
@@ -1309,6 +1330,115 @@ router.get("/years", checkAuth, async (req, res) => {
   }
 });
 
+// router.post(
+//   "/xlsUpload",
+//   checkAuth,
+//   upload.single('file'),
+//   async (req, res) => {
+//     let insertedCount = 0;
+//     let skippedCount = 0;
+//     const errorRows = [];
+
+//     try {
+//       const { role, userId } = req.userData;
+
+//       if (!["ADMIN", "GENERAL MANAGER", "SNR ACCOUNTANT"].includes(role)) {
+//         return res.status(403).json({
+//           message: "Fetching payrolls failed! Not Allowed",
+//         });
+//       }
+
+//       if (!req.file) {
+//         return res.status(400).json({
+//           message: "No file uploaded",
+//         });
+//       }
+
+//       const filePath = req.file.path;
+//       const workbook = xlsx.readFile(filePath);
+
+//       for (const sheetName of workbook.SheetNames) {
+//         if (!ALLOWED_SHEET_NAMES.includes(sheetName.toUpperCase())) {
+//           continue;
+//         }
+
+//         const worksheet = workbook.Sheets[sheetName];
+//         const data = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
+
+//         const headers = data[0];
+//         const rows = data.slice(1);
+
+//         for (let i = 0; i < rows.length; i++) {
+//           const row = rows[i];
+//           const rowData = {};
+
+//           headers.forEach((header, index) => {
+//             rowData[header] = row[index];
+//           });
+
+//           const personId = rowData['ID'];
+//           if (!personId) {
+//             console.log(`Stopping process at row ${i + 2} due to missing ID.`);
+//             break;
+//           }
+
+//           try {
+//             const processedRow = await processRow(rowData, req.userData.userId, i + 2, sheetName); // row number is i + 2 (accounting for headers)
+//             if (processedRow) {
+//               const exists = await Payroll.findOne({ payeeMonthYrType: processedRow.payeeMonthYrType });
+//               if (!exists) {
+//                 await Payroll.create(processedRow);
+//                 insertedCount++;
+//               } else {
+//                 console.log(`Duplicate record found for ${processedRow.payeeMonthYrType}, skipping insertion.`);
+//                 errorRows.push({ ...rowData, rowNumber: i + 2, error: 'Duplicate record' });
+//                 skippedCount++;
+//               }
+//             }
+//           } catch (error) {
+//             errorRows.push({ ...rowData, rowNumber: i + 2, error: error.message });
+//             skippedCount++;
+//           }
+//         }
+//       }
+
+//       fs.unlink(filePath, (err) => {
+//         if (err) console.error('Error removing file:', err);
+//       });
+
+//       // Ensure the uploads directory exists
+//       if (!fs.existsSync(UPLOAD_DIR)) {
+//         fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+//       }
+
+//       // Generate XLS file for skipped records
+//       const skippedWorkbook = xlsx.utils.book_new();
+//       const skippedWorksheet = xlsx.utils.json_to_sheet(errorRows);
+//       xlsx.utils.book_append_sheet(skippedWorkbook, skippedWorksheet, 'Skipped Records');
+//       const skippedFilePath = path.join(UPLOAD_DIR, `skipped-records-${Date.now()}.xlsx`);
+
+//       xlsx.writeFile(skippedWorkbook, skippedFilePath);
+
+
+//       console.log(`Inserted records: ${insertedCount}`);
+//       console.log(`Skipped records: ${skippedCount}`);
+
+//       return res.status(200).json({
+//         message: `${insertedCount} records uploaded successfully, ${skippedCount} records skipped.`,
+//         insertedCount,
+//         skippedCount,
+//         skippedFilePath,
+//         errorRows,  // Include errorRows in the response
+//       });
+
+//     } catch (error) {
+//       console.error("Error processing request:", error);
+//       return res.status(500).json({ message: "Error processing request: " + error.message });
+//     }
+//   }
+// );
+
+
 router.post(
   "/xlsUpload",
   checkAuth,
@@ -1317,6 +1447,7 @@ router.post(
     let insertedCount = 0;
     let skippedCount = 0;
     const errorRows = [];
+    const successfulRows = [];
 
     try {
       const { role, userId } = req.userData;
@@ -1368,6 +1499,7 @@ router.post(
               if (!exists) {
                 await Payroll.create(processedRow);
                 insertedCount++;
+                successfulRows.push(rowData);
               } else {
                 console.log(`Duplicate record found for ${processedRow.payeeMonthYrType}, skipping insertion.`);
                 errorRows.push({ ...rowData, rowNumber: i + 2, error: 'Duplicate record' });
@@ -1390,23 +1522,55 @@ router.post(
         fs.mkdirSync(UPLOAD_DIR, { recursive: true });
       }
 
+      // Get the current month and year
+      const currentDate = new Date();
+      const currentMonth = currentDate.getMonth() + 1; // Months are zero-based, so add 1
+      const currentYear = currentDate.getFullYear();
+
+      // Generate file names using the current month and year
+      const skippedFileName = `skipped-records-${currentYear}-${currentMonth}.xlsx`;
+      const successfulFileName = `successful-records-${currentYear}-${currentMonth}.xlsx`;
+
       // Generate XLS file for skipped records
       const skippedWorkbook = xlsx.utils.book_new();
       const skippedWorksheet = xlsx.utils.json_to_sheet(errorRows);
       xlsx.utils.book_append_sheet(skippedWorkbook, skippedWorksheet, 'Skipped Records');
-      const skippedFilePath = path.join(UPLOAD_DIR, `skipped-records-${Date.now()}.xlsx`);
-
+      const skippedFilePath = path.join(UPLOAD_DIR, skippedFileName);
+      const skippedFileUrl = `${baseUrl}/uploads/${path.basename(skippedFilePath)}`;
       xlsx.writeFile(skippedWorkbook, skippedFilePath);
 
+      // Generate XLS file for successful records
+      const successfulWorkbook = xlsx.utils.book_new();
+      const successfulWorksheet = xlsx.utils.json_to_sheet(successfulRows);
+      xlsx.utils.book_append_sheet(successfulWorkbook, successfulWorksheet, 'Successful Records');
+      const successfulFilePath = path.join(UPLOAD_DIR, successfulFileName);
+      const successfulFileUrl = `${baseUrl}/uploads/${path.basename(successfulFilePath)}`;
+      xlsx.writeFile(successfulWorkbook, successfulFilePath);
 
       console.log(`Inserted records: ${insertedCount}`);
-      console.log(`Skipped records: ${skippedCount}`);
+      console.log(`Skipped records : ${skippedCount}`);
+      console.log(skippedFilePath, 'skippedFilePath');
+      console.log(successfulFilePath, 'successfulFilePath');
+
+      // Prepare email details
+      const emailModel = {
+        fromText: "Torama Payroll System",
+        to: "filatei@gtsng.com", // Replace with the recipient's email
+        subject: "Payroll Upload Summary",
+        html: `<p>${insertedCount} records uploaded successfully, ${skippedCount} records skipped.</p>
+               <p>Link to skipped records: <a href="${skippedFileUrl}">Download Skipped Records</a></p>
+               <p>Link to successful records: <a href="${successfulFileUrl}">Download Successful Records</a></p>`
+      };
+
+      // Send email
+      await mailer(emailModel);
 
       return res.status(200).json({
         message: `${insertedCount} records uploaded successfully, ${skippedCount} records skipped.`,
         insertedCount,
         skippedCount,
         skippedFilePath,
+        successfulFilePath,
         errorRows,  // Include errorRows in the response
       });
 
@@ -1416,6 +1580,44 @@ router.post(
     }
   }
 );
+
+// Mailer function
+async function mailer(model) {
+  const accessToken = await oauth2Client.getAccessToken();
+  const smtpTransport = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      type: "OAuth2",
+      user: process.env.tormail,
+      clientId: tokens.clientID,
+      clientSecret: tokens.clientSecret,
+      refreshToken: tokens.refresh_token,
+      accessToken: accessToken,
+      pool: true,
+    },
+  });
+
+  const mailOptions = {
+    from: `${model.fromText} <${process.env.tormail}>`,
+    to: model.to,
+    subject: model.subject,
+    html: model.html,
+    attachments: model.attachments ? model.attachments : null
+  };
+
+  return new Promise((resolve, reject) => {
+    smtpTransport.sendMail(mailOptions, (error, response) => {
+      if (error) {
+        console.log(error);
+        reject(error);
+      } else {
+        console.log('Email sent: ' + response.response);
+        resolve(response);
+      }
+      smtpTransport.close();
+    });
+  });
+}
 
 function excelDateToJSDate(excelDate) {
   const date = new Date((excelDate - (25567 + 2)) * 86400 * 1000);

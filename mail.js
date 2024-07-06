@@ -127,7 +127,7 @@ async function sendExpense(expense, userId = null) {
   let remarks;
 
   expenseId = expenseId.toString().padStart(5, "0");
-  let subject = `${expense.status} Expense (# ${expenseId})`;
+  let subject = `Expense (# ${expenseId})`;
   let curr = process.env.naira;
   let total = expense.txn_amount;
   let status = expense.status;
@@ -298,7 +298,7 @@ async function sendProduceexpense(expense, userId = null) {
   let remarks;
 
   expenseId = expenseId?.toString().padStart(5, "0");
-  let subject = `${expense.status} Expense (# ${expenseId})`;
+  let subject = `Expense (# ${expenseId})`;
   let curr = process.env.naira;
   let total = expense.txn_amount;
   let status = expense.status;

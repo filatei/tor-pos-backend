@@ -564,14 +564,7 @@ router.get("", checkAuth, async (req, res, next) => {
 
         .limit(pageSize);
     }
-    // expenseQuery.forEach(async (e) => {
-    //   if (e.vendor.name === "SWALI") {
-    //     e.products.forEach(async pp => {
-    //       const prod = await Stockitem.findById(pp._id);
-    //     })
 
-    //   }
-    // });
 
     if (expenseQuery) {
       return res.status(200).json({

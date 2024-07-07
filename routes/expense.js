@@ -56,7 +56,7 @@ router.post("", checkAuth, function (req, res, next) {
       "MANAGER",
       "SNR ACCOUNTANT",
       "ACCOUNTANT",
-      "SECRETARY",
+      "SECRETARY", "OPERATOR"
     ];
     if (!alloweds.includes(req.userData.role)) {
       return res.status(500).json({ message: "Not allowed to create Expense" });
@@ -137,9 +137,10 @@ router.put("/:id", checkAuth, async (req, res, next) => {
     "MANAGER",
     "SNR ACCOUNTANT",
     "ACCOUNTANT",
+    "SECRETARY",
+    "OPERATOR",
   ];
   if (!alloweds.includes(req.userData.role)) {
-    logIncident(req.userData.email, "Not allowed to create Expense");
     return res.status(500).json({ message: "Not allowed to update expense" });
   }
 
@@ -441,9 +442,9 @@ router.get("/summaryAll", checkAuth, async (req, res, next) => {
 });
 
 router.delete("/:id", checkAuth, (req, res, next) => {
-  const alloweds = process.env.DELALLOWEDS;
-  if (!alloweds.includes(req.userData.email)) {
-    logIncident(req.userData.email, "Not allowed to delete ");
+
+  const delAlloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT',]
+  if (!delAlloweds.includes(req.userData.role)) {
     return res.status(500).json({ message: "Not allowed" });
   }
 
@@ -617,7 +618,7 @@ router.get("/mail/mailImprest", checkAuth, async (req, res, next) => {
 });
 
 router.get("/getByText", checkAuth, async (req, res, next) => {
-  const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT', 'SECRETARY']
+  const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT', 'SECRETARY', 'OPERATOR']
 
   if (!alloweds.includes(req.userData.role)) {
     return res.status(500).json({ message: "Not allowed" });
@@ -645,7 +646,7 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
 });
 
 router.get("/siteSummary", checkAuth, async (req, res, next) => {
-  const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT', 'SECRETARY']
+  const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT', 'SECRETARY', 'OPERATOR']
 
   if (!alloweds.includes(req.userData.role)) {
     return res.status(500).json({ message: "Not allowed" });
@@ -1039,11 +1040,19 @@ router.put(
   checkAuth,
   upload.any(),
   async function (req, res, next) {
-    const alloweds = process.env.ALLOWEDS;
+    const alloweds = [
+      "ADMIN",
+      "GENERAL MANAGER",
+      "MANAGER",
+      "SNR ACCOUNTANT",
+      "ACCOUNTANT",
+      "SECRETARY", "OPERATOR"
+    ];
 
-    if (!alloweds.includes(req.userData.email)) {
+    if (!alloweds.includes(req.userData.role)) {
       return res.status(500).json({ message: "Not allowed" });
     }
+
 
     let updater = req.userData.userId;
     let myPath;

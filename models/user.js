@@ -3,7 +3,7 @@ const uniqueValidator = require("mongoose-unique-validator");
 
 const userSchema = mongoose.Schema(
   {
-    userId: {type: String},
+    userId: { type: String },
     name: { type: String, trim: true, index: true },
     email: {
       type: String,
@@ -20,11 +20,13 @@ const userSchema = mongoose.Schema(
     phone: { type: String },
     lastSeen: { type: Date },
     roles: [],
-    role: { type: String, enum:["ADMIN", "MANAGER","GENERAL MANAGER","HR","SNR ACCOUNTANT",
-      "ACCOUNTANT","SUPERVISOR","QAQC","SNR SECRETARY","SECRETARY","STOREKEEPER",
-      "BAGGER", "SECURITY", "LOADER", "OFFICEKEEPER", "POS OFFICER", "POLICE", "CONSULTANT",
-      "OFFICER", "BUYER", "OTHER",
-    ]},
+    role: {
+      type: String, enum: ["ADMIN", "MANAGER", "GENERAL MANAGER", "HR", "SNR ACCOUNTANT",
+        "ACCOUNTANT", "SUPERVISOR", "QAQC", "SNR SECRETARY", "SECRETARY", "STOREKEEPER", "OPERATOR",
+        "BAGGER", "SECURITY", "LOADER", "OFFICEKEEPER", "POS OFFICER", "POLICE", "CONSULTANT",
+        "OFFICER", "BUYER", "OTHER",
+      ]
+    },
     nin: { type: String, maxLength: 11, minLength: 11, trim: true },
     verify: { type: String },
     isVerified: { type: Boolean },

@@ -330,7 +330,7 @@ router.get("/payHistSummary", checkAuth, async (req, res, next) => {
 
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setDate(endDate.getDate() - 21); // Set to 3 weeks ago
+    startDate.setDate(endDate.getDate() - 30); // Set to 30 days
 
     response = await getPayHistoryForVendorInRange('FLEXPLAST TECH & SERVICES', startDate, endDate)
 
@@ -987,8 +987,6 @@ async function generatePDF(html) {
   await browser.close();
   return pdf;
 }
-
-
 
 router.get("/expense/:id", (req, res, next) => {
   // this is used for expense_id, not _id

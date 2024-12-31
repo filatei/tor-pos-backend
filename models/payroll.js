@@ -8,26 +8,29 @@ const payrollSchema = mongoose.Schema({
     payee: { type: mongoose.Schema.Types.ObjectId, ref: 'People', required: true },
     payeeMonthYrType: { type: String, required: true, unique: true },
     site: { type: mongoose.Schema.Types.ObjectId, ref: 'Site' },
-    empType: {type: String},
-    payeeTax: {type: Number},
-    
+    empType: { type: String },
+    payeeTax: { type: Number },
+
     company: { type: String },
     jobName: { type: String },
-    status: { type: String, enum: ["PAID", "UNPAID", "INVALID"]},
+    status: { type: String, enum: ["PAID", "UNPAID", "INVALID"] },
 
-    payType: { type: String, enum: ["MONTH-END", "MID-MONTH", "OTHER"]},
-    month: {type: String, required:true, enum: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]},
-    year: {type: Number, required:true},
-    grossPay: {type: Number},
-    netPay: {type: Number},
-    bagsBagged: {type: Number},
+    payType: { type: String, enum: ["MONTH-END", "MID-MONTH", "OTHER"] },
+    month: { type: String, required: true, enum: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"] },
+    year: { type: Number, required: true },
+    grossPay: { type: Number },
+    netPay: { type: Number },
+    bagsBagged: { type: Number },
     bagsLoaded: { type: Number },
-    deductions: {type: Number},
-    daysAbsent: {type: Number},
+    multiplierMonthEnd: { type: Number },
+    multiplierMidMonth: { type: Number },
+    deductions: { type: Number },
+    daysAbsent: { type: Number },
     daysWorked: { type: Number },
-    totalWorkDaysInMonth: {type: Number},
-    
-    salaryAdvance: {type: Number},
+    totalWorkDaysInMonth: { type: Number },
+
+
+    salaryAdvance: { type: Number },
     payDate: { type: Date },
     payStartDate: { type: Date },
     payEndDate: { type: Date },
@@ -37,15 +40,15 @@ const payrollSchema = mongoose.Schema({
         image: { type: String },
         author: { type: String },
         date: { type: Date },
-        
+
     }],
-    remarks: {type: String},
-    memo: {type: String}
+    remarks: { type: String },
+    memo: { type: String }
 },
-{
-    timestamps: true,
-    strict: true
-});
+    {
+        timestamps: true,
+        strict: true
+    });
 
 payrollSchema.plugin(AutoIncrement, { inc_field: 'payroll_id' }, { unique: true });
 

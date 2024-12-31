@@ -635,7 +635,7 @@ router.post(
               // bagger
               row.bagsBagged = parseFloat(row["BAGS BAGGED"].replace(/,/g, ""));
               if (row.payType == "MONTH-END")
-                row.grossPay = row.bagsBagged * 3.5;
+                row.grossPay = row.bagsBagged * 5;
               if (row.payType == "MID-MONTH")
                 row.grossPay += row.bagsBagged * 0.5;
             }
@@ -644,7 +644,7 @@ router.post(
               // bagger
               row.bagsBagged = parseFloat(row["QTY"].replace(/,/g, ""));
               if (row.payType == "MONTH-END")
-                row.grossPay += row.bagsBagged * 3.5;
+                row.grossPay += row.bagsBagged * 5;
               if (row.payType == "MID-MONTH")
                 row.grossPay += row.bagsBagged * 0.5;
             }
@@ -653,7 +653,7 @@ router.post(
               row.bagsLoaded = parseFloat(row["BAGS LOADED"].replace(/,/g, ""));
 
               if (row.payType === "MONTH-END") {
-                row.grossPay += row.bagsLoaded * 3.5;
+                row.grossPay += row.bagsLoaded * 5;
               } else if (row.payType === "MID-MONTH") {
                 row.grossPay += row.bagsLoaded * 0.5;
               }
@@ -1709,7 +1709,7 @@ async function processRow(row, userId, rowNumber, sheetName) {
 
     // console.log(bagsBagged, bagsLoaded, "bagsBagged, bagsLoaded")
     const calcGrossPay = (payType === "MONTH-END")
-      ? (bagsBagged + bagsLoaded) * 3.5
+      ? (bagsBagged + bagsLoaded) * 5 // changed to 5 from 3.5 on dec 31 2024
       : (bagsBagged + bagsLoaded) * 0.5;
     // console.log(calcGrossPay, "calcGrossPay", grossPay, "grossPay");
 

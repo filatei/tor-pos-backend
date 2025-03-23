@@ -13,4 +13,4 @@ pdf
 Dockerfile
 docker-compose.yml
 .env
-
+.env*

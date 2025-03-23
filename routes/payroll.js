@@ -1999,12 +1999,15 @@ router.get('/grouped-payrolls/:year', checkAuth, async (req, res) => {
   }
   const year = parseInt(req.params.year);
   console.log(year, 'year')
+  const payrollData = await Payroll.find({ year: year }).limit(-10)
+  console.log(payrollData, 'payrollData')
+
   try {
     const payrolls = await Payroll.aggregate([
       {
         $match: {
-          createdAt: { $exists: true, $ne: null },
-          $expr: { $eq: [{ $year: '$createdAt' }, year] }
+          payStartDate: { $exists: true, $ne: null },
+          $expr: { $eq: [{ $year: '$payStartDate' }, year] }
         }
       },
       {
@@ -2055,8 +2058,8 @@ router.get('/grouped-payrolls/:year', checkAuth, async (req, res) => {
       },
       {
         $project: {
-          year: { $year: '$createdAt' },
-          month: { $month: '$createdAt' },
+          year: { $year: '$payStartDate' },
+          month: { $month: '$payStartDate' },
           payType: 1,
           payee: 1,
           payee_id: 1,
@@ -2098,7 +2101,7 @@ router.get('/grouped-payrolls/:year', checkAuth, async (req, res) => {
               netPay: '$netPay',
               status: '$status',
               siteName: '$siteName',
-              createdAt: '$createdAt',
+              payStartDate: '$payStartDate',
               payType: '$payType',
               salaryAdvance: '$salaryAdvance',
               deductions: '$deductions',

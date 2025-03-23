@@ -8,11 +8,6 @@ class MongoEmitter extends EventEmitter { }
 const mongoEmitter = new MongoEmitter();
 const sendErrorEmail = require('./emailService');
 
-
-// mongoose.set("useUnifiedTopology", true);
-// mongoose.set("useCreateIndex", true);
-// mongoose.set("useFindAndModify", false);
-
 const username = 'user1'
 const password = encodeURIComponent('Passw0rd'); // Use encodeURIComponent if your password has special characters
 let cluster;
@@ -21,13 +16,11 @@ const authSource = 'admin';
 const dbName = 'fido_db';
 
 if (hostname.includes("local")) {
-    // connectStr = process.env.CONNECT_STR;
     connectStr = `mongodb://${username}:${password}@localhost:27017/${dbName}?replicaSet=${replicaSet}&authSource=${authSource}`;
 
 }
 
 if (hostname.includes("torama.ng")) {
-    // connectStr = "mongodb://localhost:27017/fido_db";
     connectStr = "mongodb://localhost:27017/fido_db?replicaSet=rs0";
 }
 
@@ -61,9 +54,6 @@ mongoose.connection.on('disconnected', () => {
     console.error('MongoDB disconnected');
     sendErrorEmail('MongoDB connection was disconnected');
 });
-
-
-
 
 
 module.exports = mongoEmitter;

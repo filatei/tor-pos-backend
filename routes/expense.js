@@ -475,7 +475,7 @@ router.get("", checkAuth, async (req, res, next) => {
     const imprest = req.query.imprest;
     let user, userEmail;
     let role = "";
-    console.log(req.userData, "userData");
+    // console.log(req.userData, "userData");
 
     if (req.userData) {
       userEmail = req.userData.email;

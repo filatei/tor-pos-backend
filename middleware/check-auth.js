@@ -12,13 +12,13 @@ module.exports = (req, res, next) => {
       return res.status(401).send('Unauthorized request');
     }
     let token = req.headers.authorization.split(' ')[1];
-    console.log(token, 'token');
+    // console.log(token, 'token');
     if (token === 'null' || token === '' || token === null || token === 'undefined') {
       return res.status(401).send('Unauthorized request');
     }
 
     const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-    console.log(decodedToken, 'decodedToken');
+    // console.log(decodedToken, 'decodedToken');
 
     if (decodedToken) {
       req.userData = {

@@ -97,9 +97,12 @@ app.use(
 
 app.use(bodyParser.json({ limit: "1mb" }));
 
-app.use(cors());
-// let connectStr;
-// connectStr = process.env.CONNECT_STR; // mongodb://localhost:27017/torposdb
+// app.use(cors());
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
@@ -114,11 +117,6 @@ app.use((req, res, next) => {
 
   next();
 });
-
-
-// require('./mongoconnection');  // Initialize MongoDB connection
-// require('./websocketserver');  // Initialize WebSocket server
-
 
 app.use("/api/paymethods", paymethodsRoutes);
 app.use("/api/products", productsRoutes);

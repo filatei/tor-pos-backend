@@ -231,56 +231,6 @@ router.post("/changePassword", async (req, res, next) => {
   }
 });
 
-// router.post("/login", async (req, res, next) => {
-//   try {
-//     const vuser = await User.findOne({ email: req.body.email });
-
-//     if (!vuser) {
-//       return res.status(401).json({
-//         message: "Authentication failed. invalid credentials",
-//       });
-//     }
-
-//     // is email verified?
-//     if (vuser && vuser.verify) {
-//       return res
-//         .status(500)
-//         .json({ message: "Your Email not Verified. Check your inbox" });
-//     }
-
-//     const result = await bcrypt.compare(req.body.password, vuser.password);
-//     if (!result) {
-//       return res.status(401).json({
-//         message: "Authentication failed.",
-//       });
-//     }
-//     const token = jwt.sign(
-//       {
-//         email: vuser.email,
-//         userId: vuser._id,
-//         name: vuser.name,
-//         role: vuser.role ? vuser.role : null,
-//         site: vuser.site ? vuser.site : null,
-//       },
-//       process.env.ACCESS_TOKEN_SECRET,
-//       { expiresIn: "1000h" }
-//     );
-
-//     return res.status(200).json({
-//       token: token,
-//       expiresIn: 360000,
-//       userId: vuser._id,
-//       email: vuser.email,
-//       name: vuser.name,
-//       site: vuser.site,
-//       role: vuser.role,
-//       image: vuser.image,
-//     });
-//   } catch (err) {
-//     console.log(err)
-//     return res.status(500).json({ message: "Error in code block " + err });
-//   }
-// });
 
 router.post("/login", async (req, res, next) => {
   try {

@@ -481,7 +481,7 @@ router.get("", checkAuth, async (req, res, next) => {
       userEmail = req.userData.email;
       role = req.userData.role;
       user = await User.find({ email: userEmail });
-      console.log(user, "user");
+      // console.log(user, "user");
     }
     // get start of today
 

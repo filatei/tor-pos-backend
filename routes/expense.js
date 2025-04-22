@@ -998,6 +998,7 @@ router.get("/expense/:id", (req, res, next) => {
     .populate("creator")
     .then((expense) => {
       if (expense) {
+        console.log(expense, "expense");
         res.status(200).json({ expense });
       } else {
         const error = new HttpError("expense not found!", 404);
@@ -1023,6 +1024,7 @@ router.get("/:id", (req, res, next) => {
     .populate("creator", "name email role site image")
     .then((expense) => {
       if (expense) {
+        console.log(expense, "expense");
         res.status(200).json({ expense });
       } else {
         res.status(404).json({ message: "expense not found!" });

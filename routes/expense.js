@@ -570,6 +570,7 @@ router.get("", checkAuth, async (req, res, next) => {
 
 
     if (expenseQuery) {
+      console.log(expenseQuery[0], "expenseQuery");
       return res.status(200).json({
         expense: expenseQuery,
         message: "Expenses fetched Successfully",

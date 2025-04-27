@@ -468,125 +468,272 @@ router.delete("/:id", checkAuth, (req, res, next) => {
   }
 });
 
-router.get("", checkAuth, async (req, res, next) => {
+// router.get("", checkAuth, async (req, res, next) => {
+//   try {
+//     let pageSize = +req.query.pagesize;
+//     const currentPage = +req.query.page;
+//     const imprest = req.query.imprest;
+//     let user, userEmail;
+//     let role = "";
+//     // console.log(req.userData, "userData");
+
+//     if (req.userData) {
+//       userEmail = req.userData.email;
+//       role = req.userData.role;
+//       user = await User.find({ email: userEmail });
+//       // console.log(user, "user");
+//     }
+//     // get start of today
+
+
+//     const start = new Date();
+//     start.setHours(0, 0, 0, 0);
+
+//     const end = new Date();
+//     end.setHours(23, 59, 59, 999);
+
+//     const directors = process.env.DIRECTORS;
+//     const generalManagers = process.env.GENERALMANAGERS;
+//     const managers = process.env.MANAGERS;
+//     const sites = [
+//       "KPANSIA",
+//       "SWALI",
+//       "OKUTUKUTU",
+//       "YENEGWE",
+//       "OBUNNA",
+//       "KPANSIA E",
+//       "AKENFA",
+//       "MBIAMA",
+//     ];
+
+//     const blockSites = ["OKUTUKUTU-BLOCKS", "AGADAGBA-BLOCKS"];
+//     let expenseQuery;
+
+//     if (imprest) {
+//       expenseQuery = await Expense.find({
+//         status: "APPROVED",
+//         expenseAccount: "Daily Imprest",
+//         updatedAt: {
+//           $gte: start,
+//           $lte: end,
+//         },
+
+//       }, { log: 0, statusHistory: 0 })
+//         .sort({ createdAt: -1 })
+//         .populate("vendor", "name remarks phone email")
+//         .populate("creator", "name email role site image")
+//         .limit(pageSize);
+//       // add dateStr: new Date(createdAt) to expenseQuery
+//       expenseQuery = expenseQuery.map((e) => {
+//         //  add DateStr to each expense
+//         return {
+//           ...e._doc,
+//           dateStr: moment(e.createdAt).format("DD/MM/YYYY"),
+//         };
+
+//       });
+//     } else if (role === "ADMIN") {
+//       expenseQuery = await Expense.find({}, { log: 0, statusHistory: 0 })
+//         .sort({ createdAt: -1 })
+//         .populate("vendor", "name remarks phone email")
+//         .populate("creator", "name email role site image")
+//         .populate("products")
+//         .limit(pageSize);
+//     } else if (["GENERAL MANAGER", "SNR ACCOUNTANT"].includes(role)) {
+//       expenseQuery = await Expense.find({
+//         site: { $in: sites }
+//       }, { log: 0, statusHistory: 0 })
+//         .sort({ createdAt: -1 })
+//         .populate("vendor", "name remarks phone email")
+//         .populate("creator", "name email role site image")
+//         .limit(pageSize);
+//     } else if (role === "MANAGER") {
+//       expenseQuery = await Expense.find({
+//         // if i own it, good. or if site is my site, good.
+//         $or: [{ creator: user[0]._id }, { site: req.userData.site }],
+
+//       }, { log: 0, statusHistory: 0 })
+//         .sort({ createdAt: -1 })
+//         .populate("vendor", "name remarks phone email")
+//         .populate("creator", "name email role site image")
+
+//         .limit(pageSize);
+//     } else {
+//       expenseQuery = await Expense.find({ creator: user[0]._id },
+//         { log: 0, statusHistory: 0 })
+//         .sort({ createdAt: -1 })
+//         .populate("vendor", "name remarks phone email")
+//         .populate("creator", "name email role site image")
+
+//         .limit(pageSize);
+//     }
+
+
+//     if (expenseQuery) {
+//       console.log(expenseQuery[0], "expenseQuery");
+//       return res.status(200).json({
+//         expense: expenseQuery,
+//         message: "Expenses fetched Successfully",
+//       });
+//     } else {
+//       return res
+//         .status(500)
+//         .json({ message: "fetching expenses not successful" });
+//     }
+//   } catch (err) {
+//     console.log(err, 'error')
+//     return res
+//       .status(500)
+//       .json({ message: "fetching expenses not successful" + err });
+//   }
+// });
+
+router.get("", checkAuth, async (req, res) => {
   try {
-    let pageSize = +req.query.pagesize;
-    const currentPage = +req.query.page;
-    const imprest = req.query.imprest;
-    let user, userEmail;
-    let role = "";
-    // console.log(req.userData, "userData");
+    const { pagesize, page, imprest } = req.query;
+    const pageSize = +pagesize;
+    const currentPage = +page;
+    const userData = req.userData;
 
-    if (req.userData) {
-      userEmail = req.userData.email;
-      role = req.userData.role;
-      user = await User.find({ email: userEmail });
-      // console.log(user, "user");
-    }
-    // get start of today
+    const start = new Date(); start.setHours(0, 0, 0, 0);
+    const end = new Date(); end.setHours(23, 59, 59, 999);
 
-
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
-
-    const end = new Date();
-    end.setHours(23, 59, 59, 999);
-
-    const directors = process.env.DIRECTORS;
-    const generalManagers = process.env.GENERALMANAGERS;
-    const managers = process.env.MANAGERS;
-    const sites = [
-      "KPANSIA",
-      "SWALI",
-      "OKUTUKUTU",
-      "YENEGWE",
-      "OBUNNA",
-      "KPANSIA E",
-      "AKENFA",
-      "MBIAMA",
-    ];
-
-    const blockSites = ["OKUTUKUTU-BLOCKS", "AGADAGBA-BLOCKS"];
-    let expenseQuery;
+    const sites = ["KPANSIA", "SWALI", "OKUTUKUTU", "YENEGWE", "OBUNNA", "KPANSIA E", "AKENFA", "MBIAMA"];
+    let query = {};
 
     if (imprest) {
-      expenseQuery = await Expense.find({
+      query = {
         status: "APPROVED",
         expenseAccount: "Daily Imprest",
-        updatedAt: {
-          $gte: start,
-          $lte: end,
-        },
-
-      }, { log: 0, statusHistory: 0 })
-        .sort({ createdAt: -1 })
-        .populate("vendor", "name remarks phone email")
-        .populate("creator", "name email role site image")
-        .limit(pageSize);
-      // add dateStr: new Date(createdAt) to expenseQuery
-      expenseQuery = expenseQuery.map((e) => {
-        //  add DateStr to each expense
-        return {
-          ...e._doc,
-          dateStr: moment(e.createdAt).format("DD/MM/YYYY"),
-        };
-
-      });
-    } else if (role === "ADMIN") {
-      expenseQuery = await Expense.find({}, { log: 0, statusHistory: 0 })
-        .sort({ createdAt: -1 })
-        .populate("vendor", "name remarks phone email")
-        .populate("creator", "name email role site image")
-        .populate("products")
-        .limit(pageSize);
-    } else if (["GENERAL MANAGER", "SNR ACCOUNTANT"].includes(role)) {
-      expenseQuery = await Expense.find({
-        site: { $in: sites }
-      }, { log: 0, statusHistory: 0 })
-        .sort({ createdAt: -1 })
-        .populate("vendor", "name remarks phone email")
-        .populate("creator", "name email role site image")
-        .limit(pageSize);
-    } else if (role === "MANAGER") {
-      expenseQuery = await Expense.find({
-        // if i own it, good. or if site is my site, good.
-        $or: [{ creator: user[0]._id }, { site: req.userData.site }],
-
-      }, { log: 0, statusHistory: 0 })
-        .sort({ createdAt: -1 })
-        .populate("vendor", "name remarks phone email")
-        .populate("creator", "name email role site image")
-
-        .limit(pageSize);
+        updatedAt: { $gte: start, $lte: end },
+      };
     } else {
-      expenseQuery = await Expense.find({ creator: user[0]._id },
-        { log: 0, statusHistory: 0 })
-        .sort({ createdAt: -1 })
-        .populate("vendor", "name remarks phone email")
-        .populate("creator", "name email role site image")
-
-        .limit(pageSize);
+      switch (userData.role) {
+        case "ADMIN":
+          query = {};
+          break;
+        case "GENERAL MANAGER":
+        case "SNR ACCOUNTANT":
+          query = { site: { $in: sites } };
+          break;
+        case "MANAGER":
+          const user = await User.findOne({ email: userData.email });
+          query = {
+            $or: [
+              { creator: user._id },
+              { site: userData.site }
+            ],
+          };
+          break;
+        default:
+          const defaultUser = await User.findOne({ email: userData.email });
+          query = { creator: defaultUser._id };
+          break;
+      }
     }
 
+    const expenses = await Expense.find(query, { log: 0, statusHistory: 0 })
+      .sort({ createdAt: -1 })
+      .populate("vendor", "name remarks phone email")
+      .populate("creator", "name email role site image")
+      .populate("products")
+      .limit(pageSize);
 
-    if (expenseQuery) {
-      console.log(expenseQuery[0], "expenseQuery");
-      return res.status(200).json({
-        expense: expenseQuery,
-        message: "Expenses fetched Successfully",
-      });
-    } else {
-      return res
-        .status(500)
-        .json({ message: "fetching expenses not successful" });
-    }
+    const expensesWithDate = expenses.map(e => ({
+      ...e._doc,
+      dateStr: moment(e.createdAt).format("DD/MM/YYYY"),
+    }));
+
+    return res.status(200).json({
+      expense: expensesWithDate,
+      message: "Expenses fetched successfully",
+    });
+
   } catch (err) {
-    console.log(err, 'error')
-    return res
-      .status(500)
-      .json({ message: "fetching expenses not successful" + err });
+    console.error(err);
+    return res.status(500).json({ message: "Fetching expenses failed", error: err.message });
   }
 });
+
+router.get("/list", checkAuth, async (req, res) => {
+  try {
+    const { pagesize, page, imprest } = req.query;
+    const pageSize = +pagesize;
+    const currentPage = +page;
+    const userData = req.userData;
+
+    const start = new Date(); start.setHours(0, 0, 0, 0);
+    const end = new Date(); end.setHours(23, 59, 59, 999);
+
+    const sites = ["KPANSIA", "SWALI", "OKUTUKUTU", "YENEGWE", "OBUNNA", "KPANSIA E", "AKENFA", "MBIAMA"];
+    let query = {};
+
+    if (imprest) {
+      query = {
+        status: "APPROVED",
+        expenseAccount: "Daily Imprest",
+        updatedAt: { $gte: start, $lte: end },
+      };
+    } else {
+      switch (userData.role) {
+        case "ADMIN":
+          query = {};
+          break;
+        case "GENERAL MANAGER":
+        case "SNR ACCOUNTANT":
+          query = { site: { $in: sites } };
+          break;
+        case "MANAGER":
+          const user = await User.findOne({ email: userData.email });
+          query = {
+            $or: [
+              { creator: user._id },
+              { site: userData.site }
+            ],
+          };
+          break;
+        default:
+          const defaultUser = await User.findOne({ email: userData.email });
+          query = { creator: defaultUser._id };
+          break;
+      }
+    }
+
+    // Count total items based on the query
+    const totalItems = await Expense.countDocuments(query);
+
+    // Fetch the expenses with pagination
+    const expenses = await Expense.find(query, { log: 0, statusHistory: 0 })
+      .sort({ createdAt: -1 })
+      .populate("vendor", "name remarks phone email")
+      .populate("creator", "name email role site image")
+      .populate("products")
+      .skip((currentPage - 1) * pageSize)  // Pagination logic
+      .limit(pageSize);
+
+    // Add dateStr to each expense for display
+    const expensesWithDate = expenses.map(e => ({
+      ...e._doc,
+      dateStr: moment(e.createdAt).format("DD/MM/YYYY"),
+    }));
+
+    // Calculate totalPages
+    const totalPages = Math.ceil(totalItems / pageSize);
+
+    return res.status(200).json({
+      expenses: expensesWithDate,
+      message: "Expenses fetched successfully",
+      totalItems: totalItems,
+      totalPages: totalPages,
+      currentPage: currentPage
+    });
+
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Fetching expenses failed", error: err.message });
+  }
+});
+
 
 router.get("/mail/mailImprest", checkAuth, async (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;

@@ -16,7 +16,7 @@ const authSource = 'admin';
 const dbName = 'fido_db';
 
 if (hostname.includes("local")) {
-    connectStr = `mongodb://${username}:${password}@localhost:27017/${dbName}?replicaSet=${replicaSet}&authSource=${authSource}`;
+    connectStr = `mongodb://localhost:27017/${dbName}?replicaSet=${replicaSet}&authSource=${authSource}`;
 
 }
 

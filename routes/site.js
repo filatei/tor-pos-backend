@@ -58,16 +58,7 @@ router.post(
       let myPath = "";
       const file = req.file;
       let fileName;
-      // if (file) {
-      //   fileName = "uploads/site/" + req.userData.userId + "/" + file.filename;
-      //   if (hostname.includes("torama.ng")) {
-      //     url = "https://fido-api.torama.ng";
-      //   } else {
-      //     url = req.protocol + "://" + req.get("host");
-      //   }
 
-      //   myPath = url + "/" + fileName;
-      // }
       let taxR = 0;
       let bDate = new Date();
       console.log(req.body)
@@ -79,14 +70,14 @@ router.post(
       if (buildDate) {
         bDate = new Date(buildDate)
       }
-     
+
       const creator = req.userData.userId;
       const siteObj = {
         name,
         address,
         taxRate: taxR,
         phone,
-        buildDate:bDate,
+        buildDate: bDate,
         email,
         creator,
         image: myPath,
@@ -126,7 +117,7 @@ router.put("/:id", checkAuth, async (req, res, next) => {
 
   let siteObj = req.body;
   const id = req.params.id;
-  
+
   let user = req.userData;
   const updater = req.userData.userId;
 
@@ -189,7 +180,7 @@ router.delete("/:id", checkAuth, (req, res, next) => {
 });
 
 router.get("", checkAuth, async (req, res, next) => {
-  const pageSize = +req.query.pagesize;
+  let pageSize = +req.query.pagesize;
   if (!pageSize) pageSize = 200;
   const currentPage = +req.query.page;
   const directors = process.env.DIRECTORS;

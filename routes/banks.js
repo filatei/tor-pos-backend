@@ -107,6 +107,55 @@ router.get('/init-upload', async (req, res) => {
 
 });
 
+// GET all banks
+router.get('', async (req, res) => {
+
+  try {
+    const banks = await Bank.find()
+      .select('name code icon')
+      .sort({ name: 1 });
+    AllowedBanks = ["GTBANK PLC", "MONIEPOINT MICROFINANCE BANK", "UNITED BANK FOR AFRICA", "First City Monument Bank", "MONIE POINT BANK", "WEMA BANK", "FIDELITY BANK"];
+    const allowedBankNamesLower = AllowedBanks.map(b => b.toLowerCase());
+    const filteredBanks = banks.filter((bank) => {
+      return bank
+      // return allowedBankNamesLower.includes(bank.name.toLowerCase());
+    });
+    // console.log(filteredBanks, 'filteredBanks')
+
+    res.json({
+      success: true,
+      data: banks,
+      message: 'Banks fetched successfully'
+    });
+  } catch (error) {
+    console.error('Error fetching banks:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch banks'
+    });
+  }
+});
+
+
+router.get("/:id", (req, res, next) => {
+  Bank.findById(req.params.id)
+    .populate("categoryId")
+    .then((bank) => {
+      if (bank) {
+        res.status(200).json(bank);
+      } else {
+        res.status(404).json({ message: "bank not found!" });
+      }
+    })
+    .catch((error) => {
+      res.status(500).json({
+        message: "Fetching bank failed! " + error,
+      });
+    });
+});
+
+
+
 
 
 router.post('/add-bank', checkAuth, async (req, res) => {
@@ -217,21 +266,8 @@ router.get('/banks', async (req, res) => {
 });
 
 
-router.get("/:id", (req, res, next) => {
-  Bank.findById(req.params.id)
-    .populate("categoryId")
-    .then((bank) => {
-      if (bank) {
-        res.status(200).json(bank);
-      } else {
-        res.status(404).json({ message: "bank not found!" });
-      }
-    })
-    .catch((error) => {
-      res.status(500).json({
-        message: "Fetching bank failed! " + error,
-      });
-    });
-});
+
+
+
 
 module.exports = router;

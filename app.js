@@ -9,6 +9,9 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const mongoose = require("mongoose");
+const jsonParser = bodyParser.json({ limit: "1mb" });
+const urlencodedParser = bodyParser.urlencoded({ limit: "50mb", extended: true, parameterLimit: 50000 });
+
 
 const app = express();
 
@@ -97,26 +100,24 @@ app.use(
 
 app.use(bodyParser.json({ limit: "1mb" }));
 
-// app.use(cors());
 app.use(cors({
   origin: '*',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+// app.use((req, res, next) => {
+//   res.setHeader("Access-Control-Allow-Origin", "*");
+//   res.setHeader(
+//     "Access-Control-Allow-Header",
+//     "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+//   );
+//   res.setHeader(
+//     "Access-Control-Allow-Methods",
+//     "GET, POST, PATCH, DELETE, PUT, OPTIONS"
+//   );
 
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader(
-    "Access-Control-Allow-Header",
-    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-  );
-  res.setHeader(
-    "Access-Control-Allow-Methods",
-    "GET, POST, PATCH, DELETE, POST, PUT, OPTIONS"
-  );
-
-  next();
-});
+//   next();
+// });
 
 app.use("/api/paymethods", paymethodsRoutes);
 app.use("/api/products", productsRoutes);

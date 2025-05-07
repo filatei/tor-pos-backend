@@ -24,6 +24,7 @@ const oauth2Client = new google.auth.OAuth2(
 
 oauth2Client.setCredentials({
   refresh_token: tokens.refresh_token,
+  // refresh_token: process.env.refresh_token,
 });
 
 let fullDate = new Date().getFullYear()

@@ -219,14 +219,14 @@ router.delete("/:id", checkAuth, (req, res, next) => {
 
 router.get("/getByText", checkAuth, async (req, res, next) => {
   try {
-    const alloweds = ['ADMIN', 'MANAGER', 'GENERAL MANAGER', 'SECRETARY','SNR ACCOUNTANT', 'ACCOUNTANT', 'SUPERVISOR', 'POS OFFICER']
+    const alloweds = ['ADMIN', 'MANAGER', 'GENERAL MANAGER', 'SECRETARY', 'SNR ACCOUNTANT', 'ACCOUNTANT', 'SUPERVISOR', 'POS OFFICER']
 
     if (!alloweds.includes(req.userData.role)) {
       return res.status(500).json({ message: "Not allowed" });
     }
 
     const { searchTerm } = req.query;
-    const f2 = await Expenseitem.find({}).limit(2)
+    // const f2 = await Expenseitem.find({}).limit(2)
 
     const result = await Expenseitem.aggregate([
       { $match: { $text: { $search: searchTerm } } },
@@ -234,7 +234,7 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
       .sort({ createdAt: -1 })
       .limit(200);
 
-
+    console.log(result, "result 1");
     if (result.length) return res.status(200).json({ expenseitem: result });
 
     // Expenseitem.find({ $text: { $search: searchTerm } })
@@ -244,6 +244,7 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
       .limit(200)
       .then((record) => {
         if (record) {
+          console.log(record, "record ");
           res.status(200).json({ expenseitem: record });
         } else {
           res.status(404).json({ message: "record not found!" });
@@ -254,12 +255,12 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
           message: "Fetching record failed!" + error,
         });
       });
-    
+
   } catch (error) {
     console.log(error)
     res.status(404).json({ message: "server try Block Error! " + error });
   }
-  
+
 });
 
 router.get("", (req, res, next) => {

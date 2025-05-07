@@ -61,6 +61,60 @@ var upload = multer({
   },
 });
 
+// router.post("/verify", async (req, res, next) => {
+//   try {
+//     const { token, otp: inputOtp } = req.body;
+
+//     if (!token || !inputOtp) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Token and OTP are required",
+//       });
+//     }
+
+//     const vUser = await User.findOne({ verify: token });
+//     if (!vUser) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "No user found with this verification token",
+//       });
+//     }
+
+//     // Verify OTP
+//     const isOtpValid = await bcrypt.compare(inputOtp.toString(), vUser.otp);
+//     if (!isOtpValid) {
+//       return res.status(401).json({
+//         success: false,
+//         message: "Invalid OTP",
+//       });
+//     }
+
+//     // Update user
+//     vUser.verify = "";
+//     vUser.isVerified = true;
+//     vUser.otp = "";
+
+//     const savedUser = await vUser.save();
+//     if (!savedUser) {
+//       throw new Error("Failed to save user verification");
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Verification successful",
+//       result: _.omit(savedUser.toObject(), ['password', 'otp']),
+//     });
+
+//   } catch (err) {
+//     console.error("Verification error:", err);
+//     return res.status(500).json({
+//       success: false,
+//       message: "An error occurred during verification",
+//       error: process.env.NODE_ENV === 'development' ? err.message : undefined,
+//     });
+//   }
+// });
+
 router.post("/verify", async (req, res, next) => {
   // console.log(req.body, "req body");
   try {
@@ -96,7 +150,7 @@ router.post("/verify", async (req, res, next) => {
       if (saved) {
         console.log(saved)
         return res.status(200).json({
-          message: "Confirmation  successful",
+          message: "Confirmation successful",
           result: saved
         });
       } else {
@@ -465,6 +519,82 @@ router.post("/fiaLogin", async (req, res, next) => {
     return res.status(500).json({ message: "Error in code block " + err });
   }
 });
+// router.post("/signup", async (req, res) => {
+//   try {
+//     const { email, name, phone, password } = req.body;
+
+//     // Basic validation
+//     if (!email || !name || !phone || !password) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "All fields are required",
+//       });
+//     }
+
+//     // Generate verification token
+//     const verifyToken = jwt.sign(
+//       { email, name },
+//       process.env.ACCESS_VERIFY_SECRET,
+//       { expiresIn: '20m' } // 20 minutes
+//     );
+
+//     // Generate OTP
+//     const otp = Array.from({ length: 4 }, () =>
+//       Math.floor(Math.random() * 9) + 1
+//     ).join('');
+
+//     // Hash OTP and password
+//     const salt = await bcrypt.genSalt(10);
+//     const [otpHash, passwordHash] = await Promise.all([
+//       bcrypt.hash(otp, salt),
+//       bcrypt.hash(password, salt)
+//     ]);
+
+//     // Create user
+//     const user = new User({
+//       name,
+//       email,
+//       image: 'assets/images/no-person.png',
+//       password: passwordHash,
+//       verify: verifyToken,
+//       phone,
+//       otp: otpHash
+//     });
+
+//     const savedUser = await user.save();
+//     console.log(savedUser, 'savedUser')
+
+//     // try {
+//     //   await MyMail.verifyAuth(savedUser._id, savedUser.verify, otp);
+//     // } catch (mailError) {
+//     //   console.error("Failed to send verification email:", mailError);
+//     //   // Don't fail the request - just log the error
+//     // }
+
+//     return res.status(201).json({
+//       success: true,
+//       message: "User created successfully",
+//       result: _.omit(savedUser.toObject(), ['password']),
+//     });
+
+//   } catch (err) {
+//     console.error("Signup error:", err);
+
+//     // Handle duplicate key errors (like duplicate email)
+//     if (err.code === 11000) {
+//       return res.status(409).json({
+//         success: false,
+//         message: "User with this email already exists",
+//       });
+//     }
+
+//     return res.status(500).json({
+//       success: false,
+//       message: "Failed to create user",
+//       error: process.env.NODE_ENV === 'development' ? err.message : undefined,
+//     });
+//   }
+// });
 
 router.post("/signup", async (req, res, next) => {
   const verifyToken = jwt.sign(
@@ -500,17 +630,17 @@ router.post("/signup", async (req, res, next) => {
       otp: otpHash
     });
 
+
+
     user
       .save()
       .then(async (result) => {
-        // console.log(result);
-        delete result.password;
-        await MyMail.verifyAuth(result._id, result.verify, otp);
-        delete result.password;
-        delete result.otp;
+
+
         res.status(201).json({
           message: "User created!",
-          result: result,
+          result: _.omit(result.toObject(), ['password']),
+          otp
         });
       })
       .catch((err) => {
@@ -625,8 +755,9 @@ router.put("/resetUserPassword/:id", checkAuth, async (req, res, next) => {
 
     const id = req.params.id;
     const updater = req.userData.userId;
+    const updatedHash = await bcrypt.hash("123456", 10);
 
-    const updatedUser = await User.findByIdAndUpdate(id, { password: "4878734hgejh8778874djhhfhgfhjf" });
+    const updatedUser = await User.findByIdAndUpdate(id, { password: updatedHash });
     if (updatedUser) {
       res
         .status(200)
@@ -718,6 +849,16 @@ router.delete("/:id", checkAuth, async (req, res, next) => {
         message: "Deleting receipt failed!",
       });
     });
+});
+
+// Add this at the end of your routes
+router.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({
+    success: false,
+    message: 'Internal server error',
+    error: process.env.NODE_ENV === 'development' ? err.message : undefined
+  });
 });
 
 

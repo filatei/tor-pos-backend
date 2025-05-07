@@ -143,6 +143,7 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   if (!alloweds.includes(req.userData.role)) {
     return res.status(500).json({ message: "Not allowed to update expense" });
   }
+  console.log(req.body, "expense body");
 
   let expenseObj = req.body;
   let status = expenseObj.status;
@@ -174,7 +175,7 @@ router.put("/:id", checkAuth, async (req, res, next) => {
       status === "PART-PAY"
     ) {
       //  send mail
-      const mailStat = await Mail.sendExpense(expenseObj, updater);
+      // const mailStat = await Mail.sendExpense(expenseObj, updater);
     }
   }
 
@@ -441,32 +442,32 @@ router.get("/summaryAll", checkAuth, async (req, res, next) => {
   }
 });
 
-router.delete("/:id", checkAuth, (req, res, next) => {
+// router.delete("/:id", checkAuth, (req, res, next) => {
 
-  const delAlloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT',]
-  if (!delAlloweds.includes(req.userData.role)) {
-    return res.status(500).json({ message: "Not allowed" });
-  }
+//   const delAlloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT',]
+//   if (!delAlloweds.includes(req.userData.role)) {
+//     return res.status(500).json({ message: "Not allowed" });
+//   }
 
-  deleteExpense();
+//   deleteExpense();
 
-  function deleteExpense() {
-    Expense.deleteOne({ _id: req.params.id })
-      .then((result) => {
-        if (result.n > 0) {
-          res.status(200).json({ message: "Deletion successful!" });
-        } else {
-          res.status(401).json({ message: "Not authorized!" });
-        }
-      })
-      .catch((error) => {
-        console.error(error, "catch err");
-        res.status(500).json({
-          message: "Deleting expense failed! " + error,
-        });
-      });
-  }
-});
+//   function deleteExpense() {
+//     Expense.deleteOne({ _id: req.params.id })
+//       .then((result) => {
+//         if (result.n > 0) {
+//           res.status(200).json({ message: "Deletion successful!" });
+//         } else {
+//           res.status(401).json({ message: "Not authorized!" });
+//         }
+//       })
+//       .catch((error) => {
+//         console.error(error, "catch err");
+//         res.status(500).json({
+//           message: "Deleting expense failed! " + error,
+//         });
+//       });
+//   }
+// });
 
 // router.get("", checkAuth, async (req, res, next) => {
 //   try {
@@ -588,6 +589,33 @@ router.delete("/:id", checkAuth, (req, res, next) => {
 //   }
 // });
 
+
+router.delete("/:id", checkAuth, async (req, res) => {
+  const delAlloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT'];
+  if (!delAlloweds.includes(req.userData.role)) {
+    return res.status(403).json({ message: "Not allowed" });
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    return res.status(400).json({ message: "Invalid expense ID" });
+  }
+
+  try {
+    const result = await Expense.deleteOne({ _id: req.params.id });
+    if (result.deletedCount > 0) {
+      return res.status(200).json({ message: "Deletion successful!" });
+    } else {
+      return res.status(404).json({ message: "Expense not found or not authorized!" });
+    }
+  } catch (error) {
+    console.error("Deleting expense failed:", error);
+    return res.status(500).json({
+      message: "Deleting expense failed!",
+      error: error.message,
+    });
+  }
+});
+
 router.get("", checkAuth, async (req, res) => {
   try {
     const { pagesize, page, imprest } = req.query;
@@ -651,13 +679,14 @@ router.get("", checkAuth, async (req, res) => {
 
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: "Fetching expenses failed", error: err.message });
+    return res.status(500).json({ message: "fetching expenses not successful", error: err.message });
   }
 });
 
+// for React Native Code
 router.get("/list", checkAuth, async (req, res) => {
   try {
-    const { pagesize, page, imprest } = req.query;
+    const { pagesize, page, imprest, search } = req.query;
     const pageSize = +pagesize;
     const currentPage = +page;
     const userData = req.userData;
@@ -699,6 +728,37 @@ router.get("/list", checkAuth, async (req, res) => {
       }
     }
 
+    // --- SEARCH SUPPORT ---
+    if (search && typeof search === 'string' && search.trim() !== '') {
+      const searchRegex = new RegExp(search, 'i');
+      // Add $and if query already has conditions, otherwise just $or
+      if (Object.keys(query).length > 0) {
+        query = {
+          $and: [
+            query,
+            {
+              $or: [
+                { title: searchRegex },
+                { site: searchRegex },
+                { 'vendor.name': searchRegex },
+                { 'products.name': searchRegex }
+              ]
+            }
+          ]
+        };
+      } else {
+        query = {
+          $or: [
+            { title: searchRegex },
+            { site: searchRegex },
+            { 'vendor.name': searchRegex },
+            { 'products.name': searchRegex }
+          ]
+        };
+      }
+    }
+    // --- END SEARCH SUPPORT ---
+
     // Count total items based on the query
     const totalItems = await Expense.countDocuments(query);
 
@@ -734,6 +794,139 @@ router.get("/list", checkAuth, async (req, res) => {
   }
 });
 
+// Backend route to get totals
+router.get('/totals', async (req, res) => {
+  try {
+    const results = await Expense.aggregate([
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$txn_amount" },
+          pending: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "PENDING"] }, "$txn_amount", 0]
+            }
+          },
+          approved: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "APPROVED"] }, "$txn_amount", 0]
+            }
+          },
+          paid: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "PAID"] }, "$txn_amount", 0]
+            }
+          },
+          draft: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "DRAFT"] }, "$txn_amount", 0]
+            }
+          },
+          validated: {
+            $sum: {
+              $cond: [{ $eq: ["$status", "VALIDATED"] }, "$txn_amount", 0]
+            }
+          }
+        }
+      }
+    ]);
+
+    res.status(200).json(results[0] || {
+      total: 0,
+      pending: 0,
+      approved: 0,
+      paid: 0,
+      draft: 0,
+      validated: 0
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/weekly-totals', async (req, res) => {
+  try {
+    const now = new Date();
+    const currentWeekStart = new Date(now.setDate(now.getDate() - now.getDay()));
+    currentWeekStart.setHours(0, 0, 0, 0);
+
+    const lastWeekStart = new Date(currentWeekStart);
+    lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+
+    const results = await Expense.aggregate([
+      {
+        $facet: {
+          currentWeek: [
+            {
+              $match: {
+                date: { $gte: currentWeekStart }
+              }
+            },
+            {
+              $group: {
+                _id: null,
+                total: { $sum: "$txn_amount" },
+                pending: { $sum: { $cond: [{ $eq: ["$status", "PENDING"] }, "$txn_amount", 0] } },
+                approved: { $sum: { $cond: [{ $eq: ["$status", "APPROVED"] }, "$txn_amount", 0] } },
+                paid: { $sum: { $cond: [{ $eq: ["$status", "PAID"] }, "$txn_amount", 0] } },
+                weekStart: { $first: currentWeekStart },
+                weekEnd: { $first: new Date() }
+              }
+            }
+          ],
+          lastWeek: [
+            {
+              $match: {
+                date: {
+                  $gte: lastWeekStart,
+                  $lt: currentWeekStart
+                }
+              }
+            },
+            {
+              $group: {
+                _id: null,
+                total: { $sum: "$txn_amount" },
+                pending: { $sum: { $cond: [{ $eq: ["$status", "PENDING"] }, "$txn_amount", 0] } },
+                approved: { $sum: { $cond: [{ $eq: ["$status", "APPROVED"] }, "$txn_amount", 0] } },
+                paid: { $sum: { $cond: [{ $eq: ["$status", "PAID"] }, "$txn_amount", 0] } },
+                weekStart: { $first: lastWeekStart },
+                weekEnd: { $first: currentWeekStart }
+              }
+            }
+          ]
+        }
+      },
+      {
+        $project: {
+          currentWeek: { $arrayElemAt: ["$currentWeek", 0] },
+          lastWeek: { $arrayElemAt: ["$lastWeek", 0] }
+        }
+      }
+    ]);
+
+    res.json(results[0] || {
+      currentWeek: {
+        total: 0,
+        pending: 0,
+        approved: 0,
+        paid: 0,
+        weekStart: currentWeekStart,
+        weekEnd: new Date()
+      },
+      lastWeek: {
+        total: 0,
+        pending: 0,
+        approved: 0,
+        paid: 0,
+        weekStart: lastWeekStart,
+        weekEnd: currentWeekStart
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 router.get("/mail/mailImprest", checkAuth, async (req, res, next) => {
   const alloweds = process.env.ALLOWEDS;
@@ -780,9 +973,7 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
   try {
     const { searchTerm } = req.query;
     let payHist = []
-    // if (req.userData.role === 'ADMIN') {
-    //    payHist = await payHistory(searchTerm)
-    // }
+
     const totalCount = await countExpenses(searchTerm); // Step 1: Count total records
     const results = await searchExpenses(searchTerm, limit, offset); // Step 2: Fetch paged data
 
@@ -1171,7 +1362,7 @@ router.get("/:id", (req, res, next) => {
     .populate("creator", "name email role site image")
     .then((expense) => {
       if (expense) {
-        console.log(expense, "expense");
+        // console.log(expense, "expense");
         res.status(200).json({ expense });
       } else {
         res.status(404).json({ message: "expense not found!" });
@@ -1198,14 +1389,18 @@ router.put(
       "ACCOUNTANT",
       "SECRETARY", "OPERATOR"
     ];
+    console.log(req.userData, "userData");
 
     if (!alloweds.includes(req.userData.role)) {
-      return res.status(500).json({ message: "Not allowed" });
+      return res.status(403).json({ message: "Not allowed" });
     }
+
 
 
     let updater = req.userData.userId;
     let myPath;
+    console.log(req.files, "req.files");
+    console.log(req.body, "req.body");
     if (req.files) {
       req.files.forEach((file) => {
         if (hostname.includes("torama.ng")) {
@@ -1220,6 +1415,8 @@ router.put(
           file.path.split("/var/www/uploads/expenses")[1];
       });
     }
+
+    console.log(myPath, "myPath");
 
     const note = req.body;
     let recId = req.params.id;
@@ -1258,7 +1455,7 @@ router.put(
           { notes: notes, updater: updater, log: log }
         )
           .then(async (result) => {
-            let msent = await Mail.sendNote(note, expObj);
+            // let msent = await Mail.sendNote(note, expObj);
             const expense = await Expense.findById(recId).populate("vendor").populate("creator", "name email role site image")
             return res.status(201).json({
               message: " note with image updated successfully",
@@ -1281,6 +1478,33 @@ router.put(
     }
   }
 );
+
+router.delete('/notes/:expenseId/:noteIndex', checkAuth, async (req, res) => {
+  const { expenseId, noteIndex } = req.params;
+  // ...auth checks...
+  const alloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT'];
+  if (!alloweds.includes(req.userData.role)) {
+    return res.status(403).json({ message: "Not allowed" });
+  }
+  if (!mongoose.Types.ObjectId.isValid(expenseId)) {
+    return res.status(400).json({ message: "Invalid expense ID" });
+  }
+  if (isNaN(noteIndex) || noteIndex < 0) {
+    return res.status(400).json({ message: "Invalid note index" });
+  }
+  try {
+    const expense = await Expense.findById(expenseId);
+    if (!expense) return res.status(404).json({ message: 'Expense not found' });
+    expense.notes.splice(noteIndex, 1);
+    await expense.save();
+    res.json({ message: 'Note deleted', notes: expense.notes });
+
+  } catch (error) {
+    return res.status(500).json({ message: "Error with update  " + error });
+
+  }
+
+});
 
 router.post("/mail", checkAuth, function (req, res, next) {
   let expenseObj = req.body;

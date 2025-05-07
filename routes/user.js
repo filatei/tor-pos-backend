@@ -759,6 +759,7 @@ router.put("/resetUserPassword/:id", checkAuth, async (req, res, next) => {
 
     const updatedUser = await User.findByIdAndUpdate(id, { password: updatedHash });
     if (updatedUser) {
+      console.log(updatedUser, "updatedUser")
       res
         .status(200)
         .json({ message: "Update successful!" });

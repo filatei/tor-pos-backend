@@ -143,7 +143,7 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   if (!alloweds.includes(req.userData.role)) {
     return res.status(500).json({ message: "Not allowed to update expense" });
   }
-  console.log(req.body, "expense body");
+  // console.log(req.body, "expense body");
 
   let expenseObj = req.body;
   let status = expenseObj.status;
@@ -1336,7 +1336,7 @@ router.get("/expense/:id", (req, res, next) => {
     .populate("creator")
     .then((expense) => {
       if (expense) {
-        console.log(expense, "expense");
+        // console.log(expense, "expense");
         res.status(200).json({ expense });
       } else {
         const error = new HttpError("expense not found!", 404);
@@ -1399,8 +1399,8 @@ router.put(
 
     let updater = req.userData.userId;
     let myPath;
-    console.log(req.files, "req.files");
-    console.log(req.body, "req.body");
+    // console.log(req.files, "req.files");
+    // console.log(req.body, "req.body");
     if (req.files) {
       req.files.forEach((file) => {
         if (hostname.includes("torama.ng")) {
@@ -1416,7 +1416,7 @@ router.put(
       });
     }
 
-    console.log(myPath, "myPath");
+    // console.log(myPath, "myPath");
 
     const note = req.body;
     let recId = req.params.id;

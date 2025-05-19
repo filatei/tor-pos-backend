@@ -83,6 +83,8 @@ const expenseSchema = mongoose.Schema(
 );
 
 expenseSchema.plugin(AutoIncrement, { inc_field: "expense_id" });
+expenseSchema.index({ expense_id: 1 }, { unique: true });
+
 
 expenseSchema.index({ "$**": "text" });
 

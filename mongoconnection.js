@@ -18,6 +18,8 @@ const dbName = 'fido_db';
 if (hostname.includes("local")) {
     // connectStr = `mongodb://localhost:27017/${dbName}?replicaSet=${replicaSet}&authSource=${authSource}`;
     connectStr = `mongodb://localhost:27017,localhost:27018,localhost:27019/fido_db?replicaSet=rs0`
+    // connectStr = `mongodb://localhost:27017/fido_db?replicaSet=rs0&directConnection=false`
+
 }
 
 if (hostname.includes("torama.ng")) {

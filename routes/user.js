@@ -1,9 +1,12 @@
 
 const User = require("../models/user");
 const express = require("express");
+const { clerkClient } = require('@clerk/express');
+
 const router = express.Router();
 // google oauth stuff
 const os = require("os");
+const fs = require("fs");
 const homedir = os.homedir();
 const fia_googleInfo = require(`${homedir}/.google_client_secret_fia.json`);
 const FIA_GOOGLE_CLIENT_ID = fia_googleInfo.client_id;
@@ -15,13 +18,20 @@ const fido_googleInfo = require(`${homedir}/.google_client_secret_fido.json`);
 const FIDO_GOOGLE_CLIENT_ID = fido_googleInfo.client_id;
 const fido_client = new OAuth2Client(FIDO_GOOGLE_CLIENT_ID);
 
+// clerk oauth stuff
+const { verifyClerkToken } = require('../utils/clerk');
+
+
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const fs = require("fs");
 
 const hostname = os.hostname();
 const MyMail = require("../mail");
 const _ = require("lodash");
+
+
+
+
 var multer = require("multer");
 const checkAuth = require("../middleware/check-auth");
 const Mail = require("nodemailer/lib/mailer");
@@ -380,6 +390,136 @@ router.post("/googleLogin", async (req, res, next) => {
     return res.status(500).json({ message: "Error in code block " + err });
   }
 });
+
+// router.post('/clerk-login', async (req, res) => {
+//   console.log(req.body, 'req.body clerk-login')
+//   const { email, name, image } = req.body;
+
+//   try {
+//     let user = await User.findOne({ email });
+
+//     if (!user) {
+//       user = await User.create({ email, name, image });
+//     } else {
+//       user.lastLogin = new Date();
+//       user.provider = "clerk";
+//       await user.save();
+//     }
+
+//     const token = jwt.sign(
+//       {
+//         email: user.email,
+//         userId: user._id,
+//         name: user.name,
+//       },
+//       process.env.ACCESS_TOKEN_SECRET,
+//       { expiresIn: '1000h' }
+//     );
+
+//     return res.json({ token });
+//   } catch (err) {
+//     console.error(err);
+//     return res.status(500).json({ message: 'Error creating token' });
+//   }
+// });
+router.post('/clerk-login',  async (req, res) => {
+
+  try {
+    // 1. Extract Bearer token
+    const auth = req.headers.authorization;
+    if (!auth?.startsWith('Bearer ')) {
+      return res.status(401).json({ message: 'Missing or invalid token' });
+    }
+    const token = auth.split(' ')[1];
+    console.log(token, 'token from clerk login')
+
+    // 2. Verify it locally
+    const fromClerkSession = await verifyClerkSession(token);
+    console.log(fromClerkSession, 'fromClerkSession from clerk login')
+    const { sub: userId } = fromClerkSession;
+    console.log(userId, 'userId from clerk login')
+
+    // 3. Fetch full user profile from Clerk
+    const clerkUser = await clerkClient.users.getUser(userId);
+    console.log(clerkUser, 'clerkUser from clerk login')
+    const email = clerkUser.emailAddresses?.[0]?.emailAddress;
+    const name  = `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim();
+    const image = clerkUser.imageUrl;
+
+    if (!email) {
+      return res.status(400).json({ message: 'Clerk user missing email' });
+    }
+
+    // 4. Upsert into your MongoDB
+    let user = await User.findOne({ email });
+    if (!user) {
+      user = await User.create({ email, name, image });
+    } else {
+      user.lastLogin = new Date();
+      user.provider  = 'clerk';
+      await user.save();
+    }
+
+    // 5. Issue your own JWT for backend auth
+    const backendToken = jwt.sign(
+      { email: user.email, userId: user._id, name: user.name },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: '1000h' }
+    );
+
+    return res.json({ token: backendToken });
+  } catch (err) {
+    console.error('Clerk login error:', err);
+    return res.status(500).json({ message: 'Error verifying Clerk token or creating JWT' });
+  }
+});
+
+router.post('/clerk-protected', async (req, res) => {
+  const auth = req.headers.authorization;
+  if (!auth) {
+    return res.status(401).end();
+  }
+
+  const token = auth.replace(/^Bearer\s+/, '');
+  console.log(token, 'token from clerk protected')
+  try {
+    const payload = await verifyClerkToken(token);
+    console.log(payload, 'payload from clerk protected')
+    const userId = payload.sub;
+
+    const user = await clerkClient.users.getUser(userId);
+    // Now you can read:
+    // user.emailAddresses[0].emailAddress
+    // user.firstName / user.lastName
+    // user.primaryPhoneNumber
+    // user.publicMetadata.locale
+    const email = user.emailAddresses?.[0]?.emailAddress;
+    const name  = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+    const image = user.imageUrl;
+
+    const existingUser = await User.findOne({ email: email });
+    // user has no site, so we need to get it from the publicMetadata
+    if (existingUser && !existingUser.site) {
+      userSite = user.publicMetadata.site;
+    }
+
+    const update = { userId, name, image, email, provider: 'clerk', lastLogin: new Date(), site: userSite };
+    let doc = await User.findOneAndUpdate({ email: email }, update, {
+      new: true,
+      upsert: true // Make this update into an upsert
+    });
+    console.log(doc, 'saveddoc from clerk protected')
+
+    // payload.uid is the Clerk user ID, payload.sid is session ID, etc.
+    res.status(200).json(doc);
+  } catch (err) {
+    console.error('JWT verify error:', err);
+    res.status(401).json({ error: err.message });
+  }
+});
+
+
+
 
 router.post("/fidoLogin", async (req, res, next) => {
   try {

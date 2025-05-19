@@ -13,7 +13,10 @@ const userSchema = mongoose.Schema(
       trim: true,
       lowercase: true,
     },
-    password: { type: String, required: true },
+    password: { type: String, 
+      required: function () {
+      return !this.userId; // If userId exists (e.g. from Clerk), skip password
+    } },
     image: { type: String },
     site: { type: String },
     otp: { type: String },
@@ -24,13 +27,15 @@ const userSchema = mongoose.Schema(
       type: String, enum: ["ADMIN", "MANAGER", "GENERAL MANAGER", "HR", "SNR ACCOUNTANT",
         "ACCOUNTANT", "SUPERVISOR", "QAQC", "SNR SECRETARY", "SECRETARY", "STOREKEEPER", "OPERATOR",
         "BAGGER", "SECURITY", "LOADER", "OFFICEKEEPER", "POS OFFICER", "POLICE", "CONSULTANT",
-        "OFFICER", "BUYER", "OTHER",
+        "OFFICER", "BUYER", "USER", "user","OTHER",
       ]
     },
     nin: { type: String, maxLength: 11, minLength: 11, trim: true },
     verify: { type: String },
     isVerified: { type: Boolean },
     resetLink: { type: String, default: "" },
+    lastLogin: { type: Date },
+    provider: { type: String, default: "email" },
   },
   {
     timestamps: true,

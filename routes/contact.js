@@ -9,6 +9,7 @@ const path = require("path");
 const fs = require("fs");
 const os = require("os");
 const hostname = os.hostname();
+const clerkMiddleware = require("../middleware/clerk-check");
 var multer = require("multer");
 const DIR = "./uploads/contactimages/";
 const storage = multer.diskStorage({
@@ -77,6 +78,34 @@ router.post("", checkAuth, upload.single("image"), function (req, res, next) {
 
   // console.log('path: ', path)
   // console.log('req.body', req.body)
+
+  let contactObj = req.body;
+  contactObj.name = contactObj.name.toUpperCase();
+  console.log(req.userData);
+
+  contactObj.creator = req.userData.userId;
+
+  const contact = new Contact(contactObj);
+  contact.icon = path || null;
+
+  contact
+    .save()
+    .then((result) => {
+      res.status(201).json({
+        message: "Contact added successfully",
+        contact: { ...result, id: result._id },
+      });
+    })
+    .catch((error) => {
+      res.status(500).json({
+        message: "Creating a contact failed! " + error,
+      });
+    });
+});
+
+router.post("/create", clerkMiddleware,  function (req, res, next) {
+  let path = "";
+  let url = "";
 
   let contactObj = req.body;
   contactObj.name = contactObj.name.toUpperCase();
@@ -249,6 +278,66 @@ router.get("", (req, res, next) => {
     });
 });
 
+router.get("/list", clerkMiddleware, (req, res, next) => {
+  const pageSize = +req.query.pagesize;
+  const currentPage = +req.query.page;
+  const contactQuery = Contact.find();
+  if (pageSize && currentPage) {
+    contactQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
+  }
+  contactQuery
+    .then((documents) => {
+      res.status(200).json({
+        message: "Inventories fetched successfully!",
+        contact: documents,
+      });
+    })
+    .catch((error) => {
+      res.status(500).json({
+        message: "Fetching inventories failed! " + error,
+      });
+    });
+});
+
+router.get("/search", clerkMiddleware, async (req, res, next) => {
+  try {
+    const alloweds = [
+      "ADMIN",
+      "MANAGER",
+      "GENERAL MANAGER",
+      "SECRETARY",
+      "SNR ACCOUNTANT",
+      "ACCOUNTANT",
+      "SUPERVISOR",
+      "POS OFFICER",
+      "USER",
+    ];
+    console.log(req.userData,'req.userData')
+
+    if (!alloweds.includes(req.userData.role)) {
+      return res.status(500).json({ message: "Not allowed" });
+    }
+
+    const { searchTerm } = req.query;
+    console.log(searchTerm,'searchTerm')
+   
+    let result = [];
+    result = await Contact.find({
+      name: { $regex: searchTerm, $options: "i" },
+    })
+      .sort({ name: 1 })
+      .limit(50);
+
+
+    return res.status(200).json({ contacts: result });
+
+  } catch (error) {
+    console.log(error);
+    res.status(404).json({ message: "server try Block Error! " + error });
+  }
+});
+
+
 router.get("/getByText", checkAuth, async (req, res, next) => {
   try {
     const alloweds = [
@@ -268,11 +357,7 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
 
     const { searchTerm } = req.query;
 
-    // const result = await Contact.aggregate([
-    //     { $match: { $text: { $search: searchTerm } } },
-    //   ])
-    //     .sort({ createdAt: -1 })
-    //   .limit(200);
+   
     let result = [];
     result = await Contact.find({
       name: { $regex: searchTerm, $options: "i" },
@@ -284,22 +369,6 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
 
     return res.status(200).json({ contacts: result });
 
-    // Contact.find({ $text: { $search: searchTerm } })
-    //   .sort({ updatedAt: -1 })
-    //   .populate("creator")
-    //   .limit(200)
-    //   .then((record) => {
-    //     if (record) {
-    //       res.status(200).json({ contacts: record });
-    //     } else {
-    //       res.status(404).json({ message: "Contact record not found!" });
-    //     }
-    //   })
-    //   .catch((error) => {
-    //     res.status(500).json({
-    //       message: "Fetching record failed!" + error,
-    //     });
-    //   });
   } catch (error) {
     console.log(error);
     res.status(404).json({ message: "server try Block Error! " + error });

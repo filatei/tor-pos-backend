@@ -7,6 +7,7 @@ const path = require('path')
 const fs = require('fs')
 const os = require("os");
 const hostname = os.hostname();
+const clerkMiddleware = require("../middleware/clerk-check");
 var multer = require('multer')
 const DIR = '/var/www/uploads/stockitemimages/';
 
@@ -107,6 +108,51 @@ router.post('', checkAuth, function (req, res, next) {
   });
 });
 
+router.post('/create', clerkMiddleware, function (req, res, next) {
+  upload.single('image')(req, res, function (err) {
+    if (err) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ message: 'Image too large. Max size is 1MB.' });
+      }
+      return res.status(400).json({ message: 'Image upload failed: ' + err.message });
+    }
+
+    let path = '';
+    let url = '';
+
+    if (req.file) {
+      if (hostname.includes('torama')) {
+        url = 'https://fido-api.torama.ng';
+      } else {
+        url = req.protocol + '://' + req.get('host');
+      }
+      path = url + '/uploads/stockitemimages/' + req.file.filename;
+    }
+
+    let stockObj = req.body;
+    stockObj.name = stockObj.name.toUpperCase();
+    stockObj.creator = req.userData.userId;
+
+    const stockitem = new Stockitem(stockObj);
+    stockitem.icon = path || null;
+
+    stockitem.save()
+      .then((result) => {
+        res.status(201).json({
+          message: 'Stockitem added successfully',
+          stockitem: {
+            ...result._doc,
+            id: result._id
+          }
+        });
+      })
+      .catch(error => {
+        res.status(500).json({
+          message: "Creating a stockitem failed! " + error
+        });
+      });
+  });
+});
 // router.post('', checkAuth, upload.single('image'), function (req, res, next) {
 //   let path = ""
 //   let url = ""
@@ -346,6 +392,41 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
   }
 });
 
+router.get("/search", clerkMiddleware, async (req, res, next) => {
+  try {
+    const alloweds = [
+      "ADMIN",
+      "MANAGER",
+      "GENERAL MANAGER",
+      "SECRETARY",
+      "SNR ACCOUNTANT",
+      "ACCOUNTANT",
+      "SUPERVISOR",
+      "POS OFFICER",
+      "USER",
+    ];
+
+    if (!alloweds.includes(req.userData.role)) {
+      return res.status(500).json({ message: "Not allowed" });
+    }
+
+    const { searchTerm } = req.query;
+    let result = [];
+    result = await Stockitem.find({
+      name: { $regex: searchTerm, $options: "i" },
+    })
+      .sort({ name: 1 })
+      .limit(50);
+
+    console.log(result[0], "result");
+    return res.status(200).json({ stockItems: result });
+
+  } catch (error) {
+    console.log(error);
+    res.status(404).json({ message: "server  Error! " + error });
+  }
+});
+
 router.get('', (req, res, next) => {
   const pageSize = +req.query.pagesize;
   const currentPage = +req.query.page;
@@ -358,6 +439,27 @@ router.get('', (req, res, next) => {
       res.status(200).json({
         message: "Inventories fetched successfully!",
         stockitem: documents
+      });
+    })
+    .catch(error => {
+      res.status(500).json({
+        message: "Fetching inventories failed! " + error
+      });
+    });
+});
+
+router.get('/list', clerkMiddleware, (req, res, next) => {
+  const pageSize = +req.query.pagesize;
+  const currentPage = +req.query.page;
+  const stockitemQuery = Stockitem.find();
+  if (pageSize && currentPage) {
+    stockitemQuery.skip(pageSize * (currentPage - 1)).limit(pageSize);
+  }
+  stockitemQuery
+    .then(documents => {
+      res.status(200).json({
+        message: "Inventories fetched successfully!",
+        stockitems: documents
       });
     })
     .catch(error => {

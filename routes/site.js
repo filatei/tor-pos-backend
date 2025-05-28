@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const User = require("../models/user");
 const Utils = require("../utils");
 const { validationResult } = require("express-validator");
+const clerkMiddleware = require("../middleware/clerk-check");
 
 const Site = require("../models/site");
 const Accesslog = require("../models/accesslog");
@@ -180,6 +181,8 @@ router.delete("/:id", checkAuth, (req, res, next) => {
 });
 
 router.get("", checkAuth, async (req, res, next) => {
+  let userData = req.userData;
+  console.log(userData,'userData in site route')
   let pageSize = +req.query.pagesize;
   if (!pageSize) pageSize = 200;
   const currentPage = +req.query.page;
@@ -188,7 +191,22 @@ router.get("", checkAuth, async (req, res, next) => {
     const site = await Site.find()
       .sort({ createdAt: -1, name: 1 })
       .limit(pageSize);
+      console.log('site', site)
     return res.status(200).json({ site });
+  } catch (err) {
+    return res.status(500).json({
+      message: "Fetching Sites failed, please try again later." + err,
+    });
+  }
+});
+
+// Backend: /api/sites/list
+router.get("/list", clerkMiddleware, async (req, res, next) => {
+  try {
+    const sites = await Site.find()
+      .sort({ createdAt: -1, name: 1 })
+      .limit(200);
+    return res.status(200).json({ sites });
   } catch (err) {
     return res.status(500).json({
       message: "Fetching Sites failed, please try again later." + err,

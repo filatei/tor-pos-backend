@@ -1,6 +1,7 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const User = require("../models/user");
+const Site = require("../models/site");
 
 const Expense = require("../models/expense");
 const Product = require("../models/product");
@@ -39,6 +40,7 @@ function logIncident(email, description) {
 }
 
 const checkAuth = require("../middleware/check-auth");
+const clerkMiddleware = require("../middleware/clerk-check");
 // const expense = require("../models/expense");
 // const { th } = require("date-fns/locale");
 
@@ -93,6 +95,67 @@ router.post("", checkAuth, function (req, res, next) {
 
   }
 
+});
+
+// New route with image upload support
+router.post("/create", clerkMiddleware, upload.array('images', 5), async function (req, res) {
+  try {
+    const alloweds = [
+      "ADMIN",
+      "GENERAL MANAGER",
+      "MANAGER",
+      "SNR ACCOUNTANT",
+      "ACCOUNTANT",
+      "SECRETARY",
+      "OPERATOR"
+    ];
+
+    if (!alloweds.includes(req.userData.role)) {
+      return res.status(403).json({ message: "Not allowed to create Expense" });
+    }
+
+    let expenseObj = req.body;
+    expenseObj.creator = req.userData.userId;
+    expenseObj.status = "DRAFT";
+
+    // Handle products array from JSON string
+    if (typeof expenseObj.products === 'string') {
+      expenseObj.products = JSON.parse(expenseObj.products);
+    }
+
+    // Add image paths to expense object
+    if (req.files && req.files.length > 0) {
+      expenseObj.images = req.files.map(file => file.path);
+    }
+
+    const expense = new Expense(expenseObj);
+    
+    // Validate products
+    expense.products.forEach((product) => {
+      if (!product.name) throw new Error("Product name is required");
+    });
+
+    const result = await expense.save();
+    
+    res.status(201).json({
+      message: "Expense added successfully",
+      expense: { ...result.toObject(), id: result._id },
+    });
+
+  } catch (error) {
+    // If there's an error, delete uploaded files
+    if (req.files) {
+      req.files.forEach(file => {
+        fs.unlink(file.path, (err) => {
+          if (err) console.error('Error deleting file:', err);
+        });
+      });
+    }
+
+    res.status(500).json({
+      message: "Creating an expense failed! " + error.message,
+    });
+  }
 });
 
 router.put("/expenseAcct/:id", checkAuth, async (req, res, next) => {
@@ -224,6 +287,122 @@ router.put("/:id", checkAuth, async (req, res, next) => {
       });
     });
 });
+
+router.put(
+  "/update-expense/:id",
+  clerkMiddleware,
+  upload.any(), // Support file uploads
+  async (req, res) => {
+    const alloweds = [
+      "ADMIN",
+      "GENERAL MANAGER",
+      "MANAGER",
+      "SNR ACCOUNTANT",
+      "ACCOUNTANT",
+      "SECRETARY",
+      "OPERATOR",
+    ];
+    if (!alloweds.includes(req.userData.role)) {
+      return res.status(403).json({ message: "Not allowed to update expense" });
+    }
+
+    const updater = req.userData.userId;
+    const recId = req.params.id;
+    const currExp = await Expense.findById(recId);
+    if (!currExp) return res.status(404).json({ message: "Expense not found" });
+
+    const { action, status, paidAmount, paymentDate, memo, bankAcct, noteText, noteAuthor } =
+      req.body;
+    console.log(req.body,'req.body', req.files)
+
+    const url =
+      req.hostname.includes("torama.ng")
+        ? "https://fido-api.torama.ng"
+        : req.protocol + "://" + req.get("host");
+
+    let imagePath;
+    if (req.files && req.files.length > 0) {
+      const file = req.files[0];
+      // imagePath = url + "/expenseUploads" + file.path.split("/var/www/uploads/expenses")[1];
+      imagePath = url + "/expenseUploads/" + file.filename;
+      console.log(imagePath,'imagePath')
+    }
+
+    let updatedFields = {
+      updater,
+    };
+
+    let log = currExp.log || [];
+
+    if (action === "status" && status) {
+      updatedFields.status = status;
+      updatedFields.statusHistory = [
+        ...(currExp.statusHistory || []),
+        {
+          oldStatus: currExp.status,
+          newStatus: status,
+          updater,
+        },
+      ];
+      log.push({ updater, status, date: new Date(), products: currExp.products });
+    }
+
+    if (action === "payment") {
+      const balance = currExp.balance || currExp.txn_amount;
+      const amount = Number(paidAmount);
+      const newBalance = balance - amount;
+
+      if (newBalance < 0) {
+        return res.status(400).json({ message: "Payment exceeds remaining balance" });
+      }
+
+      const paymentEntry = {
+        paidAmount: amount,
+        paymentDate: paymentDate || new Date(),
+        memo,
+        bankAcct,
+        payer: updater,
+        ...(imagePath && { image: imagePath })
+      };
+
+      updatedFields.balance = newBalance;
+      updatedFields.status =
+        newBalance === 0 ? "PAID" : currExp.status === "APPROVED" ? "PART-PAY" : currExp.status;
+      updatedFields.payHistory = [...(currExp.payHistory || []), paymentEntry];
+
+      log.push({ updater, date: new Date(), paymentEntry });
+    }
+
+    if (action === "note") {
+      const note = {
+        text: noteText,
+        author: noteAuthor || req.userData.name,
+        date: new Date(),
+      };
+      if (imagePath) note.image = imagePath;
+
+      updatedFields.notes = [...(currExp.notes || []), note];
+      log.push({ updater, date: new Date(), status: currExp.status, note });
+    }
+
+    updatedFields.log = log;
+
+    try {
+      await Expense.findByIdAndUpdate(recId, updatedFields);
+      const expense = await Expense.findById(recId)
+        .populate("vendor")
+        .populate("creator", "name email role site image");
+        console.log(expense.payHistory,'expense payHistory')
+
+      return res.status(200).json({
+        message: "Update successful",
+        expense: { ...expense.toObject(), id: expense._id },
+      });
+    } catch (err) {
+      return res.status(500).json({ message: "Error updating expense", error: err });
+    }
+  }
+);
 
 router.get("/summary", checkAuth, async (req, res, next) => {
   // summary of expenses for product Rolls per month
@@ -442,153 +621,6 @@ router.get("/summaryAll", checkAuth, async (req, res, next) => {
   }
 });
 
-// router.delete("/:id", checkAuth, (req, res, next) => {
-
-//   const delAlloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT',]
-//   if (!delAlloweds.includes(req.userData.role)) {
-//     return res.status(500).json({ message: "Not allowed" });
-//   }
-
-//   deleteExpense();
-
-//   function deleteExpense() {
-//     Expense.deleteOne({ _id: req.params.id })
-//       .then((result) => {
-//         if (result.n > 0) {
-//           res.status(200).json({ message: "Deletion successful!" });
-//         } else {
-//           res.status(401).json({ message: "Not authorized!" });
-//         }
-//       })
-//       .catch((error) => {
-//         console.error(error, "catch err");
-//         res.status(500).json({
-//           message: "Deleting expense failed! " + error,
-//         });
-//       });
-//   }
-// });
-
-// router.get("", checkAuth, async (req, res, next) => {
-//   try {
-//     let pageSize = +req.query.pagesize;
-//     const currentPage = +req.query.page;
-//     const imprest = req.query.imprest;
-//     let user, userEmail;
-//     let role = "";
-//     // console.log(req.userData, "userData");
-
-//     if (req.userData) {
-//       userEmail = req.userData.email;
-//       role = req.userData.role;
-//       user = await User.find({ email: userEmail });
-//       // console.log(user, "user");
-//     }
-//     // get start of today
-
-
-//     const start = new Date();
-//     start.setHours(0, 0, 0, 0);
-
-//     const end = new Date();
-//     end.setHours(23, 59, 59, 999);
-
-//     const directors = process.env.DIRECTORS;
-//     const generalManagers = process.env.GENERALMANAGERS;
-//     const managers = process.env.MANAGERS;
-//     const sites = [
-//       "KPANSIA",
-//       "SWALI",
-//       "OKUTUKUTU",
-//       "YENEGWE",
-//       "OBUNNA",
-//       "KPANSIA E",
-//       "AKENFA",
-//       "MBIAMA",
-//     ];
-
-//     const blockSites = ["OKUTUKUTU-BLOCKS", "AGADAGBA-BLOCKS"];
-//     let expenseQuery;
-
-//     if (imprest) {
-//       expenseQuery = await Expense.find({
-//         status: "APPROVED",
-//         expenseAccount: "Daily Imprest",
-//         updatedAt: {
-//           $gte: start,
-//           $lte: end,
-//         },
-
-//       }, { log: 0, statusHistory: 0 })
-//         .sort({ createdAt: -1 })
-//         .populate("vendor", "name remarks phone email")
-//         .populate("creator", "name email role site image")
-//         .limit(pageSize);
-//       // add dateStr: new Date(createdAt) to expenseQuery
-//       expenseQuery = expenseQuery.map((e) => {
-//         //  add DateStr to each expense
-//         return {
-//           ...e._doc,
-//           dateStr: moment(e.createdAt).format("DD/MM/YYYY"),
-//         };
-
-//       });
-//     } else if (role === "ADMIN") {
-//       expenseQuery = await Expense.find({}, { log: 0, statusHistory: 0 })
-//         .sort({ createdAt: -1 })
-//         .populate("vendor", "name remarks phone email")
-//         .populate("creator", "name email role site image")
-//         .populate("products")
-//         .limit(pageSize);
-//     } else if (["GENERAL MANAGER", "SNR ACCOUNTANT"].includes(role)) {
-//       expenseQuery = await Expense.find({
-//         site: { $in: sites }
-//       }, { log: 0, statusHistory: 0 })
-//         .sort({ createdAt: -1 })
-//         .populate("vendor", "name remarks phone email")
-//         .populate("creator", "name email role site image")
-//         .limit(pageSize);
-//     } else if (role === "MANAGER") {
-//       expenseQuery = await Expense.find({
-//         // if i own it, good. or if site is my site, good.
-//         $or: [{ creator: user[0]._id }, { site: req.userData.site }],
-
-//       }, { log: 0, statusHistory: 0 })
-//         .sort({ createdAt: -1 })
-//         .populate("vendor", "name remarks phone email")
-//         .populate("creator", "name email role site image")
-
-//         .limit(pageSize);
-//     } else {
-//       expenseQuery = await Expense.find({ creator: user[0]._id },
-//         { log: 0, statusHistory: 0 })
-//         .sort({ createdAt: -1 })
-//         .populate("vendor", "name remarks phone email")
-//         .populate("creator", "name email role site image")
-
-//         .limit(pageSize);
-//     }
-
-
-//     if (expenseQuery) {
-//       console.log(expenseQuery[0], "expenseQuery");
-//       return res.status(200).json({
-//         expense: expenseQuery,
-//         message: "Expenses fetched Successfully",
-//       });
-//     } else {
-//       return res
-//         .status(500)
-//         .json({ message: "fetching expenses not successful" });
-//     }
-//   } catch (err) {
-//     console.log(err, 'error')
-//     return res
-//       .status(500)
-//       .json({ message: "fetching expenses not successful" + err });
-//   }
-// });
-
 
 router.delete("/:id", checkAuth, async (req, res) => {
   const delAlloweds = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT'];
@@ -611,6 +643,44 @@ router.delete("/:id", checkAuth, async (req, res) => {
     console.error("Deleting expense failed:", error);
     return res.status(500).json({
       message: "Deleting expense failed!",
+      error: error.message,
+    });
+  }
+});
+
+router.delete("/delete/:id", clerkMiddleware, async (req, res) => {
+  const allowedRoles = ['ADMIN', 'GENERAL MANAGER', 'MANAGER', 'SNR ACCOUNTANT', 'ACCOUNTANT'];
+  const user = req.userData;
+
+  if (!user || !allowedRoles.includes(user.role)) {
+    return res.status(403).json({ message: "Access denied. You do not have permission to delete expenses." });
+  }
+
+  const expenseId = req.params.id;
+
+  if (!mongoose.Types.ObjectId.isValid(expenseId)) {
+    return res.status(400).json({ message: "Invalid expense ID format." });
+  }
+
+  try {
+    const expense = await Expense.findById(expenseId);
+
+    if (!expense) {
+      return res.status(404).json({ message: "Expense not found." });
+    }
+
+    const deleteResult = await Expense.deleteOne({ _id: expenseId });
+
+    if (deleteResult.deletedCount === 1) {
+      console.log(`Expense ${expenseId} deleted by user ${user.email}`);
+      return res.status(200).json({ message: "Expense deleted successfully." });
+    }
+
+    return res.status(500).json({ message: "Deletion failed. No record was removed." });
+  } catch (error) {
+    console.error("Error deleting expense:", error);
+    return res.status(500).json({
+      message: "An error occurred while deleting the expense.",
       error: error.message,
     });
   }
@@ -685,7 +755,7 @@ router.get("", checkAuth, async (req, res) => {
 
 // for React Native Code
 // GET /expense/list
-router.get('/list', checkAuth, async (req, res) => {
+router.get('/list', clerkMiddleware, async (req, res) => {
   try {
     // 1. Pagination defaults
     const pageSize    = Number(req.query.pagesize) > 0 ? Number(req.query.pagesize) : 10;
@@ -718,7 +788,8 @@ router.get('/list', checkAuth, async (req, res) => {
         updatedAt:      { $gte: start, $lte: end },
       };
     } else {
-      const SITES = ["KPANSIA","SWALI","OKUTUKUTU","YENEGWE","OBUNNA","KPANSIA E","AKENFA","MBIAMA"];
+      // const SITES = ["KPANSIA","SWALI","OKUTUKUTU","YENEGWE","OBUNNA","KPANSIA E","AKENFA","MBIAMA"];
+      const SITES = await Site.find({}).select('name').lean();
       switch (userData.role) {
         case 'ADMIN':
           break;
@@ -740,6 +811,27 @@ router.get('/list', checkAuth, async (req, res) => {
     // 5. Status filter
     if (status && status !== 'ALL') {
       query.status = status;
+    }
+
+    // 5b. Site filter (NEW)
+    if (req.query.site && req.query.site !== 'ALL') {
+      if (query.site) {
+        query.site = {
+          $in: Array.isArray(query.site?.$in)
+            ? query.site.$in.filter(s => s === req.query.site)
+            : [req.query.site]
+        };
+      } else {
+        query.site = req.query.site;
+      }
+    }
+
+
+    if (req.query.startDate || req.query.endDate) {
+      const dateQuery = {};
+      if (req.query.startDate) dateQuery.$gte = new Date(req.query.startDate);
+      if (req.query.endDate)   dateQuery.$lte = new Date(req.query.endDate);
+      query.createdAt = dateQuery;
     }
 
     // 6. Search filter, including vendor.name
@@ -783,7 +875,7 @@ router.get('/list', checkAuth, async (req, res) => {
       ...e,
       dateStr: moment(e.createdAt).format('DD/MM/YYYY')
     }));
-    console.log(expensesWithDate[0], 'expensesWithDate')
+    // console.log(expensesWithDate[0], 'expensesWithDate')
 
     // 9. Respond
     return res.json({
@@ -1371,6 +1463,31 @@ router.get("/:id", (req, res, next) => {
     .populate("creator", "name email role site image")
     .then((expense) => {
       if (expense) {
+        console.log(expense, "expense")
+        res.status(200).json({ expense });
+      } else {
+        res.status(404).json({ message: "expense not found!" });
+      }
+    })
+    .catch((error) => {
+      console.log(error);
+      res.status(500).json({
+        message: "Fetching expense failed! " + error,
+      });
+    });
+});
+
+router.get("/get-expense/:id", clerkMiddleware, (req, res, next) => {
+  const id = req.params.id;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    // Handle error as needed
+    return res.status(404).json({ message: "invalid object id " });
+  }
+  Expense.findById(id)
+    .populate("vendor")
+    .populate("creator", "name email role site image")
+    .then((expense) => {
+      if (expense) {
         // console.log(expense, "expense");
         res.status(200).json({ expense });
       } else {
@@ -1388,6 +1505,109 @@ router.get("/:id", (req, res, next) => {
 router.put(
   "/notes/:id",
   checkAuth,
+  upload.any(),
+  async function (req, res, next) {
+    const alloweds = [
+      "ADMIN",
+      "GENERAL MANAGER",
+      "MANAGER",
+      "SNR ACCOUNTANT",
+      "ACCOUNTANT",
+      "SECRETARY", "OPERATOR"
+    ];
+    console.log(req.userData, "userData");
+
+    if (!alloweds.includes(req.userData.role)) {
+      return res.status(403).json({ message: "Not allowed" });
+    }
+
+
+
+    let updater = req.userData.userId;
+    let myPath;
+    // console.log(req.files, "req.files");
+    // console.log(req.body, "req.body");
+    if (req.files) {
+      req.files.forEach((file) => {
+        if (hostname.includes("torama.ng")) {
+          url = "https://fido-api.torama.ng";
+        } else {
+          url = req.protocol + "://" + req.get("host");
+        }
+
+        myPath =
+          url +
+          "/expenseUploads" +
+          file.path.split("/var/www/uploads/expenses")[1];
+      });
+    }
+
+    // console.log(myPath, "myPath");
+
+    const note = req.body;
+    let recId = req.params.id;
+    await saveExpense();
+
+    async function saveExpense() {
+      try {
+        if (myPath) {
+          note.image = myPath;
+        }
+
+        let expObj = await Expense.findById(recId);
+        // send mail with Note image
+
+        let notes;
+        if (expObj) {
+          notes = expObj.notes;
+
+          notes.push(note);
+          log = expObj.log;
+
+          log.push({
+            updater: note.author,
+            status: expObj.status,
+            date: new Date(),
+            note,
+          });
+        } else {
+          return res.status(500).json({
+            message: "No expense Object to update! ",
+          });
+        }
+
+        Expense.findByIdAndUpdate(
+          { _id: recId },
+          { notes: notes, updater: updater, log: log }
+        )
+          .then(async (result) => {
+            // let msent = await Mail.sendNote(note, expObj);
+            const expense = await Expense.findById(recId).populate("vendor").populate("creator", "name email role site image")
+            return res.status(201).json({
+              message: " note with image updated successfully",
+              expense: {
+                ...expense,
+                id: expense._id,
+              },
+            });
+          })
+          .catch((error) => {
+            return res.status(500).json({
+              message: "Creating an Image upload failed! " + error,
+            });
+          });
+      } catch (err) {
+        return res.status(500).json({
+          message: "Error with update  " + err,
+        });
+      }
+    }
+  }
+);
+
+router.put(
+  "/update-notes/:id",
+  clerkMiddleware,
   upload.any(),
   async function (req, res, next) {
     const alloweds = [

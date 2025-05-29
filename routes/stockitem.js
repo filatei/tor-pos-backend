@@ -383,7 +383,6 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
       .sort({ name: 1 })
       .limit(50);
 
-    console.log(result[0], "result");
     return res.status(200).json({ stockItems: result });
 
   } catch (error) {
@@ -418,7 +417,6 @@ router.get("/search", clerkMiddleware, async (req, res, next) => {
       .sort({ name: 1 })
       .limit(50);
 
-    console.log(result[0], "result");
     return res.status(200).json({ stockItems: result });
 
   } catch (error) {

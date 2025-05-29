@@ -98,7 +98,8 @@ router.post("", checkAuth, function (req, res, next) {
 });
 
 // New route with image upload support
-router.post("/create", clerkMiddleware, upload.array('images', 5), async function (req, res) {
+router.post("/create", clerkMiddleware, upload.any(), async function (req, res) {
+  console.log(req.body,'req.body exp crea')
   try {
     const alloweds = [
       "ADMIN",
@@ -124,8 +125,12 @@ router.post("/create", clerkMiddleware, upload.array('images', 5), async functio
     }
 
     // Add image paths to expense object
+    console.log(req.files,'req.files')
     if (req.files && req.files.length > 0) {
-      expenseObj.images = req.files.map(file => file.path);
+      const url = req.hostname.includes("torama.ng")? "https://fido-api.torama.ng": req.protocol + "://" + req.get("host");
+
+      expenseObj.images = req.files.map(file => `${url}/expenseUploads/${file.filename}`);
+      console.log(expenseObj.images,'expenseObj.images')
     }
 
     const expense = new Expense(expenseObj);
@@ -206,7 +211,6 @@ router.put("/:id", checkAuth, async (req, res, next) => {
   if (!alloweds.includes(req.userData.role)) {
     return res.status(500).json({ message: "Not allowed to update expense" });
   }
-  // console.log(req.body, "expense body");
 
   let expenseObj = req.body;
   let status = expenseObj.status;
@@ -302,18 +306,27 @@ router.put(
       "SECRETARY",
       "OPERATOR",
     ];
+
     if (!alloweds.includes(req.userData.role)) {
       return res.status(403).json({ message: "Not allowed to update expense" });
     }
 
+    console.log(req.userData,'req.userData')
+    console.log(req.body,'req.body')
     const updater = req.userData.userId;
     const recId = req.params.id;
     const currExp = await Expense.findById(recId);
     if (!currExp) return res.status(404).json({ message: "Expense not found" });
 
-    const { action, status, paidAmount, paymentDate, memo, bankAcct, noteText, noteAuthor } =
-      req.body;
-    console.log(req.body,'req.body', req.files)
+    const {
+      action,
+      status,
+      paidAmount,
+      paymentDate,
+      memo,
+      bankAcct,
+      noteText
+    } = req.body;
 
     const url =
       req.hostname.includes("torama.ng")
@@ -323,32 +336,31 @@ router.put(
     let imagePath;
     if (req.files && req.files.length > 0) {
       const file = req.files[0];
-      // imagePath = url + "/expenseUploads" + file.path.split("/var/www/uploads/expenses")[1];
-      imagePath = url + "/expenseUploads/" + file.filename;
-      console.log(imagePath,'imagePath')
+      imagePath = `${url}/expenseUploads/${file.filename}`;
     }
 
-    let updatedFields = {
-      updater,
-    };
-
+    let updateQuery = { updater };
+    let pushUpdates = {};
+    let setUpdates = {};
     let log = currExp.log || [];
 
     if (action === "status" && status) {
-      updatedFields.status = status;
-      updatedFields.statusHistory = [
-        ...(currExp.statusHistory || []),
-        {
-          oldStatus: currExp.status,
-          newStatus: status,
-          updater,
-        },
-      ];
+      setUpdates = {
+        status,
+        statusHistory: [
+          ...(currExp.statusHistory || []),
+          {
+            oldStatus: currExp.status,
+            newStatus: status,
+            updater,
+          },
+        ],
+      };
       log.push({ updater, status, date: new Date(), products: currExp.products });
     }
 
     if (action === "payment") {
-      const balance = currExp.balance || currExp.txn_amount;
+      const balance = currExp.balance ?? currExp.txn_amount;
       const amount = Number(paidAmount);
       const newBalance = balance - amount;
 
@@ -361,44 +373,138 @@ router.put(
         paymentDate: paymentDate || new Date(),
         memo,
         bankAcct,
-        payer: updater,
-        ...(imagePath && { image: imagePath })
+        payer: req.userData.name,
+        ...(imagePath && { image: imagePath }),
+      };
+      console.log(paymentEntry,'paymentEntry')
+
+      setUpdates = {
+        balance: newBalance,
+        status:
+          newBalance === 0
+            ? "PAID"
+            : currExp.status === "APPROVED"
+            ? "PART-PAY"
+            : currExp.status,
       };
 
-      updatedFields.balance = newBalance;
-      updatedFields.status =
-        newBalance === 0 ? "PAID" : currExp.status === "APPROVED" ? "PART-PAY" : currExp.status;
-      updatedFields.payHistory = [...(currExp.payHistory || []), paymentEntry];
+      pushUpdates = {
+        payHistory: paymentEntry,
+      };
 
       log.push({ updater, date: new Date(), paymentEntry });
     }
 
     if (action === "note") {
+
+      // delete from currExp.notes array the note with no author or text or date
+      currExp.notes = currExp.notes.filter(note => note.author && note.text && note.date);
+
       const note = {
         text: noteText,
-        author: noteAuthor || req.userData.name,
+        author: req.userData.name,
         date: new Date(),
+        ...(imagePath && { image: imagePath }),
       };
-      if (imagePath) note.image = imagePath;
-
-      updatedFields.notes = [...(currExp.notes || []), note];
+      console.log(note,'note')
+      currExp.notes.push(note);
       log.push({ updater, date: new Date(), status: currExp.status, note });
-    }
-
-    updatedFields.log = log;
-
-    try {
-      await Expense.findByIdAndUpdate(recId, updatedFields);
-      const expense = await Expense.findById(recId)
+      // save the expense
+      const savedExpense = await Expense.findByIdAndUpdate(recId, {
+        notes: currExp.notes,
+        updater,
+        log,
+      });
+      // console.log(savedExpense,'savedExpense')
+      const updated = await Expense.findById(recId)
         .populate("vendor")
         .populate("creator", "name email role site image");
-        console.log(expense.payHistory,'expense payHistory')
+        // console.log(updated,'updated')
 
       return res.status(200).json({
         message: "Update successful",
-        expense: { ...expense.toObject(), id: expense._id },
+        expense: {
+          ...updated.toObject(),
+          id: updated._id,
+          txn_amount: updated.txn_amount,
+          balance: updated.balance,
+        },
+      });
+
+
+      
+    }
+
+    if (action === "edit") {
+      let { title, category, site, vendor, products } = req.body;
+    
+      // Parse products if stringified
+      if (typeof products === 'string') {
+        try {
+          products = JSON.parse(products);
+        } catch (err) {
+          return res.status(400).json({ message: "Invalid products data" });
+        }
+      }
+    
+      const txn_amount = Array.isArray(products)
+        ? products.reduce((sum, p) => sum + (p.qty * p.price), 0)
+        : currExp.txn_amount;
+    
+      const updatedFields = {
+        title,
+        category,
+        site,
+        vendor,
+        products,
+        txn_amount,
+        balance: txn_amount,
+        updater,
+      };
+    
+      log.push({ updater, action: "edit", date: new Date(), changes: updatedFields });
+    
+      await Expense.findByIdAndUpdate(recId, {
+        $set: { ...updatedFields, log },
+      });
+    
+      const updated = await Expense.findById(recId)
+        .populate("vendor")
+        .populate("creator", "name email role site image");
+    
+      return res.status(200).json({
+        message: "Edit successful",
+        expense: {
+          ...updated.toObject(),
+          id: updated._id,
+          txn_amount: updated.txn_amount,
+          balance: updated.balance,
+        },
+      });
+    }
+
+    // Final update object
+    try {
+      await Expense.findByIdAndUpdate(recId, {
+        $set: { ...setUpdates, updater, log },
+        ...(Object.keys(pushUpdates).length > 0 && { $push: pushUpdates }),
+      });
+
+      const updated = await Expense.findById(recId)
+        .populate("vendor")
+        .populate("creator", "name email role site image");
+
+      return res.status(200).json({
+        message: "Update successful",
+        expense: {
+          ...updated.toObject(),
+          id: updated._id,
+          txn_amount: updated.txn_amount,
+          balance: updated.balance,
+        },
       });
     } catch (err) {
+      console.error("Update error:", err);
       return res.status(500).json({ message: "Error updating expense", error: err });
     }
   }
@@ -481,7 +587,6 @@ router.get("/summary", checkAuth, async (req, res, next) => {
     }
     let response = [];
     response = await agg("Rolls");
-    // console.log(response, 'rolls pay hist')
 
     return res.status(200).json({
       response: response,
@@ -788,7 +893,6 @@ router.get('/list', clerkMiddleware, async (req, res) => {
         updatedAt:      { $gte: start, $lte: end },
       };
     } else {
-      // const SITES = ["KPANSIA","SWALI","OKUTUKUTU","YENEGWE","OBUNNA","KPANSIA E","AKENFA","MBIAMA"];
       const SITES = await Site.find({}).select('name').lean();
       switch (userData.role) {
         case 'ADMIN':
@@ -875,7 +979,6 @@ router.get('/list', clerkMiddleware, async (req, res) => {
       ...e,
       dateStr: moment(e.createdAt).format('DD/MM/YYYY')
     }));
-    // console.log(expensesWithDate[0], 'expensesWithDate')
 
     // 9. Respond
     return res.json({
@@ -1437,7 +1540,6 @@ router.get("/expense/:id", (req, res, next) => {
     .populate("creator")
     .then((expense) => {
       if (expense) {
-        // console.log(expense, "expense");
         res.status(200).json({ expense });
       } else {
         const error = new HttpError("expense not found!", 404);
@@ -1463,7 +1565,6 @@ router.get("/:id", (req, res, next) => {
     .populate("creator", "name email role site image")
     .then((expense) => {
       if (expense) {
-        console.log(expense, "expense")
         res.status(200).json({ expense });
       } else {
         res.status(404).json({ message: "expense not found!" });
@@ -1488,7 +1589,6 @@ router.get("/get-expense/:id", clerkMiddleware, (req, res, next) => {
     .populate("creator", "name email role site image")
     .then((expense) => {
       if (expense) {
-        // console.log(expense, "expense");
         res.status(200).json({ expense });
       } else {
         res.status(404).json({ message: "expense not found!" });
@@ -1515,7 +1615,6 @@ router.put(
       "ACCOUNTANT",
       "SECRETARY", "OPERATOR"
     ];
-    console.log(req.userData, "userData");
 
     if (!alloweds.includes(req.userData.role)) {
       return res.status(403).json({ message: "Not allowed" });
@@ -1525,8 +1624,6 @@ router.put(
 
     let updater = req.userData.userId;
     let myPath;
-    // console.log(req.files, "req.files");
-    // console.log(req.body, "req.body");
     if (req.files) {
       req.files.forEach((file) => {
         if (hostname.includes("torama.ng")) {
@@ -1542,7 +1639,6 @@ router.put(
       });
     }
 
-    // console.log(myPath, "myPath");
 
     const note = req.body;
     let recId = req.params.id;
@@ -1605,108 +1701,107 @@ router.put(
   }
 );
 
-router.put(
-  "/update-notes/:id",
-  clerkMiddleware,
-  upload.any(),
-  async function (req, res, next) {
-    const alloweds = [
-      "ADMIN",
-      "GENERAL MANAGER",
-      "MANAGER",
-      "SNR ACCOUNTANT",
-      "ACCOUNTANT",
-      "SECRETARY", "OPERATOR"
-    ];
-    console.log(req.userData, "userData");
+// router.put(
+//   "/update-notes/:id",
+//   clerkMiddleware,
+//   upload.any(),
+//   async function (req, res, next) {
+//     const alloweds = [
+//       "ADMIN",
+//       "GENERAL MANAGER",
+//       "MANAGER",
+//       "SNR ACCOUNTANT",
+//       "ACCOUNTANT",
+//       "SECRETARY", "OPERATOR"
+//     ];
 
-    if (!alloweds.includes(req.userData.role)) {
-      return res.status(403).json({ message: "Not allowed" });
-    }
-
+//     if (!alloweds.includes(req.userData.role)) {
+//       return res.status(403).json({ message: "Not allowed" });
+//     }
 
 
-    let updater = req.userData.userId;
-    let myPath;
-    // console.log(req.files, "req.files");
-    // console.log(req.body, "req.body");
-    if (req.files) {
-      req.files.forEach((file) => {
-        if (hostname.includes("torama.ng")) {
-          url = "https://fido-api.torama.ng";
-        } else {
-          url = req.protocol + "://" + req.get("host");
-        }
 
-        myPath =
-          url +
-          "/expenseUploads" +
-          file.path.split("/var/www/uploads/expenses")[1];
-      });
-    }
+//     let updater = req.userData.userId;
+//     let myPath;
+//     // console.log(req.files, "req.files");
+//     // console.log(req.body, "req.body");
+//     if (req.files) {
+//       req.files.forEach((file) => {
+//         if (hostname.includes("torama.ng")) {
+//           url = "https://fido-api.torama.ng";
+//         } else {
+//           url = req.protocol + "://" + req.get("host");
+//         }
 
-    // console.log(myPath, "myPath");
+//         myPath =
+//           url +
+//           "/expenseUploads" +
+//           file.path.split("/var/www/uploads/expenses")[1];
+//       });
+//     }
 
-    const note = req.body;
-    let recId = req.params.id;
-    await saveExpense();
+//     // console.log(myPath, "myPath");
 
-    async function saveExpense() {
-      try {
-        if (myPath) {
-          note.image = myPath;
-        }
+//     const note = req.body;
+//     let recId = req.params.id;
+//     await saveExpense();
 
-        let expObj = await Expense.findById(recId);
-        // send mail with Note image
+//     async function saveExpense() {
+//       try {
+//         if (myPath) {
+//           note.image = myPath;
+//         }
 
-        let notes;
-        if (expObj) {
-          notes = expObj.notes;
+//         let expObj = await Expense.findById(recId);
+//         // send mail with Note image
 
-          notes.push(note);
-          log = expObj.log;
+//         let notes;
+//         if (expObj) {
+//           notes = expObj.notes;
 
-          log.push({
-            updater: note.author,
-            status: expObj.status,
-            date: new Date(),
-            note,
-          });
-        } else {
-          return res.status(500).json({
-            message: "No expense Object to update! ",
-          });
-        }
+//           notes.push(note);
+//           log = expObj.log;
 
-        Expense.findByIdAndUpdate(
-          { _id: recId },
-          { notes: notes, updater: updater, log: log }
-        )
-          .then(async (result) => {
-            // let msent = await Mail.sendNote(note, expObj);
-            const expense = await Expense.findById(recId).populate("vendor").populate("creator", "name email role site image")
-            return res.status(201).json({
-              message: " note with image updated successfully",
-              expense: {
-                ...expense,
-                id: expense._id,
-              },
-            });
-          })
-          .catch((error) => {
-            return res.status(500).json({
-              message: "Creating an Image upload failed! " + error,
-            });
-          });
-      } catch (err) {
-        return res.status(500).json({
-          message: "Error with update  " + err,
-        });
-      }
-    }
-  }
-);
+//           log.push({
+//             updater: note.author,
+//             status: expObj.status,
+//             date: new Date(),
+//             note,
+//           });
+//         } else {
+//           return res.status(500).json({
+//             message: "No expense Object to update! ",
+//           });
+//         }
+
+//         Expense.findByIdAndUpdate(
+//           { _id: recId },
+//           { notes: notes, updater: updater, log: log }
+//         )
+//           .then(async (result) => {
+//             // let msent = await Mail.sendNote(note, expObj);
+//             const expense = await Expense.findById(recId).populate("vendor").populate("creator", "name email role site image")
+//             return res.status(201).json({
+//               message: " note with image updated successfully",
+//               expense: {
+//                 ...expense,
+//                 id: expense._id,
+//               },
+//             });
+//           })
+//           .catch((error) => {
+//             return res.status(500).json({
+//               message: "Creating an Image upload failed! " + error,
+//             });
+//           });
+//       } catch (err) {
+//         return res.status(500).json({
+//           message: "Error with update  " + err,
+//         });
+//       }
+//     }
+//   }
+// );
 
 router.delete('/notes/:expenseId/:noteIndex', checkAuth, async (req, res) => {
   const { expenseId, noteIndex } = req.params;

@@ -182,7 +182,6 @@ router.delete("/:id", checkAuth, (req, res, next) => {
       .then((expenseitem) => {
         if (expenseitem && expenseitem.icon) {
           filePath = "uploads/" + expenseitem.icon.split("/uploads/")[1];
-          console.log(filePath);
         }
       })
       .catch((err) => {
@@ -234,7 +233,6 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
       .sort({ createdAt: -1 })
       .limit(200);
 
-    console.log(result, "result 1");
     if (result.length) return res.status(200).json({ expenseitem: result });
 
     // Expenseitem.find({ $text: { $search: searchTerm } })
@@ -244,7 +242,6 @@ router.get("/getByText", checkAuth, async (req, res, next) => {
       .limit(200)
       .then((record) => {
         if (record) {
-          console.log(record, "record ");
           res.status(200).json({ expenseitem: record });
         } else {
           res.status(404).json({ message: "record not found!" });

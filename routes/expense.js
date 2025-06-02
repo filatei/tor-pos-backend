@@ -141,7 +141,8 @@ router.post("/create", clerkMiddleware, upload.any(), async function (req, res) 
     });
 
     const result = await expense.save();
-    
+    console.log(result,'saved')
+    console.log(result.toObject(),'savec.toObject()')
     res.status(201).json({
       message: "Expense added successfully",
       expense: { ...result.toObject(), id: result._id },

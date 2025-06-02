@@ -16,6 +16,7 @@ const urlencodedParser = bodyParser.urlencoded({ limit: "50mb", extended: true, 
 const app = express();
 
 const paymethodsRoutes = require("./routes/paymethods");
+const tradingRoutes = require("./routes/trading");
 const productsRoutes = require("./routes/products");
 const banksRoutes = require("./routes/banks");
 const fiaProductsRoutes = require("./routes/fia_products");
@@ -176,5 +177,6 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/chatgpt", chatgptRoutes);
 app.use("/api/cashback", cashbackRoutes);
 app.use("/api/monnify", monnifyRoutes);
+app.use("/api/trading", tradingRoutes);
 
 module.exports = app;

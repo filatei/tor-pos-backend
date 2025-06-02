@@ -1,4 +1,5 @@
 // 'use strict'
+global.fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 const app = require("./app");
 const fs = require("fs");
 const os = require("os");

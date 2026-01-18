@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: "tor-pos-backend",
-      cwd: "tor-pos-backend",
+      cwd: "/var/www/tor-pos-backend",
       script: "npm",
       args: "start",
       interpreter: "/home/user1/.nvm/versions/node/v20.19.0/bin/node", // ADD THIS LINE

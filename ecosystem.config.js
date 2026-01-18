@@ -5,6 +5,7 @@ module.exports = {
       cwd: "tor-pos-backend",
       script: "npm",
       args: "start",
+      interpreter: "/home/user1/.nvm/versions/node/v20.19.0/bin/node", // ADD THIS LINE
       env: {
         PORT: 3000,
         NODE_ENV: "production",
@@ -15,7 +16,6 @@ module.exports = {
         SSL_PDT_CA: "/home/user1/letsencrypt/fullchain4.pem",
       },
       watch: ["server", "client"],
-      // Delay between restart
       watch_delay: 1000,
       ignore_watch: ["node_modules", "uploads"],
     },

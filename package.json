@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon server.js",
-    "start": "PORT=3500 pm2 start server.js --name 'tor-pos-backend' --watch  --node-args='--max-old-space-size=6144' "
+    "start": "node server.js"
   },
   "author": "Torama Innovation Hub",
   "license": "MIT",

@@ -758,10 +758,10 @@ router.post(
 
               if (diff > 0) {
                 console.log("exceptions", exceptions);
-                const mail = await Mail.sendPayrollCsvMail(
-                  prl,
-                  req.userData.userId
-                );
+                // const mail = await Mail.sendPayrollCsvMail(
+                //   prl,
+                //   req.userData.userId
+                // );
                 return res.status(200).json({
                   message: `${insertedIDs.length} records Uploaded  from csv,   exceptions:  ${exceptions.length} `,
                   exceptions: exceptions,
@@ -1560,7 +1560,7 @@ router.post(
       };
 
       // Send email
-      await mailer(emailModel);
+      // await mailer(emailModel);
 
       return res.status(200).json({
         message: `${insertedCount} records uploaded successfully, ${skippedCount} records skipped.`,

@@ -384,6 +384,7 @@ router.post(
   csvUpload.any(),
   async function (req, res, next) {
     let insertedIDs = [];
+    console.log("I am here");
     try {
       const { role, userId } = req.userData;
 
@@ -594,9 +595,7 @@ router.post(
                 { name: row.name },
                 { bankAccount: row.bankAccount }
               );
-              // if (bankUpdate) {
-              //   console.log("updated bank account of", row.name, bankUpdate);
-              // }
+
             }
 
             if (row["ACCOUNT NUMBER"]) {
@@ -605,9 +604,7 @@ router.post(
                 { name: row.name },
                 { bankAccount: row.bankAccount }
               );
-              // if (bankUpdate) {
-              //   // console.log("updated bank account of", row.name, bankUpdate);
-              // }
+
             }
 
             if (row["COMPANY"]) {

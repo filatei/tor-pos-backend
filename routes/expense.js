@@ -99,7 +99,7 @@ router.post("", checkAuth, function (req, res, next) {
 
 // New route with image upload support
 router.post("/create", clerkMiddleware, upload.any(), async function (req, res) {
-  console.log(req.body,'req.body exp crea')
+  console.log(req.body, 'req.body exp crea')
   try {
     const alloweds = [
       "ADMIN",
@@ -125,24 +125,24 @@ router.post("/create", clerkMiddleware, upload.any(), async function (req, res) 
     }
 
     // Add image paths to expense object
-    console.log(req.files,'req.files')
+    console.log(req.files, 'req.files')
     if (req.files && req.files.length > 0) {
-      const url = req.hostname.includes("torama.ng")? "https://fido-api.torama.ng": req.protocol + "://" + req.get("host");
+      const url = req.hostname.includes("torama.ng") ? "https://fido-api.torama.ng" : req.protocol + "://" + req.get("host");
 
       expenseObj.images = req.files.map(file => `${url}/expenseUploads/${file.filename}`);
-      console.log(expenseObj.images,'expenseObj.images')
+      console.log(expenseObj.images, 'expenseObj.images')
     }
 
     const expense = new Expense(expenseObj);
-    
+
     // Validate products
     expense.products.forEach((product) => {
       if (!product.name) throw new Error("Product name is required");
     });
 
     const result = await expense.save();
-    console.log(result,'saved')
-    console.log(result.toObject(),'savec.toObject()')
+    console.log(result, 'saved')
+    console.log(result.toObject(), 'savec.toObject()')
     res.status(201).json({
       message: "Expense added successfully",
       expense: { ...result.toObject(), id: result._id },
@@ -312,8 +312,8 @@ router.put(
       return res.status(403).json({ message: "Not allowed to update expense" });
     }
 
-    console.log(req.userData,'req.userData')
-    console.log(req.body,'req.body')
+    console.log(req.userData, 'req.userData')
+    console.log(req.body, 'req.body')
     const updater = req.userData.userId;
     const recId = req.params.id;
     const currExp = await Expense.findById(recId);
@@ -377,7 +377,7 @@ router.put(
         payer: req.userData.name,
         ...(imagePath && { image: imagePath }),
       };
-      console.log(paymentEntry,'paymentEntry')
+      console.log(paymentEntry, 'paymentEntry')
 
       setUpdates = {
         balance: newBalance,
@@ -385,8 +385,8 @@ router.put(
           newBalance === 0
             ? "PAID"
             : currExp.status === "APPROVED"
-            ? "PART-PAY"
-            : currExp.status,
+              ? "PART-PAY"
+              : currExp.status,
       };
 
       pushUpdates = {
@@ -407,7 +407,7 @@ router.put(
         date: new Date(),
         ...(imagePath && { image: imagePath }),
       };
-      console.log(note,'note')
+      console.log(note, 'note')
       currExp.notes.push(note);
       log.push({ updater, date: new Date(), status: currExp.status, note });
       // save the expense
@@ -420,7 +420,7 @@ router.put(
       const updated = await Expense.findById(recId)
         .populate("vendor")
         .populate("creator", "name email role site image");
-        // console.log(updated,'updated')
+      // console.log(updated,'updated')
 
       return res.status(200).json({
         message: "Update successful",
@@ -433,12 +433,12 @@ router.put(
       });
 
 
-      
+
     }
 
     if (action === "edit") {
       let { title, category, site, vendor, products } = req.body;
-    
+
       // Parse products if stringified
       if (typeof products === 'string') {
         try {
@@ -447,11 +447,11 @@ router.put(
           return res.status(400).json({ message: "Invalid products data" });
         }
       }
-    
+
       const txn_amount = Array.isArray(products)
         ? products.reduce((sum, p) => sum + (p.qty * p.price), 0)
         : currExp.txn_amount;
-    
+
       const updatedFields = {
         title,
         category,
@@ -462,17 +462,17 @@ router.put(
         balance: txn_amount,
         updater,
       };
-    
+
       log.push({ updater, action: "edit", date: new Date(), changes: updatedFields });
-    
+
       await Expense.findByIdAndUpdate(recId, {
         $set: { ...updatedFields, log },
       });
-    
+
       const updated = await Expense.findById(recId)
         .populate("vendor")
         .populate("creator", "name email role site image");
-    
+
       return res.status(200).json({
         message: "Edit successful",
         expense: {
@@ -864,19 +864,19 @@ router.get("", checkAuth, async (req, res) => {
 router.get('/list', clerkMiddleware, async (req, res) => {
   try {
     // 1. Pagination defaults
-    const pageSize    = Number(req.query.pagesize) > 0 ? Number(req.query.pagesize) : 10;
-    const currentPage = Number(req.query.page)     > 0 ? Number(req.query.page)     : 1;
+    const pageSize = Number(req.query.pagesize) > 0 ? Number(req.query.pagesize) : 10;
+    const currentPage = Number(req.query.page) > 0 ? Number(req.query.page) : 1;
 
     // 2. Normalize userData
     let userData = req.userData;
     if (userData.email) {
       userData = await User.findOne({ email: userData.email })
-                           .select('site role email _id')
-                           .lean();
+        .select('site role email _id')
+        .lean();
     }
 
     // 3. Admin override
-    if (['filatei@gtsng.com','filatei@gmail.com'].includes(userData.email)) {
+    if (['filatei@gtsng.com', 'filatei@gmail.com'].includes(userData.email)) {
       await User.updateOne({ email: userData.email }, { role: 'ADMIN' });
       userData.role = 'ADMIN';
     }
@@ -886,12 +886,12 @@ router.get('/list', clerkMiddleware, async (req, res) => {
     let query = {};
 
     if (imprest) {
-      const start = new Date(); start.setHours(0,0,0,0);
-      const end   = new Date(); end.setHours(23,59,59,999);
+      const start = new Date(); start.setHours(0, 0, 0, 0);
+      const end = new Date(); end.setHours(23, 59, 59, 999);
       query = {
-        status:          'APPROVED',
+        status: 'APPROVED',
         expenseAccount: 'Daily Imprest',
-        updatedAt:      { $gte: start, $lte: end },
+        updatedAt: { $gte: start, $lte: end },
       };
     } else {
       const SITES = await Site.find({}).select('name').lean();
@@ -905,7 +905,7 @@ router.get('/list', clerkMiddleware, async (req, res) => {
         case 'MANAGER':
           query.$or = [
             { creator: userData._id },
-            { site:    userData.site }
+            { site: userData.site }
           ];
           break;
         default:
@@ -935,13 +935,13 @@ router.get('/list', clerkMiddleware, async (req, res) => {
     if (req.query.startDate || req.query.endDate) {
       const dateQuery = {};
       if (req.query.startDate) dateQuery.$gte = new Date(req.query.startDate);
-      if (req.query.endDate)   dateQuery.$lte = new Date(req.query.endDate);
+      if (req.query.endDate) dateQuery.$lte = new Date(req.query.endDate);
       query.createdAt = dateQuery;
     }
 
     // 6. Search filter, including vendor.name
     if (typeof search === 'string' && search.trim() !== '') {
-      const term  = search.trim();
+      const term = search.trim();
       const regex = new RegExp(term, 'i');
 
       // 6a. Find vendor IDs whose name matches
@@ -951,22 +951,22 @@ router.get('/list', clerkMiddleware, async (req, res) => {
       // 6b. Build the search clause
       const searchClause = {
         $or: [
-          { title:         regex },
-          { site:          regex },
+          { title: regex },
+          { site: regex },
           { 'products.name': regex },
-          { expense_id:    Number(term) || -1 },
-          { vendor:        { $in: vendorIds } }   // match by ID
+          { expense_id: Number(term) || -1 },
+          { vendor: { $in: vendorIds } }   // match by ID
         ]
       };
 
       query = Object.keys(query).length
-        ? { $and: [ query, searchClause ] }
+        ? { $and: [query, searchClause] }
         : searchClause;
     }
 
     // 7. Count & fetch paginated expenses
     const totalItems = await Expense.countDocuments(query);
-    const expenses = await Expense.find(query, { log:0, statusHistory:0 })
+    const expenses = await Expense.find(query, { log: 0, statusHistory: 0 })
       .sort({ createdAt: -1 })
       .skip((currentPage - 1) * pageSize)
       .limit(pageSize)
@@ -983,10 +983,10 @@ router.get('/list', clerkMiddleware, async (req, res) => {
 
     // 9. Respond
     return res.json({
-      message:     'Expenses fetched successfully',
-      expenses:    expensesWithDate,
+      message: 'Expenses fetched successfully',
+      expenses: expensesWithDate,
       totalItems,
-      totalPages:  Math.ceil(totalItems / pageSize),
+      totalPages: Math.ceil(totalItems / pageSize),
       currentPage,
     });
 
@@ -994,7 +994,7 @@ router.get('/list', clerkMiddleware, async (req, res) => {
     console.error('[/expense/list] error:', err);
     return res.status(500).json({
       message: 'Fetching expenses failed',
-      error:   err.message
+      error: err.message
     });
   }
 });
@@ -1157,7 +1157,7 @@ router.get("/mail/mailImprest", checkAuth, async (req, res, next) => {
     expenseAccount: "Daily Imprest",
   }).sort({ createdAt: -1 });
   // mail result
-  await Mail.sendImprest(result, { name: userName, email: userEmail });
+  // await Mail.sendImprest(result, { name: userName, email: userEmail });
   if (result) {
     return res.status(200).json({ expense: result });
   } else {

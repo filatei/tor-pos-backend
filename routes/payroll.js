@@ -226,19 +226,19 @@ router.post("", checkAuth, async (req, res, next) => {
     }
 
     if (payObj.bagsBagged && payObj.payType === "MONTH-END") {
-      payObj.grossPay += payObj.bagsBagged * 2.5;
+      payObj.grossPay += payObj.bagsBagged * 6;
     }
 
     if (payObj.bagsBagged && payObj.payType === "MID-MONTH") {
-      payObj.grossPay += payObj.bagsBagged * 0.5;
+      payObj.grossPay += payObj.bagsBagged * 1;
     }
 
     if (payObj.bagsLoaded && payObj.payType === "MONTH-END") {
-      payObj.grossPay += payObj.bagsLoaded * 2;
+      payObj.grossPay += payObj.bagsLoaded * 6;
     }
 
     if (payObj.bagsLoaded && payObj.payType === "MID-MONTH") {
-      payObj.grossPay += payObj.bagsLoaded * 0.5;
+      payObj.grossPay += payObj.bagsLoaded * 1;
     }
 
     if (payObj.baseSalary) {
@@ -632,27 +632,27 @@ router.post(
               // bagger
               row.bagsBagged = parseFloat(row["BAGS BAGGED"].replace(/,/g, ""));
               if (row.payType == "MONTH-END")
-                row.grossPay = row.bagsBagged * 5;
+                row.grossPay = row.bagsBagged * 6;
               if (row.payType == "MID-MONTH")
-                row.grossPay += row.bagsBagged * 0.5;
+                row.grossPay += row.bagsBagged * 1;
             }
 
             if (row["QTY"]) {
               // bagger
               row.bagsBagged = parseFloat(row["QTY"].replace(/,/g, ""));
               if (row.payType == "MONTH-END")
-                row.grossPay += row.bagsBagged * 5;
+                row.grossPay += row.bagsBagged * 6;
               if (row.payType == "MID-MONTH")
-                row.grossPay += row.bagsBagged * 0.5;
+                row.grossPay += row.bagsBagged * 1;
             }
 
             if (row["BAGS LOADED"]) {
               row.bagsLoaded = parseFloat(row["BAGS LOADED"].replace(/,/g, ""));
 
               if (row.payType === "MONTH-END") {
-                row.grossPay += row.bagsLoaded * 5;
+                row.grossPay += row.bagsLoaded * 6;
               } else if (row.payType === "MID-MONTH") {
-                row.grossPay += row.bagsLoaded * 0.5;
+                row.grossPay += row.bagsLoaded * 1;
               }
             }
             if (row.grossPay > 0) {
@@ -1882,8 +1882,8 @@ async function processRow(row, userId, rowNumber, sheetName) {
     const bagsLoaded = parseNumber(String(row["BAGS LOADED"])?.replace(/,/g, "")) || 0;
 
     const calcGrossPay = (payType === "MONTH-END")
-      ? (bagsBagged + bagsLoaded) * 5
-      : (bagsBagged + bagsLoaded) * 0.5;
+      ? (bagsBagged + bagsLoaded) * 6
+      : (bagsBagged + bagsLoaded) * 1;
 
     const today = new Date();
 

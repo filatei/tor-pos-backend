@@ -1616,23 +1616,171 @@ async function mailer(model) {
   });
 }
 
-function excelDateToJSDate(excelDate) {
-  const date = new Date((excelDate - (25567 + 2)) * 86400 * 1000);
-  const utcDate = new Date(date.getTime() + (date.getTimezoneOffset() * 60 * 1000));
-  return utcDate;
+function excelDateToJSDate(serial) {
+  // Check if it's actually a number (Excel serial date)
+  if (typeof serial !== 'number') {
+    // If it's already a Date object, return it
+    if (serial instanceof Date) {
+      return serial;
+    }
+    // If it's a string, try to parse it
+    if (typeof serial === 'string') {
+      const parsed = new Date(serial);
+      if (!isNaN(parsed.getTime())) {
+        return parsed;
+      }
+    }
+    return null;
+  }
+
+  // Excel epoch starts on December 30, 1899
+  const excelEpoch = new Date(1899, 11, 30);
+  const excelEpochAsUnixTimestamp = excelEpoch.getTime();
+
+  // Excel has a bug where it thinks 1900 was a leap year
+  // For dates after Feb 28, 1900 (serial > 60), we need to subtract 1 day
+  const offset = serial > 60 ? 1 : 0;
+
+  // Convert Excel serial to milliseconds and add to epoch
+  const milliseconds = (serial - offset) * 24 * 60 * 60 * 1000;
+
+  return new Date(excelEpochAsUnixTimestamp + milliseconds);
 }
+
+// function excelDateToJSDate(excelDate) {
+//   const date = new Date((excelDate - (25567 + 2)) * 86400 * 1000);
+//   const utcDate = new Date(date.getTime() + (date.getTimezoneOffset() * 60 * 1000));
+//   return utcDate;
+// }
 
 function parseNumber(value) {
   const parsed = parseFloat(value);
   return isNaN(parsed) ? 0 : parsed;
 }
 
+// async function processRow(row, userId, rowNumber, sheetName) {
+//   try {
+//     const payType = row["PAY TYPE"]?.trim();
+//     if (!payType) throw new Error(`Pay Type (MONTH-END or MID-MONTH) Required`);
+
+//     const personId = String(row["ID"]).trim();  // Ensure personId is a string and then trim
+//     if (!personId) throw new Error("Person ID is required");
+
+//     const payee = await People.findOne({ people_id: personId });
+//     if (!payee) throw new Error("ID not in People DB for ID " + personId);
+
+//     if (!payee.status) {
+//       await People.updateOne({ _id: payee._id }, { status: "ACTIVE" });
+//     }
+
+//     const today = new Date();
+//     const months = [
+//       "January", "February", "March", "April", "May", "June",
+//       "July", "August", "September", "October", "November", "December"
+//     ];
+
+//     let payStartDate, payEndDate, month, year;
+
+//     if (row["PAY START DATE"]) {
+//       payStartDate = excelDateToJSDate(row["PAY START DATE"]);
+//     }
+
+//     if (row["PAY END DATE"]) {
+//       payEndDate = excelDateToJSDate(row["PAY END DATE"]);
+//       month = months[payEndDate.getMonth()];
+//       year = payEndDate.getFullYear();
+//     }
+
+//     if (!month) throw new Error(`Pay Month Required include field 'PAY START DATE' and 'PAY END DATE'`);
+//     if (!year) throw new Error(`Pay YEAR Required include field 'PAY START DATE' and 'PAY END DATE'`);
+
+//     const name = [row["FIRST NAME"], row["MIDDLE NAME"], row["LAST NAME"]]
+//       .filter(Boolean)
+//       .map(name => name.trim())
+//       .join(" ");
+
+//     const empType = row["EMPLOYEE TYPE"]?.trim();
+//     const baseSalary = parseNumber(row["BASE SALARY"]);
+//     const payeeTax = parseNumber(row["PAYEE TAX"]);
+//     const salaryAdvance = parseNumber(row["SALARY ADV"]);
+//     let deductions = parseNumber(row["DEDUCTION"]) + payeeTax + salaryAdvance;
+
+//     let daysAbsent = 0;
+//     let daysWorked = 0;
+//     let totalWorkDaysInMonth = 0;
+
+//     let grossPay = baseSalary;
+//     if (sheetName.toUpperCase() === 'REGULAR') {
+//       daysAbsent = parseNumber(row["DAYS ABS"]);
+//       daysWorked = parseNumber(row["DAYS WORKED"]);
+//       totalWorkDaysInMonth = daysAbsent + daysWorked;
+
+//       if (totalWorkDaysInMonth > 0) {
+//         deductions += (daysAbsent / totalWorkDaysInMonth) * baseSalary;
+//       }
+//     }
+
+//     const netPay = grossPay - deductions;
+
+//     const bankAccount = row["BANK ACCOUNT"]?.trim() || row["ACCOUNT NUMBER"]?.trim();
+
+//     if (bankAccount) {
+//       await People.updateOne({ name }, { bankAccount });
+//     }
+
+//     const siteName = row["LOCATION"]?.trim();
+//     const site = siteName && await Site.findOne({ name: siteName });
+//     if (siteName && !site) throw new Error("SITE not Valid");
+
+//     const bagsBagged = parseNumber(String(row["QTY"])?.replace(/,/g, "")) || 0
+//     const bagsLoaded = parseNumber(String(row["BAGS LOADED"])?.replace(/,/g, "")) || 0
+
+//     // console.log(bagsBagged, bagsLoaded, "bagsBagged, bagsLoaded")
+//     const calcGrossPay = (payType === "MONTH-END")
+//       ? (bagsBagged + bagsLoaded) * 5 // changed to 5 from 3.5 on dec 31 2024
+//       : (bagsBagged + bagsLoaded) * 0.5;
+//     // console.log(calcGrossPay, "calcGrossPay", grossPay, "grossPay");
+
+//     const payrollRecord = {
+//       payee: payee._id,
+//       payeeMonthYrType: personId + month + year + payType,
+//       site: site?._id,
+//       empType,
+//       payeeTax,
+//       company: row["COMPANY"],
+//       jobName: payee.jobName,
+//       status: "UNPAID",
+//       payType,
+//       month,
+//       year,
+//       grossPay: calcGrossPay || grossPay,
+//       netPay: calcGrossPay ? calcGrossPay - deductions : netPay,
+//       bagsBagged,
+//       bagsLoaded,
+//       deductions,
+//       daysAbsent,
+//       daysWorked,
+//       totalWorkDaysInMonth,
+//       salaryAdvance,
+//       payDate: today,
+//       payStartDate,
+//       payEndDate,
+//       payItems: [],
+//       remarks: "via XLS Upload - " + personId + month + year + payType,
+//       creator: userId,
+//     };
+
+//     return payrollRecord;
+//   } catch (error) {
+//     throw new Error(`Row ${rowNumber} processing error: ${error.message}`);
+//   }
+// }
 async function processRow(row, userId, rowNumber, sheetName) {
   try {
     const payType = row["PAY TYPE"]?.trim();
     if (!payType) throw new Error(`Pay Type (MONTH-END or MID-MONTH) Required`);
 
-    const personId = String(row["ID"]).trim();  // Ensure personId is a string and then trim
+    const personId = String(row["ID"]).trim();
     if (!personId) throw new Error("Person ID is required");
 
     const payee = await People.findOne({ people_id: personId });
@@ -1642,7 +1790,6 @@ async function processRow(row, userId, rowNumber, sheetName) {
       await People.updateOne({ _id: payee._id }, { status: "ACTIVE" });
     }
 
-    const today = new Date();
     const months = [
       "January", "February", "March", "April", "May", "June",
       "July", "August", "September", "October", "November", "December"
@@ -1650,18 +1797,48 @@ async function processRow(row, userId, rowNumber, sheetName) {
 
     let payStartDate, payEndDate, month, year;
 
+    // IMPROVED DATE HANDLING - Handle both Excel serial numbers and string dates
     if (row["PAY START DATE"]) {
-      payStartDate = excelDateToJSDate(row["PAY START DATE"]);
+      if (typeof row["PAY START DATE"] === 'number') {
+        // It's an Excel serial number
+        payStartDate = excelDateToJSDate(row["PAY START DATE"]);
+      } else if (typeof row["PAY START DATE"] === 'string') {
+        // It's a string date in DD/MM/YYYY format
+        const dt = row["PAY START DATE"].split("/");
+        if (dt.length === 3) {
+          payStartDate = new Date(dt[2], dt[1] - 1, dt[0]);
+        }
+      } else if (row["PAY START DATE"] instanceof Date) {
+        // Already a Date object
+        payStartDate = row["PAY START DATE"];
+      }
     }
 
+    // IMPROVED DATE HANDLING - Handle both Excel serial numbers and string dates
     if (row["PAY END DATE"]) {
-      payEndDate = excelDateToJSDate(row["PAY END DATE"]);
-      month = months[payEndDate.getMonth()];
-      year = payEndDate.getFullYear();
+      if (typeof row["PAY END DATE"] === 'number') {
+        // It's an Excel serial number
+        payEndDate = excelDateToJSDate(row["PAY END DATE"]);
+      } else if (typeof row["PAY END DATE"] === 'string') {
+        // It's a string date in DD/MM/YYYY format
+        const dt = row["PAY END DATE"].split("/");
+        if (dt.length === 3) {
+          payEndDate = new Date(dt[2], dt[1] - 1, dt[0]);
+        }
+      } else if (row["PAY END DATE"] instanceof Date) {
+        // Already a Date object
+        payEndDate = row["PAY END DATE"];
+      }
+
+      // Extract month and year from payEndDate
+      if (payEndDate && !isNaN(payEndDate.getTime())) {
+        month = months[payEndDate.getMonth()];
+        year = payEndDate.getFullYear();
+      }
     }
 
-    if (!month) throw new Error(`Pay Month Required include field 'PAY START DATE' and 'PAY END DATE'`);
-    if (!year) throw new Error(`Pay YEAR Required include field 'PAY START DATE' and 'PAY END DATE'`);
+    if (!month) throw new Error(`Pay Month Required - include valid 'PAY START DATE' and 'PAY END DATE'`);
+    if (!year) throw new Error(`Pay YEAR Required - include valid 'PAY START DATE' and 'PAY END DATE'`);
 
     const name = [row["FIRST NAME"], row["MIDDLE NAME"], row["LAST NAME"]]
       .filter(Boolean)
@@ -1701,14 +1878,14 @@ async function processRow(row, userId, rowNumber, sheetName) {
     const site = siteName && await Site.findOne({ name: siteName });
     if (siteName && !site) throw new Error("SITE not Valid");
 
-    const bagsBagged = parseNumber(String(row["QTY"])?.replace(/,/g, "")) || 0
-    const bagsLoaded = parseNumber(String(row["BAGS LOADED"])?.replace(/,/g, "")) || 0
+    const bagsBagged = parseNumber(String(row["QTY"])?.replace(/,/g, "")) || 0;
+    const bagsLoaded = parseNumber(String(row["BAGS LOADED"])?.replace(/,/g, "")) || 0;
 
-    // console.log(bagsBagged, bagsLoaded, "bagsBagged, bagsLoaded")
     const calcGrossPay = (payType === "MONTH-END")
-      ? (bagsBagged + bagsLoaded) * 5 // changed to 5 from 3.5 on dec 31 2024
+      ? (bagsBagged + bagsLoaded) * 5
       : (bagsBagged + bagsLoaded) * 0.5;
-    // console.log(calcGrossPay, "calcGrossPay", grossPay, "grossPay");
+
+    const today = new Date();
 
     const payrollRecord = {
       payee: payee._id,

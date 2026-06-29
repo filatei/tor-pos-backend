@@ -25,6 +25,16 @@ const { verifyClerkToken } = require('../utils/clerk');
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+// ── Legacy Fido lockdown ─────────────────────────────────────────────────────
+// Daybook is now the system of record. Only the address(es) in ALLOWED_LOGINS may
+// authenticate to fido.torama.ng; every other login / verify / reset is rejected.
+// Override on the server with ALLOWED_LOGINS="a@x.ng,b@y.ng" if ever needed.
+const ALLOWED_LOGINS = (process.env.ALLOWED_LOGINS || "filatei@torama.ng")
+  .split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
+const loginAllowed = (email) =>
+  !!email && ALLOWED_LOGINS.includes(String(email).trim().toLowerCase());
+const LOGIN_BLOCKED_MSG = "Access restricted — this system has moved to Daybook.";
+
 const hostname = os.hostname();
 const MyMail = require("../mail");
 const _ = require("lodash");
@@ -143,6 +153,8 @@ router.post("/verify", async (req, res, next) => {
       });
     }
 
+    if (!loginAllowed(vUser.email)) return res.status(403).json({ message: LOGIN_BLOCKED_MSG });
+
     // verify otp
     const otp = req.body.otp + '';
 
@@ -191,6 +203,8 @@ router.post("/confirmPassword", async (req, res, next) => {
         message: "email is required in body",
       });
     }
+
+    if (!loginAllowed(email)) return res.status(403).json({ message: LOGIN_BLOCKED_MSG });
 
     User.findOne({ email }, async (err, user) => {
       if (err || !user) {
@@ -298,6 +312,7 @@ router.post("/changePassword", async (req, res, next) => {
 
 router.post("/login", async (req, res, next) => {
   try {
+    if (!loginAllowed(req.body.email)) return res.status(403).json({ message: LOGIN_BLOCKED_MSG });
     const vuser = await User.findOne({ email: req.body.email });
 
     if (!vuser) {
@@ -358,6 +373,8 @@ router.post("/googleLogin", async (req, res, next) => {
 
     const payload = ticket.getPayload();
     const { sub: userId, email, name, picture } = payload;
+
+    if (!loginAllowed(email)) return res.status(403).json({ message: LOGIN_BLOCKED_MSG });
 
     let user = await User.findOneAndUpdate({ email }, {
       email,
@@ -449,6 +466,7 @@ router.post('/clerk-login',  async (req, res) => {
     if (!email) {
       return res.status(400).json({ message: 'Clerk user missing email' });
     }
+    if (!loginAllowed(email)) return res.status(403).json({ message: LOGIN_BLOCKED_MSG });
 
     // 4. Upsert into your MongoDB
     let user = await User.findOne({ email });
@@ -496,6 +514,8 @@ router.post('/clerk-protected', async (req, res) => {
     const email = user.emailAddresses?.[0]?.emailAddress;
     const name  = `${user.firstName || ''} ${user.lastName || ''}`.trim();
     const image = user.imageUrl;
+
+    if (!loginAllowed(email)) return res.status(403).json({ error: LOGIN_BLOCKED_MSG });
 
     const existingUser = await User.findOne({ email: email });
     // user has no site, so we need to get it from the publicMetadata
